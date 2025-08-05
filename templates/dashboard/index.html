@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard_index.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <!-- Các widget chính -->
+  <div class="cards">
+    <div class="card">
+      <h3>Tổng lương</h3>
+      <p class="value">₫1,250,000,000</p>
+    </div>
+    <div class="card">
+      <h3>Tổng hóa đơn điện nước</h3>
+      <p class="value">₫320,000,000</p>
+    </div>
+    <div class="card">
+      <h3>Số nhân viên</h3>
+      <p class="value">45</p>
+    </div>
+    <div class="card">
+      <h3>Hóa đơn chưa thanh toán</h3>
+      <p class="value">12</p>
+    </div>
+  </div>
+
+  <!-- Biểu đồ / bảng thống kê -->
+  <div class="chart-section">
+    <h4>Biểu đồ chi tiết</h4>
+    <div id="chart-container">
+      <!-- Đây là chỗ bạn có thể render chart bằng chart.js hoặc các thư viện khác -->
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard_index.js' %}"></script>
+{% endblock %}

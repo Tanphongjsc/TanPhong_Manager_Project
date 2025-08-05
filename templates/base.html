@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <!-- giờ static đã được đăng ký -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>MyProject</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'index' %}">Dashboard</a></li>
+                    <!-- Thêm menu khác -->
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button id="toggle-sidebar">☰</button>
+                </div>
+                <div class="header-right">
+                    <span>Xin chào, {{ request.user.get_username }}</span>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <section class="content">
+                {% block content %}
+                <!-- Nội dung con sẽ được render ở đây -->
+                {% endblock %}
+            </section>
+        </div>
+    </div>
+
+    <script src="{% static 'js/base.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

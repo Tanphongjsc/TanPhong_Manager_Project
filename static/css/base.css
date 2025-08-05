@@ -1,0 +1,104 @@
+/* Reset cơ bản */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+/* Khung tổng */
+.layout {
+    display: flex;
+    height: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 240px;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    font-size: 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid #34495e;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 10px 0;
+}
+
+.sidebar-nav li {
+    margin: 10px 0;
+}
+
+.sidebar-nav a {
+    color: #ecf0f1;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+    transition: background 0.2s;
+}
+
+.sidebar-nav a:hover {
+    background-color: #34495e;
+}
+
+/* Main content */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-left button {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.header-right span {
+    margin-right: 15px;
+}
+
+.btn-logout {
+    background-color: #e74c3c;
+    color: #fff;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+/* Content area */
+.content {
+    padding: 20px;
+    background-color: #f5f6fa;
+    flex-grow: 1;
+    overflow-y: auto;
+}
