@@ -1,104 +1,181 @@
-/* Reset cơ bản */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+body {
+    font-family: 'Inter', sans-serif;
+    overflow-x: visible;
 }
 
-html, body {
-    height: 100%;
-    font-family: Arial, sans-serif;
+/* --- STYLE CHỐNG FLICKER (ÁP DỤNG NGAY LẬP TỨC) --- */
+/* Style khi sidebar thu gọn */
+html.sidebar-is-collapsed #sidebar {
+    width: 5rem; /* ~80px */
+}
+html.sidebar-is-collapsed #sidebar .sidebar-text,
+html.sidebar-is-collapsed #sidebar .fa-chevron-down {
+    display: none;
+}
+html.sidebar-is-collapsed #sidebar .sidebar-link,
+html.sidebar-is-collapsed #sidebar .sub-link {
+    justify-content: center;
+}
+html.sidebar-is-collapsed #sidebar .sidebar-link i,
+html.sidebar-is-collapsed #sidebar .sub-link i {
+    margin-right: 0;
+}
+html.sidebar-is-collapsed #sidebar .submenu {
+    display: none !important;
 }
 
-/* Khung tổng */
-.layout {
-    display: flex;
-    height: 100%;
-}
-
-/* Sidebar */
-.sidebar {
-    width: 240px;
-    background-color: #2c3e50;
-    color: #ecf0f1;
-    flex-shrink: 0;
+/* Căn giữa cho submenu khi sidebar thu gọn */
+html.sidebar-is-collapsed #sidebar .submenu-inner {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
-.sidebar-header {
-    padding: 20px;
-    font-size: 1.5rem;
+/* Style khi submenu mở */
+html.submenu-is-open #services-submenu {
+    grid-template-rows: 1fr;
+}
+html.submenu-is-open #services-menu-toggle .fa-chevron-down {
+    transform: rotate(180deg);
+}
+/* --- HẾT STYLE CHỐNG FLICKER --- */
+
+/* --- STYLE CHO SUBMENU TOOLTIP KHI SIDEBAR THU GỌN --- */
+.submenu-container {
+    position: relative;
+}
+
+.submenu-tooltip {
+    position: fixed;
+    min-width: 240px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-10px);
+    transition: all 0.2s ease-in-out;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* Hiển thị tooltip khi hover vào menu cha (chỉ khi sidebar thu gọn) */
+html.sidebar-is-collapsed .submenu-container:hover .submenu-tooltip,
+html.sidebar-is-collapsed .submenu-tooltip:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* Style cho các link trong tooltip */
+.submenu-tooltip .tooltip-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+}
+
+.submenu-tooltip .tooltip-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    font-size: 14px;
+}
+
+.submenu-tooltip .tooltip-link:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.submenu-tooltip .tooltip-link.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.submenu-tooltip .tooltip-link i {
+    width: 20px;
+    margin-right: 12px;
     text-align: center;
-    border-bottom: 1px solid #34495e;
 }
 
-.sidebar-nav ul {
-    list-style: none;
-    padding: 10px 0;
+/* Mũi tên cho tooltip */
+.submenu-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    transform: rotate(45deg);
+    z-index: -1;
 }
 
-.sidebar-nav li {
-    margin: 10px 0;
+/* Đảm bảo sidebar không bị overflow hidden */
+html.sidebar-is-collapsed #sidebar {
+    overflow: visible;
 }
 
-.sidebar-nav a {
-    color: #ecf0f1;
-    text-decoration: none;
-    padding: 10px 20px;
-    display: block;
-    transition: background 0.2s;
+html.sidebar-is-collapsed #sidebar nav {
+    overflow: visible;
 }
 
-.sidebar-nav a:hover {
-    background-color: #34495e;
+/* Ẩn tooltip khi sidebar không thu gọn */
+html:not(.sidebar-is-collapsed) .submenu-tooltip {
+    display: none !important;
+}
+/* --- HẾT STYLE SUBMENU TOOLTIP --- */
+
+/* Style cho trạng thái active của link */
+.sidebar-link.active, .sub-link.active {
+    background-color: #3b82f6; /* Tailwind blue-500 */
+    color: white;
+}
+.sidebar-link.active i, .sub-link.active i {
+    color: white;
 }
 
-/* Main content */
-.main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+/* Thêm hiệu ứng cho tiêu đề trang */
+#page-title {
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
-/* Header */
-.header {
-    background-color: #fff;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
+.title-fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
-.header-left button {
-    font-size: 1.2rem;
-    background: none;
-    border: none;
-    cursor: pointer;
+.title-fade-in {
+    opacity: 1;
+    transform: translateY(0);
 }
 
-.header-right {
-    display: flex;
-    align-items: center;
+/* Hoạt ảnh cho sidebar (chạy khi người dùng tương tác) */
+#sidebar {
+    transition: width 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
-.header-right span {
-    margin-right: 15px;
+/* Trạng thái mở của sidebar trên mobile */
+#sidebar.mobile-open {
+    transform: translateX(0);
 }
 
-.btn-logout {
-    background-color: #e74c3c;
-    color: #fff;
-    padding: 5px 10px;
-    text-decoration: none;
-    border-radius: 3px;
+/* Hoạt ảnh cho submenu */
+.submenu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s ease-in-out;
 }
 
-/* Content area */
-.content {
-    padding: 20px;
-    background-color: #f5f6fa;
-    flex-grow: 1;
-    overflow-y: auto;
+.submenu-inner {
+    overflow: hidden;
+    min-height: 0;
 }
