@@ -17,9 +17,6 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Thêm apps/ vào PYTHONPATH dễ dàng import apps
-sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
-
 # Load biến môi trường từ file .env vào hệ thống
 load_dotenv()
 
@@ -46,8 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'corsheaders',
-    'dashboard',
-    'dich_vu_dien_nuoc', 
+    'apps.dashboard',
+    'apps.dich_vu_dien_nuoc', 
 ]
 
 MIDDLEWARE = [
