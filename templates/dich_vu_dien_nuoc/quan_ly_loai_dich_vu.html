@@ -1,17 +1,189 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Quản lý Loại dịch vụ{% endblock %}
+{% block title %}Quản lý Dịch vụ{% endblock title %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dichvudiennuoc_quanlyloaidichvu.css' %}">
-{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'css/dichvudiennuoc_quanlyloaidichvu.css' %}">
+{% endblock styles %}
 
 {% block content %}
-    <!-- Chỉnh sửa code ở đây -->
-    Quản lý Loại dịch vụ Comming Soon...
-{% endblock %}
+<div class="space-y-6">
+    <!-- Frame 1: Bảng Dịch vụ -->
+    <div class="bg-white p-4 md:p-6 rounded-lg shadow-md">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <h3 class="text-2xl font-semibold text-gray-700">Danh sách Dịch vụ</h3>
+            <button id="add-service-btn" class="w-full md:w-auto bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center shrink-0">
+                <i class="fas fa-plus mr-2"></i> Thêm Dịch vụ mới
+            </button>
+        </div>
 
-{% block extra_js %}
-<script src="{% static 'js/dichvudiennuoc_quanlyloaidichvu.js' %}"></script>
-{% endblock %}
+        <div class="mb-4">
+            <input type="text" id="service-search-input" placeholder="Tìm theo tên dịch vụ, loại dịch vụ..." class="form-input">
+        </div>
+
+        <div class="table-container">
+            <table class="w-full table-auto" id="service-table">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left w-1/4">Tên dịch vụ</th>
+                        <th class="py-3 px-6 text-left w-1/6">Loại dịch vụ</th>
+                        <th class="py-3 px-6 text-left w-1/2">Chú thích</th>
+                        <th class="py-3 px-6 text-center w-1/12">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 text-sm font-light">
+                    {% for dichvu in danh_sach_dich_vu %}
+                    <tr class="service-row border-b border-gray-200 hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left font-medium">{{ dichvu.tendichvu }}</td>
+                        <td class="py-3 px-6 text-left">{{ dichvu.id_loaidichvu.tenloaidichvu }}</td>
+                        <td class="py-3 px-6 text-left text-gray-500 italic">{{ dichvu.chuthich|truncatewords:15 }}</td>
+                        <td class="py-3 px-6 text-center">
+                            <div class="flex item-center justify-center space-x-2">
+                                <button class="edit-service-btn w-8 h-8 flex items-center justify-center text-yellow-500 hover:text-yellow-700 rounded-full hover:bg-yellow-100"
+                                        data-id_dichvu="{{ dichvu.id_dichvu }}"
+                                        data-tendichvu="{{ dichvu.tendichvu }}"
+                                        data-id_loaidichvu="{{ dichvu.id_loaidichvu_id }}"
+                                        data-chuthich="{{ dichvu.chuthich }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-service-btn w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-700 rounded-full hover:bg-red-100"
+                                        data-id_dichvu="{{ dichvu.id_dichvu }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-4 px-6 text-center text-gray-500">Chưa có dữ liệu dịch vụ.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Frame 2: Bảng Loại dịch vụ -->
+    <div class="bg-white p-4 md:p-6 rounded-lg shadow-md">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <h3 class="text-2xl font-semibold text-gray-700">Danh sách Loại dịch vụ</h3>
+            <button id="add-service-type-btn" class="w-full md:w-auto bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center justify-center shrink-0">
+                <i class="fas fa-plus mr-2"></i> Thêm Loại dịch vụ mới
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <input type="text" id="service-type-search-input" placeholder="Tìm theo tên loại dịch vụ..." class="form-input">
+        </div>
+
+        <div class="table-container">
+            <table class="w-full table-auto" id="service-type-table">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left w-1/3">Tên loại dịch vụ</th>
+                        <th class="py-3 px-6 text-left w-1/2">Chú thích</th>
+                        <th class="py-3 px-6 text-center w-1/6">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 text-sm font-light">
+                    {% for loaidichvu in danh_sach_loai_dich_vu %}
+                    <tr class="service-type-row border-b border-gray-200 hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left font-medium">{{ loaidichvu.tenloaidichvu }}</td>
+                        <td class="py-3 px-6 text-left text-gray-500 italic">{{ loaidichvu.chuthich|truncatewords:20 }}</td>
+                        <td class="py-3 px-6 text-center">
+                            <div class="flex item-center justify-center space-x-2">
+                                <button class="edit-service-type-btn w-8 h-8 flex items-center justify-center text-yellow-500 hover:text-yellow-700 rounded-full hover:bg-yellow-100"
+                                        data-id_loaidichvu="{{ loaidichvu.id_loaidichvu }}"
+                                        data-tenloaidichvu="{{ loaidichvu.tenloaidichvu }}"
+                                        data-chuthich="{{ loaidichvu.chuthich }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-service-type-btn w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-700 rounded-full hover:bg-red-100"
+                                        data-id_loaidichvu="{{ loaidichvu.id_loaidichvu }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-4 px-6 text-center text-gray-500">Chưa có dữ liệu loại dịch vụ.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal cho Dịch vụ -->
+<div id="modal-backdrop" class="modal-backdrop hidden"></div>
+<div id="service-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h4 id="service-modal-title" class="text-lg font-semibold"></h4>
+            <button id="close-service-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <form id="service-form">
+            <input type="hidden" id="id_dichvu" name="id_dichvu">
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Tên dịch vụ</label>
+                    <input type="text" id="tendichvu" name="tendichvu" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">Loại dịch vụ</label>
+                    <select id="id_loaidichvu" name="id_loaidichvu" class="form-input" required>
+                        <option value="">Chọn loại dịch vụ</option>
+                        {% for loaidichvu in danh_sach_loai_dich_vu %}
+                        <option value="{{ loaidichvu.id_loaidichvu }}">{{ loaidichvu.tenloaidichvu }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Chú thích</label>
+                    <textarea id="chuthich_dichvu" name="chuthich" rows="3" class="form-input"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                <button type="button" id="cancel-service-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal cho Loại dịch vụ -->
+<div id="service-type-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h4 id="service-type-modal-title" class="text-lg font-semibold"></h4>
+            <button id="close-service-type-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <form id="service-type-form">
+            <input type="hidden" id="id_loaidichvu_edit" name="id_loaidichvu">
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Tên loại dịch vụ</label>
+                    <input type="text" id="tenloaidichvu" name="tenloaidichvu" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">Chú thích</label>
+                    <textarea id="chuthich_loaidichvu" name="chuthich" rows="3" class="form-input"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                <button type="button" id="cancel-service-type-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{% static 'js/dichvudiennuoc_quanlyloaidichvu.js' %}"></script>
+{% endblock scripts %}

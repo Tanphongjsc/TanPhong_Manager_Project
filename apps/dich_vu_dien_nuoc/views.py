@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
+from django.utils import timezone
 
 from django.db import transaction
 from .models import *
@@ -20,11 +21,120 @@ def view_bao_cao_doanh_thu (request):
     return render(request, "dich_vu_dien_nuoc/bao_cao_doanh_thu.html")
 
 def view_quan_ly_loai_dich_vu (request):
-    return render(request, "dich_vu_dien_nuoc/quan_ly_loai_dich_vu.html")
+    """Hiển thị danh sách loại dịch vụ"""
+
+    loai_dich_vu_list = Loaidichvu.objects.all().order_by("id_loaidichvu")
+
+    dich_vu_list = Dichvu.objects.all().order_by("id_dichvu").select_related("id_loaidichvu")
+
+    context = {
+        "danh_sach_dich_vu": dich_vu_list,
+        "danh_sach_loai_dich_vu": loai_dich_vu_list
+    }
+
+    return render(request, "dich_vu_dien_nuoc/quan_ly_loai_dich_vu.html", context)
+
+@require_POST
+@transaction.atomic
+def api_dich_vu_update_or_create(request):
+    """Cập nhật hoặc tạo mới dịch vụ"""    
+    try:
+        data = loads(request.body)
+        pk = data.get('id_dichvu', None)
+
+        # Biến lưu lại dữ liệu được cập nhật hoặc tạo mới để response lại cho giao diện
+        dich_vu_instance = None
+    
+        if pk:
+            # Cập nhật dịch vụ
+            dich_vu_instance = get_object_or_404(Dichvu, id_dichvu=pk)
+            
+            dich_vu_instance.id_loaidichvu_id = data.get("id_loaidichvu", None)
+            dich_vu_instance.tendichvu = data.get("tendichvu", None)
+            dich_vu_instance.chuthich = data.get("chuthich", None)
+            dich_vu_instance.ngayghi = timezone.now()
+            
+            # Lưu lại các thay đổi
+            dich_vu_instance.save()
+        
+        else:
+            # Tạo mới dịch vụ
+            data.pop("id_dichvu", None)
+
+            dich_vu_instance = Dichvu.objects.create(
+                id_loaidichvu_id=data.get("id_loaidichvu", None),
+                tendichvu=data.get("tendichvu", None),
+                chuthich=data.get("chuthich", None),
+                ngayghi=timezone.now()
+            )
+        
+        return JsonResponse({'success': True, 'message': 'Lưu loại dịch vụ thành công!', 'data': model_to_dict(dich_vu_instance)})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
+    
+
+@require_POST
+@transaction.atomic
+def api_loai_dich_vu_update_or_create(request):
+    """Cập nhật hoặc tạo mới Loại dịch vụ"""    
+    try:
+        data = loads(request.body)
+        pk = data.get('id_loaidichvu', None)
+
+        # Biến lưu lại dữ liệu được cập nhật hoặc tạo mới để response lại cho giao diện
+        loai_dich_vu_instance = None
+
+        if pk:
+            # Cập nhật dịch vụ
+            loai_dich_vu_instance = get_object_or_404(Loaidichvu, id_loaidichvu=pk)
+            
+            data.pop("id_dichvu", None) # Xóa id_dichvu khỏi data để tránh lỗi khi cập nhật
+            for key, value in data.items():
+                setattr(loai_dich_vu_instance, key, value)
+            
+            # Lưu lại các thay đổi
+            loai_dich_vu_instance.save()
+        
+        else:
+            # Tạo mới dịch vụ
+            data.pop("id_loaidichvu", None)
+
+            loai_dich_vu_instance = Loaidichvu.objects.create(
+                tenloaidichvu=data.get("tenloaidichvu", None),
+                chuthich=data.get("chuthich", None),
+            )
+        
+        return JsonResponse({'success': True, 'message': 'Lưu loại dịch vụ thành công!', 'data': model_to_dict(loai_dich_vu_instance)})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
+
+
+
+def api_dich_vu_delete(request, pk):
+    """Xóa dịch vụ"""        
+    try: 
+        dichvu = get_object_or_404(Dichvu, id_dichvu = pk)
+        dichvu.delete()
+        return JsonResponse({'success': True, 'message': 'Xóa dịch vụ thành công!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+def api_loai_dich_vu_delete(request, pk):
+    """Xóa loại dịch vụ"""
+    try: 
+        loaidichvu = get_object_or_404(Loaidichvu, id_loaidichvu = pk)
+        loaidichvu.delete()
+        return JsonResponse({'success': True, 'message': 'Xóa dịch vụ thành công!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
 
 def view_quan_ly_khach_thue (request):
     """Hiển thị danh sách hợp đồng thuê và các dịch vụ liên quan"""
-    
     hopdong_list = Hopdong.objects.prefetch_related("hopdongdichvu_set__id_dichvu").order_by("-ngaytaohopdong")
 
     response_data = []

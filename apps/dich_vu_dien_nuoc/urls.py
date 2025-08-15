@@ -12,4 +12,13 @@ urlpatterns = [
 
     path("baocaodoanhthu/", views.view_bao_cao_doanh_thu, name="baocaodoanhthu"),
     path("quanlyloaidichvu/", views.view_quan_ly_loai_dich_vu, name="quanlyloaidichvu"),
+
+    # Quản lý dịch vụ API URL
+    path('api/dichvu/update-or-create/', views.api_dich_vu_update_or_create ,name="api_quanlyloaidichvu_update_or_create"),
+    path("api/dichvu/delete/<str:pk>/", views.api_dich_vu_delete, name="api_quanlyloaidichvu_delete"),
+
+    path('api/loaidichvu/update-or-create/', views.api_loai_dich_vu_update_or_create ,name="api_quanlyloaidichvu_update_or_create"),\
+    path("api/loaidichvu/delete/<str:pk>/", views.api_loai_dich_vu_delete, name="api_quanlyloaidichvu_delete"),
+
 ]
+
