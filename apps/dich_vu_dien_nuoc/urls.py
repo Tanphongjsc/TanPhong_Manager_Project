@@ -11,6 +11,11 @@ urlpatterns = [
     path("api/quanlykhachthue/delete/<str:pk>/", views.api_quan_ly_khach_thue_delete, name="api_quanlykhachthue_delete"),
 
     path("baocaodoanhthu/", views.view_bao_cao_doanh_thu, name="baocaodoanhthu"),
+
+    # Báo cáo doanh thu API URL
+    path("api/baocaodoanhthu/filter/", views.api_bao_cao_doanh_thu_filter, name="api_baocaodoanhthu_filter"),
+    path("api/baocaodoanhthu/export/", views.api_bao_cao_doanh_thu_export, name="api_baocaodoanhthu_export"),
+
     path("quanlyloaidichvu/", views.view_quan_ly_loai_dich_vu, name="quanlyloaidichvu"),
 
     # Quản lý dịch vụ API URL

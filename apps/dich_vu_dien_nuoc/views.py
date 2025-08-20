@@ -4,21 +4,255 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
 
 from django.forms.models import model_to_dict
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 
 from django.db import transaction
+from django.db.models import Sum, Q, F, Case, When, FloatField
+from django.db.models.functions import Coalesce
 from .models import *
 
 from json import loads, dumps
+from io import BytesIO
+
+import openpyxl
+from openpyxl.utils import get_column_letter
 
 
 # Create your views here.
 def view_danh_sach_thong_bao (request):
     return render(request, "dich_vu_dien_nuoc/danh_sach_thong_bao.html")
 
-def view_bao_cao_doanh_thu (request):
-    return render(request, "dich_vu_dien_nuoc/bao_cao_doanh_thu.html")
+# ------------------------------------ VIEW BÁO CÁO DOANH THU ------------------------------------
+
+def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, service_id=None):
+    """Hàm logic trung tâm để lấy tất cả dữ liệu báo cáo từ database"""
+
+    # 1. Xây dựng bộ lọc cơ sở
+    filters = Q()
+    if start_date and end_date:
+        filters = Q(id_thanhtoan_dichvu__thoigiantao__date__range=[start_date, end_date])
+    if customer_id and customer_id != 'all':
+        filters &= Q(id_thanhtoan_dichvu__id_hopdong_id=customer_id)
+    if service_id and service_id != 'all':
+        filters &= Q(id_dichvu_id=service_id)
+
+    # Lấy queryset cơ sở đã lọc
+    ct_thanhtoan_qs = CtThanhtoanDichvu.objects.filter(filters).select_related(
+        'id_thanhtoan_dichvu__id_hopdong', 'id_dichvu'
+    )
+    
+    # 2. Lấy dữ liệu cho Thẻ tóm tắt (Summary Cards)
+    # Lấy ID các thông báo thanh toán duy nhất từ kết quả đã lọc
+    thanhtoan_ids = ct_thanhtoan_qs.values_list('id_thanhtoan_dichvu_id', flat=True).distinct()
+    thanhtoan_qs = ThanhtoanDichvu.objects.filter(id__in=thanhtoan_ids)
+    
+    summary_agg_thanhtoan_qs = thanhtoan_qs.aggregate(
+        total_revenue=Coalesce(Sum('tongtiensauthue'), 0.0)
+    )
+
+    summary_agg_ct_thanhtoan_qs = ct_thanhtoan_qs.aggregate(
+        total_revenue_dien=Coalesce(Sum('tiensauthue', filter=Q(id_dichvu__id_loaidichvu_id=19)), 0.0),
+        total_revenue_nuoc=Coalesce(Sum('tiensauthue', filter=Q(id_dichvu__id_loaidichvu_id=20)), 0.0),
+    )
+    
+
+    summary = {
+        "total_revenue": summary_agg_thanhtoan_qs['total_revenue'],
+        "total_revenue_dien": summary_agg_ct_thanhtoan_qs['total_revenue_dien'],
+        "total_revenue_nuoc": summary_agg_ct_thanhtoan_qs['total_revenue_nuoc']
+    }
+
+    # 3. Lấy dữ liệu Bảng thông báo
+    thong_bao = list(thanhtoan_qs.order_by('-thoigiantao').values(
+        'sotbdv', 'tongtientruocthue', 'tongtiensauthue', 'thoigiantao',
+        tencongty=F('id_hopdong__tencongty')
+    ))
+
+    # 4. Lấy dữ liệu Bảng chi tiết dịch vụ
+    chi_tiet_dich_vu_raw = list(ct_thanhtoan_qs
+        .values('id_thanhtoan_dichvu__id_hopdong__tencongty', 'id_dichvu__tendichvu', 'donvitinh', 'id_dichvu_id')
+        .annotate(
+            tongtiensauthue=Sum('tiensauthue'),
+            tongsosudung=Sum('sosudung')
+        ).order_by('id_thanhtoan_dichvu__id_hopdong__tencongty')
+    )
+    
+    # Gom nhóm lại cho frontend
+    chi_tiet_dich_vu = {}
+    for item in chi_tiet_dich_vu_raw:
+        ten_cong_ty = item['id_thanhtoan_dichvu__id_hopdong__tencongty']
+        if ten_cong_ty not in chi_tiet_dich_vu:
+            chi_tiet_dich_vu[ten_cong_ty] = {
+                'tencongty': ten_cong_ty,
+                'dich_vu': {}
+            }
+        chi_tiet_dich_vu[ten_cong_ty]['dich_vu'][item['id_dichvu_id']] = item
+    
+    # 5. Lấy dữ liệu Bảng tổng hợp Điện - Nước (ID loại dịch vụ 19: Điện, 20: Nước)
+    dien_nuoc_qs = ct_thanhtoan_qs.filter(id_dichvu__id_loaidichvu_id__in=[19, 20])
+    tong_hop_dien_nuoc = list(dien_nuoc_qs
+        .values(tencongty=F('id_thanhtoan_dichvu__id_hopdong__tencongty'))
+        .annotate(
+            tong_tien_dien=Sum(Case(When(id_dichvu__id_loaidichvu_id=19, then=F('tiensauthue')), default=0.0, output_field=FloatField())),
+            so_dien=Sum(Case(When(id_dichvu__id_loaidichvu_id=19, then=F('sosudung')), default=0.0, output_field=FloatField())),
+            tong_tien_nuoc=Sum(Case(When(id_dichvu__id_loaidichvu_id=20, then=F('tiensauthue')), default=0.0, output_field=FloatField())),
+            so_nuoc=Sum(Case(When(id_dichvu__id_loaidichvu_id=20, then=F('sosudung')), default=0.0, output_field=FloatField())),
+        ).order_by('tencongty')
+    )
+
+    return {
+        "summary": summary,
+        "data": {
+            "thong_bao": thong_bao,
+            "chi_tiet_dich_vu": list(chi_tiet_dich_vu.values()),
+            "tong_hop_dien_nuoc": tong_hop_dien_nuoc,
+        }
+    }
+
+def view_bao_cao_doanh_thu(request):
+    """Hiển thị báo cáo doanh thu lần đầu."""
+    
+    # Lấy dữ liệu ban đầu
+    initial_data = get_filtered_revenue_data()
+
+    context = {
+        "danh_sach_khach_thue": Hopdong.objects.all().order_by("tencongty"),
+        "danh_sach_dich_vu": sorted({
+             value_dv['id_dichvu_id']  :  {
+                    "id_dichvu": value_dv['id_dichvu_id'],
+                    "tendichvu": value_dv['id_dichvu__tendichvu'],
+                }
+            for congty in initial_data['data']['chi_tiet_dich_vu']
+            for value_dv in congty.get("dich_vu", {}).values()
+        }.values(), key=lambda x: x['tendichvu']),
+        
+        "tong_doanh_thu": initial_data['summary']['total_revenue'],
+        "tong_doanh_thu_dien": initial_data['summary'].get('total_revenue_dien', None),
+        "tong_doanh_thu_nuoc": initial_data['summary'].get('total_revenue_nuoc', None),
+        
+        "thong_bao_data": initial_data['data']['thong_bao'],
+        "tong_hop_chi_tiet_dich_vu": initial_data['data']['chi_tiet_dich_vu'],
+        "tong_hop_chi_tiet_dich_vu_dien_nuoc": initial_data['data']['tong_hop_dien_nuoc'],
+    }
+
+    return render(request, "dich_vu_dien_nuoc/bao_cao_doanh_thu.html", context)
+
+
+def api_bao_cao_doanh_thu_filter(request):
+    """API để lọc báo cáo doanh thu."""
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    customer_id = request.GET.get('customer')
+    service_id = request.GET.get('service')
+    
+    data = get_filtered_revenue_data(start_date, end_date, customer_id, service_id)
+    data['success'] = True # Thêm trường success cho JS
+    
+    return JsonResponse(data)
+
+
+def api_bao_cao_doanh_thu_export(request):
+    """
+    API để xuất báo cáo doanh thu ra file Excel với 3 sheet.
+    """
+    # 1. Lấy dữ liệu đã được tối ưu
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    customer_id = request.GET.get('customer')
+    service_id = request.GET.get('service')
+    
+    # Tái sử dụng hàm logic chung để lấy toàn bộ dữ liệu cần thiết
+    report_data = get_filtered_revenue_data(start_date, end_date, customer_id, service_id)
+    data = report_data['data']
+
+    # 2. Tạo Workbook và các Sheet trong bộ nhớ
+    workbook = openpyxl.Workbook()
+    
+    # --- Sheet 1: Danh sách Thông báo ---
+    sheet1 = workbook.active
+    sheet1.title = "Danh sách Thông báo"
+    headers1 = ["Mã TB", "Khách thuê", "Tiền trước thuế", "Tổng tiền sau thuế", "Ngày tạo"]
+    sheet1.append(headers1)
+    
+    for item in data['thong_bao']:
+        row = [
+            item['sotbdv'],
+            item['tencongty'],
+            item['tongtientruocthue'],
+            item['tongtiensauthue'],
+            item['thoigiantao'].strftime('%d/%m/%Y %H:%M') if item.get('thoigiantao') else ''
+        ]
+        sheet1.append(row)
+        
+    # --- Sheet 2: Chi tiết Dịch vụ ---
+    sheet2 = workbook.create_sheet(title="Chi tiết Dịch vụ")
+    
+    # Lấy danh sách dịch vụ để làm header động
+    all_services = {
+        s['id_dichvu_id']: s['id_dichvu__tendichvu'] 
+        for company in data['chi_tiet_dich_vu'] 
+        for s in company['dich_vu'].values()
+    }
+    sorted_service_ids = sorted(all_services.keys())
+    
+    headers2 = ["Công ty"] + [all_services[sid] for sid in sorted_service_ids]
+    sheet2.append(headers2)
+    
+    for company in data['chi_tiet_dich_vu']:
+        row = [company['tencongty']]
+        for service_id in sorted_service_ids:
+            service_data = company['dich_vu'].get(service_id)
+            # Ghi cả thành tiền và số lượng sử dụng
+            cell_value = service_data['tongtiensauthue'] if service_data else ""
+            row.append(cell_value)
+        sheet2.append(row)
+
+    # --- Sheet 3: Tổng hợp Điện - Nước ---
+    sheet3 = workbook.create_sheet(title="Tổng hợp Điện - Nước")
+    headers3 = ["Công ty", "Tổng tiền điện", "Số điện sử dụng (kWh)", "Tổng tiền nước", "Số nước sử dụng (m³)"]
+    sheet3.append(headers3)
+    
+    for item in data['tong_hop_dien_nuoc']:
+        row = [
+            item['tencongty'],
+            item['tong_tien_dien'],
+            item['so_dien'],
+            item['tong_tien_nuoc'],
+            item['so_nuoc'],
+        ]
+        sheet3.append(row)
+
+    # 3. Tối ưu độ rộng cột cho tất cả sheet
+    for sheet in workbook.worksheets:
+        for col in sheet.columns:
+            max_length = 0
+            column = get_column_letter(col[0].column)
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            sheet.column_dimensions[column].width = adjusted_width
+
+    # 4. Lưu file vào buffer và trả về response
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    
+    response = HttpResponse(
+        buffer,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"BaoCaoDoanhThu_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+# ------------------------------------ VIEW QUẢN LÝ DỊCH VỤ ------------------------------------
 
 def view_quan_ly_loai_dich_vu (request):
     """Hiển thị danh sách loại dịch vụ"""
@@ -132,6 +366,7 @@ def api_loai_dich_vu_delete(request, pk):
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
 
+# ------------------------------------ VIEW QUẢN LÝ KHÁCH THUÊ ------------------------------------
 
 def view_quan_ly_khach_thue (request):
     """Hiển thị danh sách hợp đồng thuê và các dịch vụ liên quan"""
