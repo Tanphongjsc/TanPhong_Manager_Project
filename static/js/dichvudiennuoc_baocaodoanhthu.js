@@ -2,9 +2,10 @@
 
 $(document).ready(function() {
     // --- UTILITY FUNCTIONS ---
+    // ✅ ĐÃ CẬP NHẬT
     function formatCurrency(num) {
         if (!num) return '0 đ';
-        const rounded = parseFloat(num).toFixed(1); 
+        const rounded = parseFloat(num).toFixed(2); // Luôn làm tròn 2 chữ số thập phân
         return new Intl.NumberFormat('en-EN').format(rounded) + ' đ';
     }
     
@@ -92,27 +93,36 @@ $(document).ready(function() {
         updateAllTableFooters(data);
     }
 
+    // ✅ ĐÃ CẬP NHẬT
     function updateNotificationTable(data) {
         const tbody = $('#notification-table-body');
         if (!data || data.length === 0) {
-            tbody.html('<tr><td colspan="5" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>');
+            tbody.html('<tr><td colspan="6" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>');
             return;
         }
 
         const rowsHtml = data.map(item => {
-            const paymentDate = item.thoigiantao ? new Date(item.thoigiantao).toLocaleDateString('vi-VN') : '<span class="text-gray-400">-</span>';
+            let paymentDate = '<span class="text-gray-400">-</span>';
+            if (item.thoigiantao) {
+                const date = new Date(item.thoigiantao);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                paymentDate = `${month}/${year}`; // Định dạng MM/YYYY
+            }
             return `
                 <tr class="border-b hover:bg-gray-100">
                     <td class="py-3 px-6 text-left font-mono">${item.sotbdv}</td>
                     <td class="py-3 px-6 text-left">${item.tencongty}</td>
-                    <td class="py-3 px-6 text-right">${formatCurrency(item.tongtientruocthue)}</td>
-                    <td class="py-3 px-6 text-right font-bold">${formatCurrency(item.tongtiensauthue)}</td>
+                    <td class="py-3 px-6 text-right">${formatCurrency(item.tongtiensauthue)}</td>
+                    <td class="py-3 px-6 text-right">${formatCurrency(item.giam_tru)}</td>
+                    <td class="py-3 px-6 text-right font-bold">${formatCurrency(item.tongtienthanhtoan)}</td>
                     <td class="py-3 px-6 text-center">${paymentDate}</td>
                 </tr>
             `;
         }).join('');
         tbody.html(rowsHtml);
     }
+
 
     function updateServiceDetailTable(data) {
         const table = $('#service-detail-table-body').closest('table');
@@ -172,15 +182,16 @@ $(document).ready(function() {
     }
     
     function updateAllTableFooters(data) {
-        // ... (No changes in this function)
         // 1. Notification Table
         const notificationTotals = data.thong_bao.reduce((acc, item) => {
-            acc.truocThue += parseFloat(item.tongtientruocthue) || 0;
-            acc.sauThue += parseFloat(item.tongtiensauthue) || 0;
+            acc.gomThue += parseFloat(item.tongtiensauthue) || 0;
+            acc.giamTru += parseFloat(item.giam_tru) || 0;
+            acc.thanhToan += parseFloat(item.tongtienthanhtoan) || 0;
             return acc;
-        }, { truocThue: 0, sauThue: 0 });
-        $('#total-tientruocthue').text(formatCurrency(notificationTotals.truocThue));
-        $('#total-tongtien').text(formatCurrency(notificationTotals.sauThue));
+        }, { gomThue: 0, giamTru: 0, thanhToan: 0 });
+        $('#total-tiengomthue').text(formatCurrency(notificationTotals.gomThue));
+        $('#total-giamtru').text(formatCurrency(notificationTotals.giamTru));
+        $('#total-tongtientt').text(formatCurrency(notificationTotals.thanhToan));
 
         // 2. Utility Summary Table
         const utilityTotals = data.tong_hop_dien_nuoc.reduce((acc, company) => {
@@ -252,12 +263,18 @@ $(document).ready(function() {
 
     // --- INITIALIZATION ---
     try {
-        const initialData = {
-            thong_bao: JSON.parse('{{ thong_bao_data|escapejs }}'),
-            chi_tiet_dich_vu: JSON.parse('{{ tong_hop_chi_tiet_dich_vu|escapejs }}'),
-            tong_hop_dien_nuoc: JSON.parse('{{ tong_hop_chi_tiet_dich_vu_dien_nuoc|escapejs }}')
-        };
-        updateAllTableFooters(initialData);
+        const initialThongBaoData = document.getElementById('initial-thong-bao-data');
+        const initialChiTietDVData = document.getElementById('initial-chi-tiet-dich-vu-data');
+        const initialDienNuocData = document.getElementById('initial-dien-nuoc-data');
+
+        if(initialThongBaoData && initialChiTietDVData && initialDienNuocData) {
+            const initialData = {
+                thong_bao: JSON.parse(initialThongBaoData.textContent),
+                chi_tiet_dich_vu: JSON.parse(initialChiTietDVData.textContent),
+                tong_hop_dien_nuoc: JSON.parse(initialDienNuocData.textContent)
+            };
+            updateAllTableFooters(initialData);
+        }
     } catch (e) {
         console.error("Could not parse initial data:", e);
     }

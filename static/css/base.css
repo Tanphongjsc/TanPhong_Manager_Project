@@ -1,46 +1,110 @@
+:root {
+    --sidebar-width: 256px; /* 16rem */
+    --sidebar-width-collapsed: 80px; /* 5rem */
+    --transition-duration: 0.2s;
+    --transition-timing: ease-in-out;
+}
+
 body {
     font-family: 'Inter', sans-serif;
-    overflow-x: visible;
 }
 
 /* --- STYLE CHỐNG FLICKER (ÁP DỤNG NGAY LẬP TỨC) --- */
-/* Style khi sidebar thu gọn */
 html.sidebar-is-collapsed #sidebar {
-    width: 5rem; /* ~80px */
+    width: var(--sidebar-width-collapsed);
 }
-html.sidebar-is-collapsed #sidebar .sidebar-text,
-html.sidebar-is-collapsed #sidebar .fa-chevron-down {
+html.sidebar-is-collapsed .sidebar-text,
+html.sidebar-is-collapsed .fa-chevron-down {
     display: none;
 }
-html.sidebar-is-collapsed #sidebar .sidebar-link,
-html.sidebar-is-collapsed #sidebar .sub-link {
+html.sidebar-is-collapsed .sidebar-link {
     justify-content: center;
 }
-html.sidebar-is-collapsed #sidebar .sidebar-link i,
-html.sidebar-is-collapsed #sidebar .sub-link i {
+html.sidebar-is-collapsed .sidebar-link i {
     margin-right: 0;
 }
-html.sidebar-is-collapsed #sidebar .submenu {
+html.sidebar-is-collapsed #services-submenu {
     display: none !important;
 }
 
-/* Căn giữa cho submenu khi sidebar thu gọn */
-html.sidebar-is-collapsed #sidebar .submenu-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* --- SUBMENU ANIMATION --- */
+#services-submenu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-duration) var(--transition-timing);
 }
-
-/* Style khi submenu mở */
+.submenu-inner {
+    overflow: hidden;
+}
 html.submenu-is-open #services-submenu {
     grid-template-rows: 1fr;
 }
 html.submenu-is-open #services-menu-toggle .fa-chevron-down {
     transform: rotate(180deg);
 }
-/* --- HẾT STYLE CHỐNG FLICKER --- */
 
-/* --- STYLE CHO SUBMENU TOOLTIP KHI SIDEBAR THU GỌN --- */
+/* --- STYLE CHUNG CHO SIDEBAR & TRANSITION --- */
+#sidebar {
+    width: var(--sidebar-width);
+    transition: width var(--transition-duration) var(--transition-timing), 
+                transform var(--transition-duration) var(--transition-timing);
+}
+
+#sidebar.mobile-open {
+    transform: translateX(0);
+}
+
+
+/* --- TOOLTIPS --- */
+
+/* Tooltip cho các link đơn lẻ (Dashboard, Cài đặt, ...) */
+.sidebar-tooltip {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 12px;
+    background: #1f2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-duration) var(--transition-timing), 
+                transform var(--transition-duration) var(--transition-timing);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.sidebar-tooltip::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #1f2937;
+}
+
+/* * ---- PHẦN SỬA LỖI ĐƯỢC THÊM VÀO ĐÂY ---- 
+ */
+.sidebar-link .sidebar-tooltip {
+    display: none;
+}
+html.sidebar-is-collapsed .sidebar-link .sidebar-tooltip {
+    display: block;
+}
+html.sidebar-is-collapsed .sidebar-link:hover .sidebar-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(8px);
+}
+/* ---- KẾT THÚC PHẦN SỬA LỖI ---- */
+
+
+/* Tooltip cho submenu khi sidebar thu gọn */
 .submenu-container {
     position: relative;
 }
@@ -54,57 +118,14 @@ html.submenu-is-open #services-menu-toggle .fa-chevron-down {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     opacity: 0;
     visibility: hidden;
-    transform: translateX(-10px);
-    transition: all 0.2s ease-in-out;
+    transform: translateX(10px);
+    transition: all var(--transition-duration) var(--transition-timing);
     z-index: 9999;
     pointer-events: none;
+    padding-bottom: 8px;
+    padding-top: 8px;
 }
 
-/* Hiển thị tooltip khi hover vào menu cha (chỉ khi sidebar thu gọn) */
-html.sidebar-is-collapsed .submenu-container:hover .submenu-tooltip,
-html.sidebar-is-collapsed .submenu-tooltip:hover {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-    pointer-events: auto;
-}
-
-/* Style cho các link trong tooltip */
-.submenu-tooltip .tooltip-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e5e7eb;
-    font-weight: 600;
-    color: #374151;
-    font-size: 14px;
-}
-
-.submenu-tooltip .tooltip-link {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    color: #6b7280;
-    text-decoration: none;
-    transition: all 0.15s ease-in-out;
-    font-size: 14px;
-}
-
-.submenu-tooltip .tooltip-link:hover {
-    background-color: #f3f4f6;
-    color: #374151;
-}
-
-.submenu-tooltip .tooltip-link.active {
-    background-color: #3b82f6;
-    color: white;
-}
-
-.submenu-tooltip .tooltip-link i {
-    width: 20px;
-    margin-right: 12px;
-    text-align: center;
-}
-
-/* Mũi tên cho tooltip */
 .submenu-tooltip::before {
     content: '';
     position: absolute;
@@ -119,63 +140,70 @@ html.sidebar-is-collapsed .submenu-tooltip:hover {
     z-index: -1;
 }
 
-/* Đảm bảo sidebar không bị overflow hidden */
-html.sidebar-is-collapsed #sidebar {
-    overflow: visible;
+/* Hiển thị tooltip submenu khi sidebar thu gọn và hover */
+html.sidebar-is-collapsed .submenu-container:hover .submenu-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+html:not(.sidebar-is-collapsed) .submenu-tooltip { 
+    display: none !important; 
 }
 
+/* Đảm bảo tooltip không bị cắt */
+html.sidebar-is-collapsed #sidebar,
 html.sidebar-is-collapsed #sidebar nav {
     overflow: visible;
 }
 
-/* Ẩn tooltip khi sidebar không thu gọn */
-html:not(.sidebar-is-collapsed) .submenu-tooltip {
-    display: none !important;
+/* STYLE CHO CÁC LINK TRONG TOOLTIP SUBMENU */
+.submenu-tooltip .tooltip-header {
+    padding: 8px 16px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+    margin-bottom: 8px;
 }
-/* --- HẾT STYLE SUBMENU TOOLTIP --- */
+.submenu-tooltip .tooltip-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    font-size: 14px;
+    border-radius: 6px;
+    margin: 0 8px;
+}
+.submenu-tooltip .tooltip-link:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+.submenu-tooltip .tooltip-link.active {
+    background-color: #3b82f6;
+    color: white;
+}
+.submenu-tooltip .tooltip-link i {
+    width: 20px;
+    margin-right: 12px;
+    text-align: center;
+}
 
-/* Style cho trạng thái active của link */
+/* --- STYLE TRẠNG THÁI ACTIVE VÀ TIÊU ĐỀ --- */
 .sidebar-link.active, .sub-link.active {
-    background-color: #3b82f6; /* Tailwind blue-500 */
+    background-color: #3b82f6;
     color: white;
 }
 .sidebar-link.active i, .sub-link.active i {
     color: white;
 }
 
-/* Thêm hiệu ứng cho tiêu đề trang */
 #page-title {
-    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transition: opacity var(--transition-duration) var(--transition-timing), transform var(--transition-duration) var(--transition-timing);
 }
-
 .title-fade-out {
     opacity: 0;
     transform: translateY(-10px);
-}
-
-.title-fade-in {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Hoạt ảnh cho sidebar (chạy khi người dùng tương tác) */
-#sidebar {
-    transition: width 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-
-/* Trạng thái mở của sidebar trên mobile */
-#sidebar.mobile-open {
-    transform: translateX(0);
-}
-
-/* Hoạt ảnh cho submenu */
-.submenu {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.2s ease-in-out;
-}
-
-.submenu-inner {
-    overflow: hidden;
-    min-height: 0;
 }

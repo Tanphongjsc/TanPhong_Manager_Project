@@ -8,7 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 
 from django.db import transaction
-from django.db.models import Sum, Q, F, Case, When, FloatField
+from django.db.models import Sum, Q, F, Case, When, FloatField, Min
 from django.db.models.functions import Coalesce
 from .models import *
 
@@ -48,7 +48,7 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
     thanhtoan_qs = ThanhtoanDichvu.objects.filter(id__in=thanhtoan_ids)
     
     summary_agg_thanhtoan_qs = thanhtoan_qs.aggregate(
-        total_revenue=Coalesce(Sum('tongtiensauthue'), 0.0)
+        total_revenue=Coalesce(Sum('tongtiensauthue') - Sum(F('giamtru')/100 * F('tongtientruocthue')), 0.0)
     )
 
     summary_agg_ct_thanhtoan_qs = ct_thanhtoan_qs.aggregate(
@@ -65,14 +65,17 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
 
     # 3. Lấy dữ liệu Bảng thông báo
     thong_bao = list(thanhtoan_qs.order_by('-thoigiantao').values(
-        'sotbdv', 'tongtientruocthue', 'tongtiensauthue', 'thoigiantao',
-        tencongty=F('id_hopdong__tencongty')
+        'sotbdv', 'tongtiensauthue', 'thoigiantao',
+        tencongty=F('id_hopdong__tencongty'),
+        giam_tru = F('giamtru')/100 * F('tongtientruocthue'),
+        tongtienthanhtoan = F('tongtiensauthue') - F('giamtru')/100 * F('tongtientruocthue')
     ))
 
     # 4. Lấy dữ liệu Bảng chi tiết dịch vụ
     chi_tiet_dich_vu_raw = list(ct_thanhtoan_qs
-        .values('id_thanhtoan_dichvu__id_hopdong__tencongty', 'id_dichvu__tendichvu', 'donvitinh', 'id_dichvu_id')
+        .values('id_thanhtoan_dichvu__id_hopdong__tencongty', 'id_dichvu__tendichvu', 'id_dichvu_id')
         .annotate(
+             donvitinh=Min('donvitinh'),
             tongtiensauthue=Sum('tiensauthue'),
             tongsosudung=Sum('sosudung')
         ).order_by('id_thanhtoan_dichvu__id_hopdong__tencongty')
@@ -116,16 +119,28 @@ def view_bao_cao_doanh_thu(request):
     # Lấy dữ liệu ban đầu
     initial_data = get_filtered_revenue_data()
 
-    context = {
-        "danh_sach_khach_thue": Hopdong.objects.all().order_by("tencongty"),
-        "danh_sach_dich_vu": sorted({
-             value_dv['id_dichvu_id']  :  {
+    # Chuẩn bị dữ liệu danh sách dịch vụ và tính tổng
+    danh_sach_dich_vu = {}
+    for congty in initial_data['data']['chi_tiet_dich_vu']:
+        for value_dv in congty.get("dich_vu", {}).values():
+
+            # Nếu dịch vụ chưa có trong danh sách, khởi tạo nó
+            if value_dv['id_dichvu_id'] not in danh_sach_dich_vu:
+                danh_sach_dich_vu[value_dv['id_dichvu_id']] = {
                     "id_dichvu": value_dv['id_dichvu_id'],
                     "tendichvu": value_dv['id_dichvu__tendichvu'],
+                    "total_amount": 0, 
+                    "total_usage": 0,
+                    "unit": value_dv['donvitinh']
                 }
-            for congty in initial_data['data']['chi_tiet_dich_vu']
-            for value_dv in congty.get("dich_vu", {}).values()
-        }.values(), key=lambda x: x['tendichvu']),
+            
+            # Cập nhật tổng tiền và tổng số lượng sử dụng
+            danh_sach_dich_vu[value_dv['id_dichvu_id']]['total_amount'] += value_dv['tongtiensauthue']
+            danh_sach_dich_vu[value_dv['id_dichvu_id']]['total_usage'] += value_dv['tongsosudung']
+
+    context = {
+        "danh_sach_khach_thue": Hopdong.objects.all().order_by("tencongty"),
+        "danh_sach_dich_vu": sorted(danh_sach_dich_vu.values(), key=lambda x: x['tendichvu']),
         
         "tong_doanh_thu": initial_data['summary']['total_revenue'],
         "tong_doanh_thu_dien": initial_data['summary'].get('total_revenue_dien', None),
@@ -134,6 +149,15 @@ def view_bao_cao_doanh_thu(request):
         "thong_bao_data": initial_data['data']['thong_bao'],
         "tong_hop_chi_tiet_dich_vu": initial_data['data']['chi_tiet_dich_vu'],
         "tong_hop_chi_tiet_dich_vu_dien_nuoc": initial_data['data']['tong_hop_dien_nuoc'],
+
+        # TÍNH TOÁN CÁC GIÁ TRỊ TỔNG CỘNG
+        'total_tiengomthue': sum(item.get('tongtiensauthue', 0) for item in initial_data['data']['thong_bao']),
+        'total_giamtru': sum(item.get('giam_tru', 0) for item in initial_data['data']['thong_bao']),
+        'total_tongtientt': sum(item.get('tongtienthanhtoan', 0) for item in initial_data['data']['thong_bao']),
+        'total_tongtiendien': sum(float(c.get('tong_tien_dien', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
+        'total_sodiensudung': sum(float(c.get('so_dien', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
+        'total_tongtiennuoc': sum(float(c.get('tong_tien_nuoc', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
+        'total_sonuocsudung': sum(float(c.get('so_nuoc', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
     }
 
     return render(request, "dich_vu_dien_nuoc/bao_cao_doanh_thu.html", context)

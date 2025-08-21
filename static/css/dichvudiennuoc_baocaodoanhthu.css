@@ -44,6 +44,8 @@
     max-height: 450px; /* Chiều cao tối đa trước khi thanh trượt dọc xuất hiện */
     border: 1px solid #e5e7eb;
     border-radius: 0.375rem;
+    position: relative;
+    z-index: 1;
 }
 
 /* Custom styles for sticky footer */
