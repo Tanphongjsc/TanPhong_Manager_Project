@@ -3,15 +3,437 @@
 
 {% block title %}Danh sách Thông báo{% endblock %}
 
-{% block extra_css %}
+{% block styles %}
 <link rel="stylesheet" href="{% static 'css/dichvudiennuoc_danhsachthongbao.css' %}">
 {% endblock %}
 
 {% block content %}
-    <!-- Chỉnh sửa code ở đây -->
-    Danh sách Thông báo Comming Soon...
+<div class="page-container">
+    {% csrf_token %}
+    <!-- Page Title -->
+    <div class="page-title">
+        <h2><i class="fas fa-bell"></i> Thông báo dịch vụ</h2>
+    </div>
+
+    <!-- Action Bar and Filters -->
+    <div class="filter-action-section">
+        <div class="filter-container">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Tháng</label>
+                    <select class="filter-select" id="filter-month">
+                        <option value="">Tất cả tháng</option>
+                        <option value="01">Tháng 1</option>
+                        <option value="02">Tháng 2</option>
+                        <option value="03">Tháng 3</option>
+                        <option value="04">Tháng 4</option>
+                        <option value="05">Tháng 5</option>
+                        <option value="06">Tháng 6</option>
+                        <option value="07">Tháng 7</option>
+                        <option value="08">Tháng 8</option>
+                        <option value="09">Tháng 9</option>
+                        <option value="10">Tháng 10</option>
+                        <option value="11">Tháng 11</option>
+                        <option value="12">Tháng 12</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Năm</label>
+                    <select class="filter-select" id="filter-year">
+                        <option value="">Tất cả năm</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group filter-company">
+                    <label>Tên công ty</label>
+                    <div class="company-search-wrapper">
+                        <input type="text" class="filter-select company-search-input" id="filter-company" 
+                            placeholder="Tìm kiếm công ty..." autocomplete="off">
+                        <div class="company-dropdown" id="filter-company-dropdown">
+                            <!-- Options sẽ được load động -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <button type="button" class="btn btn-primary filter-btn" id="btn-filter">
+                        <i class="fas fa-search"></i> Lọc
+                    </button>
+                </div>
+                <div class="filter-group">
+                    <button type="button" class="btn btn-primary filter-btn" id="btn-clear-filters">
+                        <i class="fas fa-times"></i> Xóa bộ lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button type="button" class="btn btn-outline-primary" id="btn-print-multiple" disabled>
+                <i class="fas fa-print"></i> In nhiều thông báo
+            </button>
+            <button type="button" class="btn btn-success" id="btn-create-new">
+                <i class="fas fa-plus"></i> Tạo thông báo mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="data-table-wrapper">
+        <div class="table-responsive">
+            <table class="data-table" id="notifications-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-col">
+                            <input type="checkbox" id="select-all" class="table-checkbox">
+                        </th>
+                        <th class="stt-col">STT</th>
+                        <th class="code-col">Số TBDV</th>
+                        <th class="company-col">TÊN CÔNG TY</th>
+                        <th class="note-col">CHÚ THÍCH</th>
+                        <th class="date-col">NGÀY TẠO</th>
+                        <th class="amount-col">TỔNG TIỀN TRƯỚC THUẾ</th>
+                        <th class="amount-col">TỔNG TIỀN SAU THUẾ</th>
+                        <th class="action-col">HÀNH ĐỘNG</th>
+                    </tr>
+                </thead>
+                <tbody id="notifications-tbody">
+                    <!-- Dữ liệu sẽ được load bằng JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Loading spinner -->
+        <div class="loading-state" id="loading-spinner" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu...</p>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <h3>Không có thông báo nào</h3>
+            <p>Chưa có thông báo dịch vụ nào được tạo hoặc không có dữ liệu phù hợp với bộ lọc</p>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
+            <nav class="pagination-nav">
+                <ul class="pagination" id="pagination">
+                    <!-- Pagination sẽ được tạo bằng JavaScript -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
+                    <h4>Bạn có chắc chắn muốn xóa thông báo này không?</h4>
+                    <p id="delete-message">Thông báo sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete">
+                    <i class="fas fa-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="createNotificationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Tạo thông báo dịch vụ mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-notification-form">
+                    <!-- Thông tin cơ bản -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Tên công ty <span class="text-danger">*</span></label>
+                            <div class="company-search-wrapper">
+                                <input type="text" class="form-control company-search-input" id="create-company" 
+                                    placeholder="Tìm kiếm công ty..." autocomplete="off">
+                                <div class="company-dropdown" id="company-dropdown">
+                                    <!-- Options sẽ được load động -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Kỳ thanh toán <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="create-period" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Số TBDV</label>
+                            <input type="text" class="form-control" id="create-sotbdv" placeholder="Sẽ tự động tạo...">
+                        </div>
+                    </div>
+
+                    <!-- Chi tiết dịch vụ -->
+                    <div class="service-details-section">
+                        <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-list"></i> Chi tiết dịch vụ
+                            </h6>
+                            <div class="service-actions">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="btn-add-service">
+                                    <i class="fas fa-plus"></i> Thêm dịch vụ
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bảng dịch vụ -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="services-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="40">STT</th>
+                                        <th width="200">Diễn giải</th>
+                                        <th width="80">ĐVT</th>
+                                        <th width="100">Chỉ số cũ</th>
+                                        <th width="100">Chỉ số mới</th>
+                                        <th width="80">Hệ số</th>
+                                        <th width="120">Đơn giá</th>
+                                        <th width="100">Số sử dụng</th>
+                                        <th width="80">Thuế (%)</th>
+                                        <th width="80">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="services-tbody">
+                                    <!-- Services sẽ được load động -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Giảm trừ và tổng kết -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Phần trăm giảm trừ (%)</label>
+                                <input type="number" class="form-control" id="create-discount" value="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="summary-info p-3 bg-light rounded">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tổng tiền trước thuế:</span>
+                                        <strong id="total-before-tax">0 VNĐ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tổng tiền sau thuế:</span>
+                                        <strong id="total-after-tax" class="text-primary">0 VNĐ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-warning">
+                                        <span>Tiền giảm trừ:</span>
+                                        <strong id="discount-amount">0 VND</strong>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between text-success fs-5">
+                                        <span><strong>Tiền cần thanh toán:</strong></span>
+                                        <strong id="final-amount">0 VND</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-success" id="btn-save-and-create-new">
+                    <i class="fas fa-save"></i> Lưu và tạo mới
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-save-notification">
+                    <i class="fas fa-check"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thêm dịch vụ -->
+<div class="modal fade" id="addServiceModal" tabindex="-1" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Thêm dịch vụ mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Chọn dịch vụ</label>
+                    <input type="text" class="form-control" id="service-select-input" 
+                        list="add-services-datalist" placeholder="Tìm kiếm dịch vụ...">
+                    <datalist id="add-services-datalist">
+                        <!-- Options sẽ được load bằng JS -->
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Đơn vị tính</label>
+                    <input type="text" class="form-control" id="service-unit" 
+                        list="add-units-datalist" placeholder="Chọn hoặc nhập đơn vị tính...">
+                    <datalist id="add-units-datalist">
+                        <option value="m³">m³</option>
+                        <option value="m²">m²</option>
+                        <option value="kwh">kwh</option>
+                        <option value="người">người</option>
+                        <option value="tháng">tháng</option>
+                        <option value="xe">xe</option>
+                        <option value="phòng">phòng</option>
+                        <option value="m">m</option>
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Đơn giá</label>
+                    <input type="number" class="form-control" id="service-price" min="0" step="0.01" placeholder="Nhập đơn giá...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hệ số</label>
+                    <input type="number" class="form-control" id="service-factor" value="1" min="0" step="0.1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Thuế (%)</label>
+                    <input type="number" class="form-control" id="service-tax" value="8" min="0" max="100" step="0.1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-add-service">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal chỉnh sửa thông báo -->
+<div class="modal fade" id="editNotificationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> Chỉnh sửa thông báo dịch vụ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-notification-form">
+                    <!-- Thông tin cơ bản (Read-only) -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Tên công ty</label>
+                            <input type="text" class="form-control" id="edit-company" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Kỳ thanh toán</label>
+                            <input type="text" class="form-control" id="edit-period" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Số TBDV</label>
+                            <input type="text" class="form-control" id="edit-sotbdv" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Chi tiết dịch vụ (Có thể chỉnh sửa) -->
+                    <div class="service-details-section">
+                        <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-list"></i> Chi tiết dịch vụ
+                            </h6>
+                            <div class="service-actions">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="btn-edit-add-service">
+                                    <i class="fas fa-plus"></i> Thêm dịch vụ
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bảng dịch vụ -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="edit-services-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="40">STT</th>
+                                        <th width="200">Diễn giải</th>
+                                        <th width="80">ĐVT</th>
+                                        <th width="100">Chỉ số cũ</th>
+                                        <th width="100">Chỉ số mới</th>
+                                        <th width="80">Hệ số</th>
+                                        <th width="120">Đơn giá</th>
+                                        <th width="100">Số sử dụng</th>
+                                        <th width="80">Thuế (%)</th>
+                                        <th width="80">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="edit-services-tbody">
+                                    <!-- Services sẽ được load động -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Giảm trừ và tổng kết -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Phần trăm giảm trừ (%)</label>
+                                <input type="number" class="form-control" id="edit-discount" value="0" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="summary-info p-3 bg-light rounded">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tổng tiền trước thuế:</span>
+                                        <strong id="edit-total-before-tax">0 VND</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tổng tiền sau thuế:</span>
+                                        <strong id="edit-total-after-tax" class="text-primary">0 VND</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-warning">
+                                        <span>Tiền giảm trừ:</span>
+                                        <strong id="edit-discount-amount">0 VND</strong>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between text-success fs-5">
+                                        <span><strong>Tiền cần thanh toán:</strong></span>
+                                        <strong id="edit-final-amount">0 VND</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-save-edit-notification">
+                    <i class="fas fa-save"></i> Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script src="{% static 'js/dichvudiennuoc_danhsachthongbao.js' %}"></script>
 {% endblock %}
