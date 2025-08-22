@@ -1,17 +1,152 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Quản lý Khách thuê{% endblock %}
+{% block title %}Quản lý Hợp đồng Thuê{% endblock title %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dichvudiennuoc_quanlykhachthue.css' %}">
-{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'css/dichvudiennuoc_quanlykhachthue.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock styles %}
 
 {% block content %}
-    <!-- Chỉnh sửa code ở đây -->
-    Quản lý Khách thuê Comming Soon...
-{% endblock %}
+<div class="bg-white p-4 md:p-6 rounded-lg shadow-md">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+        <h3 class="text-2xl font-semibold text-gray-700">Danh sách Hợp đồng</h3>
+        <button id="add-tenant-btn" class="w-full md:w-auto bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center shrink-0">
+            <i class="fas fa-plus mr-2"></i> Thêm Hợp đồng mới
+        </button>
+    </div>
 
-{% block extra_js %}
-<script src="{% static 'js/dichvudiennuoc_quanlykhachthue.js' %}"></script>
-{% endblock %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="md:col-span-2">
+            <label for="search-input" class="sr-only">Tìm kiếm</label>
+            <input type="text" id="search-input" placeholder="Tìm theo tên công ty, số hợp đồng..." class="form-input">
+        </div>
+        <div>
+            <label for="status-filter" class="sr-only">Lọc theo trạng thái</label>
+            <select id="status-filter" class="form-input">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Ngừng</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full table-auto" id="tenant-table">
+            <thead>
+                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-6 text-left w-1/4">Tên công ty</th>
+                    <th class="py-3 px-6 text-left w-1/6">Số hợp đồng</th>
+                    <th class="py-3 px-6 text-left w-1/3">Chú thích</th>
+                    <th class="py-3 px-6 text-center w-1/12">Trạng thái</th>
+                    <th class="py-3 px-6 text-center w-1/12">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm font-light">
+                {% for hopdong in danh_sach_hop_dong %}
+                <tr class="tenant-row border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left font-medium">{{ hopdong.tencongty }}</td>
+                    <td class="py-3 px-6 text-left">{{ hopdong.sohd }}</td>
+                    <td class="py-3 px-6 text-left text-gray-500 italic">{{ hopdong.chuthich|truncatewords:15 }}</td>
+                    <td class="py-3 px-6 text-center" data-status="{{ hopdong.trangthai }}">
+                        {% if hopdong.trangthai == 1 %}
+                            <span class="bg-green-200 text-green-700 py-1 px-3 rounded-full text-xs">Hoạt động</span>
+                        {% else %}
+                            <span class="bg-red-200 text-red-700 py-1 px-3 rounded-full text-xs">Ngừng</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center space-x-2">
+                            <button class="edit-btn w-8 h-8 flex items-center justify-center text-yellow-500 hover:text-yellow-700 rounded-full hover:bg-yellow-100 transition-colors duration-200"
+                                    title="Chỉnh sửa"
+                                    data-id_hopdong="{{ hopdong.id_hopdong }}"
+                                    data-tencongty="{{ hopdong.tencongty }}"
+                                    data-sohd="{{ hopdong.sohd }}"
+                                    data-kythanhtoan="{{ hopdong.kythanhtoan }}"
+                                    data-chuthich="{{ hopdong.chuthich }}"
+                                    data-ngaytaohopdong="{{ hopdong.ngaytaohopdong|date:'Y-m-d' }}"
+                                    data-tiencoc="{{ hopdong.tiencoc }}"
+                                    data-ngayketthuc="{% if hopdong.ngayketthuc %}{{ hopdong.ngayketthuc|date:'Y-m-d' }}{% endif %}"
+                                    data-trangthai="{{ hopdong.trangthai }}"
+                                    data-ngaybatdautinhtien="{% if hopdong.ngaybatdautinhtien %}{{ hopdong.ngaybatdautinhtien|date:'Y-m-d' }}{% endif %}"
+                                    data-services="{{ hopdong.dichvu_list }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 transition-colors duration-200" title="Xóa"
+                                    data-id_hopdong="{{ hopdong.id_hopdong }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-4 px-6 text-center text-gray-500">Chưa có dữ liệu hợp đồng.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% block content_kept_same %}
+<datalist id="units-list">
+    <option value="Cái"></option>
+    <option value="kWh"></option>
+    <option value="Lần"></option>
+    <option value="m²"></option>
+    <option value="m³"></option>
+    <option value="Người"></option>
+    <option value="Tháng"></option>
+</datalist>
+
+<div id="modal-backdrop" class="modal-backdrop hidden"></div>
+<div id="tenant-modal" class="modal hidden">
+    <div class="modal-content transform transition-all max-w-4xl">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h4 id="modal-title" class="text-lg font-semibold"></h4>
+            <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <form id="tenant-form">
+            <input type="hidden" id="id_hopdong" name="id_hopdong">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="md:col-span-2"><label for="tencongty" class="form-label">Tên công ty</label><input type="text" id="tencongty" name="tencongty" class="form-input" required></div>
+                <div><label for="kythanhtoan" class="form-label">Kỳ thanh toán (tháng)</label><input type="number" id="kythanhtoan" name="kythanhtoan" class="form-input" min="1" placeholder="VD: 1, 3, 6"></div>
+                <div><label for="sohd" class="form-label">Số hợp đồng</label><input type="text" id="sohd" name="sohd" class="form-input"></div>
+                <div class="md:col-span-2"><label for="chuthich" class="form-label">Chú thích</label><textarea id="chuthich" name="chuthich" rows="1" class="form-input"></textarea></div>
+                <div><label for="ngaytaohopdong" class="form-label">Ngày tạo hợp đồng</label><input type="date" id="ngaytaohopdong" name="ngaytaohopdong" class="form-input"></div>
+                <div><label for="tiencoc" class="form-label">Tiền cọc</label><input type="text" id="tiencoc" name="tiencoc" class="form-input text-right" placeholder="0" inputmode="decimal"></div>
+                <div><label for="ngayketthuc" class="form-label">Ngày kết thúc</label><input type="date" id="ngayketthuc" name="ngayketthuc" class="form-input"></div>
+                <div><label for="ngaybatdautinhtien" class="form-label">Ngày bắt đầu tính tiền</label><input type="date" id="ngaybatdautinhtien" name="ngaybatdautinhtien" class="form-input"></div>
+                <div><label for="trangthai" class="form-label">Trạng thái</label><select id="trangthai" name="trangthai" class="form-input"><option value="1">Hoạt động</option><option value="0">Ngừng</option></select></div>
+            </div>
+
+            <h5 class="text-md font-semibold text-gray-700 mt-6 mb-2 border-t pt-4">Chi tiết dịch vụ</h5>
+            <div id="service-items-container" class="space-y-3">
+                <div class="grid grid-cols-12 gap-2 text-sm font-medium text-gray-500 px-2">
+                    <div class="col-span-12 md:col-span-4">Tên dịch vụ</div>
+                    <div class="col-span-12 md:col-span-2">Đơn vị tính</div>
+                    <div class="col-span-12 md:col-span-2">Đơn giá</div>
+                    <div class="col-span-12 md:col-span-3">Chú thích</div>
+                    <div class="col-span-12 md:col-span-1"></div>
+                </div>
+            </div>
+            <button type="button" id="add-service-item-btn" class="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"><i class="fas fa-plus-circle mr-2"></i>Thêm dòng dịch vụ</button>
+
+            <div class="flex justify-end space-x-2 mt-8 pt-4 border-t">
+                <button type="button" id="cancel-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Lưu thông tin</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content_kept_same %}
+{% endblock content %}
+
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{% static 'js/dichvudiennuoc_quanlykhachthue.js' %}"></script>
+{% endblock scripts %}

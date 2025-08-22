@@ -1,0 +1,53 @@
+/* static/css/quanlykhachthue.css */
+
+/* Lớp phủ nền mờ cho modal */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Container chính của modal */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    padding: 1rem; /* Thêm padding để không bị dính cạnh màn hình nhỏ */
+    overflow-y: auto; /* Cho phép cuộn nếu nội dung quá dài */
+}
+
+/* Nội dung bên trong modal */
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin: auto; /* Căn giữa modal */
+    padding: 24px;
+}
+
+/* Style chung cho các trường input và select trong form */
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 0.375rem; /* rounded-md */
+    outline: none;
+    transition: ring 0.2s, border-color 0.2s;
+}
+.form-input:focus {
+    --tw-ring-color: #3b82f6; /* blue-500 */
+    border-color: var(--tw-ring-color);
+    box-shadow: 0 0 0 1px var(--tw-ring-color);
+}
+
+/* Ẩn hoàn toàn khi có class .hidden */
+.hidden {
+    display: none;
+}

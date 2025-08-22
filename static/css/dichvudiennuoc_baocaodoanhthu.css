@@ -1,0 +1,96 @@
+/* static/css/dichvudiennuoc_baocaodoanhthu.css */
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Table styles */
+/* Quy tắc chung này khiến việc xuống dòng khó hơn, chúng ta sẽ ghi đè nó */
+.table-auto th, .table-auto td {
+    white-space: nowrap;
+}
+
+/* === BỔ SUNG === */
+/* Lớp tùy chỉnh để buộc cột tên công ty phải xuống dòng */
+.company-name-cell {
+    white-space: normal !important; /* !important để đảm bảo ghi đè quy tắc ở trên */
+    word-break: break-word;       /* Ngắt các từ dài nếu cần */
+    width: 250px;                 /* Thiết lập độ rộng cố định */
+    min-width: 250px;             /* Ngăn cột bị co lại */
+    max-width: 250px;             /* Ngăn cột phình to ra */
+}
+/* === KẾT THÚC BỔ SUNG === */
+
+
+/* Table container with scrollbars */
+.table-container {
+    display: grid;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 450px; /* Chiều cao tối đa trước khi thanh trượt dọc xuất hiện */
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Custom styles for sticky footer */
+tfoot td {
+    border-top: 1px solid #d1d5db; /* Thêm đường viền trên cho footer */
+}
+
+/* Loading animation */
+.loading {
+    position: relative; /* Cần thiết để định vị pseudo-element */
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #3b82f6;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transform: translate(-50%, -50%);
+    z-index: 999; /* Đảm bảo spinner hiển thị trên cùng */
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-auto {
+        font-size: 0.875rem;
+    }
+    .table-auto th, .table-auto td {
+        padding: 0.5rem 0.25rem;
+    }
+    .company-name-cell {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+    }
+}

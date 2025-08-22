@@ -1,17 +1,204 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Báo cáo Doanh thu{% endblock %}
+{% block title %}Báo cáo Doanh thu Dịch vụ{% endblock title %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dichvudiennuoc_baocaodoanhthu.css' %}">
-{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'css/dichvudiennuoc_baocaodoanhthu.css' %}">
+{% endblock styles %}
 
 {% block content %}
-    <!-- Chỉnh sửa code ở đây -->
-    Báo cáo Doanh thu Comming Soon...
-{% endblock %}
+<div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-semibold text-gray-700">Báo cáo Doanh thu Dịch vụ</h3>
+        <button id="export-report-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center">
+            <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+        </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+        <div>
+            <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Từ ngày</label>
+            <input type="date" id="start-date" class="form-input" value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+        <div>
+            <label for="end-date" class="block text-sm font-medium text-gray-700 mb-1">Đến ngày</label>
+            <input type="date" id="end-date" class="form-input" value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+        <div>
+            <label for="customer-filter" class="block text-sm font-medium text-gray-700 mb-1">Khách thuê</label>
+            <select id="customer-filter" class="form-input">
+                <option value="all">Tất cả khách thuê</option>
+                {% for customer in danh_sach_khach_thue %}
+                <option value="{{ customer.id_hopdong }}">{{ customer.tencongty }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="service-filter" class="block text-sm font-medium text-gray-700 mb-1">Dịch vụ</label>
+            <select id="service-filter" class="form-input">
+                <option value="all">Tất cả dịch vụ</option>
+                {% for service in danh_sach_dich_vu %}
+                <option value="{{ service.id_dichvu }}">{{ service.tendichvu }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button id="filter-btn" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center">
+                <i class="fas fa-filter mr-2"></i> Lọc
+            </button>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-blue-100 p-4 rounded-lg">
+            <p class="text-sm text-blue-800 font-medium">Tổng Doanh thu</p>
+            <p id="total-revenue" class="text-2xl font-bold text-blue-900">{{ tong_doanh_thu|floatformat:1|intcomma }} đ</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-lg">
+            <p class="text-sm text-green-800 font-medium">Tổng Tiền Điện thu</p>
+            <p id="total-revenue_dien" class="text-2xl font-bold text-green-900">{{ tong_doanh_thu_dien|floatformat:1|intcomma }} đ</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-lg">
+            <p class="text-sm text-yellow-800 font-medium">Tổng Tiền Nước thu</p>
+            <p id="total-revenue_nuoc" class="text-2xl font-bold text-yellow-900">{{ tong_doanh_thu_nuoc|floatformat:1|intcomma }} đ</p>
+        </div>
+    </div>
+    
+    <!-- Danh sách Thông Báo -->
+    <div class="mb-8">
+        <h4 class="text-xl font-semibold text-gray-700 mb-4">Danh sách Thông báo</h4>
+        <div class="table-container">
+            <table class="min-w-full table-auto border-collapse"> 
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left sticky top-0 bg-gray-200 z-30">Mã TB</th>
+                        <th class="py-3 px-6 text-left sticky top-0 bg-gray-200 z-20">Khách thuê</th>
+                        <th class="py-3 px-6 text-right sticky top-0 bg-gray-200 z-20">Tiền gồm thuế</th>
+                        <th class="py-3 px-6 text-right sticky top-0 bg-gray-200 z-20">Giảm trừ</th>
+                        <th class="py-3 px-6 text-right sticky top-0 bg-gray-200 z-20">Tổng tiền TT</th>
+                        <th class="py-3 px-6 text-center sticky top-0 bg-gray-200 z-20">Ngày lập</th>
+                    </tr>
+                </thead>
+                <tbody id="notification-table-body" class="text-gray-600 text-sm font-light">
+                    {% for item in thong_bao_data %}
+                    <tr class="border-b hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left font-mono">{{ item.sotbdv }}</td>
+                        <td class="py-3 px-6 text-left">{{ item.tencongty }}</td>
+                        <td class="py-3 px-6 text-right">{{ item.tongtiensauthue|floatformat:0|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-right">{{ item.giam_tru|default:"0"|floatformat:0|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-right font-bold">{{ item.tongtienthanhtoan|default:item.tongtiensauthue|floatformat:0|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-center">
+                            {% if item.thoigiantao %}{{ item.thoigiantao|date:'m/Y' }}{% else %}<span class="text-gray-400">-</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="sticky bottom-0 z-20 bg-gray-200 text-gray-700 font-bold text-sm">
+                    <tr>
+                        <td colspan="2" class="py-3 px-6 text-left bg-gray-200">Tổng cộng</td>
+                        <td id="total-tiengomthue" class="py-3 px-6 text-right bg-gray-200">{{ total_tiengomthue|floatformat:0|intcomma }} đ</td>
+                        <td id="total-giamtru" class="py-3 px-6 text-right bg-gray-200">{{ total_giamtru|floatformat:0|intcomma }} đ</td>
+                        <td id="total-tongtientt" class="py-3 px-6 text-right bg-gray-200">{{ total_tongtientt|floatformat:0|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-center bg-gray-200"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
 
-{% block extra_js %}
-<script src="{% static 'js/dichvudiennuoc_baocaodoanhthu.js' %}"></script>
-{% endblock %}
+    <!-- Chi tiết Dịch vụ theo Công ty -->
+    <div class="mb-8">
+        <h4 class="text-xl font-semibold text-gray-700 mb-4">Chi tiết Dịch vụ theo Công ty</h4>
+        <div class="table-container">
+            <table class="min-w-full table-auto border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left sticky top-0 left-0 bg-gray-200 z-30">Công ty</th>
+                        {% for service in danh_sach_dich_vu %}
+                            <th data-service-id="{{ service.id_dichvu }}" class="py-3 px-6 text-center whitespace-nowrap sticky top-0 bg-gray-200 z-20">{{ service.tendichvu }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="service-detail-table-body" class="text-gray-600 text-sm font-light">
+                    {% for company in tong_hop_chi_tiet_dich_vu %}
+                    <tr class="border-b hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left font-medium sticky left-0 bg-white group-hover:bg-gray-100 z-10 border-r company-name-cell">{{ company.tencongty }}</td>
+                        {% for service in danh_sach_dich_vu %}
+                        <td class="py-3 px-6 text-center">
+                            {% for id, dv in company.dich_vu.items %}{% if id == service.id_dichvu %}
+                                {{ dv.tongtiensauthue|floatformat:2|intcomma }} đ
+                                <br><small class="text-gray-500">({{ dv.tongsosudung|floatformat:2|intcomma }} {{ dv.donvitinh }})</small>
+                            {% endif %}{% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{{ danh_sach_dich_vu|length|add:1 }}" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>
+                    {% endfor %}
+                </tbody>
+                 <tfoot class="sticky bottom-0 z-20 bg-gray-200 text-gray-700 font-bold text-sm">
+                    <tr>
+                        <td class="py-3 px-6 text-left sticky left-0 bg-gray-200 z-10 border-r">Tổng cộng</td>
+                        {% for service in danh_sach_dich_vu %}
+                            <td id="total-service-{{ service.id_dichvu }}" class="py-3 px-6 text-center bg-gray-200">
+                                {{ service.total_amount|default:"0"|floatformat:1|intcomma }} đ
+                                <br>
+                                <small class="text-gray-500">
+                                    ({{ service.total_usage|default:"0"|floatformat:2|intcomma }} {{ service.unit|default:"" }})
+                                </small>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tổng hợp Điện - Nước -->
+    <div class="mb-8">
+        <h4 class="text-xl font-semibold text-gray-700 mb-4">Tổng hợp Điện - Nước</h4>
+        <div class="table-container">
+            <table class="min-w-full table-auto border-collapse"> 
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left sticky top-0 left-0 bg-gray-200 z-30">Công ty</th>
+                        <th class="py-3 px-6 text-right sticky top-0 bg-gray-200 z-20">Tổng tiền điện</th>
+                        <th class="py-3 px-6 text-center sticky top-0 bg-gray-200 z-20">Số điện sử dụng</th>
+                        <th class="py-3 px-6 text-right sticky top-0 bg-gray-200 z-20">Tổng tiền nước</th>
+                        <th class="py-3 px-6 text-center sticky top-0 bg-gray-200 z-20">Số nước sử dụng</th>
+                    </tr>
+                </thead>
+                <tbody id="utility-summary-table-body" class="text-gray-600 text-sm font-light">
+                    {% for company in tong_hop_chi_tiet_dich_vu_dien_nuoc %}
+                    <tr class="border-b hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left font-medium sticky left-0 bg-white group-hover:bg-gray-100 z-10 border-r company-name-cell">{{ company.tencongty }}</td>
+                        <td class="py-3 px-6 text-right">{{ company.tong_tien_dien|floatformat:2|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-center">{{ company.so_dien|floatformat:2|intcomma}} kWh</td>
+                        <td class="py-3 px-6 text-right">{{ company.tong_tien_nuoc|floatformat:2|intcomma }} đ</td>
+                        <td class="py-3 px-6 text-center">{{ company.so_nuoc|floatformat:2|intcomma }} m³</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="sticky bottom-0 z-20 bg-gray-200 text-gray-700 font-bold text-sm">
+                    <tr>
+                        <td class="py-3 px-6 text-left sticky left-0 bg-gray-200 z-10 border-r">Tổng cộng</td>
+                        <td id="total-tongtiendien" class="py-3 px-6 text-right bg-gray-200">{{ total_tongtiendien|floatformat:1|intcomma }} đ</td>
+                        <td id="total-sodiensudung" class="py-3 px-6 text-center bg-gray-200">{{ total_sodiensudung|floatformat:2|intcomma }} kWh</td>
+                        <td id="total-tongtiennuoc" class="py-3 px-6 text-right bg-gray-200">{{ total_tongtiennuoc|floatformat:1|intcomma }} đ</td>
+                        <td id="total-sonuocsudung" class="py-3 px-6 text-center bg-gray-200">{{ total_sonuocsudung|floatformat:2|intcomma }} m³</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{% static 'js/dichvudiennuoc_baocaodoanhthu.js' %}"></script>
+{% endblock scripts %}
