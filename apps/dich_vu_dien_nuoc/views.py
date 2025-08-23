@@ -76,7 +76,7 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
     chi_tiet_dich_vu_raw = list(ct_thanhtoan_qs
         .values('id_thanhtoan_dichvu__id_hopdong__tencongty', 'id_dichvu__tendichvu', 'id_dichvu_id')
         .annotate(
-             donvitinh=Min('donvitinh'),
+            donvitinh=Min('donvitinh'),
             tongtiensauthue=Sum('tiensauthue'),
             tongsosudung=Sum('sosudung')
         ).order_by('id_thanhtoan_dichvu__id_hopdong__tencongty')
@@ -197,15 +197,16 @@ def api_bao_cao_doanh_thu_export(request):
     # --- Sheet 1: Danh sách Thông báo ---
     sheet1 = workbook.active
     sheet1.title = "Danh sách Thông báo"
-    headers1 = ["Mã TB", "Khách thuê", "Tiền trước thuế", "Tổng tiền sau thuế", "Ngày tạo"]
+    headers1 = ["Mã TB", "Khách thuê", "Tổng tiền gồm thuế", "Giảm trừ", "Tổng tiền TT", "Ngày tạo"]
     sheet1.append(headers1)
     
     for item in data['thong_bao']:
         row = [
             item['sotbdv'],
             item['tencongty'],
-            item['tongtientruocthue'],
             item['tongtiensauthue'],
+            item['giam_tru'],
+            item['tongtienthanhtoan'],
             item['thoigiantao'].strftime('%d/%m/%Y %H:%M') if item.get('thoigiantao') else ''
         ]
         sheet1.append(row)
