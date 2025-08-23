@@ -29,8 +29,7 @@ SECRET_KEY = 'django-insecure-q@j_n2v7yzjs9a#puucmje#!xikue8x!^ei%t5oyi9bmu*cum@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['tanphong-manager-project.onrender.com', '127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -148,4 +147,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',  # Để giữ cho local development
     'http://localhost:8000',
+    'https://tanphong-manager-project.onrender.com',
 ]
