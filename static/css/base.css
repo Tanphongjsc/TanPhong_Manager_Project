@@ -48,6 +48,7 @@ html.submenu-is-open #services-menu-toggle .fa-chevron-down {
     width: var(--sidebar-width);
     transition: width var(--transition-duration) var(--transition-timing), 
                 transform var(--transition-duration) var(--transition-timing);
+    overflow-x: hidden;
 }
 
 #sidebar.mobile-open {
