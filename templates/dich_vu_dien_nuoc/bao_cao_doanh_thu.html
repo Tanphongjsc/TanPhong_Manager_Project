@@ -119,6 +119,8 @@
                         {% for service in danh_sach_dich_vu %}
                             <th data-service-id="{{ service.id_dichvu }}" class="py-3 px-6 text-center whitespace-nowrap sticky top-0 bg-gray-200 z-20">{{ service.tendichvu }}</th>
                         {% endfor %}
+                        <!-- CỘT TỔNG CỘNG -->
+                        <th class="py-3 px-6 text-center sticky top-0 bg-gray-200 z-20 grand-total-header">Tổng cộng</th>
                     </tr>
                 </thead>
                 <tbody id="service-detail-table-body" class="text-gray-600 text-sm font-light">
@@ -133,6 +135,8 @@
                             {% endif %}{% endfor %}
                         </td>
                         {% endfor %}
+                        <!-- Ô Tổng cộng mỗi dòng -->
+                        <td class="py-3 px-6 text-center font-bold company-total">{{company.tong_tien_dich_vu|floatformat:2|intcomma}}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="{{ danh_sach_dich_vu|length|add:1 }}" class="py-4 px-6 text-center text-gray-500">Không có dữ liệu.</td></tr>
@@ -150,6 +154,8 @@
                                 </small>
                             </td>
                         {% endfor %}
+                        <!-- Tổng cộng toàn bảng -->
+                        <td id="grand-total-all" class="py-3 px-6 text-center bg-gray-200">{{tota_tiendichvu|default:"0"|floatformat:2|intcomma}}</td>
                     </tr>
                 </tfoot>
             </table>

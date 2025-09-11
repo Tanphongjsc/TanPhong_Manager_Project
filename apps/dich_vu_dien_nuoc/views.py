@@ -16,6 +16,7 @@ from json import loads, dumps
 from io import BytesIO
 
 import openpyxl
+from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
 from datetime import datetime,timedelta
@@ -56,7 +57,6 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
         total_revenue_dien=Coalesce(Sum('tiensauthue', filter=Q(id_dichvu__id_loaidichvu_id=19)), 0.0),
         total_revenue_nuoc=Coalesce(Sum('tiensauthue', filter=Q(id_dichvu__id_loaidichvu_id=20)), 0.0),
     )
-    
 
     summary = {
         "total_revenue": summary_agg_thanhtoan_qs['total_revenue'],
@@ -70,7 +70,7 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
         tencongty=F('id_hopdong__tencongty'),
         giam_tru = F('giamtru')/100 * F('tongtientruocthue'),
         tongtienthanhtoan = F('tongtiensauthue') - F('giamtru')/100 * F('tongtientruocthue')
-    ))
+    ).order_by("tencongty", "-sotbdv"))
 
     # 4. Lấy dữ liệu Bảng chi tiết dịch vụ
     chi_tiet_dich_vu_raw = list(ct_thanhtoan_qs
@@ -89,10 +89,12 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
         if ten_cong_ty not in chi_tiet_dich_vu:
             chi_tiet_dich_vu[ten_cong_ty] = {
                 'tencongty': ten_cong_ty,
+                'tong_tien_dich_vu': 0,
                 'dich_vu': {}
             }
         chi_tiet_dich_vu[ten_cong_ty]['dich_vu'][item['id_dichvu_id']] = item
-    
+        chi_tiet_dich_vu[ten_cong_ty]['tong_tien_dich_vu'] += item['tongtiensauthue']
+        
     # 5. Lấy dữ liệu Bảng tổng hợp Điện - Nước (ID loại dịch vụ 19: Điện, 20: Nước)
     dien_nuoc_qs = ct_thanhtoan_qs.filter(id_dichvu__id_loaidichvu_id__in=[19, 20])
     tong_hop_dien_nuoc = list(dien_nuoc_qs
@@ -155,6 +157,9 @@ def view_bao_cao_doanh_thu(request):
         'total_tiengomthue': sum(item.get('tongtiensauthue', 0) for item in initial_data['data']['thong_bao']),
         'total_giamtru': sum(item.get('giam_tru', 0) for item in initial_data['data']['thong_bao']),
         'total_tongtientt': sum(item.get('tongtienthanhtoan', 0) for item in initial_data['data']['thong_bao']),
+
+        'tota_tiendichvu': sum(item.get('tong_tien_dich_vu', 0) for item in initial_data['data']['chi_tiet_dich_vu']),
+
         'total_tongtiendien': sum(float(c.get('tong_tien_dien', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
         'total_sodiensudung': sum(float(c.get('so_dien', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
         'total_tongtiennuoc': sum(float(c.get('tong_tien_nuoc', 0)) for c in initial_data['data']['tong_hop_dien_nuoc']),
@@ -222,9 +227,12 @@ def api_bao_cao_doanh_thu_export(request):
     }
     sorted_service_ids = sorted(all_services.keys())
     
-    headers2 = ["Công ty"] + [all_services[sid] for sid in sorted_service_ids]
+    headers2 = ["Công ty"] + [all_services[sid] for sid in sorted_service_ids] + ['Tổng cộng']
     sheet2.append(headers2)
-    
+
+    # In đậm header "Tổng cộng"
+    sheet2.cell(row=1, column=len(headers2)).font = Font(bold=True)
+
     for company in data['chi_tiet_dich_vu']:
         row = [company['tencongty']]
         for service_id in sorted_service_ids:
@@ -232,7 +240,11 @@ def api_bao_cao_doanh_thu_export(request):
             # Ghi cả thành tiền và số lượng sử dụng
             cell_value = service_data['tongtiensauthue'] if service_data else ""
             row.append(cell_value)
+        row.append(company['tong_tien_dich_vu'])
         sheet2.append(row)
+
+        # In đậm ô Tổng cộng
+        sheet2.cell(row=sheet2.max_row, column=len(row)).font = Font(bold=True)
 
     # --- Sheet 3: Tổng hợp Điện - Nước ---
     sheet3 = workbook.create_sheet(title="Tổng hợp Điện - Nước")

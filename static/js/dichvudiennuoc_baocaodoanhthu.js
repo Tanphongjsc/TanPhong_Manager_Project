@@ -139,9 +139,11 @@ $(document).ready(function() {
         }).get();
 
         const rowsHtml = data.map(company => {
+            let rowTotal = 0;
             const companyCells = serviceIds.map(serviceId => {
                 const service = company.dich_vu[serviceId];
                 if (service) {
+                    rowTotal += parseFloat(service.tongtiensauthue) || 0;
                     return `
                         <td class="py-3 px-6 text-center">
                             ${formatCurrency(service.tongtiensauthue)}
@@ -156,6 +158,7 @@ $(document).ready(function() {
                 <tr class="border-b hover:bg-gray-100 group">
                     <td class="py-3 px-6 text-left font-medium sticky left-0 bg-white group-hover:bg-gray-100 z-10 border-r company-name-cell">${company.tencongty}</td>
                     ${companyCells}
+                    <td class="py-3 px-6 text-center font-bold company-total">${formatCurrency(rowTotal)}</td>
                 </tr>
             `;
         }).join('');
@@ -239,6 +242,18 @@ $(document).ready(function() {
             const htmlContent = `${totalAmount}<br><small class="text-gray-500">(${totalUsage} ${unit})</small>`;
             $(`#total-service-${serviceId}`).html(htmlContent);
         }
+
+        // Tỉnh tổng dòng foooters
+        let grandTotal = 0;
+        for (const serviceId in serviceTotals) {
+            grandTotal += serviceTotals[serviceId];
+            const totalAmount = formatCurrency(serviceTotals[serviceId]);
+            const totalUsage = formatNumber(usageTotals[serviceId]);
+            const unit = unitMap[serviceId] || '';
+            const htmlContent = `${totalAmount}<br><small class="text-gray-500">(${totalUsage} ${unit})</small>`;
+            $(`#total-service-${serviceId}`).html(htmlContent);
+        }
+        $('#grand-total-all').text(formatCurrency(grandTotal));
     }
 
     function getCurrentFilters() {
