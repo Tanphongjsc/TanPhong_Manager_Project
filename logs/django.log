@@ -1,0 +1,376 @@
+ERROR 2025-10-24 11:02:36,258 basehttp 69592 93380 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:02:36,261 basehttp 69592 74704 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:05:47,452 basehttp 69592 50964 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:05:47,455 basehttp 69592 84280 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:25,382 basehttp 69592 88280 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:25,386 basehttp 69592 94244 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:40,520 basehttp 69592 95164 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:40,779 basehttp 69592 95012 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:40,828 basehttp 69592 95728 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:06:41,085 basehttp 69592 60016 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:08:11,788 basehttp 69592 96836 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:08:12,035 basehttp 69592 86160 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:08:12,099 basehttp 69592 78396 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:08:12,347 basehttp 69592 94084 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:09:45,956 basehttp 69592 62808 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:09:45,957 basehttp 69592 95204 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:50,748 basehttp 64464 83036 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:50,749 basehttp 64464 31952 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:50,754 basehttp 64464 79220 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:50,756 basehttp 64464 97044 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:52,153 basehttp 64464 93064 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:52,155 basehttp 64464 81876 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:52,158 basehttp 64464 79112 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:52,159 basehttp 64464 91300 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:58,573 basehttp 64464 95560 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:12:58,576 basehttp 64464 95524 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 11:19:01,620 basehttp 64464 95440 "GET / HTTP/1.1" 400 143
+WARNING 2025-10-24 11:19:01,999 basehttp 64464 94192 "GET /favicon.ico HTTP/1.1" 400 143
+ERROR 2025-10-24 11:23:09,900 basehttp 79100 94320 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:23:09,903 basehttp 79100 97220 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:22,196 basehttp 79100 96376 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:22,200 basehttp 79100 89180 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:34,002 basehttp 79100 70788 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:34,006 basehttp 79100 94428 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:43,316 basehttp 79100 86536 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:43,319 basehttp 79100 90236 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:56,071 basehttp 68876 36032 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:56,072 basehttp 68876 76572 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:56,074 basehttp 68876 97140 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:24:56,077 basehttp 68876 92340 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:00,161 basehttp 68876 79764 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:00,163 basehttp 68876 84516 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:15,182 basehttp 68876 92780 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:15,187 basehttp 68876 96912 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:48,855 basehttp 68876 91364 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:25:48,861 basehttp 68876 87560 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:26:41,222 basehttp 91916 97176 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:26:41,224 basehttp 91916 96412 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:27:19,022 basehttp 91916 91480 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:27:19,024 basehttp 91916 88140 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 11:27:24,305 log 91916 91404 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:24,306 basehttp 91916 91404 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:24,530 log 91916 91404 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:24,532 basehttp 91916 91404 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:24,585 log 91916 91404 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:24,585 basehttp 91916 91404 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:24,940 log 91916 91404 Not Found: /static/favicon.ico
+WARNING 2025-10-24 11:27:24,941 basehttp 91916 91404 "GET /static/favicon.ico HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:29,631 log 91916 91404 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:27:29,633 basehttp 91916 91404 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:29,985 log 91916 87488 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:27:29,987 basehttp 91916 87488 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:30,043 log 91916 90628 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:30,045 basehttp 91916 90628 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:30,105 log 91916 94092 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:30,105 basehttp 91916 94092 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:32,580 log 91916 87488 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:27:32,580 basehttp 91916 87488 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:32,634 log 91916 91404 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:32,636 basehttp 91916 91404 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:32,696 log 91916 94092 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:32,697 basehttp 91916 94092 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:32,750 log 91916 90628 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:27:32,751 basehttp 91916 90628 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:35,795 log 91916 87488 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:35,796 basehttp 91916 87488 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:35,854 log 91916 91404 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:27:35,855 basehttp 91916 91404 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:35,916 log 91916 94092 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:27:35,917 basehttp 91916 94092 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:35,971 log 91916 90628 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:35,972 basehttp 91916 90628 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:40,465 log 91916 87488 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:40,466 basehttp 91916 87488 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:40,521 log 91916 90628 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:40,522 basehttp 91916 90628 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:40,582 log 91916 91404 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:27:40,583 basehttp 91916 91404 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:40,643 log 91916 94092 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:27:40,646 basehttp 91916 94092 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:43,238 log 91916 87488 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:43,239 basehttp 91916 87488 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:43,294 log 91916 91404 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:27:43,295 basehttp 91916 91404 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:43,349 log 91916 90628 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:27:43,350 basehttp 91916 90628 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:43,410 log 91916 94092 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:43,411 basehttp 91916 94092 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:51,108 log 91916 90628 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:27:51,109 basehttp 91916 90628 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:27:51,172 log 91916 94092 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:27:51,174 basehttp 91916 94092 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:56,198 log 91916 91404 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:28:56,198 basehttp 91916 91404 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:56,254 log 91916 87488 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:28:56,255 basehttp 91916 87488 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:56,313 log 91916 94092 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:28:56,314 basehttp 91916 94092 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:56,366 log 91916 90628 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:28:56,366 basehttp 91916 90628 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:58,217 log 91916 87488 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:28:58,218 basehttp 91916 87488 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:58,271 log 91916 90628 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:28:58,272 basehttp 91916 90628 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:58,334 log 91916 94092 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:28:58,334 basehttp 91916 94092 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:28:58,388 log 91916 91404 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:28:58,389 basehttp 91916 91404 "GET /static/js/base.js HTTP/1.1" 404 179
+ERROR 2025-10-24 11:29:04,053 basehttp 91916 43324 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 11:29:04,055 basehttp 91916 95472 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 11:29:10,815 log 91916 44312 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:29:10,815 basehttp 91916 44312 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:11,006 log 91916 44312 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:29:11,007 basehttp 91916 44312 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:11,039 log 91916 44312 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:29:11,040 basehttp 91916 44312 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:15,524 log 91916 44312 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:29:15,526 log 91916 95332 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:29:15,527 basehttp 91916 44312 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:15,527 basehttp 91916 95332 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:16,714 log 91916 44312 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:29:16,714 basehttp 91916 44312 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:16,722 log 91916 90416 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:29:16,723 log 91916 96748 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:29:16,725 log 91916 44312 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:29:16,726 basehttp 91916 90416 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:16,726 basehttp 91916 96748 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:16,727 basehttp 91916 44312 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:17,051 log 91916 44312 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:29:17,053 log 91916 96748 Not Found: /static/css/dichvudiennuoc_quanlykhachthue.css
+WARNING 2025-10-24 11:29:17,053 log 91916 90416 Not Found: /static/js/dichvudiennuoc_quanlykhachthue.js
+WARNING 2025-10-24 11:29:17,053 basehttp 91916 44312 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:17,055 log 91916 96616 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:29:17,056 basehttp 91916 96748 "GET /static/css/dichvudiennuoc_quanlykhachthue.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:17,057 basehttp 91916 90416 "GET /static/js/dichvudiennuoc_quanlykhachthue.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:29:17,058 basehttp 91916 96616 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:08,253 log 91916 87032 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:08,254 basehttp 91916 87032 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:08,561 log 91916 87032 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:30:08,562 log 91916 67972 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:08,562 basehttp 91916 87032 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:08,564 basehttp 91916 67972 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:12,765 log 91916 87032 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:30:12,766 basehttp 91916 87032 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:12,827 log 91916 6680 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:30:12,828 basehttp 91916 6680 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:13,733 log 91916 67972 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:13,734 basehttp 91916 67972 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:13,813 log 91916 96608 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:30:13,814 basehttp 91916 96608 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:17,623 log 91916 67972 Not Found: /static/css/dichvudiennuoc_quanlykhachthue.css
+WARNING 2025-10-24 11:30:17,624 basehttp 91916 67972 "GET /static/css/dichvudiennuoc_quanlykhachthue.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:17,690 log 91916 96608 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:17,691 basehttp 91916 96608 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:17,761 log 91916 6680 Not Found: /static/js/dichvudiennuoc_quanlykhachthue.js
+WARNING 2025-10-24 11:30:17,763 basehttp 91916 6680 "GET /static/js/dichvudiennuoc_quanlykhachthue.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:17,826 log 91916 87032 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:30:17,827 basehttp 91916 87032 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:26,950 log 91916 96608 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:30:26,950 basehttp 91916 96608 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:27,003 log 91916 67972 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:30:27,004 basehttp 91916 67972 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:27,060 log 91916 6680 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:30:27,061 basehttp 91916 6680 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:27,115 log 91916 87032 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:27,116 basehttp 91916 87032 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:38,195 log 91916 67972 Not Found: /static/js/dichvudiennuoc_baocaodoanhthu.js
+WARNING 2025-10-24 11:30:38,195 basehttp 91916 67972 "GET /static/js/dichvudiennuoc_baocaodoanhthu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:38,247 log 91916 96608 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:30:38,248 basehttp 91916 96608 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:38,304 log 91916 6680 Not Found: /static/css/dichvudiennuoc_baocaodoanhthu.css
+WARNING 2025-10-24 11:30:38,304 basehttp 91916 6680 "GET /static/css/dichvudiennuoc_baocaodoanhthu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:30:38,359 log 91916 87032 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:30:38,360 basehttp 91916 87032 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:20,737 log 95588 95372 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:20,738 basehttp 95588 95372 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:21,052 log 95588 85248 Not Found: /static/css/dichvudiennuoc_baocaodoanhthu.css
+WARNING 2025-10-24 11:34:21,053 basehttp 95588 85248 "GET /static/css/dichvudiennuoc_baocaodoanhthu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:21,130 log 95588 89864 Not Found: /static/js/dichvudiennuoc_baocaodoanhthu.js
+WARNING 2025-10-24 11:34:21,132 basehttp 95588 89864 "GET /static/js/dichvudiennuoc_baocaodoanhthu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:21,306 log 95588 62808 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:21,308 basehttp 95588 62808 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:24,822 log 95588 89864 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:34:24,825 basehttp 95588 89864 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:24,878 log 95588 85248 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:34:24,881 basehttp 95588 85248 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:24,937 log 95588 95372 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:24,942 basehttp 95588 95372 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:24,993 log 95588 62808 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:24,996 basehttp 95588 62808 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:25,989 log 95588 62808 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:25,992 basehttp 95588 62808 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:26,051 log 95588 95372 Not Found: /static/css/dichvudiennuoc_quanlykhachthue.css
+WARNING 2025-10-24 11:34:26,052 basehttp 95588 95372 "GET /static/css/dichvudiennuoc_quanlykhachthue.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:26,106 log 95588 85248 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:26,108 basehttp 95588 85248 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:26,165 log 95588 89864 Not Found: /static/js/dichvudiennuoc_quanlykhachthue.js
+WARNING 2025-10-24 11:34:26,166 basehttp 95588 89864 "GET /static/js/dichvudiennuoc_quanlykhachthue.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:27,350 log 95588 89864 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:27,351 basehttp 95588 89864 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:27,405 log 95588 85248 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:34:27,407 basehttp 95588 85248 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:27,460 log 95588 62808 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:27,464 basehttp 95588 62808 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:27,520 log 95588 95372 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:34:27,522 basehttp 95588 95372 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:34,968 log 95588 85904 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:34,970 basehttp 95588 85904 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:35,233 log 95588 85904 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:35,235 basehttp 95588 85904 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:35,275 log 95588 85904 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:35,276 basehttp 95588 85904 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:42,912 log 95588 96336 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:34:42,913 log 95588 90300 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:34:42,916 log 95588 81856 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:34:42,916 log 95588 90356 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:34:42,917 basehttp 95588 96336 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:42,917 basehttp 95588 90300 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:42,918 basehttp 95588 81856 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:34:42,918 basehttp 95588 90356 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,290 log 59748 94308 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:17,291 basehttp 59748 94308 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,297 log 59748 96552 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:39:17,297 log 59748 80928 Not Found: /static/js/dichvudiennuoc_quanlyloaidichvu.js
+WARNING 2025-10-24 11:39:17,299 basehttp 59748 96552 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,299 basehttp 59748 80928 "GET /static/js/dichvudiennuoc_quanlyloaidichvu.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,497 log 59748 80928 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:39:17,500 basehttp 59748 80928 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,500 log 59748 96552 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:17,502 log 59748 94308 Not Found: /static/css/dichvudiennuoc_quanlyloaidichvu.css
+WARNING 2025-10-24 11:39:17,503 basehttp 59748 96552 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:17,504 basehttp 59748 94308 "GET /static/css/dichvudiennuoc_quanlyloaidichvu.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:19,919 log 59748 94308 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:19,921 basehttp 59748 94308 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:20,250 log 59748 93852 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:39:20,251 basehttp 59748 93852 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:20,308 log 59748 96552 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:39:20,309 basehttp 59748 96552 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:20,364 log 59748 80928 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:39:20,366 basehttp 59748 80928 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:22,099 log 59748 93852 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 11:39:22,101 basehttp 59748 93852 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:22,157 log 59748 80928 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:22,159 basehttp 59748 80928 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:22,216 log 59748 96552 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 11:39:22,218 basehttp 59748 96552 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:22,274 log 59748 94308 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:39:26,995 log 59748 5804 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:26,997 basehttp 59748 5804 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:27,275 log 59748 5804 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:39:27,276 basehttp 59748 5804 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:27,321 log 59748 5804 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:27,322 basehttp 59748 5804 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:29,472 log 59748 5804 Not Found: /static/css/base.css
+WARNING 2025-10-24 11:39:29,473 basehttp 59748 5804 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:29,479 log 59748 88800 Not Found: /static/css/dichvudiennuoc_quanlykhachthue.css
+WARNING 2025-10-24 11:39:29,481 log 59748 71544 Not Found: /static/js/dichvudiennuoc_quanlykhachthue.js
+WARNING 2025-10-24 11:39:29,482 log 59748 87756 Not Found: /static/js/base.js
+WARNING 2025-10-24 11:39:29,483 basehttp 59748 88800 "GET /static/css/dichvudiennuoc_quanlykhachthue.css HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:29,484 basehttp 59748 71544 "GET /static/js/dichvudiennuoc_quanlykhachthue.js HTTP/1.1" 404 179
+WARNING 2025-10-24 11:39:29,485 basehttp 59748 87756 "GET /static/js/base.js HTTP/1.1" 404 179
+ERROR 2025-10-24 15:00:14,795 basehttp 97796 99484 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:00:14,798 basehttp 97796 91364 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 15:00:20,828 log 97796 87072 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:00:20,830 basehttp 97796 87072 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:00:21,098 log 97796 87072 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:00:21,099 basehttp 97796 87072 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:00:21,154 log 97796 87072 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:00:21,155 basehttp 97796 87072 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:00:35,294 log 97796 87072 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:00:35,296 log 97796 60200 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:00:35,297 basehttp 97796 87072 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:00:35,298 basehttp 97796 60200 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:30,942 log 89440 81212 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:30,942 basehttp 89440 81212 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:30,945 log 89440 97668 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:30,946 basehttp 89440 97668 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:33,239 log 89440 97668 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:33,240 log 89440 81212 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:33,242 basehttp 89440 97668 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:33,242 basehttp 89440 81212 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:34,673 log 89440 81212 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:34,674 basehttp 89440 81212 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:34,893 log 89440 81212 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:34,895 log 89440 97668 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:34,896 basehttp 89440 81212 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:34,897 basehttp 89440 97668 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:38,968 log 89440 97668 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:38,970 basehttp 89440 97668 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:39,315 log 89440 81212 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 15:03:39,317 basehttp 89440 81212 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:39,368 log 89440 90648 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:39,370 basehttp 89440 90648 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:39,432 log 89440 94324 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 15:03:39,436 basehttp 89440 94324 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:40,025 log 89440 81212 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:40,026 basehttp 89440 81212 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:40,079 log 89440 90648 Not Found: /static/js/dichvudiennuoc_quanlykhachthue.js
+WARNING 2025-10-24 15:03:40,082 basehttp 89440 90648 "GET /static/js/dichvudiennuoc_quanlykhachthue.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:40,139 log 89440 97668 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:40,141 basehttp 89440 97668 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:40,200 log 89440 94324 Not Found: /static/css/dichvudiennuoc_quanlykhachthue.css
+WARNING 2025-10-24 15:03:40,201 basehttp 89440 94324 "GET /static/css/dichvudiennuoc_quanlykhachthue.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:41,797 log 89440 90648 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 15:03:41,799 basehttp 89440 90648 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:41,855 log 89440 81212 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:41,857 basehttp 89440 81212 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:41,919 log 89440 94324 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:41,922 basehttp 89440 94324 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:41,978 log 89440 97668 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 15:03:41,980 basehttp 89440 97668 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:44,656 log 89440 81212 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 15:03:44,656 basehttp 89440 81212 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:44,715 log 89440 97668 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:03:44,719 basehttp 89440 97668 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:44,776 log 89440 94324 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 15:03:44,777 basehttp 89440 94324 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:03:44,829 log 89440 90648 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:03:44,831 basehttp 89440 90648 "GET /static/js/base.js HTTP/1.1" 404 179
+ERROR 2025-10-24 15:04:06,027 basehttp 89440 96424 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:04:06,030 basehttp 89440 99416 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 15:06:46,700 log 94128 93096 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:06:46,701 basehttp 94128 93096 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:06:47,096 log 94128 96736 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 15:06:47,097 basehttp 94128 96736 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:06:47,156 log 94128 88044 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 15:06:47,158 basehttp 94128 88044 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:06:47,243 log 94128 101292 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:06:47,244 basehttp 94128 101292 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:49,106 log 94128 98296 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:07:49,107 basehttp 94128 98296 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:49,333 log 94128 98296 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:07:49,334 basehttp 94128 98296 "GET /static/js/base.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:49,374 log 94128 98296 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:07:49,374 basehttp 94128 98296 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:49,736 log 94128 98296 Not Found: /static/favicon.ico
+WARNING 2025-10-24 15:07:49,738 basehttp 94128 98296 "GET /static/favicon.ico HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:55,341 log 94128 98296 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:07:55,342 basehttp 94128 98296 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:55,567 log 94128 98296 Not Found: /static/js/dichvudiennuoc_danhsachthongbao.js
+WARNING 2025-10-24 15:07:55,569 basehttp 94128 98296 "GET /static/js/dichvudiennuoc_danhsachthongbao.js HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:55,681 log 94128 95740 Not Found: /static/css/dichvudiennuoc_danhsachthongbao.css
+WARNING 2025-10-24 15:07:55,682 basehttp 94128 95740 "GET /static/css/dichvudiennuoc_danhsachthongbao.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:56,023 log 94128 99184 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:07:56,424 log 94128 95740 Not Found: /static/css/base.css
+WARNING 2025-10-24 15:07:56,424 basehttp 94128 95740 "GET /static/css/base.css HTTP/1.1" 404 179
+WARNING 2025-10-24 15:07:56,479 log 94128 98296 Not Found: /static/js/base.js
+WARNING 2025-10-24 15:07:56,482 basehttp 94128 98296 "GET /static/js/base.js HTTP/1.1" 404 179
+ERROR 2025-10-24 15:10:59,569 basehttp 95740 97284 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:10:59,824 basehttp 95740 58248 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:10:59,882 basehttp 95740 94460 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:00,131 basehttp 95740 100416 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:18,506 basehttp 76288 99360 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:18,508 basehttp 76288 87640 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:18,761 basehttp 76288 83564 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:18,817 basehttp 76288 99504 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:18,817 basehttp 76288 96860 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:11:19,065 basehttp 76288 89244 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:16:43,719 basehttp 76288 88528 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:16:43,967 basehttp 76288 83700 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:16:44,030 basehttp 76288 101072 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 15:16:44,283 basehttp 76288 86420 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-24 15:20:39,446 basehttp 102396 94740 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 403 2549
+WARNING 2025-10-24 15:20:49,514 log 102396 94740 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-24 15:20:49,515 basehttp 102396 94740 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2898
+WARNING 2025-10-24 15:21:00,836 basehttp 102396 94740 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 403 2549
