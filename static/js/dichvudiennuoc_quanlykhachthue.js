@@ -38,7 +38,7 @@ $(document).ready(function() {
         return formattedString.replace(/,/g, '');
     }
 
-    // --- LOGIC API (Giữ nguyên) ---
+    // --- 🆕 CẢI THIỆN HÀM LẤY CSRF TOKEN ---
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -53,22 +53,65 @@ $(document).ready(function() {
         }
         return cookieValue;
     }
-    const csrftoken = getCookie('csrftoken');
 
+    // 🆕 HÀM LẤY TOKEN TỪ NHIỀU NGUỒN
+    function getCSRFToken() {
+        // Thử lấy từ input hidden trong form
+        let token = $('input[name=csrfmiddlewaretoken]').val();
+        
+        // Nếu không có, thử lấy từ cookie
+        if (!token) {
+            token = getCookie('csrftoken');
+        }
+        
+        // Nếu vẫn không có, thử lấy từ meta tag
+        if (!token) {
+            token = $('meta[name="csrf-token"]').attr('content');
+        }
+        
+        return token;
+    }
+
+    const csrftoken = getCSRFToken();
+    console.log('🔑 CSRF Token loaded:', csrftoken ? 'Success ✅' : 'Failed ❌');
+
+    // --- LOGIC API (Giữ nguyên) ---
     async function api_fetchAllServices() {
         try {
             const response = await fetch('/dichvudiennuoc/api/get-all-services/');
             serviceListData = await response.json();
-        } catch(e) { console.error("Lỗi tải danh sách dịch vụ:", e); }
+            console.log('✅ Services loaded:', serviceListData.length);
+        } catch(e) { 
+            console.error("❌ Lỗi tải danh sách dịch vụ:", e); 
+        }
     }
 
     async function api_saveHopDong(hopdongData) {
+        const currentToken = getCSRFToken();
+        
+        if (!currentToken) {
+            alert('⚠️ Không tìm thấy CSRF token. Vui lòng refresh trang.');
+            console.error('❌ CSRF token not found!');
+            return;
+        }
+
         try {
             const response = await fetch('/dichvudiennuoc/api/quanlykhachthue/update-or-create/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRFToken': currentToken 
+                },
+                credentials: 'same-origin',  // 🆕 Bắt buộc gửi cookie
                 body: JSON.stringify(hopdongData)
             });
+
+            if (response.status === 403) {
+                alert('⚠️ CSRF verification failed. Vui lòng refresh trang và thử lại.');
+                console.error('❌ CSRF verification failed');
+                return;
+            }
+
             const result = await response.json();
             if (result.success) {
                 alert(result.message);
@@ -78,16 +121,30 @@ $(document).ready(function() {
             }
         } catch (error) {
             alert('Đã xảy ra lỗi khi kết nối tới server.');
-            console.error('Error saving contract:', error);
+            console.error('❌ Error saving contract:', error);
         }
     }
 
     async function api_deleteHopDong(id_hopdong) {
+        const currentToken = getCSRFToken();
+        
+        if (!currentToken) {
+            alert('⚠️ Không tìm thấy CSRF token. Vui lòng refresh trang.');
+            return;
+        }
+
         try {
             const response = await fetch(`/dichvudiennuoc/api/quanlykhachthue/delete/${id_hopdong}/`, {
                 method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken }
+                headers: { 'X-CSRFToken': currentToken },
+                credentials: 'same-origin'
             });
+
+            if (response.status === 403) {
+                alert('⚠️ CSRF verification failed. Vui lòng refresh trang và thử lại.');
+                return;
+            }
+
             const result = await response.json();
             if (result.success) {
                 alert(result.message);
@@ -97,7 +154,7 @@ $(document).ready(function() {
             }
         } catch (error) {
             alert('Đã xảy ra lỗi khi kết nối tới server.');
-            console.error('Error deleting contract:', error);
+            console.error('❌ Error deleting contract:', error);
         }
     }
 
@@ -201,6 +258,9 @@ $(document).ready(function() {
         const formData = new FormData(this);
         const hopdongData = Object.fromEntries(formData.entries());
         
+        // Xóa csrfmiddlewaretoken khỏi data (đã gửi trong header)
+        delete hopdongData.csrfmiddlewaretoken;
+        
         // Khử định dạng số trước khi gửi
         hopdongData.tiencoc = parseNumber(hopdongData.tiencoc);
         
@@ -208,17 +268,19 @@ $(document).ready(function() {
         $('.service-item').each(function() {
             const $row = $(this);
             const id_dichvu = $row.find('.service-select').val();
-            if (id_dichvu) { // Chỉ thêm nếu có chọn dịch vụ
+            if (id_dichvu) {
                 services.push({
                     id_hopdongdichvu: $row.data('id_hopdongdichvu') || null,
                     id_dichvu: id_dichvu,
                     donvitinh: $row.find('.unit-input').val(),
-                    dongia: parseNumber($row.find('.price-input').val()), // Khử định dạng số
+                    dongia: parseNumber($row.find('.price-input').val()),
                     chuthich: $row.find('.note-input').val()
                 });
             }
         });
         hopdongData.dichvu_list = services;
+        
+        console.log('📤 Sending data:', hopdongData);
         api_saveHopDong(hopdongData);
     });
     
@@ -228,10 +290,9 @@ $(document).ready(function() {
         const originalValue = input.value;
         const cursorPosition = input.selectionStart;
 
-        // Chỉ cho phép số và một dấu chấm
         let rawValue = originalValue.replace(/[^0-9.]/g, '');
         const parts = rawValue.split('.');
-        if (parts.length > 2) { // Nếu có nhiều hơn 1 dấu chấm
+        if (parts.length > 2) {
             rawValue = parts[0] + '.' + parts.slice(1).join('');
         }
         
@@ -239,15 +300,16 @@ $(document).ready(function() {
         
         if (originalValue !== formattedValue) {
             input.value = formattedValue;
-            
-            // Điều chỉnh vị trí con trỏ sau khi định dạng
             const diff = formattedValue.length - originalValue.length;
             const newCursorPosition = cursorPosition + diff;
             input.setSelectionRange(newCursorPosition, newCursorPosition);
         }
     });
 
-    $(serviceItemsContainer).on('click', '.remove-service-item-btn', function() { $(this).closest('.service-item').remove(); });
+    $(serviceItemsContainer).on('click', '.remove-service-item-btn', function() { 
+        $(this).closest('.service-item').remove(); 
+    });
+
     $('#add-service-item-btn').on('click', () => addServiceItem());
     $('#close-modal-btn, #cancel-modal-btn, #modal-backdrop').on('click', closeModal);
 

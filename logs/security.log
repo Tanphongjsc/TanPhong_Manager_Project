@@ -138,3 +138,7 @@ WARNING 2025-10-24 11:39:29,479 security 59748 71544 Security headers added to e
 WARNING 2025-10-24 11:39:29,479 security 59748 87756 Security headers added to error response: /static/js/base.js - Status: 404
 WARNING 2025-10-24 15:20:39,266 log 102396 94740 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header has incorrect length.): /dichvudiennuoc/api/quanlykhachthue/update-or-create/
 WARNING 2025-10-24 15:21:00,654 log 102396 94740 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header has incorrect length.): /dichvudiennuoc/api/quanlykhachthue/update-or-create/
+WARNING 2025-10-24 15:35:23,896 log 100780 79620 Forbidden (CSRF cookie not set.): /dichvudiennuoc/api/loaidichvu/update-or-create/
+WARNING 2025-10-24 15:35:35,373 log 100780 79620 Forbidden (CSRF cookie not set.): /dichvudiennuoc/api/loaidichvu/update-or-create/
+WARNING 2025-10-24 15:55:31,580 log 98244 91288 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header has incorrect length.): /dichvudiennuoc/api/quanlykhachthue/update-or-create/
+WARNING 2025-10-24 16:00:20,881 log 97124 94988 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header has incorrect length.): /dichvudiennuoc/api/quanlykhachthue/update-or-create/

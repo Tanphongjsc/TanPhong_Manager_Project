@@ -374,3 +374,21 @@ WARNING 2025-10-24 15:20:39,446 basehttp 102396 94740 "POST /dichvudiennuoc/api/
 WARNING 2025-10-24 15:20:49,514 log 102396 94740 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-10-24 15:20:49,515 basehttp 102396 94740 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2898
 WARNING 2025-10-24 15:21:00,836 basehttp 102396 94740 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 403 2549
+WARNING 2025-10-24 15:35:23,898 basehttp 100780 79620 "POST /dichvudiennuoc/api/loaidichvu/update-or-create/ HTTP/1.1" 403 2855
+WARNING 2025-10-24 15:35:28,603 log 100780 79620 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-24 15:35:28,604 basehttp 100780 79620 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2898
+WARNING 2025-10-24 15:35:35,376 basehttp 100780 79620 "POST /dichvudiennuoc/api/loaidichvu/update-or-create/ HTTP/1.1" 403 2855
+WARNING 2025-10-24 15:53:45,661 log 98244 84244 Bad Request: /dichvudiennuoc/api/dichvu/update-or-create/
+WARNING 2025-10-24 15:53:45,663 basehttp 98244 84244 "POST /dichvudiennuoc/api/dichvu/update-or-create/ HTTP/1.1" 400 212
+WARNING 2025-10-24 15:53:48,602 log 98244 84244 Bad Request: /dichvudiennuoc/api/dichvu/update-or-create/
+WARNING 2025-10-24 15:53:48,606 basehttp 98244 84244 "POST /dichvudiennuoc/api/dichvu/update-or-create/ HTTP/1.1" 400 212
+WARNING 2025-10-24 15:53:50,799 log 98244 84244 Bad Request: /dichvudiennuoc/api/dichvu/update-or-create/
+WARNING 2025-10-24 15:53:50,802 basehttp 98244 84244 "POST /dichvudiennuoc/api/dichvu/update-or-create/ HTTP/1.1" 400 212
+WARNING 2025-10-24 15:53:52,964 log 98244 84244 Bad Request: /dichvudiennuoc/api/dichvu/update-or-create/
+WARNING 2025-10-24 15:53:52,966 basehttp 98244 84244 "POST /dichvudiennuoc/api/dichvu/update-or-create/ HTTP/1.1" 400 212
+WARNING 2025-10-24 15:55:31,754 basehttp 98244 91288 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 403 2549
+WARNING 2025-10-24 16:00:21,054 basehttp 97124 94988 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 403 2549
+WARNING 2025-10-24 16:02:04,786 log 97124 99644 Bad Request: /dichvudiennuoc/api/quanlykhachthue/update-or-create/
+WARNING 2025-10-24 16:02:04,788 basehttp 97124 99644 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 400 146
+ERROR 2025-10-24 16:39:55,300 basehttp 97124 98816 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-24 16:39:55,306 basehttp 97124 98424 You're accessing the development server over HTTPS, but it only supports HTTP.
