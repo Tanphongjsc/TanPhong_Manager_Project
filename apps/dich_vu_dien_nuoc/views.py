@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse
@@ -291,7 +290,7 @@ def api_bao_cao_doanh_thu_export(request):
 
 
 # ------------------------------------ VIEW QUẢN LÝ DỊCH VỤ ------------------------------------
-
+@ensure_csrf_cookie
 def view_danh_sach_thong_bao (request):
     return render(request, "dich_vu_dien_nuoc/danh_sach_thong_bao.html")
 
@@ -403,6 +402,7 @@ def api_danh_sach_cong_ty(request):
             'error': str(e)
         }, status=500)
 
+@csrf_protect
 def api_xoa_thong_bao(request, notification_id):
     """API để xóa thông báo"""
     if request.method == 'DELETE':
@@ -566,7 +566,7 @@ def api_danh_sach_tat_ca_dich_vu(request):
             'error': str(e)
         }, status=500)
 
-@csrf_exempt
+@csrf_protect
 def api_tao_moi_thong_bao(request):
     """API để tạo mới thông báo dịch vụ"""
     if request.method != 'POST':
@@ -777,7 +777,7 @@ def api_chi_tiet_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
-@csrf_exempt
+@csrf_protect
 def api_cap_nhat_thong_bao(request, notification_id):
     """API để cập nhật thông báo"""
     if request.method != 'PUT':
@@ -1048,6 +1048,7 @@ def view_quan_ly_loai_dich_vu (request):
 
     return render(request, "dich_vu_dien_nuoc/quan_ly_loai_dich_vu.html", context)
 
+@csrf_protect
 @require_POST
 @transaction.atomic
 def api_dich_vu_update_or_create(request):
@@ -1088,6 +1089,7 @@ def api_dich_vu_update_or_create(request):
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
     
 
+@csrf_protect
 @require_POST
 @transaction.atomic
 def api_loai_dich_vu_update_or_create(request):
@@ -1125,7 +1127,7 @@ def api_loai_dich_vu_update_or_create(request):
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
 
 
-
+@csrf_protect
 def api_dich_vu_delete(request, pk):
     """Xóa dịch vụ"""        
     try: 
@@ -1135,7 +1137,7 @@ def api_dich_vu_delete(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
-
+@csrf_protect
 def api_loai_dich_vu_delete(request, pk):
     """Xóa loại dịch vụ"""
     try: 
@@ -1186,6 +1188,7 @@ def view_quan_ly_khach_thue (request):
 
     return render(request, "dich_vu_dien_nuoc/quan_ly_khach_thue.html", context)
 
+@csrf_protect
 @transaction.atomic
 @require_POST
 def api_quan_ly_khach_thue_update_or_create(request):
@@ -1251,6 +1254,7 @@ def api_quan_ly_khach_thue_update_or_create(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
 
+@csrf_protect
 @transaction.atomic
 @require_POST
 def api_quan_ly_khach_thue_delete(request, pk):

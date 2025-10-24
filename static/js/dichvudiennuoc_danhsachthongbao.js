@@ -1679,7 +1679,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        // Thử lấy từ cookie trước
+        const cookieValue = getCookie('csrftoken');
+        if (cookieValue) {
+            return cookieValue;
+        }
+        
+        // Nếu không có cookie, lấy từ meta tag
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            return metaTag.getAttribute('content');
+        }
+        
+        // Lấy từ input hidden
+        const hiddenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (hiddenInput) {
+            return hiddenInput.value;
+        }
+        
+        console.error('CSRF token not found');
+        return '';
+    }
+
+    // THÊM FUNCTION getCookie() ngay sau getCsrfToken()
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     function updateBulkActionsVisibility() {
