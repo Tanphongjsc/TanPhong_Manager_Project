@@ -877,6 +877,9 @@ def api_cap_nhat_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
+from datetime import datetime, timedelta
+import calendar
+
 def api_in_thong_bao(request, notification_id):
     """API để tạo HTML in cho thông báo"""
     try:
@@ -893,9 +896,12 @@ def api_in_thong_bao(request, notification_id):
         month = created_date.month
         year = created_date.year
         
-        # Tính tháng thanh toán (tháng tiếp theo)
-        payment_month = month + 1 if month < 12 else 1
-        payment_year = year if month < 12 else year + 1
+        # Tính ngày cuối tháng của kỳ thanh toán (tháng hiện tại)
+        # Sử dụng calendar.monthrange để lấy ngày cuối tháng
+        last_day_of_month = calendar.monthrange(year, month)[1]
+        payment_day = last_day_of_month
+        payment_month = month
+        payment_year = year
         
         # Tạo các dòng dịch vụ
         services_rows = ""
@@ -955,6 +961,7 @@ def api_in_thong_bao(request, notification_id):
             'year': year,
             'period_month': created_date.month,
             'period_year': created_date.year,
+            'payment_day': payment_day,  # Thêm ngày thanh toán
             'payment_month': payment_month,
             'payment_year': payment_year,
             'company_name': thong_bao.id_hopdong.tencongty if thong_bao.id_hopdong else '',

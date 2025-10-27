@@ -392,3 +392,6 @@ WARNING 2025-10-24 16:02:04,786 log 97124 99644 Bad Request: /dichvudiennuoc/api
 WARNING 2025-10-24 16:02:04,788 basehttp 97124 99644 "POST /dichvudiennuoc/api/quanlykhachthue/update-or-create/ HTTP/1.1" 400 146
 ERROR 2025-10-24 16:39:55,300 basehttp 97124 98816 You're accessing the development server over HTTPS, but it only supports HTTP.
 ERROR 2025-10-24 16:39:55,306 basehttp 97124 98424 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-27 11:52:39,525 log 9196 6364 Not Found: /favicon.ico
+WARNING 2025-10-27 11:52:39,531 basehttp 9196 6364 "GET /favicon.ico HTTP/1.1" 404 2787
+WARNING 2025-10-27 11:53:34,657 basehttp 9196 1660 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 403 2538
