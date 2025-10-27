@@ -13,7 +13,7 @@ from .models import *
 
 from json import loads, dumps
 from io import BytesIO
-
+from django.template.loader import render_to_string
 import openpyxl
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
@@ -22,6 +22,8 @@ from datetime import datetime,timedelta
 import json
 from num2words import num2words
 
+import calendar
+from urllib.parse import quote
 # Create your views here.
 
 # ------------------------------------ VIEW BÁO CÁO DOANH THU ------------------------------------
@@ -877,9 +879,6 @@ def api_cap_nhat_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
-from datetime import datetime, timedelta
-import calendar
-
 def api_in_thong_bao(request, notification_id):
     """API để tạo HTML in cho thông báo"""
     try:
@@ -896,12 +895,21 @@ def api_in_thong_bao(request, notification_id):
         month = created_date.month
         year = created_date.year
         
-        # Tính ngày cuối tháng của kỳ thanh toán (tháng hiện tại)
-        # Sử dụng calendar.monthrange để lấy ngày cuối tháng
+        # Tính ngày cuối tháng của kỳ thanh toán
         last_day_of_month = calendar.monthrange(year, month)[1]
         payment_day = last_day_of_month
         payment_month = month
         payment_year = year
+        
+        # Lấy tên công ty và tạo tên file với tháng/năm
+        company_name = thong_bao.id_hopdong.tencongty if thong_bao.id_hopdong else 'Khong_co_ten'
+        
+        # Loại bỏ ký tự đặc biệt và tạo tên file an toàn
+        safe_company_name = "".join(c for c in company_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        safe_company_name = safe_company_name.replace(' ', '_')
+        
+        # Tạo tên file đề xuất với format: TBDV - Tên công ty - MM/YYYY
+        suggested_filename = f"TBDV - {company_name} - T{month:02d}/{year}"
         
         # Tạo các dòng dịch vụ
         services_rows = ""
@@ -934,9 +942,9 @@ def api_in_thong_bao(request, notification_id):
                         <td>{service.donvitinh or ''}</td>
                         <td class="right">{format_number_vn(old_reading) if old_reading != '' else ''}</td>
                         <td class="right">{format_number_vn(new_reading) if new_reading != '' else ''}</td>
-                        <td class="right">{format_number_vn(service.heso) if service.heso else "1"}</td>
-                        <td class="right">{format_number_vn(service.dongia) if service.dongia else "0"}</td>
-                        <td class="right">{format_number_vn(service.sosudung) if service.sosudung else "0"}</td>
+                        <td class="right">{format_number_vn(service.heso) if service.heso else "1.00"}</td>
+                        <td class="right">{format_number_vn(service.dongia) if service.dongia else "0.00"}</td>
+                        <td class="right">{format_number_vn(service.sosudung) if service.sosudung else "0.00"}</td>
                         <td class="right">{format_number_vn(before_tax)}</td>
                         <td class="right">{format_number_vn(tax)}</td>
                         <td class="right">{format_number_vn(after_tax)}</td>
@@ -953,7 +961,7 @@ def api_in_thong_bao(request, notification_id):
         amount_in_words = num2words(int(final_amount), lang='vi').capitalize() + " đồng"
         
         # Đọc template HTML
-        from django.template.loader import render_to_string
+        
         
         context = {
             'day': day,
@@ -961,22 +969,30 @@ def api_in_thong_bao(request, notification_id):
             'year': year,
             'period_month': created_date.month,
             'period_year': created_date.year,
-            'payment_day': payment_day,  # Thêm ngày thanh toán
+            'payment_day': payment_day,
             'payment_month': payment_month,
             'payment_year': payment_year,
-            'company_name': thong_bao.id_hopdong.tencongty if thong_bao.id_hopdong else '',
+            'company_name': company_name,
+            'suggested_filename': suggested_filename,  # Tên file có tháng/năm
             'services_rows': services_rows,
             'total_before_tax': format_number_vn(total_before_tax_calc),
             'tax_amount': format_number_vn(total_tax_calc),
             'total_after_tax': format_number_vn(total_after_tax_calc),
-            'discount_amount': format_number_vn(discount_amount) if discount_amount > 0 else "0",
+            'discount_amount': format_number_vn(discount_amount) if discount_amount > 0 else "0.00",
             'final_amount': format_number_vn(final_amount),
             'amount_in_words': amount_in_words
         }
         
         html_content = render_to_string('dich_vu_dien_nuoc/notification_print_template.html', context)
         
-        return HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        
+        # Thêm header để browser hiểu filename (cần encode để tránh lỗi với ký tự đặc biệt)
+        from urllib.parse import quote
+        encoded_filename = quote(suggested_filename.encode('utf-8'))
+        response['Content-Disposition'] = f'inline; filename="{encoded_filename}.pdf"'
+        
+        return response
         
     except Exception as e:
         return JsonResponse({
@@ -1022,10 +1038,10 @@ def api_in_nhieu_thong_bao(request):
 def format_number_vn(number):
     """Format số theo chuẩn: phẩy cho hàng nghìn, chấm cho thập phân"""
     if number is None or number == 0:
-        return "0"
+        return "0.00"
     
     # Làm tròn đến 1 chữ số thập phân
-    number = round(float(number), 1)
+    number = round(float(number), 2)
     
     # Tách phần nguyên và phần thập phân
     integer_part = int(number)
@@ -1036,7 +1052,7 @@ def format_number_vn(number):
     
     # Nếu có phần thập phân và != 0
     if decimal_part > 0:
-        decimal_str = f"{decimal_part:.1f}"[2:]  # Lấy phần sau dấu chấm
+        decimal_str = f"{decimal_part:.2f}"[2:]  # Lấy phần sau dấu chấm
         return f"{formatted_integer}.{decimal_str}"  # Dùng chấm cho thập phân
     else:
         return formatted_integer

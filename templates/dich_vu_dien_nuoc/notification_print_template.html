@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thông Báo Tiền Phí Dịch Vụ</title>
+    <title>{{suggested_filename}}</title>
     <style>
         @page {
             size: A4;
@@ -291,6 +291,18 @@
             text-align: right;
         }
     </style>
+    <!-- Code JavaScript trong template đã hoạt động tốt -->
+    <script>
+        // Đặt tên file mặc định khi print/save
+        window.addEventListener('beforeprint', function() {
+            document.title = '{{suggested_filename}}';
+        });
+        
+        // Đặt tên file ngay khi trang load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.title = '{{suggested_filename}}';
+        });
+    </script>
 </head>
 <body>
     <!-- Header Section -->

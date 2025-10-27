@@ -395,3 +395,7 @@ ERROR 2025-10-24 16:39:55,306 basehttp 97124 98424 You're accessing the developm
 WARNING 2025-10-27 11:52:39,525 log 9196 6364 Not Found: /favicon.ico
 WARNING 2025-10-27 11:52:39,531 basehttp 9196 6364 "GET /favicon.ico HTTP/1.1" 404 2787
 WARNING 2025-10-27 11:53:34,657 basehttp 9196 1660 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 403 2538
+WARNING 2025-10-27 15:26:42,562 log 7188 10168 Not Found: /favicon.ico
+WARNING 2025-10-27 15:26:42,564 basehttp 7188 10168 "GET /favicon.ico HTTP/1.1" 404 2787
+WARNING 2025-10-27 15:30:53,844 log 7188 17228 Not Found: /favicon.ico
+WARNING 2025-10-27 15:30:53,846 basehttp 7188 17228 "GET /favicon.ico HTTP/1.1" 404 2787
