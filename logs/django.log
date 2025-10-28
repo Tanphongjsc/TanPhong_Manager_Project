@@ -399,3 +399,28 @@ WARNING 2025-10-27 15:26:42,562 log 7188 10168 Not Found: /favicon.ico
 WARNING 2025-10-27 15:26:42,564 basehttp 7188 10168 "GET /favicon.ico HTTP/1.1" 404 2787
 WARNING 2025-10-27 15:30:53,844 log 7188 17228 Not Found: /favicon.ico
 WARNING 2025-10-27 15:30:53,846 basehttp 7188 17228 "GET /favicon.ico HTTP/1.1" 404 2787
+WARNING 2025-10-28 15:09:52,535 basehttp 22600 2520 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 403 2538
+WARNING 2025-10-28 15:29:52,544 basehttp 9836 9796 "DELETE /dichvudiennuoc/api/xoa-thong-bao/388/ HTTP/1.1" 403 2538
+WARNING 2025-10-28 15:36:47,750 basehttp 9836 20396 "DELETE /dichvudiennuoc/api/xoa-thong-bao/388/ HTTP/1.1" 403 2538
+WARNING 2025-10-28 15:37:51,475 basehttp 9836 132 "DELETE /dichvudiennuoc/api/xoa-thong-bao/388/ HTTP/1.1" 403 2538
+WARNING 2025-10-28 15:38:26,620 basehttp 9836 20396 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 403 2538
+ERROR 2025-10-28 16:01:43,755 basehttp 22968 7728 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:01:43,756 basehttp 22968 19224 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:01:46,978 basehttp 22968 10100 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:01:46,980 basehttp 22968 11144 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:01:47,510 basehttp 22968 16028 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:01:47,512 basehttp 22968 7472 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:56,548 basehttp 22968 9860 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:56,550 basehttp 22968 16888 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:58,017 basehttp 22968 19824 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:58,020 basehttp 22968 7860 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:59,088 basehttp 22968 18664 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:08:59,089 basehttp 22968 14284 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:00,020 basehttp 22968 21400 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:00,022 basehttp 22968 2964 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:00,538 basehttp 22968 4616 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:00,541 basehttp 22968 2676 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:11,685 basehttp 23108 12260 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:11,686 basehttp 23108 17320 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:12,330 basehttp 23108 18464 You're accessing the development server over HTTPS, but it only supports HTTP.
+ERROR 2025-10-28 16:09:12,332 basehttp 23108 3428 You're accessing the development server over HTTPS, but it only supports HTTP.

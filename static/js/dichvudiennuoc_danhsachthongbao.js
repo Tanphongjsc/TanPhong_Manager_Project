@@ -1151,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Prepare data - Parse date object
+        // Prepare data
         const dateObj = new Date(period);
         const discount = parseFloat(document.getElementById('create-discount').value) || 0;
         
@@ -1160,8 +1160,8 @@ document.addEventListener('DOMContentLoaded', function() {
             period: {
                 year: dateObj.getFullYear(),
                 month: dateObj.getMonth() + 1,
-                day: dateObj.getDate(), // THÊM
-                full_date: period // Gửi cả full date để backend lưu vào ThoigianTao
+                day: dateObj.getDate(),
+                full_date: period
             },
             sotbdv: sotbdv.trim(),
             discount: discount,
@@ -1178,18 +1178,16 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // Show loading
-        const saveBtn = createNew ? document.getElementById('btn-save-and-create-new') : document.getElementById('btn-save-notification');
+        const saveBtn = createNew ? 
+            document.getElementById('btn-save-and-create-new') : 
+            document.getElementById('btn-save-notification');
         const originalText = saveBtn.innerHTML;
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
         
-        // Send to server
-        fetch('/dichvudiennuoc/api/tao-moi-thong-bao/', {
+        // ✅ SỬ DỤNG fetchWithCsrf THAY VÌ fetch
+        fetchWithCsrf('/dichvudiennuoc/api/tao-moi-thong-bao/', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
             body: JSON.stringify(data)
         })
         .then(response => response.json())
@@ -1492,7 +1490,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Validate services
         for (let service of currentServices) {
             if (!service.service_id) {
                 alert('Vui lòng chọn dịch vụ cho tất cả các dòng');
@@ -1515,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = {
             discount: discount,
             services: currentServices.map(service => ({
-                id: service.original_id || null, // ID gốc nếu có
+                id: service.original_id || null,
                 service_id: service.service_id,
                 unit: service.unit.trim(),
                 old_reading: parseFloat(service.old_reading) || null,
@@ -1533,13 +1530,9 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
         
-        // Send to server
-        fetch(`/dichvudiennuoc/api/cap-nhat-thong-bao/${currentEditingNotification.id}/`, {
+        // ✅ SỬ DỤNG fetchWithCsrf
+        fetchWithCsrf(`/dichvudiennuoc/api/cap-nhat-thong-bao/${currentEditingNotification.id}/`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
             body: JSON.stringify(data)
         })
         .then(response => response.json())
@@ -1547,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 showSuccessMessage('Thông báo đã được cập nhật thành công!');
                 editNotificationModal.hide();
-                loadNotifications(); // Reload table
+                loadNotifications();
             } else {
                 showError('Có lỗi xảy ra: ' + result.error);
             }
@@ -1557,7 +1550,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showError('Có lỗi xảy ra khi lưu thông báo');
         })
         .finally(() => {
-            // Restore button
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalText;
         });
@@ -1650,17 +1642,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleConfirmDelete() {
         if (currentDeleteId === null) return;
         
-        fetch(`/dichvudiennuoc/api/xoa-thong-bao/${currentDeleteId}/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': getCsrfToken(),
-                'Content-Type': 'application/json',
-            }
+        // ✅ SỬ DỤNG fetchWithCsrf
+        fetchWithCsrf(`/dichvudiennuoc/api/xoa-thong-bao/${currentDeleteId}/`, {
+            method: 'DELETE'
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                loadNotifications(); // Reload data
+                loadNotifications();
                 showSuccessMessage('Thông báo đã được xóa thành công');
             } else {
                 showError('Có lỗi xảy ra: ' + data.error);
@@ -1679,42 +1668,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getCsrfToken() {
-        // Thử lấy từ cookie trước
-        const cookieValue = getCookie('csrftoken');
-        if (cookieValue) {
-            return cookieValue;
-        }
-        
-        // Nếu không có cookie, lấy từ meta tag
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        if (metaTag) {
-            return metaTag.getAttribute('content');
-        }
-        
-        // Lấy từ input hidden
-        const hiddenInput = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (hiddenInput) {
+        // Phương pháp 1: Lấy từ hidden input {% csrf_token %}
+        const hiddenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (hiddenInput && hiddenInput.value) {
+            console.log('✅ CSRF token loaded from hidden input');
             return hiddenInput.value;
         }
         
-        console.error('CSRF token not found');
-        return '';
+        // Phương pháp 2: Lấy từ meta tag (backup)
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag && metaTag.content) {
+            console.log('✅ CSRF token loaded from meta tag');
+            return metaTag.content;
+        }
+        
+        // Không tìm thấy token
+        console.error('❌ CSRF token not found! Please refresh the page.');
+        return null;
     }
 
-    // THÊM FUNCTION getCookie() ngay sau getCsrfToken()
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    function validateCsrfToken() {
+        const token = getCsrfToken();
+        
+        if (!token) {
+            showError('Lỗi bảo mật: Không tìm thấy CSRF token. Vui lòng tải lại trang.');
+            return false;
         }
-        return cookieValue;
+        
+        if (token.length < 32) {
+            showError('Lỗi bảo mật: CSRF token không hợp lệ. Vui lòng tải lại trang.');
+            return false;
+        }
+        
+        return true;
+    }
+
+    async function fetchWithCsrf(url, options = {}) {
+        // Kiểm tra token trước khi gọi API
+        if (!validateCsrfToken()) {
+            throw new Error('CSRF token validation failed');
+        }
+        
+        const csrfToken = getCsrfToken();
+        
+        // Merge headers
+        options.headers = {
+            ...options.headers,
+            'X-CSRFToken': csrfToken,  // ← CSRF token từ DOM
+            'Content-Type': 'application/json'
+        };
+        
+        // Gọi fetch
+        const response = await fetch(url, options);
+        
+        // Xử lý lỗi CSRF
+        if (response.status === 403) {
+            const data = await response.json();
+            if (data.error && data.error.includes('CSRF')) {
+                showError('Lỗi bảo mật. Vui lòng tải lại trang và thử lại.');
+                // Tự động reload sau 2 giây
+                setTimeout(() => window.location.reload(), 2000);
+            }
+            throw new Error('CSRF validation failed');
+        }
+        
+        return response;
     }
 
     function updateBulkActionsVisibility() {

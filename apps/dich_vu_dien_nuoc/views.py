@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
 from django.forms.models import model_to_dict
@@ -405,6 +405,7 @@ def api_danh_sach_cong_ty(request):
         }, status=500)
 
 @csrf_protect
+@require_http_methods(["DELETE"])
 def api_xoa_thong_bao(request, notification_id):
     """API để xóa thông báo"""
     if request.method == 'DELETE':
@@ -569,6 +570,7 @@ def api_danh_sach_tat_ca_dich_vu(request):
         }, status=500)
 
 @csrf_protect
+@require_http_methods(["POST"])
 def api_tao_moi_thong_bao(request):
     """API để tạo mới thông báo dịch vụ"""
     if request.method != 'POST':
@@ -780,6 +782,7 @@ def api_chi_tiet_thong_bao(request, notification_id):
         }, status=500)
 
 @csrf_protect
+@require_http_methods(["PUT"])
 def api_cap_nhat_thong_bao(request, notification_id):
     """API để cập nhật thông báo"""
     if request.method != 'PUT':
