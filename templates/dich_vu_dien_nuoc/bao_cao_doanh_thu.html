@@ -52,15 +52,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-blue-100 p-4 rounded-lg">
             <p class="text-sm text-blue-800 font-medium">Tổng Doanh thu</p>
-            <p id="total-revenue" class="text-2xl font-bold text-blue-900">{{ tong_doanh_thu|floatformat:1|intcomma }} đ</p>
+            <p id="total-revenue" class="text-2xl font-bold text-blue-900">{{ tong_doanh_thu|floatformat:2|intcomma }} đ</p>
         </div>
         <div class="bg-green-100 p-4 rounded-lg">
             <p class="text-sm text-green-800 font-medium">Tổng Tiền Điện thu</p>
-            <p id="total-revenue_dien" class="text-2xl font-bold text-green-900">{{ tong_doanh_thu_dien|floatformat:1|intcomma }} đ</p>
+            <p id="total-revenue_dien" class="text-2xl font-bold text-green-900">{{ tong_doanh_thu_dien|floatformat:2|intcomma }} đ</p>
         </div>
         <div class="bg-yellow-100 p-4 rounded-lg">
             <p class="text-sm text-yellow-800 font-medium">Tổng Tiền Nước thu</p>
-            <p id="total-revenue_nuoc" class="text-2xl font-bold text-yellow-900">{{ tong_doanh_thu_nuoc|floatformat:1|intcomma }} đ</p>
+            <p id="total-revenue_nuoc" class="text-2xl font-bold text-yellow-900">{{ tong_doanh_thu_nuoc|floatformat:2|intcomma }} đ</p>
         </div>
     </div>
     
@@ -98,9 +98,9 @@
                 <tfoot class="sticky bottom-0 z-20 bg-gray-200 text-gray-700 font-bold text-sm">
                     <tr>
                         <td colspan="2" class="py-3 px-6 text-left bg-gray-200">Tổng cộng</td>
-                        <td id="total-tiengomthue" class="py-3 px-6 text-right bg-gray-200">{{ total_tiengomthue|floatformat:0|intcomma }} đ</td>
-                        <td id="total-giamtru" class="py-3 px-6 text-right bg-gray-200">{{ total_giamtru|floatformat:0|intcomma }} đ</td>
-                        <td id="total-tongtientt" class="py-3 px-6 text-right bg-gray-200">{{ total_tongtientt|floatformat:0|intcomma }} đ</td>
+                        <td id="total-tiengomthue" class="py-3 px-6 text-right bg-gray-200">{{ total_tiengomthue|floatformat:2|intcomma }} đ</td>
+                        <td id="total-giamtru" class="py-3 px-6 text-right bg-gray-200">{{ total_giamtru|floatformat:2|intcomma }} đ</td>
+                        <td id="total-tongtientt" class="py-3 px-6 text-right bg-gray-200">{{ total_tongtientt|floatformat:2|intcomma }} đ</td>
                         <td class="py-3 px-6 text-center bg-gray-200"></td>
                     </tr>
                 </tfoot>

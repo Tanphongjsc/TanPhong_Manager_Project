@@ -2,16 +2,16 @@
 
 $(document).ready(function() {
     // --- UTILITY FUNCTIONS ---
-    // ✅ ĐÃ CẬP NHẬT
+    // ✅ SỬA: Dùng locale 'de-DE' (Đức) vì có format giống Việt Nam: 1.234.567,89
     function formatCurrency(num) {
         if (!num) return '0 đ';
-        const rounded = parseFloat(num).toFixed(2); // Luôn làm tròn 2 chữ số thập phân
-        return new Intl.NumberFormat('en-EN').format(rounded) + ' đ';
+        const rounded = parseFloat(num).toFixed(2);
+        return new Intl.NumberFormat('de-DE').format(rounded) + ' đ';
     }
     
     function formatNumber(num, decimals = 2) {
         if (!num) return '0';
-        return new Intl.NumberFormat('en-EN', { 
+        return new Intl.NumberFormat('de-DE', {
             minimumFractionDigits: decimals, 
             maximumFractionDigits: decimals 
         }).format(parseFloat(num));
@@ -93,7 +93,7 @@ $(document).ready(function() {
         updateAllTableFooters(data);
     }
 
-    // ✅ ĐÃ CẬP NHẬT
+    // ✅ CẬP NHẬT: Hàm updateNotificationTable
     function updateNotificationTable(data) {
         const tbody = $('#notification-table-body');
         if (!data || data.length === 0) {
@@ -107,7 +107,7 @@ $(document).ready(function() {
                 const date = new Date(item.thoigiantao);
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();
-                paymentDate = `${month}/${year}`; // Định dạng MM/YYYY
+                paymentDate = `${month}/${year}`;
             }
             return `
                 <tr class="border-b hover:bg-gray-100">
