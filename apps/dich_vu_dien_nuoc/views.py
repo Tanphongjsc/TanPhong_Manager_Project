@@ -71,7 +71,7 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
         tencongty=F('id_hopdong__tencongty'),
         giam_tru = F('giamtru')/100 * F('tongtientruocthue'),
         tongtienthanhtoan = F('tongtiensauthue') - F('giamtru')/100 * F('tongtientruocthue')
-    ).order_by("tencongty", "-sotbdv"))
+    ).order_by("-thoigiantao", "tencongty", "-sotbdv"))
 
     # 4. Lấy dữ liệu Bảng chi tiết dịch vụ
     chi_tiet_dich_vu_raw = list(ct_thanhtoan_qs
