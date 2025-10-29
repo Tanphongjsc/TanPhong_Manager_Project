@@ -148,3 +148,43 @@ WARNING 2025-10-28 15:29:52,329 log 9836 9796 Forbidden (CSRF token from the 'X-
 WARNING 2025-10-28 15:36:47,567 log 9836 20396 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header incorrect.): /dichvudiennuoc/api/xoa-thong-bao/388/
 WARNING 2025-10-28 15:37:51,293 log 9836 132 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header incorrect.): /dichvudiennuoc/api/xoa-thong-bao/388/
 WARNING 2025-10-28 15:38:26,440 log 9836 20396 Forbidden (CSRF token from the 'X-Csrftoken' HTTP header incorrect.): /dichvudiennuoc/api/tao-moi-thong-bao/
+ERROR 2025-10-29 11:25:51,996 log 148896 134928 Unsafe redirect to URL with protocol 'dashboard'
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 264, in get
+    return HttpResponseRedirect(url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\http\response.py", line 637, in __init__
+    raise DisallowedRedirect(
+django.core.exceptions.DisallowedRedirect: Unsafe redirect to URL with protocol 'dashboard'
+ERROR 2025-10-29 11:27:02,664 log 148896 147212 Unsafe redirect to URL with protocol 'dashboard'
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 264, in get
+    return HttpResponseRedirect(url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\http\response.py", line 637, in __init__
+    raise DisallowedRedirect(
+django.core.exceptions.DisallowedRedirect: Unsafe redirect to URL with protocol 'dashboard'
