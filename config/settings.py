@@ -90,6 +90,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DB_SCHEMAS = [s.strip() for s in os.getenv('DB_SCHEMA', 'public').split(',') if s.strip()]
+DB_SEARCH_PATH = ','.join(DB_SCHEMAS)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -100,6 +103,7 @@ DATABASES = {
         'PORT': os.getenv("port"),
         'OPTIONS': {
             'sslmode': 'require',
+            'options': f"-c search_path={DB_SEARCH_PATH},public",
         },
         'CONN_MAX_AGE': 600,
 
@@ -138,6 +142,10 @@ TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_I18N = True
 USE_TZ = True
 
+# Authentication Settings
+LOGIN_REDIRECT_URL = 'dashboard:dashboard' # Chuyển hướng sau khi login thành công
+LOGIN_URL = 'login' # Đường dẫn đến trang login
+LOGOUT_REDIRECT_URL = 'login' # Chuyển hướng sau khi logout
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

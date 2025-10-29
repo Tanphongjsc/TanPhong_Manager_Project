@@ -22,24 +22,34 @@
     <!-- Tối ưu hóa: Sử dụng CDN với SRI (Subresource Integrity) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block styles %}{% endblock styles %}
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-gray-800">
 
     <div class="flex h-screen">
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
 
+        {% if user.is_authenticated %}
         <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed lg:relative lg:translate-x-0 -translate-x-full z-30 transition-all duration-300 ease-in-out">
             <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
                 <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
                 <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
             </div>
             <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-                <a href="{% url 'dashboard' %}" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Dashboard">
+                <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Dashboard">
                     <i class="fas fa-tachometer-alt w-6 text-gray-400"></i>
                     <span class="ml-3 sidebar-text">Dashboard</span>
                     <div class="sidebar-tooltip">Dashboard</div>
@@ -59,16 +69,16 @@
                             <i class="fas fa-building-circle-check mr-2"></i>Quản lý Dịch vụ
                         </div>
                         <div class="py-2">
-                            <a href="{% url 'danhsachthongbao' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh sách Thông báo">
+                            <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh sách Thông báo">
                                 <i class="fas fa-list-ul me-2"></i>Danh sách Thông báo
                             </a>
-                            <a href="{% url 'quanlykhachthue' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Khách thuê">
+                            <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Khách thuê">
                                 <i class="fas fa-users-gear me-2"></i>Quản lý Khách thuê
                             </a>
-                            <a href="{% url 'quanlyloaidichvu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Loại dịch vụ">
+                            <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Loại dịch vụ">
                                 <i class="fas fa-tags me-2"></i>Quản lý Loại dịch vụ
                             </a>
-                            <a href="{% url 'baocaodoanhthu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Báo cáo Doanh thu">
+                            <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Báo cáo Doanh thu">
                                 <i class="fas fa-chart-pie me-2"></i>Báo cáo Doanh thu
                             </a>
                         </div>
@@ -76,16 +86,16 @@
                     
                     <div id="services-submenu" class="submenu">
                         <div class="submenu-inner pl-8 pt-2">
-                            <a href="{% url 'danhsachthongbao' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh sách Thông báo">
+                            <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh sách Thông báo">
                                 <i class="fas fa-list-ul w-6 text-gray-400"></i><span class="sidebar-text">Danh sách Thông báo</span>
                             </a>
-                            <a href="{% url 'quanlykhachthue' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Khách thuê">
+                            <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Khách thuê">
                                 <i class="fas fa-users-gear w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Khách thuê</span>
                             </a>
-                            <a href="{% url 'quanlyloaidichvu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Loại dịch vụ">
+                            <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Loại dịch vụ">
                                 <i class="fas fa-tags w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Loại dịch vụ</span>
                             </a>
-                            <a href="{% url 'baocaodoanhthu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Báo cáo Doanh thu">
+                            <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Báo cáo Doanh thu">
                                 <i class="fas fa-chart-pie w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo Doanh thu</span>
                             </a>
                         </div>
@@ -102,11 +112,19 @@
 
         <div id="main-content" class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white shadow-sm flex items-center justify-between p-4 z-10 sticky top-0">
-                 <button id="menu-button" class="text-gray-600 focus:outline-none">
-                     <i class="fas fa-bars fa-lg"></i>
-                 </button>
-                 <h2 id="page-title" class="text-xl font-semibold text-gray-800 mb-0"></h2>
-                 <div class="w-8"></div> <!-- Placeholder for alignment -->
+                <button id="menu-button" class="text-gray-600 focus:outline-none">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-semibold text-gray-800 mb-0"></h2>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-600">Xin chào, <strong>{{ user.username }}</strong></span>
+                    <form action="{% url 'logout' %}" method="post" class="inline-block">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <main class="flex-1 p-4 md:p-6 overflow-y-auto">
@@ -114,6 +132,12 @@
                 {% endblock content %}
             </main>
         </div>
+        {% else %}
+        <!-- Nội dung cho user chưa đăng nhập (có thể redirect đến login) -->
+        <div class="flex-1 flex items-center justify-center">
+            <p class="text-xl text-gray-600">Vui lòng đăng nhập để truy cập hệ thống.</p>
+        </div>
+        {% endif %}
     </div>
     
     <!-- Tối ưu hóa: Đặt script ở cuối và sử dụng defer/asynchronous loading khi có thể -->

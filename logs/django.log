@@ -424,3 +424,384 @@ ERROR 2025-10-28 16:09:11,685 basehttp 23108 12260 You're accessing the developm
 ERROR 2025-10-28 16:09:11,686 basehttp 23108 17320 You're accessing the development server over HTTPS, but it only supports HTTP.
 ERROR 2025-10-28 16:09:12,330 basehttp 23108 18464 You're accessing the development server over HTTPS, but it only supports HTTP.
 ERROR 2025-10-28 16:09:12,332 basehttp 23108 3428 You're accessing the development server over HTTPS, but it only supports HTTP.
+WARNING 2025-10-29 11:25:52,001 basehttp 148896 134928 "GET / HTTP/1.1" 400 87781
+WARNING 2025-10-29 11:26:14,621 log 148896 134928 Not Found: /dashboard
+WARNING 2025-10-29 11:26:14,622 basehttp 148896 134928 "GET /dashboard HTTP/1.1" 404 2838
+WARNING 2025-10-29 11:26:20,821 log 148896 134928 Not Found: /dichvudiennuoc
+WARNING 2025-10-29 11:26:20,822 basehttp 148896 134928 "GET /dichvudiennuoc HTTP/1.1" 404 2853
+WARNING 2025-10-29 11:27:02,666 basehttp 148896 147212 "GET / HTTP/1.1" 400 87632
+ERROR 2025-10-29 11:35:02,418 log 118344 151524 Internal Server Error: /
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 81, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^
+KeyError: 'dashboard'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 259, in get
+    url = self.get_redirect_url(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 249, in get_redirect_url
+    url = reverse(self.pattern_name, args=args, kwargs=kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 92, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'dashboard' is not a registered namespace
+ERROR 2025-10-29 11:35:02,420 basehttp 118344 151524 "GET / HTTP/1.1" 500 100112
+WARNING 2025-10-29 11:35:02,669 log 118344 151524 Not Found: /favicon.ico
+WARNING 2025-10-29 11:35:02,670 basehttp 118344 151524 "GET /favicon.ico HTTP/1.1" 404 2844
+ERROR 2025-10-29 11:35:04,402 log 118344 151524 Internal Server Error: /
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 81, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^
+KeyError: 'dashboard'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 259, in get
+    url = self.get_redirect_url(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 249, in get_redirect_url
+    url = reverse(self.pattern_name, args=args, kwargs=kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 92, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'dashboard' is not a registered namespace
+ERROR 2025-10-29 11:35:04,404 basehttp 118344 151524 "GET / HTTP/1.1" 500 100112
+WARNING 2025-10-29 11:35:04,634 log 118344 151524 Not Found: /favicon.ico
+WARNING 2025-10-29 11:35:04,635 basehttp 118344 151524 "GET /favicon.ico HTTP/1.1" 404 2844
+ERROR 2025-10-29 11:35:21,091 log 118344 151524 Internal Server Error: /
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 81, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+                      ~~~~~~~~~~~~~~~~~~~~~~~^^^^
+KeyError: 'dashboard'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 144, in dispatch
+    return handler(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 259, in get
+    url = self.get_redirect_url(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\generic\base.py", line 249, in get_redirect_url
+    url = reverse(self.pattern_name, args=args, kwargs=kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 92, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'dashboard' is not a registered namespace
+ERROR 2025-10-29 11:35:21,094 basehttp 118344 151524 "GET / HTTP/1.1" 500 100112
+WARNING 2025-10-29 11:35:21,309 log 118344 151524 Not Found: /favicon.ico
+WARNING 2025-10-29 11:35:21,310 basehttp 118344 151524 "GET /favicon.ico HTTP/1.1" 404 2844
+ERROR 2025-10-29 11:35:23,456 log 150776 127532 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: registration/login.html
+ERROR 2025-10-29 11:35:23,458 basehttp 150776 127532 "GET /accounts/login/?next=/dashboard/ HTTP/1.1" 500 87638
+WARNING 2025-10-29 11:35:23,708 log 150776 127532 Not Found: /favicon.ico
+WARNING 2025-10-29 11:35:23,709 basehttp 150776 127532 "GET /favicon.ico HTTP/1.1" 404 2997
+ERROR 2025-10-29 11:35:25,134 log 150776 127532 Internal Server Error: /accounts/login/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+               ^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: registration/login.html
+ERROR 2025-10-29 11:35:25,136 basehttp 150776 127532 "GET /accounts/login/?next=/dashboard/ HTTP/1.1" 500 87638
+WARNING 2025-10-29 11:35:25,327 log 150776 127532 Not Found: /favicon.ico
+WARNING 2025-10-29 11:35:25,327 basehttp 150776 127532 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:43:14,676 basehttp 96512 11832 "GET /static/css/styles.css HTTP/1.1" 404 1969
+WARNING 2025-10-29 11:43:15,626 log 96512 122872 Not Found: /favicon.ico
+WARNING 2025-10-29 11:43:15,627 basehttp 96512 122872 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:45:16,895 basehttp 58168 147492 "GET /static/css/styles.css HTTP/1.1" 404 1969
+WARNING 2025-10-29 11:45:19,062 log 58168 147396 Not Found: /favicon.ico
+WARNING 2025-10-29 11:45:19,063 basehttp 58168 147396 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:45:27,375 log 58168 147396 Not Found: /favicon.ico
+WARNING 2025-10-29 11:45:27,376 basehttp 58168 147396 "GET /favicon.ico HTTP/1.1" 404 2997
+ERROR 2025-10-29 11:45:53,207 log 58168 147396 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dashboard\views.py", line 7, in index
+    return render(request, "dashboard/index.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\urls\resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'danhsachthongbao' not found. 'danhsachthongbao' is not a valid view function or pattern name.
+ERROR 2025-10-29 11:45:53,220 basehttp 58168 147396 "GET /dashboard/ HTTP/1.1" 500 177687
+WARNING 2025-10-29 11:47:18,021 log 58168 150704 Not Found: /favicon.ico
+WARNING 2025-10-29 11:47:18,023 basehttp 58168 150704 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:53:31,320 log 135356 149184 Not Found: /favicon.ico
+WARNING 2025-10-29 11:53:31,322 basehttp 135356 149184 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:55:07,579 log 135356 150080 Not Found: /favicon.ico
+WARNING 2025-10-29 11:55:07,580 basehttp 135356 150080 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 11:55:28,211 log 135356 150080 Not Found: /favicon.ico
+WARNING 2025-10-29 11:55:28,212 basehttp 135356 150080 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 12:05:42,002 log 135356 152368 Not Found: /favicon.ico
+WARNING 2025-10-29 12:05:42,003 basehttp 135356 152368 "GET /favicon.ico HTTP/1.1" 404 2997
+ERROR 2025-10-29 12:06:22,374 log 135356 152368 Internal Server Error: /dichvudiennuoc/baocaodoanhthu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 128, in view_bao_cao_doanh_thu
+    initial_data = get_filtered_revenue_data()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_filtered_revenue_data() missing 1 required positional argument: 'request'
+ERROR 2025-10-29 12:06:22,380 basehttp 135356 152368 "GET /dichvudiennuoc/baocaodoanhthu/ HTTP/1.1" 500 78295
+ERROR 2025-10-29 12:06:25,883 log 135356 152368 Internal Server Error: /dichvudiennuoc/baocaodoanhthu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 128, in view_bao_cao_doanh_thu
+    initial_data = get_filtered_revenue_data()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_filtered_revenue_data() missing 1 required positional argument: 'request'
+ERROR 2025-10-29 12:06:25,887 basehttp 135356 152368 "GET /dichvudiennuoc/baocaodoanhthu/ HTTP/1.1" 500 78295
+ERROR 2025-10-29 12:06:33,564 log 135356 152368 Internal Server Error: /dichvudiennuoc/baocaodoanhthu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 128, in view_bao_cao_doanh_thu
+    initial_data = get_filtered_revenue_data()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_filtered_revenue_data() missing 1 required positional argument: 'request'
+ERROR 2025-10-29 12:06:33,566 basehttp 135356 152368 "GET /dichvudiennuoc/baocaodoanhthu/ HTTP/1.1" 500 78317
+WARNING 2025-10-29 12:07:30,432 log 117080 71036 Not Found: /favicon.ico
+WARNING 2025-10-29 12:07:30,434 basehttp 117080 71036 "GET /favicon.ico HTTP/1.1" 404 2997
+ERROR 2025-10-29 13:23:57,345 forms 117080 148976 Failed to send password reset email to 1
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\forms.py", line 434, in send_mail
+    email_message.send()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\message.py", line 307, in send
+    return self.get_connection(fail_silently).send_messages([self])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\backends\smtp.py", line 128, in send_messages
+    new_conn_created = self.open()
+                       ^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\backends\smtp.py", line 86, in open
+    self.connection = self.connection_class(
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 255, in __init__
+    (code, msg) = self.connect(host, port)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 341, in connect
+    self.sock = self._get_socket(host, port, self.timeout)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 312, in _get_socket
+    return socket.create_connection((host, port), timeout,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\socket.py", line 851, in create_connection
+    raise exceptions[0]
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\socket.py", line 836, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+ERROR 2025-10-29 13:24:35,904 forms 117080 148976 Failed to send password reset email to 1
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\forms.py", line 434, in send_mail
+    email_message.send()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\message.py", line 307, in send
+    return self.get_connection(fail_silently).send_messages([self])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\backends\smtp.py", line 128, in send_messages
+    new_conn_created = self.open()
+                       ^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\mail\backends\smtp.py", line 86, in open
+    self.connection = self.connection_class(
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 255, in __init__
+    (code, msg) = self.connect(host, port)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 341, in connect
+    self.sock = self._get_socket(host, port, self.timeout)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\smtplib.py", line 312, in _get_socket
+    return socket.create_connection((host, port), timeout,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\socket.py", line 851, in create_connection
+    raise exceptions[0]
+  File "C:\Users\thanhduong\AppData\Local\Programs\Python\Python311\Lib\socket.py", line 836, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+WARNING 2025-10-29 15:24:15,227 log 157140 150220 Not Found: /favicon.ico
+WARNING 2025-10-29 15:24:15,230 basehttp 157140 150220 "GET /favicon.ico HTTP/1.1" 404 2997
+WARNING 2025-10-29 15:26:22,868 log 10128 153888 Not Found: /favicon.ico
+WARNING 2025-10-29 15:26:22,870 basehttp 10128 153888 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:26:29,881 log 10128 153888 Not Found: /a
+WARNING 2025-10-29 15:26:29,883 basehttp 10128 153888 "GET /a HTTP/1.1" 404 2954
+WARNING 2025-10-29 15:33:30,516 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:33:30,517 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:33:58,135 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:33:58,137 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:36:26,485 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:36:26,486 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:37:59,125 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:37:59,125 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:41:04,879 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:41:04,880 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:41:09,655 log 149220 149492 Not Found: /favicon.ico
+WARNING 2025-10-29 15:41:09,657 basehttp 149220 149492 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 15:41:22,441 log 149220 149492 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-29 15:41:22,443 basehttp 149220 149492 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
+WARNING 2025-10-29 15:42:14,607 log 149220 155764 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-29 15:42:14,609 basehttp 149220 155764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
+WARNING 2025-10-29 15:42:20,275 log 149220 155764 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-29 15:42:20,276 basehttp 149220 155764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
+WARNING 2025-10-29 15:42:26,173 log 149220 155764 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-29 15:42:26,174 basehttp 149220 155764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
+WARNING 2025-10-29 15:42:35,740 log 149220 155764 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-10-29 15:42:35,742 basehttp 149220 155764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
+WARNING 2025-10-29 15:44:30,571 log 149220 154480 Not Found: /favicon.ico
+WARNING 2025-10-29 15:44:30,572 basehttp 149220 154480 "GET /favicon.ico HTTP/1.1" 404 2984

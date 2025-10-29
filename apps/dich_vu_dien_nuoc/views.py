@@ -9,6 +9,8 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, Q, F, Case, When, FloatField, Min, Max
 from django.db.models.functions import Coalesce
+from django.contrib.auth.decorators import login_required
+
 from .models import *
 
 from json import loads, dumps
@@ -117,6 +119,7 @@ def get_filtered_revenue_data(start_date=None, end_date=None, customer_id=None, 
         }
     }
 
+@login_required
 def view_bao_cao_doanh_thu(request):
     """Hiển thị báo cáo doanh thu lần đầu."""
     
@@ -169,7 +172,7 @@ def view_bao_cao_doanh_thu(request):
 
     return render(request, "dich_vu_dien_nuoc/bao_cao_doanh_thu.html", context)
 
-
+@login_required
 def api_bao_cao_doanh_thu_filter(request):
     """API để lọc báo cáo doanh thu."""
     start_date = request.GET.get('start_date')
@@ -182,7 +185,7 @@ def api_bao_cao_doanh_thu_filter(request):
     
     return JsonResponse(data)
 
-
+@login_required
 def api_bao_cao_doanh_thu_export(request):
     """
     API để xuất báo cáo doanh thu ra file Excel với 3 sheet.
@@ -292,10 +295,12 @@ def api_bao_cao_doanh_thu_export(request):
 
 
 # ------------------------------------ VIEW QUẢN LÝ DỊCH VỤ ------------------------------------
+@login_required
 @ensure_csrf_cookie
 def view_danh_sach_thong_bao (request):
     return render(request, "dich_vu_dien_nuoc/danh_sach_thong_bao.html")
 
+@login_required
 def api_danh_sach_thong_bao(request):
     """API để lấy danh sách thông báo dịch vụ"""
     try:
@@ -387,6 +392,7 @@ def api_danh_sach_thong_bao(request):
             'pagination': {'current_page': 1, 'per_page': 10, 'total_count': 0, 'total_pages': 1}
         }, status=500)
 
+@login_required
 def api_danh_sach_cong_ty(request):
     """API để lấy danh sách công ty cho dropdown filter"""
     try:
@@ -404,6 +410,7 @@ def api_danh_sach_cong_ty(request):
             'error': str(e)
         }, status=500)
 
+@login_required
 @csrf_protect
 @require_http_methods(["DELETE"])
 def api_xoa_thong_bao(request, notification_id):
@@ -435,6 +442,7 @@ def api_xoa_thong_bao(request, notification_id):
         'error': 'Method not allowed'
     }, status=405)
 
+@login_required
 def api_danh_sach_cong_ty_chua_tao(request):
     try:
         # SỬA: Bỏ tham số day, chỉ lọc theo month và year
@@ -478,6 +486,7 @@ def api_danh_sach_cong_ty_chua_tao(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@login_required
 def api_lay_dich_vu_ky_truoc(request):
     """API để lấy dịch vụ từ kỳ thanh toán trước của công ty"""
     try:
@@ -546,6 +555,7 @@ def api_lay_dich_vu_ky_truoc(request):
             'error': str(e)
         }, status=500)
 
+@login_required
 def api_danh_sach_tat_ca_dich_vu(request):
     """API để lấy tất cả dịch vụ cho dropdown"""
     try:
@@ -569,6 +579,7 @@ def api_danh_sach_tat_ca_dich_vu(request):
             'error': str(e)
         }, status=500)
 
+@login_required
 @csrf_protect
 @require_http_methods(["POST"])
 def api_tao_moi_thong_bao(request):
@@ -731,6 +742,7 @@ def api_tao_moi_thong_bao(request):
             'error': str(e)
         }, status=500)
     
+@login_required
 def api_chi_tiet_thong_bao(request, notification_id):
     """API để lấy chi tiết thông báo cho chỉnh sửa"""
     try:
@@ -781,6 +793,7 @@ def api_chi_tiet_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
+@login_required
 @csrf_protect
 @require_http_methods(["PUT"])
 def api_cap_nhat_thong_bao(request, notification_id):
@@ -882,6 +895,7 @@ def api_cap_nhat_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
+@login_required
 def api_in_thong_bao(request, notification_id):
     """API để tạo HTML in cho thông báo"""
     try:
@@ -1003,6 +1017,7 @@ def api_in_thong_bao(request, notification_id):
             'error': str(e)
         }, status=500)
 
+@login_required
 def api_in_nhieu_thong_bao(request):
     """API để tạo nhiều file in"""
     try:
@@ -1074,6 +1089,7 @@ def view_quan_ly_loai_dich_vu (request):
 
     return render(request, "dich_vu_dien_nuoc/quan_ly_loai_dich_vu.html", context)
 
+@login_required
 @csrf_protect
 @require_POST
 @transaction.atomic
@@ -1115,6 +1131,7 @@ def api_dich_vu_update_or_create(request):
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
     
 
+@login_required
 @csrf_protect
 @require_POST
 @transaction.atomic
@@ -1153,6 +1170,7 @@ def api_loai_dich_vu_update_or_create(request):
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
 
 
+@login_required
 @csrf_protect
 def api_dich_vu_delete(request, pk):
     """Xóa dịch vụ"""        
@@ -1163,6 +1181,7 @@ def api_dich_vu_delete(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
+@login_required
 @csrf_protect
 def api_loai_dich_vu_delete(request, pk):
     """Xóa loại dịch vụ"""
@@ -1176,6 +1195,7 @@ def api_loai_dich_vu_delete(request, pk):
 
 # ------------------------------------ VIEW QUẢN LÝ KHÁCH THUÊ ------------------------------------
 
+@login_required
 def view_quan_ly_khach_thue (request):
     """Hiển thị danh sách hợp đồng thuê và các dịch vụ liên quan"""
     hopdong_list = Hopdong.objects.prefetch_related("hopdongdichvu_set__id_dichvu").order_by("-ngaytaohopdong")
@@ -1214,6 +1234,7 @@ def view_quan_ly_khach_thue (request):
 
     return render(request, "dich_vu_dien_nuoc/quan_ly_khach_thue.html", context)
 
+@login_required
 @csrf_protect
 @transaction.atomic
 @require_POST
@@ -1280,6 +1301,7 @@ def api_quan_ly_khach_thue_update_or_create(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f"Dữ liệu thêm mới chưa đúng - {str(e)}"}, status=400)
 
+@login_required
 @csrf_protect
 @transaction.atomic
 @require_POST
@@ -1291,6 +1313,7 @@ def api_quan_ly_khach_thue_delete(request, pk):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
+@login_required
 def api_get_all_services (request):
     dich_vu = Dichvu.objects.all().values("id_dichvu", "tendichvu")
     return JsonResponse(list(dich_vu), safe=False)
