@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-app_name = "hrm_manager"
+app_name = "hrm"
 urlpatterns = [
     # Include URLs từ sub-apps
     path('core/', include('apps.hrm_manager.__core__.urls')),  # URLs cho phần core (models chung)

@@ -1,216 +1,179 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // --- KHAI BÁO CÁC PHẦN TỬ VÀ KEY ---
+document.addEventListener('DOMContentLoaded', () => {
+    const html = document.documentElement;
+    const body = document.body;
     const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const menuButton = document.getElementById('menu-button');
-    const servicesMenuToggle = document.getElementById('services-menu-toggle');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuBtn = document.getElementById('menu-button');
     const pageTitle = document.getElementById('page-title');
     const docTitle = document.querySelector('title');
+    const userMenuBtn = document.getElementById('user-menu-button');
+    const userMenuDropdown = document.getElementById('user-menu-dropdown');
+    const SIDEBAR_KEY = 'sidebarCollapsedState';
 
-    const SIDEBAR_COLLAPSED_KEY = 'sidebarCollapsedState';
-    const SUBMENU_OPEN_KEY = 'servicesSubmenuState';
-
-    // --- HÀM TIỆN ÍCH ---
+    const qs = (sel, root = document) => root.querySelector(sel);
+    const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const isMobile = () => window.innerWidth < 1024;
-    
-    // Debounce function để tối ưu resize event
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    const isCollapsed = () => html.classList.contains('sidebar-is-collapsed');
+    const setLocal = (k, v) => localStorage.setItem(k, String(v));
+    const getLocal = k => localStorage.getItem(k) === 'true';
 
-    // --- XỬ LÝ SỰ KIỆN CLICK ---
-    
-    // 1. Mở/đóng sidebar (logic khác nhau cho mobile và desktop)
-    menuButton.addEventListener('click', (e) => {
+    // Build menu model từ DOM (tự động theo .submenu-container)
+    const MENUS = qsa('.submenu-container').map(container => {
+        const toggle = qs('.sidebar-link', container);
+        const submenu = qs('.submenu', container);
+        const tooltip = qs('.submenu-tooltip', container);
+        const id = container.dataset.menu || (toggle?.id || '').replace('-menu-toggle', '') || crypto.randomUUID();
+        return {
+            key: id,
+            container, toggle, submenu, tooltip,
+            stateKey: `${id}SubmenuState`,
+            openClass: `submenu-${id}-open`
+        };
+    }).filter(m => m.toggle && m.submenu);
+
+    function setMenuOpen(menu, open) {
+        html.classList.toggle(menu.openClass, open);
+        menu.toggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+        setLocal(menu.stateKey, open);
+    }
+    function closeAllMenus() { MENUS.forEach(m => setMenuOpen(m, false)); }
+
+    // Toggle sidebar (desktop) / mở overlay (mobile)
+    menuBtn?.addEventListener('click', e => {
         e.stopPropagation();
         if (isMobile()) {
             sidebar.classList.toggle('mobile-open');
-            sidebarOverlay.classList.toggle('hidden');
-            document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
-        } else {
-            const isCollapsed = document.documentElement.classList.toggle('sidebar-is-collapsed');
-            localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isCollapsed);
-            
-            // Tự động đóng submenu khi thu gọn sidebar
-            if (isCollapsed) {
-                document.documentElement.classList.remove('submenu-is-open');
-                localStorage.setItem(SUBMENU_OPEN_KEY, 'false');
-            }
+            overlay.classList.toggle('hidden');
+            body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+            return;
         }
+        const collapsed = html.classList.toggle('sidebar-is-collapsed');
+        setLocal(SIDEBAR_KEY, collapsed);
+        if (collapsed) closeAllMenus();
     });
 
-    // 2. Đóng sidebar khi click ra ngoài (chỉ trên mobile)
-    sidebarOverlay.addEventListener('click', () => {
+    // Đóng sidebar mobile
+    overlay?.addEventListener('click', () => {
         sidebar.classList.remove('mobile-open');
-        sidebarOverlay.classList.add('hidden');
-        document.body.style.overflow = '';
+        overlay.classList.add('hidden');
+        body.style.overflow = '';
     });
 
-    // 3. Mở/đóng submenu
-    if (servicesMenuToggle) {
-        servicesMenuToggle.addEventListener('click', (e) => {
+    // Toggle từng submenu
+    MENUS.forEach(menu => {
+        menu.toggle.addEventListener('click', e => {
             e.preventDefault();
-            // Không cho mở submenu khi sidebar đã thu gọn
-            if (document.documentElement.classList.contains('sidebar-is-collapsed')) return;
-
-            const isOpen = document.documentElement.classList.toggle('submenu-is-open');
-            localStorage.setItem(SUBMENU_OPEN_KEY, isOpen);
+            if (isCollapsed()) return;
+            setMenuOpen(menu, !html.classList.contains(menu.openClass));
         });
-    }
-
-    // 4. Sử dụng event delegation cho các link trong tooltip
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('.tooltip-link') || e.target.closest('.tooltip-link')) {
-            const link = e.target.matches('.tooltip-link') ? e.target : e.target.closest('.tooltip-link');
-            updateActiveStateForTooltipLink(link);
-        }
+        // Khôi phục trạng thái mở
+        setMenuOpen(menu, getLocal(menu.stateKey));
     });
 
-    // 5. Xử lý vị trí tooltip khi hover
-    const submenuContainer = document.querySelector('.submenu-container');
-    const tooltip = document.querySelector('.submenu-tooltip');
-    
-    if (submenuContainer && tooltip) {
-        submenuContainer.addEventListener('mouseenter', () => {
-            if (document.documentElement.classList.contains('sidebar-is-collapsed')) {
-                updateTooltipPosition();
-            }
+    // Tooltip định vị khi sidebar thu gọn
+    let hoveredMenu = null, rafId = 0;
+    const schedule = (fn) => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(fn); };
+
+    function positionTooltip(menu) {
+        if (!menu?.tooltip || !menu?.toggle) return;
+        const rect = menu.toggle.getBoundingClientRect();
+        const tip = menu.tooltip;
+        const tipH = tip.getBoundingClientRect().height;
+        const winH = window.innerHeight;
+        let top = rect.top;
+        if (top + tipH > winH) top = Math.max(10, winH - tipH - 20);
+        tip.style.left = `${rect.right + 8}px`;
+        tip.style.top = `${top}px`;
+    }
+
+    MENUS.forEach(menu => {
+        menu.container.addEventListener('mouseenter', () => {
+            if (!isCollapsed()) return;
+            hoveredMenu = menu;
+            schedule(() => positionTooltip(menu));
         });
-        
-        // Sử dụng debounce để tối ưu resize event
-        window.addEventListener('resize', debounce(() => {
-            if (document.documentElement.classList.contains('sidebar-is-collapsed')) {
-                updateTooltipPosition();
-            }
-        }, 100));
-    }
-
-    function updateTooltipPosition() {
-        const servicesMenuToggle = document.getElementById('services-menu-toggle');
-        const tooltip = document.querySelector('.submenu-tooltip');
-        
-        if (!servicesMenuToggle || !tooltip) return;
-        
-        const rect = servicesMenuToggle.getBoundingClientRect();
-        const sidebarWidth = 80;
-        
-        // Tính toán vị trí
-        const left = rect.right + 8;
-        const top = rect.top;
-        
-        // Đảm bảo tooltip không bị tràn ra ngoài màn hình
-        const tooltipHeight = tooltip.offsetHeight || 200;
-        const windowHeight = window.innerHeight;
-        
-        let finalTop = top;
-        if (top + tooltipHeight > windowHeight) {
-            finalTop = windowHeight - tooltipHeight - 20;
-        }
-        
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${Math.max(finalTop, 10)}px`;
-    }
-
-    // --- HÀM XỬ LÝ TRẠNG THÁI ACTIVE VÀ CẬP NHẬT TIÊU ĐỀ ---
-    function initializeUI() {
-        const currentPath = window.location.pathname;
-        let activeLink = null;
-        let activeTooltipLink = null;
-
-        // Tìm link khớp với URL hiện tại trong sidebar thông thường
-        document.querySelectorAll('#sidebar-nav a[href]:not(.tooltip-link)').forEach(link => {
-            const linkPath = link.getAttribute('href');
-            if (linkPath !== '#' && currentPath.startsWith(linkPath)) {
-                if (!activeLink || linkPath.length > activeLink.getAttribute('href').length) {
-                    activeLink = link;
-                }
-            }
+        menu.container.addEventListener('mouseleave', () => {
+            if (hoveredMenu === menu) hoveredMenu = null;
         });
+    });
+    window.addEventListener('resize', () => {
+        if (isCollapsed() && hoveredMenu) schedule(() => positionTooltip(hoveredMenu));
+    }, { passive: true });
 
-        // Tìm link khớp với URL hiện tại trong tooltip
-        document.querySelectorAll('.tooltip-link[href]').forEach(link => {
-            const linkPath = link.getAttribute('href');
-            if (linkPath !== '#' && currentPath.startsWith(linkPath)) {
-                if (!activeTooltipLink || linkPath.length > activeTooltipLink.getAttribute('href').length) {
-                    activeTooltipLink = link;
-                }
-            }
-        });
-
-        // Xóa trạng thái active cũ
-        document.querySelectorAll('#sidebar-nav .active, .tooltip-link.active').forEach(el => el.classList.remove('active'));
-
-        if (activeLink) {
-            activeLink.classList.add('active');
-            const title = activeLink.dataset.title || 'Dashboard';
-            updateTitle(title);
-
-            // Nếu link active là con của submenu, highlight menu cha
-            if (activeLink.closest('#services-submenu')) {
-                servicesMenuToggle.classList.add('active');
-                if (activeTooltipLink) {
-                    activeTooltipLink.classList.add('active');
-                }
-                // Chỉ mở submenu nếu chưa được lưu trạng thái 'mở'
-                if (localStorage.getItem(SUBMENU_OPEN_KEY) !== 'true') {
-                    document.documentElement.classList.add('submenu-is-open');
-                    localStorage.setItem(SUBMENU_OPEN_KEY, 'true');
-                }
-            } else {
-                document.documentElement.classList.remove('submenu-is-open');
-                localStorage.setItem(SUBMENU_OPEN_KEY, 'false');
-            }
-        } else if (activeTooltipLink) {
-            activeTooltipLink.classList.add('active');
-            servicesMenuToggle.classList.add('active');
-            const title = activeTooltipLink.dataset.title || 'Dashboard';
-            updateTitle(title);
-        } else {
-            updateTitle('Dashboard');
-        }
-    }
-    
-    function updateActiveStateForTooltipLink(clickedLink) {
-        document.querySelectorAll('.tooltip-link.active, .sub-link.active').forEach(el => el.classList.remove('active'));
-        
-        clickedLink.classList.add('active');
-        servicesMenuToggle.classList.add('active');
-        
-        const href = clickedLink.getAttribute('href');
-        const correspondingSubLink = document.querySelector(`#services-submenu a[href="${href}"]`);
-        if (correspondingSubLink) {
-            correspondingSubLink.classList.add('active');
-        }
-        
-        const title = clickedLink.dataset.title || 'Dashboard';
-        updateTitle(title);
-    }
-    
+    // Active state + tiêu đề
     function updateTitle(newTitle) {
+        if (!newTitle) return;
         if (pageTitle.textContent === newTitle) return;
-
         pageTitle.classList.add('title-fade-out');
-        
         setTimeout(() => {
             pageTitle.textContent = newTitle;
             docTitle.textContent = `${newTitle} - AdminSystem`;
             pageTitle.classList.remove('title-fade-out');
             pageTitle.classList.add('title-fade-in');
-            
-            // Xóa class fade-in sau khi hoàn thành animation
-            setTimeout(() => {
-                pageTitle.classList.remove('title-fade-in');
-            }, 150);
-        }, 150);
+            setTimeout(() => pageTitle.classList.remove('title-fade-in'), 120);
+        }, 120);
     }
+    function clearActive() { qsa('#sidebar-nav .active, .submenu-tooltip .active').forEach(el => el.classList.remove('active')); }
+    function markActiveByHref(href) {
+        if (!href || href === '#') return;
+        const normal = qsa(`#sidebar-nav a[href="${href}"]:not(.tooltip-link)`);
+        const inTooltip = qsa(`.submenu-tooltip a[href="${href}"]`);
+        normal.forEach(a => a.classList.add('active'));
+        inTooltip.forEach(a => a.classList.add('active'));
+        const any = normal[0] || inTooltip[0];
+        if (any) {
+            const container = any.closest('.submenu-container');
+            const menu = MENUS.find(m => m.container === container);
+            if (menu) {
+                setMenuOpen(menu, true);
+                menu.toggle.classList.add('active');
+            }
+        }
+    }
+    function initActiveFromLocation() {
+        const path = window.location.pathname;
+        const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)')
+            .map(a => a.getAttribute('href'))
+            .filter(h => h && h !== '#');
+        const best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
+        clearActive();
+        if (best) {
+            markActiveByHref(best);
+            updateTitle(qs(`#sidebar-nav a[href="${best}"]`)?.dataset?.title || 'Dashboard');
+        } else {
+            updateTitle('Dashboard');
+        }
+    }
+    // Đồng bộ click trong tooltip
+    document.addEventListener('click', e => {
+        const link = e.target.closest('.tooltip-link');
+        if (!link) return;
+        clearActive(); markActiveByHref(link.getAttribute('href'));
+        updateTitle(link.dataset.title || 'Dashboard');
+    });
 
-    initializeUI();
+    // User dropdown
+    function toggleUserMenu(show) {
+        if (!userMenuDropdown) return;
+        userMenuDropdown.classList.toggle('hidden', !show);
+        requestAnimationFrame(() => {
+            userMenuDropdown.style.opacity = show ? '1' : '0';
+            userMenuDropdown.style.transform = show ? 'scale(1)' : 'scale(0.95)';
+        });
+        userMenuBtn?.setAttribute('aria-expanded', show ? 'true' : 'false');
+    }
+    userMenuBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleUserMenu(userMenuDropdown.classList.contains('hidden'));
+    });
+    document.addEventListener('click', e => {
+        if (!userMenuDropdown || userMenuDropdown.classList.contains('hidden')) return;
+        if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) toggleUserMenu(false);
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') toggleUserMenu(false);
+    });
+
+    // Khởi tạo
+    initActiveFromLocation();
 });
