@@ -805,3 +805,698 @@ WARNING 2025-10-29 15:42:35,740 log 149220 155764 Not Found: /.well-known/appspe
 WARNING 2025-10-29 15:42:35,742 basehttp 149220 155764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3095
 WARNING 2025-10-29 15:44:30,571 log 149220 154480 Not Found: /favicon.ico
 WARNING 2025-10-29 15:44:30,572 basehttp 149220 154480 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 17:31:35,914 log 26312 151040 Not Found: /favicon.ico
+WARNING 2025-10-29 17:31:35,915 basehttp 26312 151040 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-29 17:48:57,271 log 157068 151576 Forbidden (Permission denied): /dashboard/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 56, in _view_wrapper
+    test_pass = test_func(request.user)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 129, in check_perms
+    raise PermissionDenied
+django.core.exceptions.PermissionDenied
+WARNING 2025-10-29 17:48:57,452 basehttp 157068 151576 "GET /dashboard/ HTTP/1.1" 403 135
+WARNING 2025-10-29 17:50:03,716 log 125912 150516 Forbidden (Permission denied): /dashboard/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 56, in _view_wrapper
+    test_pass = test_func(request.user)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 129, in check_perms
+    raise PermissionDenied
+django.core.exceptions.PermissionDenied
+WARNING 2025-10-29 17:50:03,884 basehttp 125912 150516 "GET /dashboard/ HTTP/1.1" 403 135
+WARNING 2025-10-29 17:50:04,275 log 125912 150516 Not Found: /favicon.ico
+WARNING 2025-10-29 17:50:04,275 basehttp 125912 150516 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-30 09:27:47,467 log 103400 163172 Forbidden (Permission denied): /dashboard/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 56, in _view_wrapper
+    test_pass = test_func(request.user)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 129, in check_perms
+    raise PermissionDenied
+django.core.exceptions.PermissionDenied
+WARNING 2025-10-30 09:27:47,746 basehttp 103400 163172 "GET /dashboard/ HTTP/1.1" 403 135
+WARNING 2025-10-30 09:30:47,336 log 161604 147624 Not Found: /favicon.ico
+WARNING 2025-10-30 09:30:47,337 basehttp 161604 147624 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-30 09:33:04,692 log 151632 162900 Not Found: /favicon.ico
+WARNING 2025-10-30 09:33:04,695 basehttp 151632 162900 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-30 09:33:19,631 log 151632 158836 Not Found: /favicon.ico
+WARNING 2025-10-30 09:33:19,633 basehttp 151632 158836 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-30 09:34:11,664 log 143952 152992 Not Found: /favicon.ico
+WARNING 2025-10-30 09:34:11,665 basehttp 143952 152992 "GET /favicon.ico HTTP/1.1" 404 2984
+WARNING 2025-10-30 17:48:02,163 log 20736 22088 Not Found: /favicon.ico
+WARNING 2025-10-30 17:48:02,164 basehttp 20736 22088 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-30 17:48:28,007 log 20736 22088 Internal Server Error: /dichvudiennuoc/api/danh-sach-thong-bao/
+ERROR 2025-10-30 17:48:28,009 basehttp 20736 22088 "GET /dichvudiennuoc/api/danh-sach-thong-bao/?month=&year=&company=&page=1&per_page=10 HTTP/1.1" 500 430
+ERROR 2025-10-30 17:48:28,279 log 20736 20456 Internal Server Error: /dichvudiennuoc/api/danh-sach-cong-ty/
+ERROR 2025-10-30 17:48:28,283 basehttp 20736 20456 "GET /dichvudiennuoc/api/danh-sach-cong-ty/ HTTP/1.1" 500 179
+ERROR 2025-10-30 17:49:03,744 log 20736 6460 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column HopDong.Id_HopDong does not exist
+LINE 1: SELECT "HopDong"."Id_HopDong", "HopDong"."TenCongTy", "HopDo...
+               ^
+HINT:  Perhaps you meant to reference the column "HopDong.MaHopDong" or the column "HopDong.TenHopDong".
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column HopDong.Id_HopDong does not exist
+LINE 1: SELECT "HopDong"."Id_HopDong", "HopDong"."TenCongTy", "HopDo...
+               ^
+HINT:  Perhaps you meant to reference the column "HopDong.MaHopDong" or the column "HopDong.TenHopDong".
+
+ERROR 2025-10-30 17:49:03,746 basehttp 20736 6460 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 136368
+ERROR 2025-10-31 10:09:23,630 log 22236 34984 Internal Server Error: /dichvudiennuoc/api/danh-sach-thong-bao/
+ERROR 2025-10-31 10:09:23,631 basehttp 22236 34984 "GET /dichvudiennuoc/api/danh-sach-thong-bao/?month=&year=&company=&page=1&per_page=10 HTTP/1.1" 500 301
+ERROR 2025-10-31 10:09:24,031 log 22236 35416 Internal Server Error: /dichvudiennuoc/api/danh-sach-cong-ty/
+ERROR 2025-10-31 10:09:24,033 basehttp 22236 35416 "GET /dichvudiennuoc/api/danh-sach-cong-ty/ HTTP/1.1" 500 222
+ERROR 2025-10-31 10:09:24,044 log 22236 29208 Internal Server Error: /dichvudiennuoc/api/danh-sach-tat-ca-dich-vu/
+ERROR 2025-10-31 10:09:24,046 basehttp 22236 29208 "GET /dichvudiennuoc/api/danh-sach-tat-ca-dich-vu/ HTTP/1.1" 500 222
+ERROR 2025-10-31 10:09:31,986 log 22236 29208 Internal Server Error: /dichvudiennuoc/baocaodoanhthu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.ThanhToan_DichVu" does not exist
+LINE 1: ...ngTienTruocThue"))), 0.0) AS "total_revenue" FROM "public.Th...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 127, in view_bao_cao_doanh_thu
+    initial_data = get_filtered_revenue_data()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 55, in get_filtered_revenue_data
+    summary_agg_thanhtoan_qs = thanhtoan_qs.aggregate(
+                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 588, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.ThanhToan_DichVu" does not exist
+LINE 1: ...ngTienTruocThue"))), 0.0) AS "total_revenue" FROM "public.Th...
+                                                             ^
+
+ERROR 2025-10-31 10:09:31,995 basehttp 22236 29208 "GET /dichvudiennuoc/baocaodoanhthu/ HTTP/1.1" 500 141873
+ERROR 2025-10-31 10:10:28,776 log 22236 29208 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.HopDong" does not exist
+LINE 1: ...Thai", "public.HopDong"."NgayBatDauTinhTien" FROM "public.Ho...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.HopDong" does not exist
+LINE 1: ...Thai", "public.HopDong"."NgayBatDauTinhTien" FROM "public.Ho...
+                                                             ^
+
+ERROR 2025-10-31 10:10:28,779 basehttp 22236 29208 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 136551
+ERROR 2025-10-31 10:11:59,826 log 19984 32700 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.SyntaxError: syntax error at or near "".""
+LINE 1: SELECT "public."HopDong"."Id_HopDong", "public."HopDong"."Te...
+                               ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: syntax error at or near "".""
+LINE 1: SELECT "public."HopDong"."Id_HopDong", "public."HopDong"."Te...
+                               ^
+
+ERROR 2025-10-31 10:11:59,829 basehttp 19984 32700 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 137086
+WARNING 2025-10-31 10:12:00,374 log 19984 32700 Not Found: /favicon.ico
+WARNING 2025-10-31 10:12:00,375 basehttp 19984 32700 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:12:14,556 log 36440 30332 Internal Server Error: /dichvudiennuoc/api/danh-sach-tat-ca-dich-vu/
+ERROR 2025-10-31 10:12:14,557 basehttp 36440 30332 "GET /dichvudiennuoc/api/danh-sach-tat-ca-dich-vu/ HTTP/1.1" 500 222
+ERROR 2025-10-31 10:12:14,910 log 36440 36392 Internal Server Error: /dichvudiennuoc/api/danh-sach-cong-ty/
+ERROR 2025-10-31 10:12:14,911 basehttp 36440 36392 "GET /dichvudiennuoc/api/danh-sach-cong-ty/ HTTP/1.1" 500 208
+ERROR 2025-10-31 10:12:14,961 log 36440 548 Internal Server Error: /dichvudiennuoc/api/danh-sach-thong-bao/
+ERROR 2025-10-31 10:12:14,962 basehttp 36440 548 "GET /dichvudiennuoc/api/danh-sach-thong-bao/?month=&year=&company=&page=1&per_page=10 HTTP/1.1" 500 301
+ERROR 2025-10-31 10:12:19,075 log 36440 548 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.SyntaxError: zero-length delimited identifier at or near """"
+LINE 1: SELECT "public."HopDong""."Id_HopDong", "public."HopDong""."...
+                               ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: zero-length delimited identifier at or near """"
+LINE 1: SELECT "public."HopDong""."Id_HopDong", "public."HopDong""."...
+                               ^
+
+ERROR 2025-10-31 10:12:19,078 basehttp 36440 548 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 137673
+WARNING 2025-10-31 10:12:19,577 log 36440 548 Not Found: /favicon.ico
+WARNING 2025-10-31 10:12:19,578 basehttp 36440 548 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:12:44,950 log 37404 16472 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.HopDong" does not exist
+LINE 1: ...Thai", "public.HopDong"."NgayBatDauTinhTien" FROM "public.Ho...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.HopDong" does not exist
+LINE 1: ...Thai", "public.HopDong"."NgayBatDauTinhTien" FROM "public.Ho...
+                                                             ^
+
+ERROR 2025-10-31 10:12:44,954 basehttp 37404 16472 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 136816
+WARNING 2025-10-31 10:12:45,453 log 37404 16472 Not Found: /favicon.ico
+WARNING 2025-10-31 10:12:45,454 basehttp 37404 16472 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:14:08,293 log 6388 19492 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.hopdong" does not exist
+LINE 1: ...Thai", "public.hopdong"."NgayBatDauTinhTien" FROM "public.ho...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.hopdong" does not exist
+LINE 1: ...Thai", "public.hopdong"."NgayBatDauTinhTien" FROM "public.ho...
+                                                             ^
+
+ERROR 2025-10-31 10:14:08,298 basehttp 6388 19492 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 136816
+WARNING 2025-10-31 10:14:08,789 log 6388 19492 Not Found: /favicon.ico
+WARNING 2025-10-31 10:14:08,790 basehttp 6388 19492 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:14:23,151 log 3336 32464 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.HopDong_DichVu" does not exist
+LINE 1: ...uThich", "public.HopDong_DichVu"."DonViTinh" FROM "public.Ho...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1951, in _fetch_all
+    self._prefetch_related_objects()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1328, in _prefetch_related_objects
+    prefetch_related_objects(self._result_cache, *self._prefetch_related_lookups)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 2397, in prefetch_related_objects
+    obj_list, additional_lookups = prefetch_one_level(
+                                   ^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 2561, in prefetch_one_level
+    ) = prefetcher.get_prefetch_querysets(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 800, in get_prefetch_querysets
+    for rel_obj in queryset:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.HopDong_DichVu" does not exist
+LINE 1: ...uThich", "public.HopDong_DichVu"."DonViTinh" FROM "public.Ho...
+                                                             ^
+
+ERROR 2025-10-31 10:14:23,156 basehttp 3336 32464 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 177379
+WARNING 2025-10-31 10:14:23,660 log 3336 32464 Not Found: /favicon.ico
+WARNING 2025-10-31 10:14:23,661 basehttp 3336 32464 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:14:33,648 log 35204 32416 Internal Server Error: /dichvudiennuoc/quanlykhachthue/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "public.DichVu" does not exist
+LINE 1: ...ichVu"."ChuThich", "public.DichVu"."NgayGhi" FROM "public.Di...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\dich_vu_dien_nuoc\views.py", line 1204, in view_quan_ly_khach_thue
+    for hopdong in hopdong_list:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1951, in _fetch_all
+    self._prefetch_related_objects()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1328, in _prefetch_related_objects
+    prefetch_related_objects(self._result_cache, *self._prefetch_related_lookups)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 2397, in prefetch_related_objects
+    obj_list, additional_lookups = prefetch_one_level(
+                                   ^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 2598, in prefetch_one_level
+    all_related_objects = list(rel_qs)
+                          ^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "public.DichVu" does not exist
+LINE 1: ...ichVu"."ChuThich", "public.DichVu"."NgayGhi" FROM "public.Di...
+                                                             ^
+
+ERROR 2025-10-31 10:14:33,654 basehttp 35204 32416 "GET /dichvudiennuoc/quanlykhachthue/ HTTP/1.1" 500 165042
+WARNING 2025-10-31 10:14:34,104 log 35204 32416 Not Found: /favicon.ico
+WARNING 2025-10-31 10:14:34,105 basehttp 35204 32416 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:35:21,794 log 33728 36244 Not Found: /favicon.ico
+WARNING 2025-10-31 10:35:21,796 basehttp 33728 36244 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:37:05,229 log 31504 14048 Not Found: /favicon.ico
+WARNING 2025-10-31 10:37:05,229 basehttp 31504 14048 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:37:14,978 log 31504 14048 Not Found: /favicon.ico
+WARNING 2025-10-31 10:37:14,980 basehttp 31504 14048 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:38:09,428 log 31504 14048 Not Found: /favicon.ico
+WARNING 2025-10-31 10:38:09,429 basehttp 31504 14048 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:39:34,984 log 38060 34952 Not Found: /favicon.ico
+WARNING 2025-10-31 10:39:34,984 basehttp 38060 34952 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:39:56,690 log 38060 34952 Not Found: /favicon.ico
+WARNING 2025-10-31 10:39:56,692 basehttp 38060 34952 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-10-31 10:42:06,938 log 30764 36156 Internal Server Error: /hrm/core/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedTable: relation "hrm.HopDong" does not exist
+LINE 1: ...pDong"."LoaiHopDong", "hrm.HopDong"."GhiChu" FROM "hrm.HopDo...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\__core__\views.py", line 9, in index
+    print(models_Hopdong)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 360, in __repr__
+    data = list(self[: REPR_OUTPUT_SIZE + 1])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: relation "hrm.HopDong" does not exist
+LINE 1: ...pDong"."LoaiHopDong", "hrm.HopDong"."GhiChu" FROM "hrm.HopDo...
+                                                             ^
+
+ERROR 2025-10-31 10:42:06,946 basehttp 30764 36156 "GET /hrm/core/ HTTP/1.1" 500 137822
+WARNING 2025-10-31 10:42:59,070 log 37356 19792 Not Found: /favicon.ico
+WARNING 2025-10-31 10:42:59,072 basehttp 37356 19792 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-10-31 10:43:17,034 log 37356 19792 Not Found: /favicon.ico
+WARNING 2025-10-31 10:43:17,036 basehttp 37356 19792 "GET /favicon.ico HTTP/1.1" 404 3131

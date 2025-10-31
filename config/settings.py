@@ -43,9 +43,22 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     # Third party apps
     'corsheaders',
+
     # Local apps
     'apps.dashboard',
     'apps.dich_vu_dien_nuoc',
+
+    # HRM Manager Apps
+    'apps.hrm_manager',
+    'apps.hrm_manager.__core__',
+    'apps.hrm_manager.cham_cong',
+    'apps.hrm_manager.don_bao',
+    'apps.hrm_manager.hop_dong_lao_dong',
+    'apps.hrm_manager.lam_them_gio',
+    'apps.hrm_manager.lich_lam_viec',
+    'apps.hrm_manager.nghi_phep',
+    'apps.hrm_manager.quan_ly_luong',
+    'apps.hrm_manager.to_chuc_nhan_su',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +104,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DB_SCHEMAS = [s.strip() for s in os.getenv('DB_SCHEMA', 'public').split(',') if s.strip()]
-DB_SEARCH_PATH = ','.join(DB_SCHEMAS)
+PG_SEARCH_PATH = ','.join(DB_SCHEMAS)
 
 DATABASES = {
     'default': {
@@ -103,7 +116,7 @@ DATABASES = {
         'PORT': os.getenv("port"),
         'OPTIONS': {
             'sslmode': 'require',
-            'options': f"-c search_path={DB_SEARCH_PATH},public",
+            'options': f"-c search_path={PG_SEARCH_PATH}",
         },
         'CONN_MAX_AGE': 600,
 

@@ -19,7 +19,7 @@ class CtThanhtoanDichvu(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'CT_ThanhToan_DichVu'
+        db_table = '"public"."CT_ThanhToan_DichVu"'
 
 
 class Dichvu(models.Model):
@@ -31,7 +31,7 @@ class Dichvu(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'DichVu'
+        db_table = '"public"."DichVu"'
 
 
 class Hopdong(models.Model):
@@ -48,7 +48,7 @@ class Hopdong(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'HopDong'
+        db_table = '"public"."HopDong"'
 
 
 class HopdongDichvu(models.Model):
@@ -61,7 +61,7 @@ class HopdongDichvu(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'HopDong_DichVu'
+        db_table = '"public"."HopDong_DichVu"'
 
 
 class HopdongNhaxuong(models.Model):
@@ -86,7 +86,7 @@ class Loaidichvu(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'LoaiDichVu'
+        db_table = '"public"."LoaiDichVu"'
 
 
 class Loaitaisan(models.Model):
@@ -96,7 +96,7 @@ class Loaitaisan(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'LoaiTaiSan'
+        db_table = '"public"."LoaiTaiSan"'
 
 
 class Taisan(models.Model):
@@ -110,7 +110,7 @@ class Taisan(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'TaiSan'
+        db_table = '"public"."TaiSan"'
 
 
 class ThanhtoanDichvu(models.Model):
@@ -124,7 +124,7 @@ class ThanhtoanDichvu(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'ThanhToan_DichVu'
+        db_table = '"public"."ThanhToan_DichVu"'
 
 
 class ThanhtoanNhaxuong(models.Model):
@@ -135,4 +135,4 @@ class ThanhtoanNhaxuong(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'ThanhToan_NhaXuong'
+        db_table = '"public"."ThanhToan_NhaXuong"'

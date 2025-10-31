@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required,permission_required
+from .models import *
 
 # Create your views here.
 @login_required
-@permission_required('dashboard.view_dashboard', raise_exception=True)
 def index(request):
-    return render(request, "dashboard/index.html")
+    models_Hopdong = Hopdong.objects.all()
+    print(models_Hopdong)
+    return render(request, "hrm_manager/index.html")

@@ -23,11 +23,18 @@ from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='dashboard/')),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('dichvudiennuoc/', include('apps.dich_vu_dien_nuoc.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('hrm/', include('apps.hrm_manager.urls')),
 ]
 
 # 🆕 THÊM DÒNG NÀY CHO DEVELOPMENT
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'static')
+
+
+# Tùy chỉnh tiêu đề trang admin
+admin.site.site_header = "Trang quản trị"  # Tiêu đề chính (header)
+admin.site.site_title = "Admin Panel"           # Tiêu đề trên tab trình duyệt
+admin.site.index_title = "Chào mừng bạn, hôm nay bạn như thế nào ?"         # Tiêu đề trên trang index
