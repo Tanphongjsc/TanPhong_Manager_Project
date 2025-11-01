@@ -5,8 +5,8 @@
     --transition-timing: ease-in-out;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
+/* Ngăn scrollbar ngang toàn trang trong lúc animate */
+html, body {
     overflow-x: hidden;
 }
 
@@ -37,12 +37,45 @@ html.submenu-salary-open   #salary-submenu   { grid-template-rows: 1fr; }
 html.submenu-services-open #services-menu-toggle .fa-chevron-down { transform: rotate(180deg); }
 html.submenu-salary-open   #salary-menu-toggle .fa-chevron-down   { transform: rotate(180deg); }
 
-/* Sidebar wrapper */
+/* Sidebar cơ bản (desktop) */
 #sidebar {
     width: var(--sidebar-width);
     transition: width var(--transition-duration) var(--transition-timing), transform var(--transition-duration) var(--transition-timing);
+    will-change: width, transform;
+    position: relative;
 }
-#sidebar.mobile-open { transform: translateX(0); }
+
+/* Khi đang expand/collapse (desktop): khóa tràn để mượt */
+html.sidebar-expanding #sidebar,
+html.sidebar-collapsing #sidebar { overflow: hidden; }
+
+/* Khi đang animate: khóa scroll và ẩn tooltip để không bị cắt */
+html.sidebar-expanding #sidebar-nav,
+html.sidebar-collapsing #sidebar-nav {
+    overflow: hidden !important;
+}
+html.sidebar-expanding .sidebar-tooltip,
+html.sidebar-collapsing .sidebar-tooltip,
+html.sidebar-expanding .submenu-tooltip,
+html.sidebar-collapsing .submenu-tooltip {
+    display: none !important;
+}
+
+/* Ẩn text trong lúc animate để tránh tràn ra khi chiều rộng chưa đủ */
+.sidebar-text {
+    white-space: nowrap; /* chống xuống dòng gây nhảy layout */
+    transition: opacity var(--transition-duration) var(--transition-timing);
+}
+html.sidebar-expanding .sidebar-text,
+html.sidebar-collapsing .sidebar-text,
+html.sidebar-collapsing .fa-chevron-down {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Đảm bảo main-content không sinh scrollbar ngang khi flex co giãn */
+#main-content { min-width: 0; }
 
 /* Tooltip icon đơn lẻ (Dashboard/Settings) */
 .sidebar-tooltip {
@@ -146,10 +179,34 @@ html.sidebar-is-collapsed #sidebar nav { overflow: visible; }
 /* Hover mượt */
 .sidebar-link, .sub-link, .tooltip-link { transition: background-color .2s ease-in-out, color .2s ease-in-out; }
 
-/* Mobile */
+/* Mobile: off-canvas, bỏ ảnh hưởng của trạng thái "collapsed" */
 @media (max-width: 1023px) {
-    #sidebar { box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-    #main-content { width: 100%; }
+    /* Bỏ hiệu lực thu gọn trên mobile */
+    html.sidebar-is-collapsed #sidebar { width: var(--sidebar-width); }
+    html.sidebar-is-collapsed .sidebar-text,
+    html.sidebar-is-collapsed .fa-chevron-down { display: inline; }
+    html.sidebar-is-collapsed #services-submenu,
+    html.sidebar-is-collapsed #salary-submenu { display: grid; }
+
+    /* Off-canvas sidebar */
+    #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        height: 100vh;
+        width: var(--sidebar-width);
+        transform: translateX(-100%);
+        transition: transform 0.25s var(--transition-timing); /* chỉ animate transform cho mượt */
+        box-shadow: 2px 0 10px rgba(0,0,0,.12);
+        z-index: 30;
+    }
+    #sidebar.mobile-open { transform: translateX(0); }
+
+    /* Nội dung chiếm toàn bộ chiều ngang */
+    #main-content {
+        width: 100vw;
+        min-width: 0;
+        margin-left: 0 !important;
+    }
 }
 
 /* Tôn trọng người dùng giảm chuyển động */

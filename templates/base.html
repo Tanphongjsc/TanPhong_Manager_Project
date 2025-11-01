@@ -7,10 +7,13 @@
     <title>{% block title %}AdminSystem{% endblock title %}</title>
 
     <script>
-        // Chống "flicker" (nhấp nháy giao diện) khi tải lại trang
+        // Chống flicker khi load
         (function() {
             const html = document.documentElement;
-            if (localStorage.getItem('sidebarCollapsedState') === 'true') {
+            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+
+            // Chỉ khôi phục "thu gọn" trên desktop
+            if (isDesktop && localStorage.getItem('sidebarCollapsedState') === 'true') {
                 html.classList.add('sidebar-is-collapsed');
             }
             // Khôi phục từng submenu
@@ -47,7 +50,7 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
 
         {% if user.is_authenticated %}
-        <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed lg:relative lg:translate-x-0 -translate-x-full z-30 transition-all duration-300 ease-in-out" role="navigation" aria-label="Sidebar">
+        <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed lg:relative z-30 transition-all duration-300 ease-in-out" role="navigation" aria-label="Sidebar">
             <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
                 <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
                 <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
