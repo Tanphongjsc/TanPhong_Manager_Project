@@ -7,7 +7,7 @@
     <title>{% block title %}AdminSystem{% endblock title %}</title>
 
     <script>
-        // Chống flicker khi load
+        // Chống flicker khi load: khôi phục trạng thái sidebar/submenu từ localStorage trước khi CSS render
         (function() {
             const html = document.documentElement;
             const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
@@ -16,12 +16,12 @@
             if (isDesktop && localStorage.getItem('sidebarCollapsedState') === 'true') {
                 html.classList.add('sidebar-is-collapsed');
             }
-            // Khôi phục từng submenu
+            // Khôi phục trạng thái các submenu nếu đã lưu trước đó
             if (localStorage.getItem('servicesSubmenuState') === 'true') {
                 html.classList.add('submenu-services-open');
             }
-            if (localStorage.getItem('salarySubmenuState') === 'true') {
-                html.classList.add('submenu-salary-open');
+            if (localStorage.getItem('hrmSubmenuState') === 'true') { // <-- ĐÃ SỬA
+                html.classList.add('submenu-hrm-open'); // <-- ĐÃ SỬA
             }
         })();
     </script>
@@ -29,14 +29,18 @@
     <!-- Tối ưu hóa: Sử dụng CDN với SRI (Subresource Integrity) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome từ CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <!-- CSS project -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block styles %}{% endblock styles %}
     <style>
+        /* Thiết lập font chung cho trang */
         body {
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
@@ -47,22 +51,30 @@
 <body class="bg-gray-100 text-gray-800">
 
     <div class="flex h-screen">
+        <!-- Overlay cho sidebar trên mobile (ẩn/hiện) -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
 
         {% if user.is_authenticated %}
+        <!-- Sidebar chính: hiển thị khi user đã đăng nhập -->
         <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed lg:relative z-30 transition-all duration-300 ease-in-out" role="navigation" aria-label="Sidebar">
             <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
+                <!-- Logo / Brand -->
                 <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
                 <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
             </div>
+
+            <!-- Navigation links: dùng aria và class để JS/CSS thao tác -->
             <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+                <!-- Dashboard -->
                 <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Dashboard">
                     <i class="fas fa-tachometer-alt w-6 text-gray-400 flex-shrink-0"></i>
                     <span class="ml-3 sidebar-text">Dashboard</span>
                     <div class="sidebar-tooltip">Dashboard</div>
                 </a>
                 
+                <!-- Submenu: Quản lý Dịch vụ -->
                 <div class="submenu-container" data-menu="services">
+                    <!-- Toggle chính cho submenu (JS sẽ dùng id để mở/đóng) -->
                     <a href="#" id="services-menu-toggle" aria-expanded="false" aria-controls="services-submenu"
                        class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Dịch vụ">
                         <i class="fas fa-building-circle-check w-6 text-gray-400 flex-shrink-0"></i>
@@ -70,11 +82,13 @@
                         <i class="fas fa-chevron-down transform transition-transform duration-200 sidebar-text flex-shrink-0"></i>
                     </a>
                     
+                    <!-- Tooltip khi hover (desktop) -->
                     <div class="submenu-tooltip shadow-xl">
                         <div class="tooltip-header px-4 py-2 border-b border-gray-200 font-semibold text-gray-700 flex items-center">
                             <i class="fas fa-building-circle-check mr-2"></i>Quản lý Dịch vụ
                         </div>
                         <div class="py-2">
+                            <!-- Các link nhanh trong tooltip -->
                             <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh sách Thông báo">
                                 <i class="fas fa-list-ul me-2"></i>Danh sách Thông báo
                             </a>
@@ -90,6 +104,7 @@
                         </div>
                     </div>
                     
+                    <!-- Submenu chính (dùng cho mobile/expanded) -->
                     <div id="services-submenu" class="submenu">
                         <div class="submenu-inner pl-8 pt-2">
                             <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh sách Thông báo">
@@ -108,50 +123,101 @@
                     </div>
                 </div>
                 
-                <div class="submenu-container" data-menu="salary">
-                    <a href="#" id="salary-menu-toggle" aria-expanded="false" aria-controls="salary-submenu"
-                       class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Lương">
-                        <i class="fas fa-money-bill-wave w-6 text-gray-400 flex-shrink-0"></i>
-                        <span class="ml-3 sidebar-text flex-1">Quản lý Lương</span>
+                <!-- Submenu: Quản lý Lương -->
+                <div class="submenu-container" data-menu="hrm">
+                    <a href="#" id="hrm-menu-toggle" aria-expanded="false" aria-controls="hrm-submenu"
+                    class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Nhân sự">
+                        <i class="fas fa-users-gear w-6 text-gray-400 flex-shrink-0"></i>
+                        <span class="ml-3 sidebar-text flex-1">Quản lý Nhân sự</span>
                         <i class="fas fa-chevron-down transform transition-transform duration-200 sidebar-text flex-shrink-0"></i>
                     </a>
                     
                     <div class="submenu-tooltip shadow-xl">
                         <div class="tooltip-header px-4 py-2 border-b border-gray-200 font-semibold text-gray-700 flex items-center">
-                            <i class="fas fa-money-bill-wave mr-2"></i>Quản lý Lương
+                            <i class="fas fa-users-gear mr-2"></i>Quản lý Nhân sự
                         </div>
                         <div class="py-2">
-                            <a href="{% url 'hrm:core:index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Nhân sự">
-                                <i class="fas fa-user-tie me-2"></i>Quản lý Nhân sự
+                            <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Cây nhân sự">
+                                <i class="fas fa-sitemap me-2"></i>Cây nhân sự
                             </a>
-                            <a href="{% url 'hrm:core:index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Hợp đồng">
+                            <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Chức vụ">
+                                <i class="fas fa-id-badge me-2"></i>Chức vụ
+                            </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh mục hệ thống">
+                                <i class="fas fa-archive me-2"></i>Danh mục hệ thống
+                            </a>
+                            
+                            <div class="my-2 border-t border-gray-200"></div>
+
+                            <div class="px-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quản lý thông tin</div>
+                            <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Hợp đồng">
                                 <i class="fas fa-file-contract me-2"></i>Quản lý Hợp đồng
+                            </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Tạm ứng">
+                                <i class="fas fa-hand-holding-usd me-2"></i>Quản lý Tạm ứng
+                            </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Bồi thường">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Quản lý Bồi thường
+                            </a>
+
+                            <div class="my-2 border-t border-gray-200"></div>
+
+                            <a href="#" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Báo cáo">
+                                <i class="fas fa-chart-bar me-2"></i>Báo cáo
                             </a>
                         </div>
                     </div>
                     
-                    <div id="salary-submenu" class="submenu">
+                    <div id="hrm-submenu" class="submenu">
                         <div class="submenu-inner pl-8 pt-2">
-                            <a href="{% url 'hrm:core:index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Nhân sự">
-                                <i class="fas fa-user-tie w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Nhân sự</span>
+
+                            <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Cây nhân sự">
+                                <i class="fas fa-sitemap w-6 text-gray-400"></i><span class="sidebar-text">Cây nhân sự</span>
                             </a>
-                            <a href="{% url 'hrm:core:index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Hợp đồng">
+                            <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Chức vụ">
+                                <i class="fas fa-id-badge w-6 text-gray-400"></i><span class="sidebar-text">Chức vụ</span>
+                            </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh mục hệ thống">
+                                <i class="fas fa-archive w-6 text-gray-400"></i><span class="sidebar-text">Danh mục hệ thống</span>
+                            </a>
+
+                            <div class="my-2 border-t border-gray-700"></div>
+
+                            <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">Quản lý thông tin</div>
+
+                            <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Hợp đồng">
                                 <i class="fas fa-file-contract w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Hợp đồng</span>
                             </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Tạm ứng">
+                                <i class="fas fa-hand-holding-usd w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Tạm ứng</span>
+                            </a>
+                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Bồi thường">
+                                <i class="fas fa-exclamation-triangle w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Bồi thường</span>
+                            </a>
+
+                            <div class="my-2 border-t border-gray-700"></div>
+
+                            <a href="{% url 'hrm:to_chuc_nhan_su:bao_cao_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Báo cáo">
+                                <i class="fas fa-chart-bar w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo</span>
+                            </a>
+                            
                         </div>
                     </div>
                 </div>
                 
+                <!-- Link cài đặt chung -->
                 <a href="#" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Cài đặt">
                     <i class="fas fa-cog w-6 text-gray-400 flex-shrink-0"></i>
                     <span class="ml-3 sidebar-text">Cài đặt</span>
                     <div class="sidebar-tooltip">Cài đặt</div>
                 </a>
             </nav>
-            <!-- Nút Đăng xuất -->
+
+            <!-- Nút Đăng xuất: đặt ở cuối sidebar để luôn hiển thị -->
             <div class="mt-auto py-2 px-2 border-t border-gray-700"> <!-- Thêm padding và đường viền để tách biệt trực quan -->
                 <form action="{% url 'logout' %}" method="post" class="m-0">
                     {% csrf_token %}
+                    <!-- Sử dụng button để gửi POST logout (bảo mật hơn link GET) -->
                     <button type="submit" class="sidebar-link flex items-center w-full px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-200 text-red-400 relative border-0 bg-transparent text-left">
                         <i class="fas fa-sign-out-alt w-6 flex-shrink-0"></i>
                         <span class="ml-3 sidebar-text">Đăng xuất</span>
@@ -161,28 +227,35 @@
             </div>
         </aside>
 
+        <!-- Main content bao gồm header và nội dung trang -->
         <div id="main-content" class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white shadow-sm flex items-center justify-between p-4 z-10 sticky top-0">
+                <!-- Nút mở/thu sidebar trên mobile/desktop -->
                 <button id="menu-button" class="text-gray-600 focus:outline-none">
                     <i class="fas fa-bars fa-lg"></i>
                 </button>
+                <!-- Title trang: JS có thể set nội dung theo route -->
                 <h2 id="page-title" class="text-xl font-semibold text-gray-800 mb-0"></h2>
                 
-                <!-- Menu người dùng -->
+                <!-- Menu người dùng (avatar + dropdown) -->
                 <div class="relative">
                     <button id="user-menu-button" class="flex items-center space-x-2 focus:outline-none" type="button" aria-haspopup="true" aria-expanded="false">
                         <span class="text-sm text-gray-600 hidden sm:inline">Xin chào, <strong>{{ user.username }}</strong></span>
+                        <!-- Avatar sinh động từ ui-avatars -->
                         <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&background=3b82f6&color=fff" alt="User avatar">
                     </button>
+                    <!-- Dropdown menu người dùng (ẩn mặc định) -->
                     <div id="user-menu-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-20 hidden origin-top-right"
                          style="transition: transform 0.2s ease-out, opacity 0.2s ease-out;">
                         <div class="px-4 py-3 border-b">
+                            <!-- Hiển thị tên đầy đủ/email nếu có -->
                             <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
                             <p class="text-sm text-gray-500 truncate">{{ user.email|default:"Không có email" }}</p>
                         </div>
                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user-circle w-6 mr-2 text-gray-500"></i>Hồ sơ của bạn</a>
                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-cog w-6 mr-2 text-gray-500"></i>Cài đặt tài khoản</a>
                         <div class="border-t">
+                            <!-- Liên kết đăng xuất hiển thị trên view nhỏ (mobile) -->
                             <a href="javascript:{document.querySelector('#sidebar form[action*=\'logout\']').submit()}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 lg:hidden">
                                 <i class="fas fa-sign-out-alt w-6 mr-2"></i>Đăng xuất
                             </a>
@@ -192,12 +265,13 @@
             </header>
 
             <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+                <!-- Nội dung chính của trang sẽ được inject ở đây bởi các template con -->
                 {% block content %}
                 {% endblock content %}
             </main>
         </div>
         {% else %}
-        <!-- Nội dung cho user chưa đăng nhập (có thể redirect đến login) -->
+        <!-- Nếu chưa đăng nhập: hiển thị thông báo (có thể redirect tới trang login) -->
         <div class="flex-1 flex items-center justify-center">
             <p class="text-xl text-gray-600">Vui lòng đăng nhập để truy cập hệ thống.</p>
         </div>
@@ -206,6 +280,7 @@
     
     <!-- Tối ưu hóa: Đặt script ở cuối và sử dụng defer/asynchronous loading khi có thể -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <!-- JS chính của project: defer để không block render -->
     <script src="{% static 'js/base.js' %}" defer></script>
     
     {% block scripts %}{% endblock scripts %}

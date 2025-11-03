@@ -18,7 +18,7 @@ html.sidebar-is-collapsed .sidebar-link { justify-content: center; padding: 0.75
 html.sidebar-is-collapsed .sidebar-link i { margin-right: 0; }
 /* Ẩn toàn bộ submenu khi thu gọn */
 html.sidebar-is-collapsed #services-submenu,
-html.sidebar-is-collapsed #salary-submenu { display: none !important; }
+html.sidebar-is-collapsed #hrm-submenu { display: none !important; }
 
 /* Submenu: dùng grid + overflow để mở/đóng mượt */
 .submenu {
@@ -31,11 +31,11 @@ html.sidebar-is-collapsed #salary-submenu { display: none !important; }
 
 /* Mở theo nhóm */
 html.submenu-services-open #services-submenu { grid-template-rows: 1fr; }
-html.submenu-salary-open   #salary-submenu   { grid-template-rows: 1fr; }
+html.submenu-hrm-open      #hrm-submenu      { grid-template-rows: 1fr; }
 
 /* Chevron xoay theo nhóm */
 html.submenu-services-open #services-menu-toggle .fa-chevron-down { transform: rotate(180deg); }
-html.submenu-salary-open   #salary-menu-toggle .fa-chevron-down   { transform: rotate(180deg); }
+html.submenu-hrm-open      #hrm-menu-toggle .fa-chevron-down      { transform: rotate(180deg); }
 
 /* Sidebar cơ bản (desktop) */
 #sidebar {
