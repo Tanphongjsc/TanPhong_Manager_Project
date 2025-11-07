@@ -4552,3 +4552,107 @@ WARNING 2025-11-07 10:48:26,136 log 101768 122176 Not Found: /.well-known/appspe
 WARNING 2025-11-07 10:48:26,138 basehttp 101768 122176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-11-07 10:48:29,831 log 101768 103600 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-11-07 10:48:29,833 basehttp 101768 103600 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 11:44:22,191 log 112560 115688 Not Found: /favicon.ico
+WARNING 2025-11-07 11:44:22,192 basehttp 112560 115688 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-07 11:44:25,969 log 112560 115688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 11:44:25,970 basehttp 112560 115688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 11:44:30,986 log 112560 115688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 11:44:30,988 basehttp 112560 115688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:18:53,847 log 112560 114024 Not Found: /favicon.ico
+WARNING 2025-11-07 12:18:53,848 basehttp 112560 114024 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-07 12:21:02,659 log 112560 114024 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:21:02,660 basehttp 112560 114024 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:21:18,040 log 112560 114024 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:21:18,042 basehttp 112560 114024 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:21:27,291 log 112560 114024 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:21:27,293 basehttp 112560 114024 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:21:29,517 log 112560 114024 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:21:29,518 basehttp 112560 114024 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:21:32,338 log 112560 114024 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:21:32,339 basehttp 112560 114024 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:23:21,998 log 112560 111728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:23:21,999 basehttp 112560 111728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:29:52,973 log 112560 116248 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:29:52,974 basehttp 112560 116248 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 12:30:28,612 log 112560 123120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 12:30:28,616 basehttp 112560 123120 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-07 15:54:09,140 log 119828 117608 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/cong-ty/1
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\utils\deprecation.py", line 122, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\middleware\common.py", line 108, in process_response
+    return self.response_redirect_class(self.get_full_path_with_slash(request))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\middleware\common.py", line 87, in get_full_path_with_slash
+    raise RuntimeError(
+RuntimeError: You called this URL via PUT, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining PUT data. Change your form to point to localhost:8000/hrm/to-chuc-nhan-su/api/v1/cong-ty/1/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+ERROR 2025-11-07 15:54:09,141 basehttp 119828 117608 "PUT /hrm/to-chuc-nhan-su/api/v1/cong-ty/1 HTTP/1.1" 500 76801
+ERROR 2025-11-07 15:56:20,806 log 124128 110276 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 102, in api_cong_ty_detail
+    **cong_ty.values()
+      ^^^^^^^^^^^^^^
+AttributeError: 'Congty' object has no attribute 'values'
+ERROR 2025-11-07 15:56:20,808 basehttp 124128 110276 "GET /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/ HTTP/1.1" 500 80014
+ERROR 2025-11-07 15:57:07,022 log 103660 120536 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 90, in api_cong_ty_detail
+    cong_ty = Congty.objects.get(id=id).values()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Congty' object has no attribute 'values'
+ERROR 2025-11-07 15:57:07,024 basehttp 103660 120536 "GET /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/ HTTP/1.1" 500 80038
+ERROR 2025-11-07 15:59:26,542 log 65008 119272 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 92, in api_cong_ty_detail
+    cong_ty = Congty.objects.get(id=id).values()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Congty' object has no attribute 'values'
+ERROR 2025-11-07 15:59:26,544 basehttp 65008 119272 "GET /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/ HTTP/1.1" 500 80038
+WARNING 2025-11-07 16:09:10,105 log 104052 124144 Not Found: /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/
+WARNING 2025-11-07 16:09:10,106 basehttp 104052 124144 "GET /hrm/to-chuc-nhan-su/api/v1/cong-ty/1/ HTTP/1.1" 404 75
+WARNING 2025-11-07 17:22:13,630 log 123460 106712 Not Found: /hrm/to-chuc-nhan-su/api/v1/phong-ban/employee
+WARNING 2025-11-07 17:22:13,631 basehttp 123460 106712 "GET /hrm/to-chuc-nhan-su/api/v1/phong-ban/employee HTTP/1.1" 404 10525
+WARNING 2025-11-07 17:23:02,420 log 13084 118252 Bad Request: /hrm/to-chuc-nhan-su/api/v1/phong-ban/1/employee/
+WARNING 2025-11-07 17:23:02,421 basehttp 13084 118252 "GET /hrm/to-chuc-nhan-su/api/v1/phong-ban/1/employee/ HTTP/1.1" 400 558
+WARNING 2025-11-07 17:36:04,635 log 107412 105196 Not Found: /favicon.ico
+WARNING 2025-11-07 17:36:04,635 basehttp 107412 105196 "GET /favicon.ico HTTP/1.1" 404 3131

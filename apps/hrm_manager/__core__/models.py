@@ -671,13 +671,12 @@ class Phieuluong(models.Model):
 
 class Phongban(models.Model):
     id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField()
     maphongban = models.CharField(db_column='MaPhongBan', blank=True, null=True)  # Field name made lowercase.
     tenphongban = models.CharField(db_column='TenPhongBan', blank=True, null=True)  # Field name made lowercase.
     level = models.IntegerField(db_column='Level', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
-    create_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
     congty = models.ForeignKey(Congty, models.DO_NOTHING, blank=True, null=True)
     phongbancha_id = models.BigIntegerField(blank=True, null=True)
