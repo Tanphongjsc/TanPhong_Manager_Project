@@ -7,3 +7,12 @@
 __pycache__/
 env/
 logs/
+
+# Thư mục Node
+node_modules/
+
+# Thư mục build CSS (vì Render sẽ tự build)
+static/css/dist/
+
+# Thư mục collectstatic của Django
+staticfiles/

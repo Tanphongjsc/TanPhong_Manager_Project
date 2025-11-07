@@ -3874,3 +3874,681 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'quan_ly_tam_ung_index' not f
 ERROR 2025-11-03 17:58:26,095 basehttp 73080 49948 "GET /hrm/hop-dong-lao-dong/quan-ly/hop-dong/ HTTP/1.1" 500 180943
 WARNING 2025-11-03 17:58:26,542 log 73080 49948 Not Found: /favicon.ico
 WARNING 2025-11-03 17:58:26,543 basehttp 73080 49948 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 09:29:53,307 log 76068 83704 Not Found: /favicon.ico
+WARNING 2025-11-04 09:29:53,308 basehttp 76068 83704 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-11-04 10:24:03,916 log 76068 84436 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 12, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 962, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'recursive_node' appears more than once
+ERROR 2025-11-04 10:24:03,920 basehttp 76068 84436 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 230942
+WARNING 2025-11-04 10:24:04,935 log 76068 84436 Not Found: /favicon.ico
+WARNING 2025-11-04 10:24:04,935 basehttp 76068 84436 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 10:24:54,099 log 76068 84436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 10:24:54,100 basehttp 76068 84436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 10:24:57,499 log 76068 84436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 10:24:57,500 basehttp 76068 84436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 10:25:04,330 log 76068 84436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 10:25:04,331 basehttp 76068 84436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 10:37:13,525 log 84436 80568 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 10:37:13,526 basehttp 84436 80568 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 10:37:20,048 log 84436 42408 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 10:37:20,049 basehttp 84436 42408 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 10:37:20,788 log 84436 42408 Not Found: /favicon.ico
+WARNING 2025-11-04 10:37:20,789 basehttp 84436 42408 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 10:37:44,346 log 84436 42408 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 10:37:44,346 basehttp 84436 42408 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 10:37:46,434 log 84436 42408 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 10:37:46,435 basehttp 84436 42408 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 10:37:47,118 log 84436 42408 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 10:37:47,119 basehttp 84436 42408 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 10:44:47,076 basehttp 81776 78732 "POST /hrm/to-chuc-nhan-su/api/v1/chuc-vu HTTP/1.1" 403 2491
+WARNING 2025-11-04 10:46:44,711 log 5168 25176 Bad Request: /hrm/to-chuc-nhan-su/api/v1/chuc-vu
+WARNING 2025-11-04 10:46:44,711 basehttp 5168 25176 "POST /hrm/to-chuc-nhan-su/api/v1/chuc-vu HTTP/1.1" 400 87
+WARNING 2025-11-04 10:50:35,448 basehttp 5168 60512 "PUT /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1 HTTP/1.1" 403 2491
+WARNING 2025-11-04 10:51:12,572 log 81292 77896 Method Not Allowed (PATCH): /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1
+WARNING 2025-11-04 10:51:12,747 basehttp 81292 77896 "PATCH /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1 HTTP/1.1" 405 0
+WARNING 2025-11-04 11:03:37,550 log 67868 79148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:03:37,551 basehttp 67868 79148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:04:03,693 log 67868 18320 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:04:03,694 basehttp 67868 18320 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:05:00,378 log 61760 24712 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:05:00,379 basehttp 61760 24712 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:06:02,554 log 61760 24712 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:06:02,556 basehttp 61760 24712 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:06:11,795 log 61760 24712 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:06:11,797 basehttp 61760 24712 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:06:19,531 log 61760 24712 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:06:19,531 basehttp 61760 24712 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:07:19,736 log 61760 24712 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:07:19,738 basehttp 61760 24712 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:14:56,064 log 61760 64952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:14:56,065 basehttp 61760 64952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:15:33,541 log 61760 64952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:15:33,543 basehttp 61760 64952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:17:51,618 log 61760 78880 Not Found: /favicon.ico
+WARNING 2025-11-04 11:17:51,620 basehttp 61760 78880 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 11:18:00,462 log 61760 64952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:00,463 basehttp 61760 64952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:04,596 log 61760 84120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:04,597 basehttp 61760 84120 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:08,306 log 61760 84120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:08,307 basehttp 61760 84120 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:18,634 log 61760 84120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:18,635 basehttp 61760 84120 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:30,046 log 69696 82688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:30,047 basehttp 69696 82688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:47,392 log 69696 82688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:47,393 basehttp 69696 82688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:18:58,499 log 69696 82688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:18:58,500 basehttp 69696 82688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:19:01,812 log 69696 82688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:19:01,813 basehttp 69696 82688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:19:06,033 log 69696 20112 Not Found: /favicon.ico
+WARNING 2025-11-04 11:19:06,035 basehttp 69696 20112 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 11:20:50,392 log 69696 57888 Not Found: /favicon.ico
+WARNING 2025-11-04 11:20:50,393 basehttp 69696 57888 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 11:21:01,507 log 69696 57888 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:21:01,508 basehttp 69696 57888 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:21:06,228 log 69696 57888 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:21:06,229 basehttp 69696 57888 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:22:20,363 log 54060 70452 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:22:20,364 basehttp 54060 70452 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:22:45,648 log 6760 24248 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:22:45,649 basehttp 6760 24248 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:30:10,256 log 7868 83552 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:30:10,257 basehttp 7868 83552 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:30:55,758 log 7868 83552 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:30:55,759 basehttp 7868 83552 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:31:57,273 log 59812 66156 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:31:57,274 basehttp 59812 66156 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:35:59,705 log 81300 61912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:35:59,706 basehttp 81300 61912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:37:21,520 log 81300 61912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:37:21,520 basehttp 81300 61912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:37:22,990 log 81300 61912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:37:22,991 basehttp 81300 61912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 11:37:24,454 log 81300 61912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 11:37:24,455 basehttp 81300 61912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-04 12:23:10,318 log 81300 75796 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 155, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 240, in do_block
+    parser.invalid_block_tag(endblock, "endblock", acceptable_endblocks)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 50: 'endblock', expected 'endblock' or 'endblock content'. Did you forget to register or load this tag?
+ERROR 2025-11-04 12:23:10,322 basehttp 81300 75796 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 183870
+WARNING 2025-11-04 12:23:10,660 log 81300 75796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:23:11,739 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:23:11,739 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-11-04 12:23:30,937 log 81300 73172 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 155, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 240, in do_block
+    parser.invalid_block_tag(endblock, "endblock", acceptable_endblocks)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 50: 'endblock', expected 'endblock' or 'endblock content'. Did you forget to register or load this tag?
+ERROR 2025-11-04 12:23:30,941 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 183627
+WARNING 2025-11-04 12:23:31,370 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:23:31,372 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:23:41,661 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:23:41,662 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:24:50,536 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:24:50,537 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:24:50,767 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:24:50,768 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-04 12:25:15,529 log 81300 73172 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 155, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 240, in do_block
+    parser.invalid_block_tag(endblock, "endblock", acceptable_endblocks)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 50: 'endblock', expected 'endblock' or 'endblock content'. Did you forget to register or load this tag?
+ERROR 2025-11-04 12:25:15,533 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 183627
+ERROR 2025-11-04 12:28:20,528 log 81300 73172 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 155, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'content' appears more than once
+ERROR 2025-11-04 12:28:20,530 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 196168
+WARNING 2025-11-04 12:28:21,089 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:28:21,090 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-11-04 12:28:23,114 log 81300 73172 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 155, in view_chuc_vu_index
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'content' appears more than once
+ERROR 2025-11-04 12:28:23,117 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/chuc-vu/ HTTP/1.1" 500 196168
+WARNING 2025-11-04 12:28:23,543 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:28:23,544 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:28:49,403 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:28:49,405 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:28:54,643 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:28:54,644 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:29:02,024 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:29:02,026 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:29:02,318 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:29:02,319 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:31:19,458 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:31:19,460 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:31:22,947 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:31:22,950 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:31:24,864 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:31:24,866 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:31:29,662 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:31:29,664 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:31:30,611 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:31:30,612 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:31:40,851 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:31:40,853 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:32:17,491 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 12:32:17,492 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 12:32:20,058 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 12:32:20,059 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 12:32:22,349 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:32:22,349 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:32:26,314 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 12:32:26,315 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 12:32:27,216 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:32:27,218 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:32:31,708 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:32:31,709 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:32:37,256 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:32:37,257 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:32:37,636 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:32:37,636 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:32:38,546 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:32:38,547 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:32:38,944 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:32:38,945 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:32:39,775 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:32:39,776 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:32:41,961 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu
+WARNING 2025-11-04 12:32:41,962 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu HTTP/1.1" 404 5294
+WARNING 2025-11-04 12:32:44,592 log 81300 73172 Not Found: /hrm/to_chuc_nhan_su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:32:44,593 basehttp 81300 73172 "GET /hrm/to_chuc_nhan_su/api/v1/chuc-vu/ HTTP/1.1" 404 5297
+WARNING 2025-11-04 12:33:16,273 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:33:16,274 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:33:30,112 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:33:30,113 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8114
+WARNING 2025-11-04 12:33:39,867 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:33:39,868 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8114
+WARNING 2025-11-04 12:33:42,106 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:33:42,107 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:33:44,549 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:33:44,550 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:33:50,034 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+WARNING 2025-11-04 12:33:50,035 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 404 8111
+WARNING 2025-11-04 12:34:02,749 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:34:02,749 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8114
+WARNING 2025-11-04 12:34:06,285 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:34:06,286 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:34:12,803 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:34:12,803 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8114
+WARNING 2025-11-04 12:34:32,805 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:34:32,806 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:34:35,536 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:34:35,537 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:34:40,884 log 81300 47324 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:34:40,885 basehttp 81300 47324 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:34:43,326 log 81300 47324 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:34:43,327 basehttp 81300 47324 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:34:54,845 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:34:54,847 basehttp 81300 73172 "DELETE /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8117
+WARNING 2025-11-04 12:35:30,902 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:35:30,903 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:35:32,995 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/{positionId}/
+WARNING 2025-11-04 12:35:32,996 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/%7BpositionId%7D/ HTTP/1.1" 404 8157
+WARNING 2025-11-04 12:35:36,979 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:35:36,980 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:35:40,574 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/{positionId}/
+WARNING 2025-11-04 12:35:40,575 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/%7BpositionId%7D/ HTTP/1.1" 404 8157
+WARNING 2025-11-04 12:36:20,267 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/{positionId}/
+WARNING 2025-11-04 12:36:20,268 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu$/%7BpositionId%7D/ HTTP/1.1" 404 8157
+WARNING 2025-11-04 12:36:36,492 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1/
+WARNING 2025-11-04 12:36:36,492 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1/ HTTP/1.1" 404 8117
+WARNING 2025-11-04 12:36:38,529 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:36:38,530 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:36:43,900 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/
+WARNING 2025-11-04 12:36:43,900 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/ HTTP/1.1" 404 8117
+WARNING 2025-11-04 12:37:33,488 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/
+WARNING 2025-11-04 12:37:33,490 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/ HTTP/1.1" 404 8117
+WARNING 2025-11-04 12:37:34,460 log 81300 73172 Not Found: /favicon.ico
+WARNING 2025-11-04 12:37:34,461 basehttp 81300 73172 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:37:43,275 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/
+WARNING 2025-11-04 12:37:43,277 basehttp 81300 73172 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/2/ HTTP/1.1" 404 8117
+WARNING 2025-11-04 12:39:08,036 log 81300 73172 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:39:08,038 basehttp 81300 73172 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:39:24,402 log 81300 73172 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/
+WARNING 2025-11-04 12:39:24,403 basehttp 81300 73172 "PUT /hrm/to-chuc-nhan-su/api/v1/chuc-vu2/ HTTP/1.1" 404 8114
+WARNING 2025-11-04 12:41:18,251 log 53196 79656 Not Found: /favicon.ico
+WARNING 2025-11-04 12:41:18,253 basehttp 53196 79656 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 12:41:47,224 log 53196 79656 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:41:47,226 basehttp 53196 79656 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:42:25,695 log 53196 79656 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu//2/
+WARNING 2025-11-04 12:42:25,695 basehttp 53196 79656 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu//2/ HTTP/1.1" 404 8122
+WARNING 2025-11-04 12:42:29,591 log 53196 79656 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:42:29,593 basehttp 53196 79656 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:42:32,186 log 53196 79656 Not Found: /hrm/to-chuc-nhan-su/api/v1/chuc-vu//2/
+WARNING 2025-11-04 12:42:32,187 basehttp 53196 79656 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu//2/ HTTP/1.1" 404 8122
+WARNING 2025-11-04 12:43:00,132 log 53196 79656 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:43:00,133 basehttp 53196 79656 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-04 12:44:10,947 log 78544 58872 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 167, in api_chuc_vu_list
+    chuc_vu_list = Chucvu.objects.all().sort('id').values()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'QuerySet' object has no attribute 'sort'
+ERROR 2025-11-04 12:44:10,950 basehttp 78544 58872 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 500 82051
+ERROR 2025-11-04 12:44:17,307 log 78544 58872 Internal Server Error: /hrm/to-chuc-nhan-su/api/v1/chuc-vu/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 167, in api_chuc_vu_list
+    chuc_vu_list = Chucvu.objects.all().order_by('id').values()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'QuerySet' object has no attribute 'sort'
+ERROR 2025-11-04 12:44:17,309 basehttp 78544 58872 "GET /hrm/to-chuc-nhan-su/api/v1/chuc-vu/ HTTP/1.1" 500 82059
+WARNING 2025-11-04 12:47:16,516 log 78276 62408 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:47:16,517 basehttp 78276 62408 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:47:33,351 log 78276 62408 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:47:33,353 basehttp 78276 62408 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:47:36,089 log 78276 62408 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:47:36,090 basehttp 78276 62408 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 12:47:40,052 log 78276 62408 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 12:47:40,053 basehttp 78276 62408 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 15:00:10,587 log 78276 81064 Not Found: /favicon.ico
+WARNING 2025-11-04 15:00:10,589 basehttp 78276 81064 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-04 15:00:39,832 log 78276 81064 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 15:00:39,832 basehttp 78276 81064 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-04 15:18:47,445 log 78276 16260 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-04 15:18:47,446 basehttp 78276 16260 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-06 15:39:28,163 log 113516 106568 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-06 15:39:28,166 basehttp 113516 106568 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 10:48:21,781 log 101768 122176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 10:48:21,783 basehttp 101768 122176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 10:48:26,136 log 101768 122176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 10:48:26,138 basehttp 101768 122176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-07 10:48:29,831 log 101768 103600 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-07 10:48:29,833 basehttp 101768 103600 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242

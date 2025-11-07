@@ -1,288 +1,549 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AdminSystem{% endblock title %}</title>
 
+    <!-- Anti-flicker: khôi phục trạng thái sidebar + submenu từ localStorage -->
     <script>
-        // Chống flicker khi load: khôi phục trạng thái sidebar/submenu từ localStorage trước khi CSS render
-        (function() {
+        (function () {
             const html = document.documentElement;
-            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-
-            // Chỉ khôi phục "thu gọn" trên desktop
-            if (isDesktop && localStorage.getItem('sidebarCollapsedState') === 'true') {
-                html.classList.add('sidebar-is-collapsed');
-            }
-            // Khôi phục trạng thái các submenu nếu đã lưu trước đó
-            if (localStorage.getItem('servicesSubmenuState') === 'true') {
-                html.classList.add('submenu-services-open');
-            }
-            if (localStorage.getItem('hrmSubmenuState') === 'true') { // <-- ĐÃ SỬA
-                html.classList.add('submenu-hrm-open'); // <-- ĐÃ SỬA
-            }
+            const isDesktop = matchMedia('(min-width:1024px)').matches;
+            if (isDesktop && localStorage.getItem('sidebarCollapsedState') === 'true') html.classList.add('sidebar-is-collapsed');
+            if (localStorage.getItem('servicesSubmenuState') === 'true') html.classList.add('submenu-services-open');
+            if (localStorage.getItem('hrmSubmenuState') === 'true') html.classList.add('submenu-hrm-open');
         })();
     </script>
 
-    <!-- Tối ưu hóa: Sử dụng CDN với SRI (Subresource Integrity) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS -->
+    <link href="{% static 'css/dist/output.css' %}" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome từ CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <!-- CSS project -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    {% block styles %}{% endblock styles %}
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
     <style>
-        /* Thiết lập font chung cho trang */
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        :root{
+            --sidebar-w:270px; --sidebar-w-collapsed:80px;
+            --dur:180ms; --ease:ease-in-out;
+        }
+
+        /* Base */
+        html,body{overflow-x:hidden}
+        body{font-family:'Inter',sans-serif}
+
+        /* Scrollbar */
+        #sidebar-nav{
+            overscroll-behavior:contain; scrollbar-gutter:stable;
+            scrollbar-width:thin; scrollbar-color:rgba(148,163,184,.28) transparent;
+        }
+        #sidebar-nav::-webkit-scrollbar{width:6px;height:6px}
+        #sidebar-nav::-webkit-scrollbar-track{background:transparent}
+        #sidebar-nav::-webkit-scrollbar-thumb{
+            background-color:rgba(148,163,184,.18); border-radius:9999px; border:2px solid transparent; background-clip:padding-box;
+        }
+        #sidebar:hover #sidebar-nav{scrollbar-color:rgba(148,163,184,.45) transparent}
+        #sidebar:hover #sidebar-nav::-webkit-scrollbar-thumb{background-color:rgba(148,163,184,.45)}
+        #sidebar-nav::-webkit-scrollbar-thumb:hover{background-color:rgba(148,163,184,.60)}
+        html.sidebar-is-collapsed #sidebar-nav{scrollbar-width:none}
+        html.sidebar-is-collapsed #sidebar-nav::-webkit-scrollbar{width:0;height:0}
+
+        /* Components */
+        .sidebar-link,.sub-link{display:flex;align-items:center;padding:.5rem 1rem;border-radius:.5rem;transition:background-color .2s,color .2s}
+        .sidebar-link:hover,.sub-link:hover{background-color:rgb(55 65 81)}
+        .sub-link{font-size:.875rem}
+        .tooltip-link{display:block;padding:.5rem 1rem;color:rgb(107 114 128);text-decoration:none;transition:background-color .2s,color .2s;font-size:.875rem;border-radius:.5rem;margin:0 .5rem}
+        .tooltip-link:hover{background-color:rgb(243 244 246);color:rgb(55 65 81)}
+        .sidebar-link.active,.sub-link.active,.tooltip-link.active{background-color:rgb(37 99 235)!important;color:#fff!important}
+        .sidebar-link.active i,.sub-link.active i,.tooltip-link.active i{color:#fff!important}
+
+        /* Icon & text */
+        .sidebar-link i:first-child{width:1.5rem;text-align:center;flex-shrink:0}
+        .sidebar-link span{margin-left:.75rem}
+        .submenu-container .sidebar-link{justify-content:flex-start}
+        .submenu-container .sidebar-link .fa-chevron-down{margin-left:auto;transition:transform var(--dur) var(--ease)}
+
+        /* Sidebar states */
+        #sidebar{width:var(--sidebar-w);transition:width var(--dur) var(--ease),transform .25s var(--ease);will-change:width,transform;position:relative}
+        html.sidebar-is-collapsed #sidebar{width:var(--sidebar-w-collapsed);overflow:visible}
+        html.sidebar-is-collapsed #sidebar-nav{overflow:visible}
+        html:is(.sidebar-expanding,.sidebar-collapsing) #sidebar,
+        html:is(.sidebar-expanding,.sidebar-collapsing) #sidebar-nav{overflow:hidden}
+        .sidebar-text,#sidebar .flex.items-center h1.sidebar-text,.fa-chevron-down{white-space:nowrap;transition:opacity var(--dur) var(--ease)}
+        html.sidebar-is-collapsed .sidebar-text,
+        html.sidebar-is-collapsed #sidebar .flex.items-center h1.sidebar-text,
+        html.sidebar-is-collapsed .fa-chevron-down{display:none}
+        html:is(.sidebar-expanding,.sidebar-collapsing) .sidebar-text,
+        html:is(.sidebar-expanding,.sidebar-collapsing) .fa-chevron-down{opacity:0;visibility:hidden;pointer-events:none}
+        html.sidebar-is-collapsed .sidebar-link{justify-content:center;padding:.75rem 0}
+        html.sidebar-is-collapsed .sidebar-link i:first-child{margin-right:0}
+
+        /* Submenu */
+        .submenu{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur) var(--ease);will-change:grid-template-rows}
+        .submenu-inner{overflow:hidden}
+        html.sidebar-is-collapsed .submenu{display:none!important}
+        html.submenu-services-open #services-submenu,
+        html.submenu-hrm-open #hrm-submenu{grid-template-rows:1fr}
+        html.submenu-services-open #services-menu-toggle .fa-chevron-down,
+        html.submenu-hrm-open #hrm-menu-toggle .fa-chevron-down{transform:rotate(180deg)}
+
+        /* Tooltips */
+        .sidebar-tooltip{
+            position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:.75rem;
+            background-color:rgb(31 41 55);color:#fff;padding:.5rem .75rem;border-radius:.375rem;font-size:.875rem;white-space:nowrap;z-index:1000;
+            opacity:0;visibility:hidden;pointer-events:none;transition:all var(--dur) var(--ease);will-change:transform,opacity;contain:paint layout;
+        }
+        .sidebar-tooltip::before{content:'';position:absolute;right:100%;top:50%;transform:translateY(-50%);border:5px solid transparent;border-right-color:rgb(31 41 55)}
+        html:not(.sidebar-is-collapsed) .sidebar-tooltip{display:none}
+        html.sidebar-is-collapsed .sidebar-link:hover .sidebar-tooltip{opacity:1;visibility:visible;transform:translate(.5rem,-50%)}
+
+        .submenu-tooltip{
+            position:fixed;min-width:15rem;background-color:#fff;border-radius:.5rem;border:1px solid rgb(229 231 235);
+            box-shadow:0 10px 25px rgba(0,0,0,.08);opacity:0;visibility:hidden;z-index:9999;pointer-events:none;
+            transition:all var(--dur) var(--ease);transform:translateX(.625rem);will-change:transform,opacity,top,left;contain:paint layout;
+        }
+        .submenu-tooltip::before{
+            content:'';position:absolute;top:1rem;left:-.375rem;width:.75rem;height:.75rem;background:#fff;border-left:1px solid rgb(229 231 235);border-bottom:1px solid rgb(229 231 235);transform:rotate(45deg);z-index:-1;
+        }
+        html:not(.sidebar-is-collapsed) .submenu-tooltip{display:none!important}
+        html.sidebar-is-collapsed .submenu-container:hover .submenu-tooltip{opacity:1;visibility:visible;transform:translateX(0);pointer-events:auto}
+        .tooltip-header{padding:.5rem 1rem;border-bottom:1px solid rgb(229 231 235);font-weight:600;color:rgb(55 65 81);display:flex;align-items:center}
+
+        html:is(.sidebar-expanding,.sidebar-collapsing) .sidebar-tooltip,
+        html:is(.sidebar-expanding,.sidebar-collapsing) .submenu-tooltip{display:none!important}
+
+        /* Title fade */
+        #page-title{transition:all var(--dur) var(--ease)}
+        .title-fade-out{opacity:0;transform:translateY(-.5rem)}
+        .title-fade-in{opacity:1;transform:translateY(0)}
+
+        /* User menu */
+        #user-menu-dropdown{transform-origin:top right;opacity:0;transform:scale(.95);transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
+
+        /* Mobile */
+        @media (max-width:1023px){
+            #sidebar{
+                position:fixed;top:0;left:0;bottom:0;height:100vh;z-index:30;width:var(--sidebar-w);
+                transform:translateX(-100%);box-shadow:2px 0 10px rgba(0,0,0,.12);transition:transform .25s var(--ease);
+            }
+            #sidebar.mobile-open{transform:translateX(0)}
+            html.sidebar-is-collapsed #sidebar{width:var(--sidebar-w)}
+            html.sidebar-is-collapsed .sidebar-text,html.sidebar-is-collapsed .fa-chevron-down{display:inline}
+            html.sidebar-is-collapsed .submenu{display:grid}
+            html.sidebar-is-collapsed .sidebar-link i:first-child{margin-right:0}
+
+            #main-content{width:100vw;min-width:0;margin-left:0;transition:filter .25s ease}
+            #sidebar.mobile-open ~ #main-content{filter:blur(4px);pointer-events:none}
+
+            #sidebar-overlay{position:fixed;inset:0;background:transparent;z-index:20;opacity:0;transition:opacity .25s ease}
+            #sidebar.mobile-open ~ #sidebar-overlay{opacity:1}
+
+            .sidebar-tooltip,.submenu-tooltip{display:none!important}
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion:reduce){
+            :root{--dur:0ms}
+            *{animation:none!important}
         }
     </style>
+
+    {% block styles %}{% endblock styles %}
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="h-full overflow-hidden bg-gray-100 text-gray-800 antialiased">
+<div class="flex h-full">
+    <!-- Overlay Mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-800 bg-opacity-20 z-20 lg:hidden hidden"></div>
 
-    <div class="flex h-screen">
-        <!-- Overlay cho sidebar trên mobile (ẩn/hiện) -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-gray-800 text-gray-300 flex flex-col fixed lg:relative z-30 h-full" role="navigation">
+        <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
+            <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
+            <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
+        </div>
 
-        {% if user.is_authenticated %}
-        <!-- Sidebar chính: hiển thị khi user đã đăng nhập -->
-        <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed lg:relative z-30 transition-all duration-300 ease-in-out" role="navigation" aria-label="Sidebar">
-            <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
-                <!-- Logo / Brand -->
-                <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
-                <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
-            </div>
+        <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link relative">
+                <i class="fas fa-tachometer-alt w-6 text-gray-400 flex-shrink-0"></i>
+                <span class="ml-3 sidebar-text">Dashboard</span>
+                <div class="sidebar-tooltip">Dashboard</div>
+            </a>
 
-            <!-- Navigation links: dùng aria và class để JS/CSS thao tác -->
-            <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-                <!-- Dashboard -->
-                <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Dashboard">
-                    <i class="fas fa-tachometer-alt w-6 text-gray-400 flex-shrink-0"></i>
-                    <span class="ml-3 sidebar-text">Dashboard</span>
-                    <div class="sidebar-tooltip">Dashboard</div>
+            <!-- Quản lý Dịch vụ -->
+            <div class="submenu-container" data-menu="services">
+                <a href="#" id="services-menu-toggle" aria-expanded="false" aria-controls="services-submenu" class="sidebar-link" data-title="Quản lý Dịch vụ">
+                    <i class="fas fa-building-circle-check w-6 text-gray-400 flex-shrink-0"></i>
+                    <span class="ml-3 sidebar-text flex-1">Quản lý Dịch vụ</span>
+                    <i class="fas fa-chevron-down sidebar-text flex-shrink-0"></i>
                 </a>
-                
-                <!-- Submenu: Quản lý Dịch vụ -->
-                <div class="submenu-container" data-menu="services">
-                    <!-- Toggle chính cho submenu (JS sẽ dùng id để mở/đóng) -->
-                    <a href="#" id="services-menu-toggle" aria-expanded="false" aria-controls="services-submenu"
-                       class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Dịch vụ">
-                        <i class="fas fa-building-circle-check w-6 text-gray-400 flex-shrink-0"></i>
-                        <span class="ml-3 sidebar-text flex-1">Quản lý Dịch vụ</span>
-                        <i class="fas fa-chevron-down transform transition-transform duration-200 sidebar-text flex-shrink-0"></i>
-                    </a>
-                    
-                    <!-- Tooltip khi hover (desktop) -->
-                    <div class="submenu-tooltip shadow-xl">
-                        <div class="tooltip-header px-4 py-2 border-b border-gray-200 font-semibold text-gray-700 flex items-center">
-                            <i class="fas fa-building-circle-check mr-2"></i>Quản lý Dịch vụ
-                        </div>
-                        <div class="py-2">
-                            <!-- Các link nhanh trong tooltip -->
-                            <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh sách Thông báo">
-                                <i class="fas fa-list-ul me-2"></i>Danh sách Thông báo
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Khách thuê">
-                                <i class="fas fa-users-gear me-2"></i>Quản lý Khách thuê
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Quản lý Loại dịch vụ">
-                                <i class="fas fa-tags me-2"></i>Quản lý Loại dịch vụ
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Báo cáo Doanh thu">
-                                <i class="fas fa-chart-pie me-2"></i>Báo cáo Doanh thu
-                            </a>
-                        </div>
+
+                <div class="submenu-tooltip shadow-xl">
+                    <div class="tooltip-header">
+                        <i class="fas fa-building-circle-check mr-2"></i>Quản lý Dịch vụ
                     </div>
-                    
-                    <!-- Submenu chính (dùng cho mobile/expanded) -->
-                    <div id="services-submenu" class="submenu">
-                        <div class="submenu-inner pl-8 pt-2">
-                            <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh sách Thông báo">
-                                <i class="fas fa-list-ul w-6 text-gray-400"></i><span class="sidebar-text">Danh sách Thông báo</span>
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Khách thuê">
-                                <i class="fas fa-users-gear w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Khách thuê</span>
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Loại dịch vụ">
-                                <i class="fas fa-tags w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Loại dịch vụ</span>
-                            </a>
-                            <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Báo cáo Doanh thu">
-                                <i class="fas fa-chart-pie w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo Doanh thu</span>
-                            </a>
-                        </div>
+                    <div class="py-2">
+                        <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="tooltip-link" data-title="Danh sách Thông báo">
+                            <i class="fas fa-list-ul me-2"></i>Danh sách Thông báo
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="tooltip-link" data-title="Quản lý Khách thuê">
+                            <i class="fas fa-users-gear me-2"></i>Quản lý Khách thuê
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="tooltip-link" data-title="Quản lý Loại dịch vụ">
+                            <i class="fas fa-tags me-2"></i>Quản lý Loại dịch vụ
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="tooltip-link" data-title="Báo cáo Doanh thu">
+                            <i class="fas fa-chart-pie me-2"></i>Báo cáo Doanh thu
+                        </a>
                     </div>
                 </div>
-                
-                <!-- Submenu: Quản lý Lương -->
-                <div class="submenu-container" data-menu="hrm">
-                    <a href="#" id="hrm-menu-toggle" aria-expanded="false" aria-controls="hrm-submenu"
-                    class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Quản lý Nhân sự">
-                        <i class="fas fa-users-gear w-6 text-gray-400 flex-shrink-0"></i>
-                        <span class="ml-3 sidebar-text flex-1">Quản lý Nhân sự</span>
-                        <i class="fas fa-chevron-down transform transition-transform duration-200 sidebar-text flex-shrink-0"></i>
-                    </a>
-                    
-                    <div class="submenu-tooltip shadow-xl">
-                        <div class="tooltip-header px-4 py-2 border-b border-gray-200 font-semibold text-gray-700 flex items-center">
-                            <i class="fas fa-users-gear mr-2"></i>Quản lý Nhân sự
-                        </div>
-                        <div class="py-2">
-                            <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Cây nhân sự">
-                                <i class="fas fa-sitemap me-2"></i>Cây nhân sự
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Chức vụ">
-                                <i class="fas fa-id-badge me-2"></i>Chức vụ
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Danh mục hệ thống">
-                                <i class="fas fa-archive me-2"></i>Danh mục hệ thống
-                            </a>
-                            
-                            <div class="my-2 border-t border-gray-200"></div>
 
-                            <div class="px-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quản lý thông tin</div>
-                            <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Hợp đồng">
-                                <i class="fas fa-file-contract me-2"></i>Quản lý Hợp đồng
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Tạm ứng">
-                                <i class="fas fa-hand-holding-usd me-2"></i>Quản lý Tạm ứng
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="tooltip-link d-block px-4 py-2 text-decoration-none pl-8" data-title="Quản lý Bồi thường">
-                                <i class="fas fa-exclamation-triangle me-2"></i>Quản lý Bồi thường
-                            </a>
-
-                            <div class="my-2 border-t border-gray-200"></div>
-
-                            <a href="#" class="tooltip-link d-block px-4 py-2 text-decoration-none" data-title="Báo cáo">
-                                <i class="fas fa-chart-bar me-2"></i>Báo cáo
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div id="hrm-submenu" class="submenu">
-                        <div class="submenu-inner pl-8 pt-2">
-
-                            <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Cây nhân sự">
-                                <i class="fas fa-sitemap w-6 text-gray-400"></i><span class="sidebar-text">Cây nhân sự</span>
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Chức vụ">
-                                <i class="fas fa-id-badge w-6 text-gray-400"></i><span class="sidebar-text">Chức vụ</span>
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Danh mục hệ thống">
-                                <i class="fas fa-archive w-6 text-gray-400"></i><span class="sidebar-text">Danh mục hệ thống</span>
-                            </a>
-
-                            <div class="my-2 border-t border-gray-700"></div>
-
-                            <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">Quản lý thông tin</div>
-
-                            <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Hợp đồng">
-                                <i class="fas fa-file-contract w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Hợp đồng</span>
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Tạm ứng">
-                                <i class="fas fa-hand-holding-usd w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Tạm ứng</span>
-                            </a>
-                            <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 pl-8" data-title="Quản lý Bồi thường">
-                                <i class="fas fa-exclamation-triangle w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Bồi thường</span>
-                            </a>
-
-                            <div class="my-2 border-t border-gray-700"></div>
-
-                            <a href="{% url 'hrm:to_chuc_nhan_su:bao_cao_index' %}" class="sub-link flex items-center px-4 py-2 text-sm rounded-lg hover:bg-gray-700 transition-colors duration-200" data-title="Báo cáo">
-                                <i class="fas fa-chart-bar w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo</span>
-                            </a>
-                            
-                        </div>
+                <div id="services-submenu" class="submenu">
+                    <div class="submenu-inner pl-8 pt-2 space-y-1">
+                        <a href="{% url 'dich_vu_dien_nuoc:danhsachthongbao' %}" class="sub-link" data-title="Danh sách Thông báo">
+                            <i class="fas fa-list-ul w-6 text-gray-400"></i><span class="sidebar-text">Danh sách Thông báo</span>
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:quanlykhachthue' %}" class="sub-link" data-title="Quản lý Khách thuê">
+                            <i class="fas fa-users-gear w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Khách thuê</span>
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:quanlyloaidichvu' %}" class="sub-link" data-title="Quản lý Loại dịch vụ">
+                            <i class="fas fa-tags w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Loại dịch vụ</span>
+                        </a>
+                        <a href="{% url 'dich_vu_dien_nuoc:baocaodoanhthu' %}" class="sub-link" data-title="Báo cáo Doanh thu">
+                            <i class="fas fa-chart-pie w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo Doanh thu</span>
+                        </a>
                     </div>
                 </div>
-                
-                <!-- Link cài đặt chung -->
-                <a href="#" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 relative" data-title="Cài đặt">
-                    <i class="fas fa-cog w-6 text-gray-400 flex-shrink-0"></i>
-                    <span class="ml-3 sidebar-text">Cài đặt</span>
-                    <div class="sidebar-tooltip">Cài đặt</div>
-                </a>
-            </nav>
-
-            <!-- Nút Đăng xuất: đặt ở cuối sidebar để luôn hiển thị -->
-            <div class="mt-auto py-2 px-2 border-t border-gray-700"> <!-- Thêm padding và đường viền để tách biệt trực quan -->
-                <form action="{% url 'logout' %}" method="post" class="m-0">
-                    {% csrf_token %}
-                    <!-- Sử dụng button để gửi POST logout (bảo mật hơn link GET) -->
-                    <button type="submit" class="sidebar-link flex items-center w-full px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-200 text-red-400 relative border-0 bg-transparent text-left">
-                        <i class="fas fa-sign-out-alt w-6 flex-shrink-0"></i>
-                        <span class="ml-3 sidebar-text">Đăng xuất</span>
-                        <div class="sidebar-tooltip">Đăng xuất</div>
-                    </button>
-                </form>
             </div>
-        </aside>
 
-        <!-- Main content bao gồm header và nội dung trang -->
-        <div id="main-content" class="flex-1 flex flex-col overflow-hidden">
-            <header class="bg-white shadow-sm flex items-center justify-between p-4 z-10 sticky top-0">
-                <!-- Nút mở/thu sidebar trên mobile/desktop -->
-                <button id="menu-button" class="text-gray-600 focus:outline-none">
-                    <i class="fas fa-bars fa-lg"></i>
+            <!-- Quản lý Nhân sự -->
+            <div class="submenu-container" data-menu="hrm">
+                <a href="#" id="hrm-menu-toggle" aria-expanded="false" aria-controls="hrm-submenu" class="sidebar-link" data-title="Quản lý Nhân sự">
+                    <i class="fas fa-users-gear w-6 text-gray-400 flex-shrink-0"></i>
+                    <span class="ml-3 sidebar-text flex-1">Quản lý Nhân sự</span>
+                    <i class="fas fa-chevron-down sidebar-text flex-shrink-0"></i>
+                </a>
+
+                <div class="submenu-tooltip shadow-xl">
+                    <div class="tooltip-header">
+                        <i class="fas fa-users-gear mr-2"></i>Quản lý Nhân sự
+                    </div>
+                    <div class="py-2">
+                        <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="tooltip-link" data-title="Cây nhân sự">
+                            <i class="fas fa-sitemap me-2"></i>Cây nhân sự
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="tooltip-link" data-title="Chức vụ">
+                            <i class="fas fa-id-badge me-2"></i>Chức vụ
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="tooltip-link" data-title="Danh mục hệ thống">
+                            <i class="fas fa-archive me-2"></i>Danh mục hệ thống
+                        </a>
+                        <div class="my-2 border-t border-gray-200"></div>
+                        <div class="px-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quản lý thông tin</div>
+                        <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="tooltip-link pl-6" data-title="Quản lý Hợp đồng">
+                            <i class="fas fa-file-contract me-2"></i>Quản lý Hợp đồng
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="tooltip-link pl-6" data-title="Quản lý Tạm ứng">
+                            <i class="fas fa-hand-holding-usd me-2"></i>Quản lý Tạm ứng
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="tooltip-link pl-6" data-title="Quản lý Bồi thường">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Quản lý Bồi thường
+                        </a>
+                        <div class="my-2 border-t border-gray-200"></div>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:bao_cao_index' %}" class="tooltip-link" data-title="Báo cáo">
+                            <i class="fas fa-chart-bar me-2"></i>Báo cáo
+                        </a>
+                    </div>
+                </div>
+
+                <div id="hrm-submenu" class="submenu">
+                    <div class="submenu-inner pl-8 pt-2 space-y-1">
+                        <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}" class="sub-link" data-title="Cây nhân sự">
+                            <i class="fas fa-sitemap w-6 text-gray-400"></i><span class="sidebar-text">Cây nhân sự</span>
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:chuc_vu_index' %}" class="sub-link" data-title="Chức vụ">
+                            <i class="fas fa-id-badge w-6 text-gray-400"></i><span class="sidebar-text">Chức vụ</span>
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="sub-link" data-title="Danh mục hệ thống">
+                            <i class="fas fa-archive w-6 text-gray-400"></i><span class="sidebar-text">Danh mục hệ thống</span>
+                        </a>
+                        <div class="my-2 border-t border-gray-700"></div>
+                        <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">Quản lý thông tin</div>
+                        <a href="{% url 'hrm:hop_dong_lao_dong:quan_ly_hop_dong_index' %}" class="sub-link pl-6" data-title="Quản lý Hợp đồng">
+                            <i class="fas fa-file-contract w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Hợp đồng</span>
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_tam_ung_index' %}" class="sub-link pl-6" data-title="Quản lý Tạm ứng">
+                            <i class="fas fa-hand-holding-usd w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Tạm ứng</span>
+                        </a>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:quan_ly_boi_thuong_index' %}" class="sub-link pl-6" data-title="Quản lý Bồi thường">
+                            <i class="fas fa-exclamation-triangle w-6 text-gray-400"></i><span class="sidebar-text">Quản lý Bồi thường</span>
+                        </a>
+                        <div class="my-2 border-t border-gray-700"></div>
+                        <a href="{% url 'hrm:to_chuc_nhan_su:bao_cao_index' %}" class="sub-link" data-title="Báo cáo">
+                            <i class="fas fa-chart-bar w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cài đặt -->
+            <a href="#" class="sidebar-link relative" data-title="Cài đặt">
+                <i class="fas fa-cog w-6 text-gray-400 flex-shrink-0"></i>
+                <span class="ml-3 sidebar-text">Cài đặt</span>
+                <div class="sidebar-tooltip">Cài đặt</div>
+            </a>
+        </nav>
+
+        <!-- Đăng xuất -->
+        <div class="mt-auto py-2 px-2 border-t border-gray-700">
+            <form action="{% url 'logout' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-link w-full hover:bg-red-600 hover:text-white text-red-400 border-0 bg-transparent text-left">
+                    <i class="fas fa-sign-out-alt w-6 flex-shrink-0"></i>
+                    <span class="ml-3 sidebar-text">Đăng xuất</span>
+                    <div class="sidebar-tooltip">Đăng xuất</div>
                 </button>
-                <!-- Title trang: JS có thể set nội dung theo route -->
-                <h2 id="page-title" class="text-xl font-semibold text-gray-800 mb-0"></h2>
-                
-                <!-- Menu người dùng (avatar + dropdown) -->
-                <div class="relative">
-                    <button id="user-menu-button" class="flex items-center space-x-2 focus:outline-none" type="button" aria-haspopup="true" aria-expanded="false">
-                        <span class="text-sm text-gray-600 hidden sm:inline">Xin chào, <strong>{{ user.username }}</strong></span>
-                        <!-- Avatar sinh động từ ui-avatars -->
-                        <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&background=3b82f6&color=fff" alt="User avatar">
-                    </button>
-                    <!-- Dropdown menu người dùng (ẩn mặc định) -->
-                    <div id="user-menu-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-20 hidden origin-top-right"
-                         style="transition: transform 0.2s ease-out, opacity 0.2s ease-out;">
-                        <div class="px-4 py-3 border-b">
-                            <!-- Hiển thị tên đầy đủ/email nếu có -->
-                            <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
-                            <p class="text-sm text-gray-500 truncate">{{ user.email|default:"Không có email" }}</p>
-                        </div>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user-circle w-6 mr-2 text-gray-500"></i>Hồ sơ của bạn</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-cog w-6 mr-2 text-gray-500"></i>Cài đặt tài khoản</a>
-                        <div class="border-t">
-                            <!-- Liên kết đăng xuất hiển thị trên view nhỏ (mobile) -->
-                            <a href="javascript:{document.querySelector('#sidebar form[action*=\'logout\']').submit()}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 lg:hidden">
-                                <i class="fas fa-sign-out-alt w-6 mr-2"></i>Đăng xuất
-                            </a>
-                        </div>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="main-content" class="flex-1 flex flex-col overflow-hidden min-w-0">
+        <header class="bg-white shadow-sm flex items-center justify-between p-4 z-10 sticky top-0">
+            <button id="menu-button" class="text-gray-600 focus:outline-none">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <h2 id="page-title" class="text-xl font-semibold text-gray-800 mb-0">Dashboard</h2>
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center space-x-2 focus:outline-none" aria-haspopup="true" aria-expanded="false">
+                    <span class="text-sm text-gray-600 hidden sm:inline">Xin chào, <strong>{{ user.username }}</strong></span>
+                    <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&background=3b82f6&color=fff" alt="Avatar">
+                </button>
+                <div id="user-menu-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-20 hidden origin-top-right">
+                    <div class="px-4 py-3 border-b">
+                        <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-sm text-gray-500 truncate">{{ user.email|default:"Không có email" }}</p>
+                    </div>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user-circle w-6 mr-2 text-gray-500"></i>Hồ sơ</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-cog w-6 mr-2 text-gray-500"></i>Cài đặt</a>
+                    <div class="border-t lg:hidden">
+                        <a href="javascript:document.querySelector('#sidebar form').submit()" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt w-6 mr-2"></i>Đăng xuất
+                        </a>
                     </div>
                 </div>
-            </header>
-
-            <main class="flex-1 p-4 md:p-6 overflow-y-auto">
-                <!-- Nội dung chính của trang sẽ được inject ở đây bởi các template con -->
-                {% block content %}
-                {% endblock content %}
-            </main>
-        </div>
-        {% else %}
-        <!-- Nếu chưa đăng nhập: hiển thị thông báo (có thể redirect tới trang login) -->
-        <div class="flex-1 flex items-center justify-center">
-            <p class="text-xl text-gray-600">Vui lòng đăng nhập để truy cập hệ thống.</p>
-        </div>
-        {% endif %}
+            </div>
+        </header>
+        <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+            {% block content %}{% endblock %}
+        </main>
     </div>
-    
-    <!-- Tối ưu hóa: Đặt script ở cuối và sử dụng defer/asynchronous loading khi có thể -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    <!-- JS chính của project: defer để không block render -->
-    <script src="{% static 'js/base.js' %}" defer></script>
-    
-    {% block scripts %}{% endblock scripts %}
+    {% else %}
+    <div class="flex-1 flex items-center justify-center">
+        <p class="text-xl text-gray-600">Vui lòng đăng nhập để truy cập hệ thống.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const html = document.documentElement;
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const menuBtn = document.getElementById('menu-button');
+        const pageTitle = document.getElementById('page-title');
+        const docTitle = document.querySelector('title');
+        const userMenuBtn = document.getElementById('user-menu-button');
+        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+        const SIDEBAR_KEY = 'sidebarCollapsedState';
+
+        const qs = (s, r = document) => r.querySelector(s);
+        const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
+        const isMobile = () => matchMedia('(max-width:1023px)').matches;
+        const isCollapsed = () => html.classList.contains('sidebar-is-collapsed');
+        const setLocal = (k, v) => localStorage.setItem(k, String(v));
+        const getLocal = (k) => localStorage.getItem(k) === 'true';
+
+        let animating = false;
+        const startAnim = (mode) => { animating = true; html.classList.add(mode); };
+        const endAnim = () => { animating = false; html.classList.remove('sidebar-expanding', 'sidebar-collapsing'); };
+
+        const MENUS = qsa('.submenu-container').map(container => {
+            const toggle = qs('.sidebar-link', container);
+            const submenu = qs('.submenu', container);
+            const tooltip = qs('.submenu-tooltip', container);
+            const id = container.dataset.menu;
+            return { key: id, container, toggle, submenu, tooltip, stateKey: `${id}SubmenuState`, openClass: `submenu-${id}-open` };
+        }).filter(m => m.toggle && m.submenu);
+
+        const setMenuOpen = (menu, open) => {
+            html.classList.toggle(menu.openClass, open);
+            menu.toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            setLocal(menu.stateKey, open);
+        };
+        const closeAllMenus = () => MENUS.forEach(m => setMenuOpen(m, false));
+
+        // Toggle sidebar
+        menuBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (animating) return;
+
+            if (isMobile()) {
+                const open = !sidebar.classList.contains('mobile-open');
+                sidebar.classList.toggle('mobile-open', open);
+                overlay.classList.toggle('hidden', !open);
+                return;
+            }
+
+            const onEnd = (ev) => {
+                if (ev.target !== sidebar || ev.propertyName !== 'width') return;
+                sidebar.removeEventListener('transitionend', onEnd);
+                endAnim();
+            };
+
+            if (isCollapsed()) {
+                startAnim('sidebar-expanding');
+                html.classList.remove('sidebar-is-collapsed');
+                setLocal(SIDEBAR_KEY, false);
+            } else {
+                startAnim('sidebar-collapsing');
+                closeAllMenus();
+                html.classList.add('sidebar-is-collapsed');
+                setLocal(SIDEBAR_KEY, true);
+            }
+            sidebar.addEventListener('transitionend', onEnd);
+        });
+
+        overlay?.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.add('hidden');
+        });
+
+        // Submenus
+        MENUS.forEach(menu => {
+            menu.toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!isMobile() && isCollapsed()) return;
+                if (animating) return;
+                setMenuOpen(menu, !html.classList.contains(menu.openClass));
+            });
+            setMenuOpen(menu, getLocal(menu.stateKey));
+        });
+
+        // Tooltip positioning for collapsed mode
+        let hoveredMenu = null, rafId = 0;
+        const schedule = (fn) => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(fn); };
+        const positionTooltip = (menu) => {
+            if (!menu?.tooltip || !menu?.toggle) return;
+            const rect = menu.toggle.getBoundingClientRect();
+            const tip = menu.tooltip;
+            const tipH = tip.getBoundingClientRect().height;
+            const winH = innerHeight;
+            const top = Math.min(Math.max(10, rect.top), Math.max(10, winH - tipH - 20));
+            tip.style.left = `${rect.right + 8}px`;
+            tip.style.top = `${top}px`;
+        };
+        MENUS.forEach(menu => {
+            menu.container.addEventListener('mouseenter', () => {
+                if (isCollapsed() && !isMobile()) {
+                    hoveredMenu = menu;
+                    schedule(() => positionTooltip(menu));
+                }
+            }, { passive: true });
+            menu.container.addEventListener('mouseleave', () => { if (hoveredMenu === menu) hoveredMenu = null; }, { passive: true });
+        });
+        addEventListener('resize', () => { if (isCollapsed() && hoveredMenu && !isMobile()) schedule(() => positionTooltip(hoveredMenu)); }, { passive: true });
+
+        // Title/active link sync
+        const updateTitle = (t) => {
+            if (!t || pageTitle.textContent === t) return;
+            pageTitle.classList.add('title-fade-out');
+            setTimeout(() => {
+                pageTitle.textContent = t;
+                docTitle.textContent = `${t} - AdminSystem`;
+                pageTitle.classList.remove('title-fade-out');
+                pageTitle.classList.add('title-fade-in');
+                setTimeout(() => pageTitle.classList.remove('title-fade-in'), 120);
+            }, 120);
+        };
+        const clearActive = () => qsa('#sidebar-nav .active, .submenu-tooltip .active').forEach(el => el.classList.remove('active'));
+        const markActiveByHref = (href) => {
+            if (!href || href === '#') return;
+            const normal = qsa(`#sidebar-nav a[href="${href}"]:not(.tooltip-link)`);
+            const inTip = qsa(`.submenu-tooltip a[href="${href}"]`);
+            normal.forEach(a => a.classList.add('active'));
+            inTip.forEach(a => a.classList.add('active'));
+            const any = normal[0] || inTip[0];
+            if (any) {
+                const container = any.closest('.submenu-container');
+                const menu = MENUS.find(m => m.container === container);
+                if (menu) { setMenuOpen(menu, true); menu.toggle.classList.add('active'); }
+            }
+        };
+        const initActiveFromLocation = () => {
+            const path = location.pathname;
+            const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)').map(a => a.getAttribute('href')).filter(h => h && h !== '#');
+            const best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
+            clearActive();
+            if (best) {
+                markActiveByHref(best);
+                updateTitle(qs(`#sidebar-nav a[href="${best}"]`)?.dataset?.title || 'Dashboard');
+            } else updateTitle('Dashboard');
+        };
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('.tooltip-link');
+            if (!link) return;
+            clearActive();
+            markActiveByHref(link.getAttribute('href'));
+            updateTitle(link.dataset.title || 'Dashboard');
+        });
+
+        // User menu
+        const toggleUserMenu = (show) => {
+            if (!userMenuDropdown) return;
+            userMenuDropdown.classList.toggle('hidden', !show);
+            requestAnimationFrame(() => {
+                userMenuDropdown.style.opacity = show ? '1' : '0';
+                userMenuDropdown.style.transform = show ? 'scale(1)' : 'scale(.95)';
+            });
+            userMenuBtn?.setAttribute('aria-expanded', show ? 'true' : 'false');
+        };
+        userMenuBtn?.addEventListener('click', (e) => { e.stopPropagation(); toggleUserMenu(userMenuDropdown.classList.contains('hidden')); });
+        document.addEventListener('click', (e) => {
+            if (!userMenuDropdown || userMenuDropdown.classList.contains('hidden')) return;
+            if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) toggleUserMenu(false);
+        }, { passive: true });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleUserMenu(false); });
+
+        // Breakpoint sync
+        const mq = matchMedia('(max-width:1023px)');
+        const onBpChange = (e) => {
+            if (e.matches) {
+                html.classList.remove('sidebar-is-collapsed');
+                sidebar.classList.remove('mobile-open');
+                overlay?.classList.add('hidden');
+                MENUS.forEach(menu => setMenuOpen(menu, getLocal(menu.stateKey)));
+            } else {
+                sidebar.classList.remove('mobile-open');
+                overlay?.classList.add('hidden');
+                html.classList.toggle('sidebar-is-collapsed', getLocal(SIDEBAR_KEY));
+            }
+        };
+        (mq.addEventListener ? mq.addEventListener('change', onBpChange) : mq.addListener(onBpChange));
+        onBpChange(mq);
+
+        // Init active state
+        initActiveFromLocation();
+    });
+</script>
+{% block scripts %}{% endblock scripts %}
 </body>
 </html>

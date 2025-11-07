@@ -188,3 +188,5 @@ Traceback (most recent call last):
   File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\http\response.py", line 637, in __init__
     raise DisallowedRedirect(
 django.core.exceptions.DisallowedRedirect: Unsafe redirect to URL with protocol 'dashboard'
+WARNING 2025-11-04 10:44:46,909 log 81776 78732 Forbidden (CSRF token missing.): /hrm/to-chuc-nhan-su/api/v1/chuc-vu
+WARNING 2025-11-04 10:50:35,289 log 5168 60512 Forbidden (CSRF token missing.): /hrm/to-chuc-nhan-su/api/v1/chuc-vu/1
