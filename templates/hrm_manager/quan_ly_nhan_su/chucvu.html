@@ -87,13 +87,13 @@
               <input type="hidden" id="form-position-id" name="id">
               
               <div>
-                  <label for="form-machucvu" class="block text-sm font-medium text-slate-700 mb-1">Mã Chức Vụ <span class="text-red-500">*</span></label>
-                  <input type="text" id="form-machucvu" name="machucvu" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50" placeholder="VD: CV_KD">
+                  <label for="form-tenvitricongviec" class="block text-sm font-medium text-slate-700 mb-1">Tên Vị Trí Công Việc <span class="text-red-500">*</span></label>
+                  <input type="text" id="form-tenvitricongviec" name="tenvitricongviec" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: Trưởng phòng Kinh doanh">
               </div>
               
               <div>
-                  <label for="form-tenvitricongviec" class="block text-sm font-medium text-slate-700 mb-1">Tên Vị Trí Công Việc <span class="text-red-500">*</span></label>
-                  <input type="text" id="form-tenvitricongviec" name="tenvitricongviec" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: Trưởng phòng Kinh doanh">
+                  <label for="form-machucvu" class="block text-sm font-medium text-slate-700 mb-1">Mã Chức Vụ <span class="text-red-500">*</span></label>
+                  <input type="text" id="form-machucvu" name="machucvu" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50" placeholder="VD: CV_KD">
               </div>
               
               <div>
@@ -148,107 +148,108 @@
 
 
 {% block scripts %}
+<script src="{% static 'js/utils.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Constants
     const API_BASE_URL = "/hrm/to-chuc-nhan-su/api/v1/chuc-vu/";
     const csrfToken = "{{ csrf_token }}";
 
-    const loadingSpinner = document.getElementById('loading-spinner');
-    const tableContainer = document.getElementById('table-container');
-    const tableBody = document.getElementById('positions-table-body');
-    const emptyState = document.getElementById('empty-state');
-    const emptyStateMessage = document.getElementById('empty-state-message');
-    const searchInput = document.getElementById('search-input');
-    const searchForm = document.getElementById('search-form');
+    // DOM Elements
+    const elements = {
+        loadingSpinner: document.getElementById('loading-spinner'),
+        tableContainer: document.getElementById('table-container'),
+        tableBody: document.getElementById('positions-table-body'),
+        emptyState: document.getElementById('empty-state'),
+        emptyStateMessage: document.getElementById('empty-state-message'),
+        searchInput: document.getElementById('search-input'),
+        searchForm: document.getElementById('search-form'),
+        positionModal: document.getElementById('position-modal'),
+        positionModalContent: document.getElementById('position-modal-content'),
+        positionModalTitle: document.getElementById('position-modal-title'),
+        positionForm: document.getElementById('position-form'),
+        btnAddNew: document.getElementById('btn-add-new'),
+        btnCloseModal: document.getElementById('btn-close-modal'),
+        btnCancelModal: document.getElementById('btn-cancel-modal'),
+        btnSubmitForm: document.getElementById('btn-submit-form'),
+        formPositionId: document.getElementById('form-position-id'),
+        formMaChucVu: document.getElementById('form-machucvu'),
+        formTenViTri: document.getElementById('form-tenvitricongviec'),
+        formTrangThai: document.getElementById('form-trangthai'),
+        formGhiChu: document.getElementById('form-ghichu'),
+        deleteModal: document.getElementById('delete-modal'),
+        deleteModalContent: document.getElementById('delete-modal-content'),
+        btnCancelDelete: document.getElementById('btn-cancel-delete'),
+        btnConfirmDelete: document.getElementById('btn-confirm-delete'),
+        toast: document.getElementById('toast-notification'),
+        toastMessage: document.getElementById('toast-message')
+    };
 
-    const positionModal = document.getElementById('position-modal');
-    const positionModalContent = document.getElementById('position-modal-content');
-    const positionModalTitle = document.getElementById('position-modal-title');
-    const positionForm = document.getElementById('position-form');
-    const btnAddNew = document.getElementById('btn-add-new');
-    const btnCloseModal = document.getElementById('btn-close-modal');
-    const btnCancelModal = document.getElementById('btn-cancel-modal');
-    const btnSubmitForm = document.getElementById('btn-submit-form');
-    
-    const formPositionId = document.getElementById('form-position-id');
-    const formMaChucVu = document.getElementById('form-machucvu');
-    const formTenViTri = document.getElementById('form-tenvitricongviec');
-    const formTrangThai = document.getElementById('form-trangthai');
-    const formGhiChu = document.getElementById('form-ghichu');
-
-    const deleteModal = document.getElementById('delete-modal');
-    const deleteModalContent = document.getElementById('delete-modal-content');
-    const btnCancelDelete = document.getElementById('btn-cancel-delete');
-    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
-
-    const toast = document.getElementById('toast-notification');
-    const toastMessage = document.getElementById('toast-message');
-    let toastTimer;
-    
-    let currentDeleteId = null;
+    // State
     let allPositions = [];
     let searchDebounceTimer;
+    let toastTimer;
+    let currentDeleteId = null;
 
-    // Tối ưu: Hiển thị toast với animation mượt hơn
+    // Utility Functions
+    function removeVietnameseAccents(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    }
+
+    function generatePositionCode(name) {
+        if (!name) return '';
+        let normalized = removeVietnameseAccents(name);
+        normalized = normalized.replace(/\s+/g, '_');
+        normalized = normalized.replace(/[^a-zA-Z0-9_]/g, '');
+        return normalized.toUpperCase();
+    }
+
     function showToast(message, isError = false) {
-        if (!toast || !toastMessage) return;
+        if (!elements.toast || !elements.toastMessage) return;
         clearTimeout(toastTimer);
-        
-        toastMessage.textContent = message;
-        toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white`;
-        
-        // Trigger reflow để animation hoạt động
-        void toast.offsetWidth;
-        
-        toast.classList.remove('opacity-0', 'translate-x-full', 'pointer-events-none');
-        toast.classList.add('opacity-100', 'translate-x-0');
-        
+        elements.toastMessage.textContent = message;
+        elements.toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white`;
+        void elements.toast.offsetWidth; // Trigger reflow
+        elements.toast.classList.remove('opacity-0', 'translate-x-full', 'pointer-events-none');
+        elements.toast.classList.add('opacity-100', 'translate-x-0');
         toastTimer = setTimeout(() => {
-            toast.classList.add('opacity-0', 'translate-x-full', 'pointer-events-none');
-            toast.classList.remove('opacity-100', 'translate-x-0');
+            elements.toast.classList.add('opacity-0', 'translate-x-full', 'pointer-events-none');
+            elements.toast.classList.remove('opacity-100', 'translate-x-0');
         }, 3000);
     }
 
     function showLoading(isLoading) {
-        if (!loadingSpinner || !tableContainer || !emptyState) return;
+        if (!elements.loadingSpinner || !elements.tableContainer || !elements.emptyState) return;
         if (isLoading) {
-            loadingSpinner.classList.remove('hidden');
-            tableContainer.classList.add('hidden');
-            emptyState.classList.add('hidden');
+            elements.loadingSpinner.classList.remove('hidden');
+            elements.tableContainer.classList.add('hidden');
+            elements.emptyState.classList.add('hidden');
         } else {
-            loadingSpinner.classList.add('hidden');
+            elements.loadingSpinner.classList.add('hidden');
         }
-    }
-    
-    function renderStatusBadge(status) {
-        if (status === 'active') {
-            return `<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Đang hoạt động</span>`;
-        }
-        return `<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">Ngưng hoạt động</span>`;
     }
 
-    // Tối ưu: Sử dụng DocumentFragment để render table nhanh hơn
+    function renderStatusBadge(status) {
+        return status === 'active'
+            ? '<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Đang hoạt động</span>'
+            : '<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">Ngưng hoạt động</span>';
+    }
+
     function renderTable(positions) {
-        if (!tableBody || !tableContainer || !emptyState) return;
-        
+        if (!elements.tableBody || !elements.tableContainer || !elements.emptyState) return;
         if (positions.length === 0) {
-            tableContainer.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-            if (searchInput && searchInput.value) {
-                emptyStateMessage.innerHTML = `Không tìm thấy kết quả cho "<b>${searchInput.value}</b>".`;
-            } else {
-                emptyStateMessage.textContent = 'Chưa có chức vụ nào. Hãy bắt đầu bằng cách thêm một chức vụ mới.';
-            }
+            elements.tableContainer.classList.add('hidden');
+            elements.emptyState.classList.remove('hidden');
+            elements.emptyStateMessage.innerHTML = elements.searchInput && elements.searchInput.value
+                ? `Không tìm thấy kết quả cho "<b>${elements.searchInput.value}</b>".`
+                : 'Chưa có chức vụ nào. Hãy bắt đầu bằng cách thêm một chức vụ mới.';
         } else {
-            tableContainer.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-            
+            elements.tableContainer.classList.remove('hidden');
+            elements.emptyState.classList.add('hidden');
             const fragment = document.createDocumentFragment();
-            
             positions.forEach(pos => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors';
-                // Lưu toàn bộ data vào data-position attribute
                 tr.setAttribute('data-position', JSON.stringify(pos));
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${pos.machucvu || ''}</td>
@@ -262,104 +263,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 fragment.appendChild(tr);
             });
-            
-            tableBody.innerHTML = '';
-            tableBody.appendChild(fragment);
+            elements.tableBody.innerHTML = '';
+            elements.tableBody.appendChild(fragment);
         }
     }
-    
-    // Tối ưu: Debounce cho search để giảm số lần filter
+
     function filterAndRender() {
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(() => {
-            if (!searchInput) {
+            if (!elements.searchInput) {
                 renderTable(allPositions);
                 return;
             }
-            const query = searchInput.value.toLowerCase().trim();
-            if (!query) {
-                renderTable(allPositions);
-                return;
-            }
-            const filteredPositions = allPositions.filter(pos => 
-                (pos.tenvitricongviec && pos.tenvitricongviec.toLowerCase().includes(query)) ||
-                (pos.machucvu && pos.machucvu.toLowerCase().includes(query))
-            );
-            renderTable(filteredPositions);
+            const query = elements.searchInput.value.toLowerCase().trim();
+            const filtered = query
+                ? allPositions.filter(pos =>
+                    (pos.tenvitricongviec && pos.tenvitricongviec.toLowerCase().includes(query)) ||
+                    (pos.machucvu && pos.machucvu.toLowerCase().includes(query))
+                )
+                : allPositions;
+            renderTable(filtered);
         }, 300);
     }
 
-    // Tối ưu: Lấy data trực tiếp từ row thay vì gọi API
     function openPositionModal(positionData = null) {
-        if (!positionModal || !positionForm || !positionModalContent) return;
-        
-        positionForm.reset();
-        formPositionId.value = '';
-        btnSubmitForm.disabled = false;
-        
+        if (!elements.positionModal || !elements.positionForm || !elements.positionModalContent) return;
+        elements.positionForm.reset();
+        elements.formPositionId.value = '';
+        elements.btnSubmitForm.disabled = false;
         if (positionData) {
-            // Chế độ cập nhật - điền data trực tiếp
-            positionModalTitle.textContent = 'Cập nhật chức vụ';
-            formMaChucVu.disabled = true;
-            
-            formPositionId.value = positionData.id;
-            formMaChucVu.value = positionData.machucvu || '';
-            formTenViTri.value = positionData.tenvitricongviec || '';
-            formTrangThai.value = positionData.trangthai || 'active';
-            formGhiChu.value = positionData.ghichu || '';
+            elements.positionModalTitle.textContent = 'Cập nhật chức vụ';
+            elements.formMaChucVu.disabled = true;
+            elements.formPositionId.value = positionData.id;
+            elements.formTenViTri.value = positionData.tenvitricongviec || '';
+            elements.formMaChucVu.value = positionData.machucvu || '';
+            elements.formTrangThai.value = positionData.trangthai || 'active';
+            elements.formGhiChu.value = positionData.ghichu || '';
         } else {
-            // Chế độ tạo mới
-            positionModalTitle.textContent = 'Tạo mới chức vụ';
-            formMaChucVu.disabled = false;
+            elements.positionModalTitle.textContent = 'Tạo mới chức vụ';
+            elements.formMaChucVu.disabled = false;
+            elements.formMaChucVu.value = '';
         }
-        
-        // Animation mở modal
-        positionModal.classList.remove('hidden');
-        positionModal.classList.add('flex');
+        elements.positionModal.classList.remove('hidden');
+        elements.positionModal.classList.add('flex');
         requestAnimationFrame(() => {
-            positionModal.classList.remove('opacity-0');
-            positionModalContent.classList.remove('scale-95');
-            positionModalContent.classList.add('scale-100');
+            elements.positionModal.classList.remove('opacity-0');
+            elements.positionModalContent.classList.remove('scale-95');
+            elements.positionModalContent.classList.add('scale-100');
         });
     }
 
     function closePositionModal() {
-        if (!positionModal || !positionModalContent) return;
-        
-        positionModal.classList.add('opacity-0');
-        positionModalContent.classList.remove('scale-100');
-        positionModalContent.classList.add('scale-95');
-        
+        if (!elements.positionModal || !elements.positionModalContent) return;
+        elements.positionModal.classList.add('opacity-0');
+        elements.positionModalContent.classList.remove('scale-100');
+        elements.positionModalContent.classList.add('scale-95');
         setTimeout(() => {
-            positionModal.classList.add('hidden');
-            positionModal.classList.remove('flex');
+            elements.positionModal.classList.add('hidden');
+            elements.positionModal.classList.remove('flex');
         }, 200);
     }
 
     function openDeleteModal(id) {
-        if (!deleteModal || !deleteModalContent) return;
+        if (!elements.deleteModal || !elements.deleteModalContent) return;
         currentDeleteId = id;
-        
-        deleteModal.classList.remove('hidden');
-        deleteModal.classList.add('flex');
+        elements.deleteModal.classList.remove('hidden');
+        elements.deleteModal.classList.add('flex');
         requestAnimationFrame(() => {
-            deleteModal.classList.remove('opacity-0');
-            deleteModalContent.classList.remove('scale-95');
-            deleteModalContent.classList.add('scale-100');
+            elements.deleteModal.classList.remove('opacity-0');
+            elements.deleteModalContent.classList.remove('scale-95');
+            elements.deleteModalContent.classList.add('scale-100');
         });
     }
 
     function closeDeleteModal() {
-        if (!deleteModal || !deleteModalContent) return;
+        if (!elements.deleteModal || !elements.deleteModalContent) return;
         currentDeleteId = null;
-        
-        deleteModal.classList.add('opacity-0');
-        deleteModalContent.classList.remove('scale-100');
-        deleteModalContent.classList.add('scale-95');
-        
+        elements.deleteModal.classList.add('opacity-0');
+        elements.deleteModalContent.classList.remove('scale-100');
+        elements.deleteModalContent.classList.add('scale-95');
         setTimeout(() => {
-            deleteModal.classList.add('hidden');
-            deleteModal.classList.remove('flex');
+            elements.deleteModal.classList.add('hidden');
+            elements.deleteModal.classList.remove('flex');
         }, 200);
     }
 
@@ -368,15 +353,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(API_BASE_URL);
             const result = await response.json();
-            
-            if (result.success && Array.isArray(result.data)) {
-                allPositions = result.data;
-                filterAndRender();
-            } else {
-                allPositions = [];
-                renderTable([]);
-                showToast(result.message || 'Lỗi khi tải dữ liệu.', true);
-            }
+            allPositions = result.success && Array.isArray(result.data) ? result.data : [];
+            filterAndRender();
         } catch (error) {
             allPositions = [];
             renderTable([]);
@@ -388,33 +366,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleFormSubmit(e) {
         e.preventDefault();
-        if (!btnSubmitForm) return;
-        
-        const originalText = btnSubmitForm.textContent;
-        btnSubmitForm.disabled = true;
-        btnSubmitForm.textContent = 'Đang xử lý...';
-        
-        const id = formPositionId.value;
+        if (!elements.btnSubmitForm) return;
+        const originalText = elements.btnSubmitForm.textContent;
+        elements.btnSubmitForm.disabled = true;
+        elements.btnSubmitForm.textContent = 'Đang xử lý...';
+        const id = elements.formPositionId.value;
         const isUpdating = !!id;
-        
-        let url = API_BASE_URL;
-        let method = 'POST';
-        
+        const url = isUpdating ? `${API_BASE_URL}${id}/` : API_BASE_URL;
+        const method = isUpdating ? 'PUT' : 'POST';
         const body = {
-            machucvu: formMaChucVu.value,
-            tenvitricongviec: formTenViTri.value,
-            trangthai: formTrangThai.value,
-            ghichu: formGhiChu.value
+            machucvu: elements.formMaChucVu.value,
+            tenvitricongviec: elements.formTenViTri.value,
+            trangthai: elements.formTrangThai.value,
+            ghichu: elements.formGhiChu.value
         };
-
-        if (isUpdating) {
-            url = `${API_BASE_URL}${id}/`;
-            method = 'PUT';
-        }
-
         try {
             const response = await fetch(url, {
-                method: method,
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -422,51 +390,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(body)
             });
-            
             const result = await response.json();
-            
             if (result.success) {
                 showToast(result.message || (isUpdating ? 'Cập nhật chức vụ thành công!' : 'Tạo mới chức vụ thành công!'), false);
                 closePositionModal();
                 await fetchPositions();
             } else {
-                if (result.errors) {
-                    let errorMsg = 'Đã xảy ra lỗi: ';
-                    const errorList = [];
-                    for (const key in result.errors) {
-                        errorList.push(`${key}: ${result.errors[key].join(', ')}`);
-                    }
-                    errorMsg += errorList.join('; ');
-                    showToast(errorMsg, true);
-                } else {
-                    showToast(result.message || 'Đã xảy ra lỗi.', true);
-                }
+                const errorMsg = result.errors
+                    ? 'Đã xảy ra lỗi: ' + Object.entries(result.errors).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ')
+                    : result.message || 'Đã xảy ra lỗi.';
+                showToast(errorMsg, true);
             }
         } catch (error) {
             showToast('Lỗi kết nối: ' + error.message, true);
         } finally {
-            btnSubmitForm.disabled = false;
-            btnSubmitForm.textContent = originalText;
+            elements.btnSubmitForm.disabled = false;
+            elements.btnSubmitForm.textContent = originalText;
         }
     }
 
     async function handleConfirmDelete() {
-        if (!currentDeleteId || !btnConfirmDelete) return;
-        
-        const originalText = btnConfirmDelete.textContent;
-        btnConfirmDelete.disabled = true;
-        btnConfirmDelete.textContent = 'Đang xóa...';
-        
+        if (!currentDeleteId || !elements.btnConfirmDelete) return;
+        const originalText = elements.btnConfirmDelete.textContent;
+        elements.btnConfirmDelete.disabled = true;
+        elements.btnConfirmDelete.textContent = 'Đang xóa...';
         try {
             const response = await fetch(`${API_BASE_URL}${currentDeleteId}/`, {
                 method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                },
+                headers: { 'X-CSRFToken': csrfToken }
             });
-
             const result = await response.json();
-            
             if (result.success) {
                 showToast(result.message || 'Xóa chức vụ thành công!', false);
                 closeDeleteModal();
@@ -477,93 +430,54 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             showToast('Lỗi kết nối: ' + error.message, true);
         } finally {
-            btnConfirmDelete.disabled = false;
-            btnConfirmDelete.textContent = originalText;
+            elements.btnConfirmDelete.disabled = false;
+            elements.btnConfirmDelete.textContent = originalText;
         }
     }
-    
+
     // Event Listeners
-    if (btnAddNew) {
-        btnAddNew.addEventListener('click', () => openPositionModal(null));
-    }
-    
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener('click', closePositionModal);
-    }
-    
-    if (btnCancelModal) {
-        btnCancelModal.addEventListener('click', closePositionModal);
-    }
-
-    if (positionForm) {
-        positionForm.addEventListener('submit', handleFormSubmit);
-    }
-
-    if (btnCancelDelete) {
-        btnCancelDelete.addEventListener('click', closeDeleteModal);
-    }
-
-    if (btnConfirmDelete) {
-        btnConfirmDelete.addEventListener('click', handleConfirmDelete);
-    }
-    
-    if (searchForm) {
-        searchForm.addEventListener('submit', (e) => e.preventDefault());
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', filterAndRender);
-    }
-
-    // Event delegation cho table - Tối ưu: Lấy data từ row
-    if (tableBody) {
-        tableBody.addEventListener('click', function(e) {
-            const editButton = e.target.closest('.btn-edit');
-            if (editButton) {
-                e.preventDefault();
-                const row = editButton.closest('tr');
-                if (row) {
-                    const positionDataStr = row.getAttribute('data-position');
-                    if (positionDataStr) {
-                        try {
-                            const positionData = JSON.parse(positionDataStr);
-                            openPositionModal(positionData);
-                        } catch (error) {
-                            showToast('Lỗi khi đọc dữ liệu: ' + error.message, true);
-                        }
-                    }
+    elements.btnAddNew?.addEventListener('click', () => openPositionModal(null));
+    elements.btnCloseModal?.addEventListener('click', closePositionModal);
+    elements.btnCancelModal?.addEventListener('click', closePositionModal);
+    elements.positionForm?.addEventListener('submit', handleFormSubmit);
+    elements.btnCancelDelete?.addEventListener('click', closeDeleteModal);
+    elements.btnConfirmDelete?.addEventListener('click', handleConfirmDelete);
+    elements.searchForm?.addEventListener('submit', (e) => e.preventDefault());
+    elements.searchInput?.addEventListener('input', filterAndRender);
+    elements.formTenViTri?.addEventListener('input', () => {
+        if (!elements.formPositionId.value) {
+            elements.formMaChucVu.value = generatePositionCode(elements.formTenViTri.value);
+        }
+    });
+    elements.tableBody?.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn) {
+            e.preventDefault();
+            const row = editBtn.closest('tr');
+            if (row) {
+                try {
+                    const data = JSON.parse(row.getAttribute('data-position'));
+                    openPositionModal(data);
+                } catch (error) {
+                    showToast('Lỗi khi đọc dữ liệu: ' + error.message, true);
                 }
-                return;
             }
-            
-            const deleteButton = e.target.closest('.btn-delete');
-            if (deleteButton) {
-                e.preventDefault();
-                const id = deleteButton.dataset.id;
-                openDeleteModal(id);
-                return;
-            }
-        });
-    }
+            return;
+        }
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (deleteBtn) {
+            e.preventDefault();
+            openDeleteModal(deleteBtn.dataset.id);
+        }
+    });
+    elements.positionModal?.addEventListener('click', (e) => {
+        if (e.target === elements.positionModal) closePositionModal();
+    });
+    elements.deleteModal?.addEventListener('click', (e) => {
+        if (e.target === elements.deleteModal) closeDeleteModal();
+    });
 
-    // Click outside modal để đóng
-    if (positionModal) {
-        positionModal.addEventListener('click', (e) => {
-            if (e.target === positionModal) {
-                closePositionModal();
-            }
-        });
-    }
-
-    if (deleteModal) {
-        deleteModal.addEventListener('click', (e) => {
-            if (e.target === deleteModal) {
-                closeDeleteModal();
-            }
-        });
-    }
-
-    // Khởi tạo
+    // Initialize
     fetchPositions();
 });
 </script>
