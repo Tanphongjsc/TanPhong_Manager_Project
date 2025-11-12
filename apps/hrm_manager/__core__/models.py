@@ -547,6 +547,20 @@ class Lichsuhopdong(models.Model):
         db_table = '"hrm"."LichSuHopDong"'
         db_table_comment = 'Bảng này sẽ lưu lại lịch sử ký hợp đồng của nhân viên trong công ty. Và để từ thử việc -> chính thức sẽ ký 2 hợp đồng khác nhau'
 
+class Loainhanvien(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    maloainv = models.CharField(db_column='MaLoaiNV', blank=True, null=True)  # Field name made lowercase.
+    tenloainv = models.CharField(db_column='TenLoaiNV', blank=True, null=True)  # Field name made lowercase.
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'LoaiNhanVien'
+        db_table_comment = 'Danh muc Loai Nhan vien'
+
 
 class LoaingayapdungLamthem(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -571,6 +585,24 @@ class LoaingayapdungLamthem(models.Model):
         db_table_comment = 'Bảng này để lưu lại cấu hình các loại ngày được áp dụng (Ngày làm việc, Ngày nghỉ, Ngày lễ) làm thêm cho một bản thiết kế làm thêm.'
 
 
+
+class Nganhang(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    manganhang = models.CharField(db_column='MaNganHang', blank=True, null=True)  # Field name made lowercase.
+    tennganhang = models.CharField(db_column='TenNganHang', blank=True, null=True)  # Field name made lowercase.
+    tenviettat = models.CharField(db_column='TenVietTat', blank=True, null=True)  # Field name made lowercase.
+    diachichinhanh = models.CharField(db_column='DiaChiChiNhanh', blank=True, null=True)  # Field name made lowercase.
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'NganHang'
+        db_table_comment = 'Danh muc Ngan hang'
+
+
+
 class Nhanvien(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField()
@@ -584,9 +616,9 @@ class Nhanvien(models.Model):
     ngaysinh = models.DateField(db_column='NgaySinh', blank=True, null=True)  # Field name made lowercase.
     socccd = models.CharField(db_column='SoCCCD', blank=True, null=True)  # Field name made lowercase.
     ngayvaolam = models.DateField(db_column='NgayVaoLam', blank=True, null=True)  # Field name made lowercase.
-    loainv = models.CharField(db_column='LoaiNV', blank=True, null=True)  # Field name made lowercase.
+    loainv = models.ForeignKey(Loainhanvien, models.DO_NOTHING, blank=True, null=True)
     trangthainv = models.CharField(db_column='TrangThaiNV', blank=True, null=True)  # Field name made lowercase.
-    tennganhang = models.CharField(db_column='TenNganHang', blank=True, null=True)  # Field name made lowercase.
+    nganhang = models.ForeignKey(Nganhang, models.DO_NOTHING, blank=True, null=True)
     sotknganhang = models.CharField(db_column='SoTKNganHang', blank=True, null=True)  # Field name made lowercase.
     tentknganhang = models.CharField(db_column='TenTKNganHang', blank=True, null=True)  # Field name made lowercase.
     masothue = models.CharField(db_column='MaSoThue', blank=True, null=True)  # Field name made lowercase.

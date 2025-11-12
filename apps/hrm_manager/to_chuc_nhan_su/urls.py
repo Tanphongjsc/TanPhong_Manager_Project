@@ -26,6 +26,11 @@ urlpatterns = [
     # PHÒNG BAN
     path('api/v1/phong-ban/', views.api_phong_ban_list, name='api_phong_ban_list'),
     path('api/v1/phong-ban/<int:id>/', views.api_phong_ban_detail, name='api_phong_ban_detail'),
-    path('api/v1/phong-ban/<int:id>/employee/', views.api_phong_ban_nhan_vien, name='api_phong_ban_nhan_vien'),
+    path('api/v1/phong-ban/employee/', views.api_phong_ban_nhan_vien, name='api_phong_ban_nhan_vien'),
     path('api/v1/phong-ban/tree/', views.api_phong_ban_tree, name='api_phong_ban_tree'),
+
+    # NHÂN VIÊN
+    path('api/v1/nhan-vien/', views.api_nhan_vien_list, name='api_nhan_vien_list'),
+    path('api/v1/nhan-vien/<int:id>/', views.api_nhan_vien_detail, name='api_nhan_vien_detail'),
+
 ]

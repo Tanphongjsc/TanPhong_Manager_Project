@@ -1,4 +1,339 @@
 {% extends "base.html" %}
+{% load static %}
 
-<h1>Bảo hiểm</h1>
-<h2> COMING SOON ... </h2>
+{% block title %}Cây nhân sự{% endblock %}
+
+{% block styles %}
+<style>
+main {
+    padding: 0 !important;
+}
+
+/* Chiều cao tổng thể linh hoạt để hai khối hiển thị đồng thời */
+.flex-org-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Desktop: hai cột cùng chiều cao, cuộn độc lập */
+@media (min-width: 1024px) {
+    .flex-org-wrapper {
+        flex-direction: row;
+        height: calc(100vh - 120px); /* tùy chỉnh theo header thực tế */
+    }
+    #tree-sidebar,
+    .org-employee-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    #tree-sidebar > div.flex-1,
+    .org-employee-panel .flex-1,
+    .org-employee-panel .overflow-auto {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+}
+
+/* Mobile / Tablet: chia 50/50 để tránh dồn nén bảng */
+@media (max-width: 1023px) {
+    #tree-sidebar,
+    .org-employee-panel {
+        min-height: 50vh;
+        display: flex;
+        flex-direction: column;
+    }
+    #tree-sidebar > div.flex-1,
+    .org-employee-panel .flex-1,
+    .org-employee-panel .overflow-auto {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+}
+
+/* Luôn hiển thị action trên thiết bị không hover (mobile) */
+@media (hover: none) {
+    .tree-actions {
+        display: flex !important;
+    }
+}
+
+/* Khi chọn item làm rõ nền */
+.tree-item.selected {
+    background-color: #f1f5f9;
+    font-weight: 600;
+}
+
+/* Toast trạng thái ẩn mặc định */
+#toast-notification {
+    transition: all .3s;
+}
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="flex-org-wrapper p-4 md:p-6">
+
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+    <!-- Tree Sidebar -->
+    <aside id="tree-sidebar" 
+        class="w-full lg:w-auto lg:max-w-xs xl:max-w-sm bg-white rounded-lg shadow-sm flex flex-col mb-4 lg:mb-0">
+        
+        <div class="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
+            <h3 class="text-xl font-semibold text-slate-800">Cấu trúc tổ chức</h3>
+        </div>
+
+        <div class="flex-1 p-4 sm:p-6 space-y-4 overflow-y-auto">
+            <button id="add-company-btn" 
+                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                <i class="fas fa-plus"></i>
+                Thêm công ty
+            </button>
+
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <i class="fas fa-search h-5 w-5 text-slate-400"></i>
+                </span>
+                <input type="search" id="tree-search-input"
+                    class="block w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="Tìm bộ phận...">
+            </div>
+
+            <div>
+                <div id="view-all-employees"
+                    class="group flex cursor-pointer items-center justify-between rounded-lg p-3 hover:bg-slate-100">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-globe h-5 w-5 text-slate-500"></i>
+                        <span class="font-medium text-slate-700">Tất cả nhân viên</span>
+                    </div>
+                    <span id="total-employee-count" class="text-sm text-slate-500"></span>
+                </div>
+            </div>
+
+            <div id="org-tree-container" class="space-y-1">
+                <div class="text-center text-slate-500 py-4">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    Đang tải cây...
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full overflow-hidden flex flex-col min-w-0">
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 h-full flex flex-col">
+
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <h3 id="employee-list-title" class="text-xl font-semibold text-slate-800 truncate">Tất cả nhân viên</h3>
+                </div>
+                <button id="add-employee-btn" 
+                        class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 flex-shrink-0">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden sm:inline">Thêm nhân viên</span>
+                </button>
+            </div>
+
+            <form id="employee-filter-form" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                <div class="relative sm:col-span-2 md:col-span-1 xl:col-span-2">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i class="fas fa-search h-5 w-5 text-slate-400"></i>
+                    </span>
+                    <input type="search" id="filter-search" name="search"
+                        class="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="Tìm theo tên hoặc mã nhân viên...">
+                </div>
+
+                <div class="w-full">
+                    <select id="filter-trang-thai" name="trangthainv"
+                            class="block w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đang làm việc">Đang làm việc</option>
+                        <option value="Đã nghỉ việc">Đã nghỉ việc</option>
+                        <option value="Thử việc">Thử việc</option>
+                    </select>
+                </div>
+                
+                <div class="w-full">
+                    <select id="filter-gioi-tinh" name="gioitinh"
+                            class="block w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">Tất cả giới tính</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+            </form>
+
+            <div class="flex-1 overflow-auto">
+                <table class="w-full min-w-max">
+                    <thead class="bg-slate-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6">
+                                Tên nhân viên
+                            </th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Mã NV</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Email</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Trạng thái</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Bộ phận</th>
+                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Hành động</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-table-body" class="divide-y divide-slate-200 bg-white">
+                        <tr>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-500">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Đang tải danh sách nhân viên...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="pagination-controls" class="flex items-center justify-between border-t border-slate-200 px-4 py-3 sm:px-6 mt-4" aria-label="Pagination">
+                <div class="flex-1 text-center sm:text-left">
+                    <p class="text-sm text-slate-700">
+                        Tổng số:
+                        <span id="page-total" class="font-medium">0</span>
+                        nhân viên
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Templates -->
+<template id="employee-row-template">
+    <tr class="hover:bg-slate-50 transition-colors">
+        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+            <div class="flex items-center">
+                <div class="h-10 w-10 flex-shrink-0">
+                    <span class="employee-avatar-placeholder inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                        <span class="font-medium leading-none"></span>
+                    </span>
+                </div>
+                <div class="ml-4">
+                    <div class="font-medium text-slate-900 employee-name"></div>
+                    <div class="text-slate-500 employee-email-small"></div>
+                </div>
+            </div>
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500 employee-code"></td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500 employee-email-main"></td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
+            <span class="employee-status inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"></span>
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500 employee-dept"></td>
+        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+            <button class="btn-edit-employee text-blue-600 hover:text-blue-900 transition-colors">
+                Sửa<span class="sr-only">, [Tên]</span>
+            </button>
+            <button class="btn-delete-employee text-red-600 hover:text-red-900 ml-4 transition-colors">
+                Xóa<span class="sr-only">, [Tên]</span>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<template id="tree-item-template">
+    <li>
+        <div class="tree-item group flex cursor-pointer items-center justify-between rounded-lg p-3 hover:bg-slate-100 transition-colors"
+            data-id="" data-name="" data-type="">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <button class="tree-toggle w-6 h-6 rounded-md hover:bg-slate-200 invisible flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-chevron-right text-xs text-slate-500 transition-transform"></i>
+                </button>
+                <i class="tree-icon h-5 w-5 text-slate-500 flex-shrink-0"></i>
+                <span class="tree-name flex-1 font-medium text-slate-700 truncate"></span>
+            </div>
+            <div class="tree-actions hidden group-hover:flex items-center gap-2 flex-shrink-0 ml-2">
+                <button class="btn-add-sub p-1 rounded hover:bg-slate-200" title="Thêm phòng ban con">
+                    <i class="fas fa-plus text-slate-400 hover:text-blue-600"></i>
+                </button>
+                <button class="btn-edit-dept p-1 rounded hover:bg-slate-200" title="Sửa tên">
+                    <i class="fas fa-pen text-slate-400 hover:text-green-600"></i>
+                </button>
+                <button class="btn-delete-dept p-1 rounded hover:bg-slate-200" title="Xóa">
+                    <i class="fas fa-trash text-slate-400 hover:text-red-600"></i>
+                </button>
+            </div>
+        </div>
+        <ul class="tree-children ml-6 pl-5 border-l border-slate-200 hidden space-y-1 mt-1">
+        </ul>
+    </li>
+</template>
+
+<!-- Department Modal -->
+<div id="dept-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity duration-200" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-transform duration-200 scale-95" id="dept-modal-content">
+        <div class="p-4 sm:p-5 border-b flex justify-between items-center flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800" id="dept-modal-title">Quản lý phòng ban</h3>
+            <button type="button" id="close-dept-modal-btn-x" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        
+        <form id="dept-form" class="p-4 sm:p-5 space-y-4 overflow-y-auto">
+            {% csrf_token %}
+            <input type="hidden" id="dept-id-input" name="id">
+            <input type="hidden" id="parent-id-input" name="parent">
+            <input type="hidden" id="company-id-input" name="congty_id">
+            <input type="hidden" id="dept-level-input" name="level">
+
+            <div id="dept-modal-parent-info" class="text-sm text-slate-500"></div>
+            
+            <div>
+                <label for="dept-name-input" class="block text-sm font-medium text-slate-700 mb-1">Tên <span class="text-red-500">*</span></label>
+                <input type="text" id="dept-name-input" name="name" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: Phòng Kế toán">
+            </div>
+            
+            <div>
+                <label for="dept-code-input" class="block text-sm font-medium text-slate-700 mb-1">Mã (Tùy chọn)</label>
+                <input type="text" id="dept-code-input" name="code" class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: ACC">
+            </div>
+        </form>
+        
+        <div class="p-4 sm:p-5 border-t flex-shrink-0 flex justify-end gap-3">
+            <button type="button" id="close-dept-modal-btn" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Hủy</button>
+            <button type="submit" form="dept-form" id="save-dept-btn" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Lưu thay đổi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Department Modal -->
+<div id="delete-dept-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity duration-200" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-transform duration-200 scale-95" id="delete-modal-content">
+        <div class="p-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-red-100 sm:h-12 sm:w-12">
+                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                </div>
+                <div class="ml-4 text-left">
+                    <h3 class="text-lg font-semibold text-slate-900" id="delete-modal-title">Xác nhận xóa phòng ban</h3>
+                    <p class="text-sm text-slate-500 mt-2">Bạn có chắc chắn muốn xóa <strong id="delete-dept-name"></strong> không? Hành động này không thể hoàn tác.</p>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 rounded-b-lg">
+            <button type="button" id="cancel-delete-dept-btn" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Hủy</button>
+            <button type="button" id="confirm-delete-dept-btn" class="px-4 py-2 bg-red-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700 transition-colors">Xác nhận Xóa</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div
+id="toast-notification"
+class="fixed bottom-5 right-5 sm:left-auto left-4 sm:right-5 z-50 bg-slate-800 text-white px-4 py-3 rounded-md shadow-lg transition-all duration-300 opacity-0 translate-x-full pointer-events-none max-w-sm sm:max-w-sm">
+<span id="toast-message"></span>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/quan_ly_nhan_su/cay_nhan_su.js' %}" defer></script>
+{% endblock scripts %}
