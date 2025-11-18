@@ -316,7 +316,6 @@ class Hopdong(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     mahopdong = models.CharField(db_column='MaHopDong', blank=True, null=True)  # Field name made lowercase.
     tenhopdong = models.CharField(db_column='TenHopDong', blank=True, null=True)  # Field name made lowercase.
-    filehopdong = models.CharField(db_column='FileHopDong', blank=True, null=True)  # Field name made lowercase.
     loaihopdong = models.CharField(db_column='LoaiHopDong', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
 
@@ -575,22 +574,24 @@ class Nhanvien(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
-    manhanvien = models.CharField(db_column='MaNhanVien', blank=True, null=True)  # Field name made lowercase.
-    hovaten = models.CharField(db_column='HoVaTen', blank=True, null=True)  # Field name made lowercase.
-    email = models.CharField(db_column='Email', blank=True, null=True)  # Field name made lowercase.
-    sodienthoai = models.CharField(db_column='SoDienThoai', blank=True, null=True)  # Field name made lowercase.
-    diachi = models.TextField(db_column='DiaChi', blank=True, null=True)  # Field name made lowercase.
-    gioitinh = models.CharField(db_column='GioiTinh', blank=True, null=True)  # Field name made lowercase.
-    ngaysinh = models.DateField(db_column='NgaySinh', blank=True, null=True)  # Field name made lowercase.
-    socccd = models.CharField(db_column='SoCCCD', blank=True, null=True)  # Field name made lowercase.
-    ngayvaolam = models.DateField(db_column='NgayVaoLam', blank=True, null=True)  # Field name made lowercase.
-    loainv = models.CharField(db_column='LoaiNV', blank=True, null=True)  # Field name made lowercase.
-    trangthainv = models.CharField(db_column='TrangThaiNV', blank=True, null=True)  # Field name made lowercase.
-    tennganhang = models.CharField(db_column='TenNganHang', blank=True, null=True)  # Field name made lowercase.
-    sotknganhang = models.CharField(db_column='SoTKNganHang', blank=True, null=True)  # Field name made lowercase.
-    tentknganhang = models.CharField(db_column='TenTKNganHang', blank=True, null=True)  # Field name made lowercase.
-    masothue = models.CharField(db_column='MaSoThue', blank=True, null=True)  # Field name made lowercase.
-    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
+    manhanvien = models.CharField(db_column='MaNhanVien', blank=True, null=True)
+    hovaten = models.CharField(db_column='HoVaTen', blank=True, null=True)
+    email = models.CharField(db_column='Email', blank=True, null=True)
+    sodienthoai = models.CharField(db_column='SoDienThoai', blank=True, null=True)
+    diachi = models.TextField(db_column='DiaChi', blank=True, null=True)
+    gioitinh = models.CharField(db_column='GioiTinh', blank=True, null=True)
+    ngaysinh = models.DateField(db_column='NgaySinh', blank=True, null=True)
+    socccd = models.CharField(db_column='SoCCCD', blank=True, null=True)
+    ngayvaolam = models.DateField(db_column='NgayVaoLam', blank=True, null=True)
+    # SỬA: Thay CharField thành ForeignKey
+    loainv = models.ForeignKey('Loainhanvien', models.DO_NOTHING, db_column='loainv_id', blank=True, null=True)
+    trangthainv = models.CharField(db_column='TrangThaiNV', blank=True, null=True)
+    # SỬA: Thay CharField thành ForeignKey  
+    nganhang = models.ForeignKey('Nganhang', models.DO_NOTHING, db_column='nganhang_id', blank=True, null=True)
+    sotknganhang = models.CharField(db_column='SoTKNganHang', blank=True, null=True)
+    tentknganhang = models.CharField(db_column='TenTKNganHang', blank=True, null=True)
+    masothue = models.CharField(db_column='MaSoThue', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
     user_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -836,3 +837,69 @@ class Thietlapsolieucodinh(models.Model):
         managed = False
         db_table = '"hrm"."ThietLapSoLieuCoDinh"'
         db_table_comment = 'Thiết lập số liệu cố định cho những tham số tính lương cho từng nhân viên khác nhau'
+
+class Baohiem(models.Model):
+    """Model Bảo hiểm"""
+    id = models.BigAutoField(primary_key=True)
+    mabaohiem = models.CharField(db_column='MaBaoHiem', blank=True, null=True)
+    tenbaohiem = models.CharField(db_column='TenBaoHiem', blank=True, null=True)
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."BaoHiem"'
+        db_table_comment = 'Bảng chứa danh sách các loại bảo hiểm'
+
+class Loainhanvien(models.Model):
+    """Model Loại nhân viên"""
+    id = models.BigAutoField(primary_key=True)
+    maloainv = models.CharField(db_column='MaLoaiNV', blank=True, null=True)
+    tenloainv = models.CharField(db_column='TenLoaiNV', blank=True, null=True)
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."LoaiNhanVien"'
+        db_table_comment = 'Bảng chứa các loại nhân viên theo hình thức làm việc'
+
+class Nganhang(models.Model):
+    """Model Ngân hàng"""
+    id = models.BigAutoField(primary_key=True)
+    manganhang = models.CharField(db_column='MaNganHang', blank=True, null=True)
+    tennganhang = models.CharField(db_column='TenNganHang', blank=True, null=True)
+    tenviettat = models.CharField(db_column='TenVietTat', blank=True, null=True)
+    diachichinhanh = models.CharField(db_column='DiaChiChiNhanh', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."NganHang"'
+        db_table_comment = 'Bảng chứa danh sách các ngân hàng'
+
+class NhanvienBaohiem(models.Model):
+    """Model quan hệ Nhân viên - Bảo hiểm"""
+    id = models.BigAutoField(primary_key=True)
+    masobh = models.CharField(db_column='MaSoBH', blank=True, null=True)
+    ngaybatdaudong = models.DateField(db_column='NgayBatDauDong', blank=True, null=True)
+    ngaydungdong = models.DateField(db_column='NgayDungDong', blank=True, null=True)
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    noidangky = models.CharField(db_column='NoiDangKy', blank=True, null=True)
+    codongbh = models.BooleanField(db_column='CoDongBH', blank=True, null=True)
+    nhanvien = models.ForeignKey(Nhanvien, models.DO_NOTHING, blank=True, null=True)
+    baohiem = models.ForeignKey(Baohiem, models.DO_NOTHING, blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."NhanVien_BaoHiem"'
+        db_table_comment = 'Bảng quan hệ giữa Nhân viên và Bảo hiểm'

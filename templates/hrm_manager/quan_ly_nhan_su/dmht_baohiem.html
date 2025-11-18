@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Danh mục bảo hiểm{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    {# Breadcrumb #}
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="p-6">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6">Danh mục bảo hiểm</h1>
+
+        {# Search and Filter Bar #}
+        {% include "components/search_filter_bar.html" with search_placeholder="Tìm kiếm bảo hiểm" show_status_filter=True create_text="Thêm bảo hiểm" create_onclick="window.BaoHiemManager.openSidebar('create')" %}
+
+        {# Table #}
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Tên bảo hiểm
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Mã bảo hiểm
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Trạng thái
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Hành động
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                        {% for item in object_list %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="javascript:void(0);" 
+                                   data-id="{{ item.id }}" 
+                                   class="view-link text-sm font-medium text-green-600 hover:text-green-700">
+                                    {{ item.tenbaohiem }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {{ item.mabaohiem }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if item.trangthai|lower == 'active' %}
+                                    {% include "components/status_toggle.html" with item_id=item.id is_active=True %}
+                                {% else %}
+                                    {% include "components/status_toggle.html" with item_id=item.id is_active=False %}
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                {% include "components/action_buttons.html" with item_id=item.id %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                            {% include "components/table_empty.html" with colspan=4 message="Chưa có bảo hiểm nào" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Pagination #}
+            {% include "components/pagination.html" %}
+        </div>
+    </div>
+</div>
+
+{# Sidebar #}
+{% include "components/crud_sidebar.html" with sidebar_id="bh-sidebar" overlay_id="bh-sidebar-overlay" form_id="baohiem-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/baohiem_form.html" submit_text="Thêm" %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/quan_ly_nhan_su/dmht_baohiem.js' %}"></script>
+{% endblock %}
