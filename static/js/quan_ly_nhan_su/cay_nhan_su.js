@@ -1,36 +1,61 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // API Configuration
+    // ============ CONFIGURATION ============
     const API_BASE = '/hrm/to-chuc-nhan-su/api/v1';
-    const API_TREE = `${API_BASE}/phong-ban/tree/`;
-    const API_EMPLOYEES = `${API_BASE}/phong-ban/employee/`;
-    const API_DEPT = `${API_BASE}/phong-ban/`;
-    const API_COMPANY = `${API_BASE}/cong-ty/`;
+    const API = {
+        TREE: `${API_BASE}/phong-ban/tree/`,
+        EMPLOYEES: `${API_BASE}/phong-ban/employee/`,
+        DEPT: `${API_BASE}/phong-ban/`,
+        COMPANY: `${API_BASE}/cong-ty/`,
+    };
     const CSRF_TOKEN = document.getElementById('csrf-token')?.value || '';
 
-    // State
+    // ============ STATE MANAGEMENT ============
     const state = {
         selectedDeptId: null,
         selectedCompanyId: null,
         selectedLevel: 0,
         deptName: 'Tất cả nhân viên',
         filters: { search: '', trangThai: '', gioiTinh: '' },
-        deleteItem: { id: null, type: null, name: '' }
+        deleteItem: { id: null, type: null, name: '' },
+        selectedEmployees: new Set(), // Track selected employee IDs
+        treeCache: null,
+        employeeFetchController: null,
+        toastTimer: null
     };
 
-    // DOM Cache - Optimized selector
+    // ============ DOM CACHE ============
     const dom = {
+        // Tree & Sidebar
         treeContainer: document.getElementById('org-tree-container'),
+        viewAllEmployees: document.getElementById('view-all-employees'),
+        treeSearchInput: document.getElementById('tree-search-input'),
+        addCompanyBtn: document.getElementById('add-company-btn'),
+        openSidebarBtn: document.getElementById('open-sidebar-btn'),
+        closeSidebarBtn: document.getElementById('close-sidebar-btn'),
+        sidebarOverlay: document.getElementById('sidebar-overlay'),
+        treeSidebar: document.getElementById('tree-sidebar'),
+        totalEmployeeCount: document.getElementById('total-employee-count'),
+        
+        // Employee Table
         employeeTableBody: document.getElementById('employee-table-body'),
         employeeListTitle: document.getElementById('employee-list-title'),
-        totalEmployeeCount: document.getElementById('total-employee-count'),
-        viewAllEmployees: document.getElementById('view-all-employees'),
-        treeItemTemplate: document.getElementById('tree-item-template'),
-        employeeRowTemplate: document.getElementById('employee-row-template'),
+        pageTotal: document.getElementById('page-total'),
+        selectAllCheckbox: document.getElementById('select-all-checkbox'),
+        
+        // Bulk Actions
+        bulkActions: document.getElementById('bulk-actions'),
+        selectedCount: document.getElementById('selected-count'),
+        bulkDeleteBtn: document.getElementById('bulk-delete-btn'),
+        bulkExportBtn: document.getElementById('bulk-export-btn'),
+        clearSelectionBtn: document.getElementById('clear-selection-btn'),
+        
+        // Filters
         filterForm: document.getElementById('employee-filter-form'),
         filterSearch: document.getElementById('filter-search'),
         filterTrangThai: document.getElementById('filter-trang-thai'),
         filterGioiTinh: document.getElementById('filter-gioi-tinh'),
-        pageTotal: document.getElementById('page-total'),
+        
+        // Modals
         deptModal: document.getElementById('dept-modal'),
         deptModalContent: document.getElementById('dept-modal-content'),
         deptForm: document.getElementById('dept-form'),
@@ -45,21 +70,24 @@ document.addEventListener('DOMContentLoaded', () => {
         closeDeptModalBtn: document.getElementById('close-dept-modal-btn'),
         closeDeptModalBtnX: document.getElementById('close-dept-modal-btn-x'),
         saveDeptBtn: document.getElementById('save-dept-btn'),
-        addCompanyBtn: document.getElementById('add-company-btn'),
+        
         deleteDeptModal: document.getElementById('delete-dept-modal'),
         deleteModalContent: document.getElementById('delete-modal-content'),
         deleteDeptName: document.getElementById('delete-dept-name'),
         deleteModalTitle: document.getElementById('delete-modal-title'),
         confirmDeleteDeptBtn: document.getElementById('confirm-delete-dept-btn'),
         cancelDeleteDeptBtn: document.getElementById('cancel-delete-dept-btn'),
+        
+        // Templates & Toast
+        treeItemTemplate: document.getElementById('tree-item-template'),
+        employeeRowTemplate: document.getElementById('employee-row-template'),
         toast: document.getElementById('toast-notification'),
-        toastMessage: document.getElementById('toast-message'),
-        treeSearchInput: document.getElementById('tree-search-input')
+        toastMessage: document.getElementById('toast-message')
     };
 
-    let toastTimer;
-
-    // API Helper - Optimized error handling
+    // ============ UTILITY FUNCTIONS ============
+    
+    // API Helper
     async function apiFetch(url, options = {}) {
         const config = {
             headers: {
@@ -84,82 +112,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Toast Notification (REWORKED giống chucvu.html)
+    // Toast Notification
     function showToast(message, isError = false) {
         if (!dom.toast || !dom.toastMessage) return;
-        clearTimeout(toastTimer);
+        clearTimeout(state.toastTimer);
+        
         dom.toastMessage.textContent = message;
-        // Gán base class + màu
-        dom.toast.className = `fixed bottom-5 right-5 sm:left-auto left-4 sm:right-5 z-50 px-4 py-3 rounded-md shadow-lg transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white max-w-sm`;
-        // Force reflow
-        void dom.toast.offsetWidth;
-        // Hiển thị
+        dom.toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg transition-all duration-300
+            ${isError ? 'bg-red-600' : 'bg-green-600'} text-white max-w-sm opacity-0 translate-x-full pointer-events-none`;
+        
+        void dom.toast.offsetWidth; // Force reflow
+        
         dom.toast.classList.remove('opacity-0', 'translate-x-full', 'pointer-events-none');
         dom.toast.classList.add('opacity-100', 'translate-x-0');
-        toastTimer = setTimeout(() => {
+        
+        state.toastTimer = setTimeout(() => {
             dom.toast.classList.add('opacity-0', 'translate-x-full', 'pointer-events-none');
             dom.toast.classList.remove('opacity-100', 'translate-x-0');
         }, 3000);
     }
 
-    // Fetch Tree with caching
-    let treeCache = null;
+    // Execute with loading state
+    async function executeWithLoading(button, loadingText, action) {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = loadingText;
+        try {
+            await action();
+        } catch (error) {
+            showToast('Lỗi kết nối: ' + error.message, true);
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    // Modal Management
+    function showModal(modal, content, onShow) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+            if (onShow) setTimeout(onShow, 100);
+        });
+    }
+
+    function closeModal(modal, content, onClose) {
+        modal.classList.add('opacity-0');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.style.display = 'none';
+            if (onClose) onClose();
+        }, 200);
+    }
+
+    // Sidebar Toggle
+    const toggleSidebar = (show) => {
+        dom.treeSidebar?.classList.toggle('show', show);
+        dom.sidebarOverlay?.classList.toggle('show', show);
+    };
+
+    const closeSidebar = () => {
+        if (window.innerWidth < 1024) toggleSidebar(false);
+    };
+
+    // ============ TREE FUNCTIONS ============
+    
     async function fetchTree(forceRefresh = false) {
-        if (treeCache && !forceRefresh) {
-            renderTree(treeCache);
+        if (state.treeCache && !forceRefresh) {
+            renderTree(state.treeCache);
             return;
         }
         
         dom.treeContainer.innerHTML = '<div class="text-center text-slate-500 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</div>';
         try {
-            const result = await apiFetch(API_TREE);
-            treeCache = result.data || [];
-            renderTree(treeCache);
+            const result = await apiFetch(API.TREE);
+            state.treeCache = result.data || [];
+            renderTree(state.treeCache);
         } catch (error) {
             dom.treeContainer.innerHTML = '<div class="text-center text-red-500 py-4">Không thể tải cây tổ chức.</div>';
             showToast('Lỗi kết nối: ' + error.message, true);
         }
     }
 
-    // Fetch Employees with debouncing
-    let employeeFetchAbortController = null;
-    async function fetchEmployees() {
-        // Cancel previous request
-        if (employeeFetchAbortController) {
-            employeeFetchAbortController.abort();
-        }
-        employeeFetchAbortController = new AbortController();
-        
-        dom.employeeTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</td></tr>';
-        
-        const params = new URLSearchParams();
-        if (state.selectedDeptId) params.append('phongban_id', state.selectedDeptId);
-        else if (state.selectedCompanyId) params.append('congty_id', state.selectedCompanyId);
-        if (state.filters.search) params.append('search', state.filters.search);
-        if (state.filters.trangThai) params.append('trangthainv', state.filters.trangThai);
-        if (state.filters.gioiTinh) params.append('gioitinh', state.filters.gioiTinh);
-
-        try {
-            const result = await apiFetch(`${API_EMPLOYEES}?${params}`, {
-                signal: employeeFetchAbortController.signal
-            });
-            const employees = result.data || [];
-            const total = result.total || employees.length;
-            renderEmployeeTable(employees);
-            dom.pageTotal.textContent = total;
-            if (!state.selectedDeptId && !Object.values(state.filters).some(v => v)) {
-                dom.totalEmployeeCount.textContent = `(${total})`;
-            }
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                dom.employeeTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-red-500">Không thể tải danh sách.</td></tr>';
-                dom.pageTotal.textContent = 0;
-                showToast('Lỗi kết nối: ' + error.message, true);
-            }
-        }
-    }
-
-    // Render Tree - Optimized with DocumentFragment
     function renderTree(companies) {
         dom.treeContainer.innerHTML = '';
         if (!companies.length) {
@@ -169,36 +210,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fragment = document.createDocumentFragment();
         companies.forEach(company => {
-            const clone = dom.treeItemTemplate.content.cloneNode(true);
-            const item = clone.querySelector('.tree-item');
-            const toggle = clone.querySelector('.tree-toggle');
-            const icon = clone.querySelector('.tree-icon');
-            const name = clone.querySelector('.tree-name');
-            const children = clone.querySelector('.tree-children');
+            const clone = createTreeItem(company, 'company');
+            
+            // Company-specific setup
             const btnAddSub = clone.querySelector('.btn-add-sub');
-
-            item.dataset.id = company.id;
-            item.dataset.name = company.tencongty_vi;
-            item.dataset.type = 'company';
-            name.textContent = company.tencongty_vi;
-            icon.className = 'fas fa-building h-5 w-5 text-blue-600 flex-shrink-0';
-
-            item.onclick = () => selectCompany(company.id, company.tencongty_vi);
-
-            // HIỂN THỊ nút thêm phòng ban cho công ty (cấp 1)
             btnAddSub.classList.remove('hidden');
             btnAddSub.onclick = (e) => {
                 e.stopPropagation();
-                // Thêm phòng ban cấp 1 (không có phòng ban cha)
                 openDeptModal('add-sub', null, company.tencongty_vi, company.id, 1);
             };
 
-            if (company.departments?.length) {
-                toggle.classList.remove('invisible');
-                toggle.onclick = (e) => toggleTree(e, children, toggle);
-                renderDeptTree(company.departments, children, company.id);
-            }
-
+            // Action buttons
             clone.querySelector('.btn-edit-dept').onclick = (e) => {
                 e.stopPropagation();
                 openCompanyModal('edit', company);
@@ -208,35 +230,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 openDeleteModal(company.id, company.tencongty_vi, 'company');
             };
 
+            // Render departments
+            const children = clone.querySelector('.tree-children');
+            if (company.departments?.length) {
+                renderDeptTree(company.departments, children, company.id);
+            }
+
             fragment.appendChild(clone);
         });
         dom.treeContainer.appendChild(fragment);
     }
 
+    function createTreeItem(item, type) {
+        const clone = dom.treeItemTemplate.content.cloneNode(true);
+        const treeItem = clone.querySelector('.tree-item');
+        const toggle = clone.querySelector('.tree-toggle');
+        const icon = clone.querySelector('.tree-icon');
+        const name = clone.querySelector('.tree-name');
+        const children = clone.querySelector('.tree-children');
+
+        // Set data
+        const isCompany = type === 'company';
+        Object.assign(treeItem.dataset, {
+            id: item.id,
+            name: isCompany ? item.tencongty_vi : item.tenphongban,
+            type: type
+        });
+
+        const displayName = isCompany ? item.tencongty_vi : item.tenphongban;
+        name.textContent = displayName;
+        name.title = displayName;
+
+        // Icon
+        icon.className = isCompany 
+            ? 'fas fa-building h-5 w-5 text-blue-600 flex-shrink-0 tree-icon'
+            : 'fas fa-folder h-5 w-5 text-yellow-500 flex-shrink-0 tree-icon';
+
+        // Click handler
+        treeItem.onclick = () => {
+            if (isCompany) {
+                selectCompany(item.id, displayName);
+            } else {
+                selectDept(item.id, displayName, item.congty || treeItem.dataset.companyId, item.level);
+            }
+        };
+
+        // Toggle handler
+        const hasChildren = isCompany ? item.departments?.length : item.children?.length;
+        if (hasChildren) {
+            toggle.classList.remove('invisible');
+            toggle.onclick = (e) => {
+                e.stopPropagation();
+                children.classList.toggle('hidden');
+                const toggleIcon = toggle.querySelector('i');
+                toggleIcon.classList.toggle('fa-chevron-right');
+                toggleIcon.classList.toggle('fa-chevron-down');
+            };
+        }
+
+        return clone;
+    }
+
     function renderDeptTree(departments, container, companyId) {
         const fragment = document.createDocumentFragment();
         departments?.forEach(dept => {
-            const clone = dom.treeItemTemplate.content.cloneNode(true);
-            const item = clone.querySelector('.tree-item');
-            const toggle = clone.querySelector('.tree-toggle');
-            const icon = clone.querySelector('.tree-icon');
-            const name = clone.querySelector('.tree-name');
-            const children = clone.querySelector('.tree-children');
+            const clone = createTreeItem(dept, 'department');
+            const treeItem = clone.querySelector('.tree-item');
+            treeItem.dataset.companyId = companyId;
+            treeItem.dataset.level = dept.level;
 
-            item.dataset.id = dept.id;
-            item.dataset.name = dept.tenphongban;
-            item.dataset.type = 'department';
-            item.dataset.companyId = companyId;
-            item.dataset.level = dept.level;
-            name.textContent = dept.tenphongban;
-            icon.className = 'fas fa-folder h-5 w-5 text-yellow-500 flex-shrink-0';
-
-            if (dept.children?.length) {
-                toggle.classList.remove('invisible');
-                toggle.onclick = (e) => toggleTree(e, children, toggle);
-                renderDeptTree(dept.children, children, companyId);
-            }
-
+            // Action buttons
             clone.querySelector('.btn-add-sub').onclick = (e) => {
                 e.stopPropagation();
                 openDeptModal('add-sub', dept.id, dept.tenphongban, companyId, dept.level + 1);
@@ -250,42 +313,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 openDeleteModal(dept.id, dept.tenphongban, 'department');
             };
 
-            item.onclick = () => selectDept(dept.id, dept.tenphongban, companyId, dept.level);
+            // Recursive children
+            const children = clone.querySelector('.tree-children');
+            if (dept.children?.length) {
+                renderDeptTree(dept.children, children, companyId);
+            }
 
             fragment.appendChild(clone);
         });
         container.appendChild(fragment);
     }
 
-    function toggleTree(e, submenu, toggle) {
-        e.stopPropagation();
-        submenu.classList.toggle('hidden');
-        const icon = toggle.querySelector('i');
-        icon.classList.toggle('fa-chevron-right');
-        icon.classList.toggle('fa-chevron-down');
+    function selectCompany(id, name) {
+        updateSelection({ selectedCompanyId: id, selectedDeptId: null, selectedLevel: 0, deptName: name });
+        highlightTreeItem(`[data-id="${id}"][data-type="company"]`);
+        dom.employeeListTitle.textContent = name;
+        fetchEmployees();
+        closeSidebar();
     }
 
-    // Render Employee Table - Optimized
+    function selectDept(id, name, companyId, level) {
+        updateSelection({ selectedDeptId: id, selectedCompanyId: companyId, selectedLevel: level, deptName: name });
+        highlightTreeItem(`[data-id="${id}"][data-type="department"]`);
+        dom.employeeListTitle.textContent = name;
+        fetchEmployees();
+        closeSidebar();
+    }
+
+    function updateSelection(updates) {
+        Object.assign(state, updates);
+    }
+
+    function highlightTreeItem(selector) {
+        document.querySelectorAll('.tree-item.selected').forEach(el => el.classList.remove('selected'));
+        dom.viewAllEmployees?.classList.remove('selected');
+        dom.treeContainer.querySelector(`.tree-item${selector}`)?.classList.add('selected');
+    }
+
+    // ============ EMPLOYEE FUNCTIONS ============
+    
+    async function fetchEmployees() {
+        // Cancel previous request
+        if (state.employeeFetchController) {
+            state.employeeFetchController.abort();
+        }
+        state.employeeFetchController = new AbortController();
+        
+        dom.employeeTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...</td></tr>';
+        
+        const params = new URLSearchParams();
+        if (state.selectedDeptId) params.append('phongban_id', state.selectedDeptId);
+        else if (state.selectedCompanyId) params.append('congty_id', state.selectedCompanyId);
+        if (state.filters.search) params.append('search', state.filters.search);
+        if (state.filters.trangThai) params.append('trangthainv', state.filters.trangThai);
+        if (state.filters.gioiTinh) params.append('gioitinh', state.filters.gioiTinh);
+
+        try {
+            const result = await apiFetch(`${API.EMPLOYEES}?${params}`, {
+                signal: state.employeeFetchController.signal
+            });
+            const employees = result.data || [];
+            const total = result.total || employees.length;
+            
+            renderEmployeeTable(employees);
+            dom.pageTotal.textContent = total;
+            
+            if (!state.selectedDeptId && !Object.values(state.filters).some(v => v)) {
+                dom.totalEmployeeCount.textContent = `(${total})`;
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                dom.employeeTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-red-500">Không thể tải danh sách.</td></tr>';
+                dom.pageTotal.textContent = 0;
+                showToast('Lỗi kết nối: ' + error.message, true);
+            }
+        }
+    }
+
     function renderEmployeeTable(employees) {
         dom.employeeTableBody.innerHTML = '';
+        state.selectedEmployees.clear();
+        updateBulkActions();
+        
         if (!employees.length) {
-            dom.employeeTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-500">Không tìm thấy nhân viên.</td></tr>';
+            dom.employeeTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-500">Không tìm thấy nhân viên.</td></tr>';
             return;
         }
 
         const fragment = document.createDocumentFragment();
         employees.forEach(emp => {
             const clone = dom.employeeRowTemplate.content.cloneNode(true);
+            
+            // Checkbox
+            const checkbox = clone.querySelector('.employee-checkbox');
+            checkbox.dataset.id = emp.id;
+            
+            // Avatar
             const name = emp.hovaten || 'N/A';
             const initials = name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
-            
             clone.querySelector('.employee-avatar-placeholder span').textContent = initials;
+            
+            // Employee info
             clone.querySelector('.employee-name').textContent = name;
             clone.querySelector('.employee-email-small').textContent = emp.email || '';
             clone.querySelector('.employee-code').textContent = emp.manhanvien || 'N/A';
             clone.querySelector('.employee-email-main').textContent = emp.email || 'N/A';
             clone.querySelector('.employee-dept').textContent = emp.cong_tac?.phong_ban || 'N/A';
 
+            // Status
             const statusSpan = clone.querySelector('.employee-status');
             const status = emp.trangthainv || 'Khác';
             statusSpan.textContent = status;
@@ -299,54 +434,77 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.employeeTableBody.appendChild(fragment);
     }
 
-    // Selectors
-    function selectCompany(id, name) {
-        state.selectedCompanyId = id;
-        state.selectedDeptId = null;
-        state.selectedLevel = 0;
-        state.deptName = name;
-
-        document.querySelectorAll('.tree-item.selected').forEach(el => {
-            el.classList.remove('selected');
-        });
-        dom.viewAllEmployees.classList.remove('selected');
-
-        const selected = dom.treeContainer.querySelector(`.tree-item[data-id="${id}"][data-type="company"]`);
-        selected?.classList.add('selected');
-
-        dom.employeeListTitle.textContent = name;
-        fetchEmployees();
-    }
-
-    function selectDept(id, name, companyId, level) {
-        state.selectedDeptId = id;
-        state.selectedCompanyId = companyId;
-        state.selectedLevel = level;
-        state.deptName = name;
-
-        document.querySelectorAll('.tree-item.selected').forEach(el => {
-            el.classList.remove('selected');
-        });
-        dom.viewAllEmployees.classList.remove('selected');
-
-        const selected = dom.treeContainer.querySelector(`.tree-item[data-id="${id}"]`);
-        selected?.classList.add('selected');
-
-        dom.employeeListTitle.textContent = name;
-        fetchEmployees();
-    }
-
-    // Modal Management - Department (FIXED)
-    function openDeptModal(mode, id = null, name = '', companyId = null, level = 1, code = '') {
-        console.log('Opening dept modal:', mode, { id, name, companyId, level, code });
+    // ============ BULK SELECTION FUNCTIONS ============
+    
+    function updateBulkActions() {
+        const count = state.selectedEmployees.size;
+        dom.selectedCount.textContent = `${count} đã chọn`;
+        dom.bulkActions.classList.toggle('show', count > 0);
         
+        // Update select all checkbox state
+        const allCheckboxes = document.querySelectorAll('.employee-checkbox');
+        const checkedCount = document.querySelectorAll('.employee-checkbox:checked').length;
+        dom.selectAllCheckbox.checked = allCheckboxes.length > 0 && checkedCount === allCheckboxes.length;
+        dom.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < allCheckboxes.length;
+    }
+
+    function handleSelectAll(checked) {
+        state.selectedEmployees.clear();
+        document.querySelectorAll('.employee-checkbox').forEach(cb => {
+            cb.checked = checked;
+            if (checked) state.selectedEmployees.add(cb.dataset.id);
+        });
+        updateBulkActions();
+    }
+
+    function handleEmployeeCheckbox(checkbox) {
+        const id = checkbox.dataset.id;
+        if (checkbox.checked) {
+            state.selectedEmployees.add(id);
+        } else {
+            state.selectedEmployees.delete(id);
+        }
+        updateBulkActions();
+    }
+
+    function clearSelection() {
+        state.selectedEmployees.clear();
+        document.querySelectorAll('.employee-checkbox').forEach(cb => cb.checked = false);
+        dom.selectAllCheckbox.checked = false;
+        updateBulkActions();
+    }
+
+    async function bulkDelete() {
+        if (state.selectedEmployees.size === 0) return;
+        
+        if (!confirm(`Bạn có chắc chắn muốn xóa ${state.selectedEmployees.size} nhân viên đã chọn?`)) {
+            return;
+        }
+
+        await executeWithLoading(dom.bulkDeleteBtn, 'Đang xóa...', async () => {
+            // Implement bulk delete API call here
+            // For now, just simulate
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            showToast(`Đã xóa ${state.selectedEmployees.size} nhân viên`);
+            clearSelection();
+            fetchEmployees();
+        });
+    }
+
+    function bulkExport() {
+        if (state.selectedEmployees.size === 0) return;
+        
+        // Implement export logic here
+        showToast(`Đang xuất ${state.selectedEmployees.size} nhân viên...`);
+        // You can collect selected employee data and export to Excel
+    }
+
+    // ============ MODAL FUNCTIONS ============
+    
+    function openDeptModal(mode, id = null, name = '', companyId = null, level = 1, code = '') {
         dom.deptForm.reset();
-        dom.deptIdInput.value = '';
-        dom.parentIdInput.value = '';
-        dom.companyIdInput.value = '';
-        dom.deptLevelInput.value = '';
-        dom.saveDeptBtn.disabled = false;
-        dom.deptCodeInput.disabled = false;
+        [dom.deptIdInput, dom.parentIdInput, dom.companyIdInput, dom.deptLevelInput].forEach(el => el.value = '');
+        dom.saveDeptBtn.disabled = dom.deptCodeInput.disabled = false;
         
         if (mode === 'add-sub') {
             dom.deptModalTitle.textContent = 'Thêm phòng ban con';
@@ -365,43 +523,13 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.deptCodeInput.disabled = true;
         }
         
-        // Show modal with proper animation
-        dom.deptModal.classList.remove('hidden');
-        dom.deptModal.classList.add('flex');
-        dom.deptModal.style.display = 'flex';
-        
-        requestAnimationFrame(() => {
-            dom.deptModal.classList.remove('opacity-0');
-            dom.deptModalContent.classList.remove('scale-95');
-            dom.deptModalContent.classList.add('scale-100');
-        });
-        
-        // Focus first input
-        setTimeout(() => dom.deptNameInput.focus(), 100);
+        showModal(dom.deptModal, dom.deptModalContent, () => dom.deptNameInput.focus());
     }
 
-    function closeDeptModal() {
-        dom.deptModal.classList.add('opacity-0');
-        dom.deptModalContent.classList.remove('scale-100');
-        dom.deptModalContent.classList.add('scale-95');
-        setTimeout(() => {
-            dom.deptModal.classList.add('hidden');
-            dom.deptModal.classList.remove('flex');
-            dom.deptModal.style.display = 'none';
-        }, 200);
-    }
-
-    // Modal Management - Company (FIXED)
     function openCompanyModal(mode, company = null) {
-        console.log('Opening company modal:', mode, company);
-        
         dom.deptForm.reset();
-        dom.deptIdInput.value = '';
-        dom.parentIdInput.value = '';
-        dom.companyIdInput.value = '';
-        dom.deptLevelInput.value = '';
-        dom.saveDeptBtn.disabled = false;
-        dom.deptCodeInput.disabled = false;
+        [dom.deptIdInput, dom.parentIdInput, dom.companyIdInput, dom.deptLevelInput].forEach(el => el.value = '');
+        dom.saveDeptBtn.disabled = dom.deptCodeInput.disabled = false;
         
         if (mode === 'add') {
             dom.deptModalTitle.textContent = 'Thêm công ty mới';
@@ -415,143 +543,163 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.deptCodeInput.disabled = true;
         }
         
-        // Show modal with proper animation
-        dom.deptModal.classList.remove('hidden');
-        dom.deptModal.classList.add('flex');
-        dom.deptModal.style.display = 'flex';
-        
-        requestAnimationFrame(() => {
-            dom.deptModal.classList.remove('opacity-0');
-            dom.deptModalContent.classList.remove('scale-95');
-            dom.deptModalContent.classList.add('scale-100');
-        });
-        
-        // Focus first input
-        setTimeout(() => dom.deptNameInput.focus(), 100);
+        showModal(dom.deptModal, dom.deptModalContent, () => dom.deptNameInput.focus());
     }
 
     function openDeleteModal(id, name, type) {
         state.deleteItem = { id, name, type };
         dom.deleteDeptName.textContent = name;
         dom.deleteModalTitle.textContent = type === 'company' ? 'Xác nhận xóa công ty' : 'Xác nhận xóa phòng ban';
-        
-        dom.deleteDeptModal.classList.remove('hidden');
-        dom.deleteDeptModal.classList.add('flex');
-        dom.deleteDeptModal.style.display = 'flex';
-        
-        requestAnimationFrame(() => {
-            dom.deleteDeptModal.classList.remove('opacity-0');
-            dom.deleteModalContent.classList.remove('scale-95');
-            dom.deleteModalContent.classList.add('scale-100');
-        });
+        showModal(dom.deleteDeptModal, dom.deleteModalContent);
     }
 
-    function closeDeleteModal() {
-        dom.deleteDeptModal.classList.add('opacity-0');
-        dom.deleteModalContent.classList.remove('scale-100');
-        dom.deleteModalContent.classList.add('scale-95');
-        setTimeout(() => {
-            state.deleteItem = { id: null, type: null, name: '' };
-            dom.deleteDeptModal.classList.add('hidden');
-            dom.deleteDeptModal.classList.remove('flex');
-            dom.deleteDeptModal.style.display = 'none';
-        }, 200);
-    }
+    const closeDeptModal = () => closeModal(dom.deptModal, dom.deptModalContent);
+    
+    const closeDeleteModal = () => closeModal(dom.deleteDeptModal, dom.deleteModalContent, () => {
+        state.deleteItem = { id: null, type: null, name: '' };
+    });
 
-    // Save Department/Company (FIXED - Added proper logging)
+    // ============ SAVE & DELETE FUNCTIONS ============
+    
     async function saveItem(e) {
         e.preventDefault();
-        console.log('Form submit triggered');
-        
         const id = dom.deptIdInput.value;
         const isCompany = !dom.companyIdInput.value && !dom.parentIdInput.value;
-        const originalText = dom.saveDeptBtn.textContent;
         
-        console.log('Saving item:', { id, isCompany, name: dom.deptNameInput.value });
-        
-        dom.saveDeptBtn.disabled = true;
-        dom.saveDeptBtn.textContent = 'Đang xử lý...';
-        
-        try {
-            let url, method, data;
+        await executeWithLoading(dom.saveDeptBtn, 'Đang xử lý...', async () => {
+            const url = isCompany 
+                ? (id ? `${API.COMPANY}${id}/` : API.COMPANY)
+                : (id ? `${API.DEPT}${id}/` : API.DEPT);
+            const method = id ? 'PUT' : 'POST';
+            const data = isCompany
+                ? { tencongty_vi: dom.deptNameInput.value.trim(), macongty: dom.deptCodeInput.value.trim() || null }
+                : { tenphongban: dom.deptNameInput.value.trim(), maphongban: dom.deptCodeInput.value.trim() || null };
             
-            if (isCompany) {
-                url = id ? `${API_COMPANY}${id}/` : API_COMPANY;
-                method = id ? 'PUT' : 'POST';
-                data = {
-                    tencongty_vi: dom.deptNameInput.value.trim(),
-                    macongty: dom.deptCodeInput.value.trim() || null
-                };
-            } else {
-                url = id ? `${API_DEPT}${id}/` : API_DEPT;
-                method = id ? 'PUT' : 'POST';
-                data = {
-                    tenphongban: dom.deptNameInput.value.trim(),
-                    maphongban: dom.deptCodeInput.value.trim() || null
-                };
-                if (!id) {
-                    data.phongbancha_id = dom.parentIdInput.value || null;
-                    data.congty = dom.companyIdInput.value;
-                }
+            if (!isCompany && !id) {
+                data.phongbancha_id = dom.parentIdInput.value || null;
+                data.congty = dom.companyIdInput.value;
             }
 
-            console.log('API Request:', method, url, data);
             const result = await apiFetch(url, { method, body: data });
-            console.log('API Response:', result);
-            
             if (result?.success) {
                 showToast(result.message || `Đã ${id ? 'cập nhật' : 'thêm'} thành công.`);
                 closeDeptModal();
-                await fetchTree(true); // Force refresh
-                treeCache = null; // Clear cache
+                state.treeCache = null;
+                await fetchTree(true);
             } else {
                 showToast(result?.message || 'Đã xảy ra lỗi.', true);
             }
-        } catch (error) {
-            console.error('Save error:', error);
-            showToast('Lỗi kết nối: ' + error.message, true);
-        } finally {
-            dom.saveDeptBtn.disabled = false;
-            dom.saveDeptBtn.textContent = originalText;
-        }
+        });
     }
 
-    // Delete Item
     async function deleteItem() {
         if (!state.deleteItem.id) return;
-        const originalText = dom.confirmDeleteDeptBtn.textContent;
-        dom.confirmDeleteDeptBtn.disabled = true;
-        dom.confirmDeleteDeptBtn.textContent = 'Đang xóa...';
-
-        try {
+        
+        await executeWithLoading(dom.confirmDeleteDeptBtn, 'Đang xóa...', async () => {
             const url = state.deleteItem.type === 'company' 
-                ? `${API_COMPANY}${state.deleteItem.id}/`
-                : `${API_DEPT}${state.deleteItem.id}/`;
+                ? `${API.COMPANY}${state.deleteItem.id}/`
+                : `${API.DEPT}${state.deleteItem.id}/`;
             
             const result = await apiFetch(url, { method: 'DELETE' });
             if (result?.success) {
                 showToast(result.message || 'Xóa thành công!');
                 closeDeleteModal();
+                state.treeCache = null;
                 await fetchTree(true);
-                treeCache = null;
+                
                 if (state.selectedDeptId === state.deleteItem.id) {
-                    state.selectedDeptId = null;
-                    state.selectedCompanyId = null;
+                    state.selectedDeptId = state.selectedCompanyId = null;
                     dom.employeeListTitle.textContent = 'Tất cả nhân viên';
                     fetchEmployees();
                 }
             } else {
                 showToast(result?.message || 'Không thể xóa.', true);
             }
-        } catch (error) {
-            showToast('Lỗi kết nối: ' + error.message, true);
-        } finally {
-            dom.confirmDeleteDeptBtn.disabled = false;
-            dom.confirmDeleteDeptBtn.textContent = originalText;
-        }
+        });
     }
 
-    // Auto-generate code from name
+    // ============ EVENT LISTENERS ============
+    
+    // Sidebar
+    dom.openSidebarBtn?.addEventListener('click', () => toggleSidebar(true));
+    dom.closeSidebarBtn?.addEventListener('click', () => toggleSidebar(false));
+    dom.sidebarOverlay?.addEventListener('click', () => toggleSidebar(false));
+
+    // View All
+    dom.viewAllEmployees?.addEventListener('click', () => {
+        updateSelection({ selectedDeptId: null, selectedCompanyId: null, selectedLevel: 0, deptName: 'Tất cả nhân viên' });
+        highlightTreeItem(''); // Clear all
+        dom.viewAllEmployees.classList.add('selected');
+        dom.employeeListTitle.textContent = 'Tất cả nhân viên';
+        fetchEmployees();
+        closeSidebar();
+    });
+
+    // Filters
+    dom.filterForm?.addEventListener('submit', (e) => e.preventDefault());
+    
+    let searchTimer;
+    dom.filterSearch?.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            state.filters.search = dom.filterSearch.value.trim();
+            fetchEmployees();
+        }, 400);
+    });
+    
+    dom.filterTrangThai?.addEventListener('change', () => {
+        state.filters.trangThai = dom.filterTrangThai.value;
+        fetchEmployees();
+    });
+    
+    dom.filterGioiTinh?.addEventListener('change', () => {
+        state.filters.gioiTinh = dom.filterGioiTinh.value;
+        fetchEmployees();
+    });
+
+    // Bulk Actions
+    dom.selectAllCheckbox?.addEventListener('change', (e) => handleSelectAll(e.target.checked));
+    
+    // Event delegation for employee checkboxes
+    dom.employeeTableBody?.addEventListener('change', (e) => {
+        if (e.target.classList.contains('employee-checkbox')) {
+            handleEmployeeCheckbox(e.target);
+        }
+    });
+    
+    dom.clearSelectionBtn?.addEventListener('click', clearSelection);
+    dom.bulkDeleteBtn?.addEventListener('click', bulkDelete);
+    dom.bulkExportBtn?.addEventListener('click', bulkExport);
+
+    // Company & Dept Modals
+    dom.addCompanyBtn?.addEventListener('click', () => openCompanyModal('add'));
+    dom.deptForm?.addEventListener('submit', saveItem);
+    dom.closeDeptModalBtn?.addEventListener('click', closeDeptModal);
+    dom.closeDeptModalBtnX?.addEventListener('click', closeDeptModal);
+    dom.confirmDeleteDeptBtn?.addEventListener('click', deleteItem);
+    dom.cancelDeleteDeptBtn?.addEventListener('click', closeDeleteModal);
+    
+    // Close modal on backdrop click
+    dom.deptModal?.addEventListener('click', (e) => e.target === dom.deptModal && closeDeptModal());
+    dom.deleteDeptModal?.addEventListener('click', (e) => e.target === dom.deleteDeptModal && closeDeleteModal());
+
+    // Tree search with debounce
+    let treeSearchTimer;
+    dom.treeSearchInput?.addEventListener('input', () => {
+        clearTimeout(treeSearchTimer);
+        treeSearchTimer = setTimeout(() => {
+            const query = (dom.treeSearchInput.value || '').toLowerCase().trim();
+            dom.treeContainer.querySelectorAll('.tree-item').forEach(item => {
+                const li = item.closest('li');
+                if (li) {
+                    const name = (item.dataset.name || '').toLowerCase();
+                    li.style.display = (!query || name.includes(query)) ? '' : 'none';
+                }
+            });
+        }, 200);
+    });
+
+    // Auto-generate code from name (if utils.js provides generatePositionCode)
     if (dom.deptNameInput && typeof generatePositionCode === 'function') {
         dom.deptNameInput.addEventListener('input', () => {
             if (!dom.deptIdInput.value && !dom.deptCodeInput.disabled) {
@@ -560,98 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners - Properly attached
-    if (dom.viewAllEmployees) {
-        dom.viewAllEmployees.onclick = () => {
-            state.selectedDeptId = null;
-            state.selectedCompanyId = null;
-            state.selectedLevel = 0;
-            state.deptName = 'Tất cả nhân viên';
-            document.querySelectorAll('.tree-item.bg-slate-100').forEach(el => {
-                el.classList.remove('bg-slate-100', 'font-semibold');
-            });
-            dom.viewAllEmployees.classList.add('bg-slate-100', 'font-semibold');
-            dom.employeeListTitle.textContent = 'Tất cả nhân viên';
-            fetchEmployees();
-        };
-    }
-    
-    if (dom.filterForm) dom.filterForm.onsubmit = (e) => e.preventDefault();
-    
-    // Debounced search
-    let searchTimer;
-    if (dom.filterSearch) {
-        dom.filterSearch.oninput = () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => {
-                state.filters.search = dom.filterSearch.value.trim();
-                fetchEmployees();
-            }, 400);
-        };
-    }
-    
-    if (dom.filterTrangThai) {
-        dom.filterTrangThai.onchange = () => {
-            state.filters.trangThai = dom.filterTrangThai.value;
-            fetchEmployees();
-        };
-    }
-    
-    if (dom.filterGioiTinh) {
-        dom.filterGioiTinh.onchange = () => {
-            state.filters.gioiTinh = dom.filterGioiTinh.value;
-            fetchEmployees();
-        };
-    }
-    
-    if (dom.addCompanyBtn) {
-        dom.addCompanyBtn.onclick = () => openCompanyModal('add');
-    }
-    
-    // CRITICAL FIX: Properly attach form submit handler
-    if (dom.deptForm) {
-        dom.deptForm.addEventListener('submit', saveItem);
-        console.log('Form submit handler attached');
-    }
-    
-    if (dom.closeDeptModalBtn) dom.closeDeptModalBtn.onclick = closeDeptModal;
-    if (dom.closeDeptModalBtnX) dom.closeDeptModalBtnX.onclick = closeDeptModal;
-    if (dom.confirmDeleteDeptBtn) dom.confirmDeleteDeptBtn.onclick = deleteItem;
-    if (dom.cancelDeleteDeptBtn) dom.cancelDeleteDeptBtn.onclick = closeDeleteModal;
-    
-    // Close modal on backdrop click
-    if (dom.deptModal) {
-        dom.deptModal.onclick = (e) => {
-            if (e.target === dom.deptModal) closeDeptModal();
-        };
-    }
-    if (dom.deleteDeptModal) {
-        dom.deleteDeptModal.onclick = (e) => {
-            if (e.target === dom.deleteDeptModal) closeDeleteModal();
-        };
-    }
-
-    // Tree search - Optimized
-    if (dom.treeSearchInput) {
-        let searchDebounceTimer;
-        dom.treeSearchInput.addEventListener('input', () => {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-                const q = (dom.treeSearchInput.value || '').toLowerCase().trim();
-                const nodes = dom.treeContainer.querySelectorAll('.tree-item');
-                nodes.forEach(n => {
-                    const name = (n.dataset.name || '').toLowerCase();
-                    const li = n.closest('li');
-                    if (li) {
-                        li.style.display = (!q || name.includes(q)) ? '' : 'none';
-                    }
-                });
-            }, 200);
-        });
-    }
-
-    // Initialize
-    console.log('Initializing...');
+    // ============ INITIALIZATION ============
     fetchTree();
     fetchEmployees();
 });

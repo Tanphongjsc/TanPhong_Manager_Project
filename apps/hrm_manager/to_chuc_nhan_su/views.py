@@ -5,6 +5,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.db.models import OuterRef, Subquery, Q, Prefetch
+from django.db import transaction
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 
 from apps.hrm_manager.__core__.models import *
 
@@ -181,7 +184,7 @@ def api_phong_ban_list(request):
                 tenphongban=data.get('tenphongban').title(),
                 level=phong_ban_cha.level + 1 if phong_ban_cha else 1,
                 ghichu=data.get('ghichu'),
-                trangthai=data.get('trangthai'),
+                trangthai=data.get('trangthai', 'active'),
                 congty_id=data.get('congty'),
                 phongbancha_id=phong_ban_cha.id if phong_ban_cha else None,
                 created_at=datetime.now()
@@ -212,6 +215,7 @@ def api_phong_ban_list(request):
 
 @login_required
 @require_http_methods(["GET", "PUT", "DELETE"])
+@transaction.atomic
 def api_phong_ban_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa phòng ban"""
     
@@ -237,7 +241,10 @@ def api_phong_ban_detail(request, id):
 
             for field in phong_ban._meta.fields:
                 if field.name in data:
-                    setattr(phong_ban, field.name, data[field.name])
+                    if field.name == 'tenphongban':
+                        setattr(phong_ban, field.name, data[field.name].title())
+                    else:
+                        setattr(phong_ban, field.name, data[field.name])
 
             phong_ban.updated_at = datetime.now()
             phong_ban.save()
@@ -268,6 +275,10 @@ def api_phong_ban_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Phòng Ban
         try:
+            phong_ban_con = Phongban.objects.filter(phongbancha_id=phong_ban.id)
+            phong_ban_con.delete()
+
+            # Xóa phòng ban hiện tại
             phong_ban.delete()
             return JsonResponse({
                 'success': True,
@@ -284,14 +295,16 @@ def api_phong_ban_detail(request, id):
 def api_phong_ban_nhan_vien(request):
     # """API lấy danh sách nhân sự theo phòng ban"""
 
-    # Lấy ID công ty từ request nếu cần lọc theo công ty
+    # Lấy tham số lọc từ query params
     param_query = request.GET.dict()
+    page = param_query.pop('page', 1)
+    page_size = param_query.pop('page_size', 10)
     congty_id = param_query.pop('congty_id', None)
     phongban_id = param_query.pop('phongban_id', None)
     chucvu = param_query.pop('chucvu', None)
 
     try:        
-        # 1. Build filters chung trên join (từ Lichsucongtac)
+        # Build filters từ Lichsucongtac
         filters = Q(trangthai='active')  # Bắt buộc active từ Lichsu
         if chucvu:
             filters &= Q(chucvu_id=chucvu)  # Giả sử chucvu là ID
@@ -308,19 +321,29 @@ def api_phong_ban_nhan_vien(request):
             if value:
                 filters &= Q(**{key: value})
 
-        # 2. Query từ Lichsucongtac với join (select_related)
+        # Query từ Lichsucongtac với join (select_related)
         qs = Lichsucongtac.objects.filter(filters).select_related(
             'nhanvien', 'nhanvien__loainv', 'nhanvien__nganhang',  # Join nhân viên + related
             'phongban', 'chucvu'  # Join cho cong_tac
         ).distinct('nhanvien__id')  # Unique theo nhân viên (nếu có duplicate active)
 
-        # 3. Fields cần thiết (tối ưu data tải về) Lấy fields từ Nhanvien + build cong_tac từ Lichsu
+        # Sử dụng Paginator
+        paginator = Paginator(qs, page_size)
+        try:
+            page_obj = paginator.page(page)
+        except PageNotAnInteger:
+            return JsonResponse({
+                'success': False,
+                'message': 'Trang không hợp lệ'
+            }, status=400)
+        
+        # Fields cần thiết (tối ưu data tải về) Lấy fields từ Nhanvien + build cong_tac từ Lichsu
         result = []
-        for lichsu in qs:
+        for lichsu in page_obj:
             nv = lichsu.nhanvien
             cong_tac = {
                 'phong_ban': lichsu.phongban.tenphongban if lichsu.phongban else None,
-                'chuc_vu': lichsu.chucvu.tenchucvu if lichsu.chucvu else None,  # Giả sử Chucvu có tenchucvu
+                'chuc_vu': lichsu.chucvu.tenvitricongviec if lichsu.chucvu else None,
             }
             nv_data = model_to_dict(nv)
             nv_data['cong_tac'] = cong_tac
@@ -330,7 +353,14 @@ def api_phong_ban_nhan_vien(request):
         return JsonResponse({
             'success': True,
             'data': result,
-            'total': len(result)
+            'pagination': {
+                'page': page_obj.number,
+                'page_size': page_size,
+                'total': paginator.count,
+                'total_pages': paginator.num_pages,
+                'has_next': page_obj.has_next(),
+                'has_prev': page_obj.has_previous()
+            }
         })
 
     except Exception as e:
@@ -340,7 +370,7 @@ def api_phong_ban_nhan_vien(request):
         }, status=400)
 
 
-# @login_required
+@login_required
 @require_http_methods(["GET"])
 def api_phong_ban_tree(request):
     """API lấy cây phòng ban"""
@@ -352,7 +382,7 @@ def api_phong_ban_tree(request):
         # 2. Lấy tất cả phòng ban + prefetch công ty để tránh N+1
         phong_ban_qs = Phongban.objects.select_related('congty').values(
             'id', 'tenphongban', 'phongbancha_id', 'congty_id', 'level', 'maphongban'
-        )
+        ).order_by('id')
 
         # Chuyển thành dict để tra cứu nhanh
         phong_ban_dict = {pb['id']: {**pb, 'children': []} for pb in phong_ban_qs} # Thêm trường 'children' để xây dựng cây
@@ -396,7 +426,9 @@ def api_phong_ban_tree(request):
 # # ==================== API NHÂN VIÊN ====================
 
 # @login_required
-@require_http_methods(["GET", "POST"])
+@csrf_exempt
+@transaction.atomic
+@require_http_methods(["GET", "POST", "PUT"])
 def api_nhan_vien_list(request):
     """API lấy danh sách và tạo mới Nhân Viên"""
     
@@ -477,9 +509,61 @@ def api_nhan_vien_list(request):
                 'success': False,
                 'message': f'Lỗi: {str(e)}'
             }, status=400)
+    
+    elif request.method == "PUT":
+        # Cập nhập phòng ban nhiều nhân viên cùng lúc
+
+        try:
+            nhan_vien_ids = request.GET.get('nhan_vien_ids', [])
+            phong_ban_id = request.GET.get('phong_ban_id')
+
+            if not nhan_vien_ids or not phong_ban_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
+                }, status=400)
+
+            # Cập nhật phòng ban cho các nhân viên
+            Lichsucongtac.objects.filter(
+                nhanvien_id__in=nhan_vien_ids,
+                trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
+            ).update(
+                phongban_id=phong_ban_id,
+                updated_at=datetime.now()
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Cập nhật phòng ban cho nhân viên thành công'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
+
+    elif request.method == "DELETE":
+        # Xóa Nhân Viên
+
+        nhan_vien_ids = request.GET.getlist('nhan_vien_ids', [])
+        try:
+            nhan_vien = Nhanvien.objects.filter(id__in = nhan_vien_ids)
+            nhan_vien.delete()
+
+            return JsonResponse({
+                "success" :True,
+                "message": "Xóa nhân viên thành công"
+            })
+        
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
 
 
-# @login_required
+@login_required
 @require_http_methods(["GET", "PUT", "DELETE"])
 def api_nhan_vien_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa Nhân Viên"""

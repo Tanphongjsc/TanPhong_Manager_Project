@@ -4,486 +4,211 @@
 {% block title %}Quản lý Chức vụ{% endblock %}
 
 {% block content %}
-<!-- Thẻ nội dung chính -->
-<div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-  
-    <!-- CSRF token (hidden) để JS/Fetch có thể đọc nếu cần -->
+<div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 h-full flex flex-col">
     <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
-    <!-- Header: Tìm kiếm và Các nút hành động -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        
-        <!-- Form tìm kiếm -->
-        <form id="search-form" class="flex-1 w-full sm:max-w-md">
-            {% csrf_token %}
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                </span>
-                <input 
-                    type="search" 
-                    name="q" 
-                    id="search-input"
-                    class="block w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-500 focus:ring-blue-500 focus:border-blue-500" 
-                    placeholder="Tìm kiếm theo Tên Vị Trí..."
-                >
-            </div>
-        </form>
-        
-        <!-- Các nút hành động -->
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <button type="button" id="btn-add-new" class="flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                <svg class="h-5 w-5 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
-                Thêm mới
-            </button>
-        </div>
-    </div>
+    {% include "hrm_manager/components/toolbar.html" with search_id="search-input" placeholder="Tìm kiếm theo Tên Vị Trí..." show_add_btn=True add_btn_id="btn-add-new" %}
 
-    <!-- Vùng hiển thị table (responsive với overflow-x-auto) -->
-    <div id="loading-spinner" class="text-center py-10 hidden">
-        <!-- Spinner (lấy từ Tailwind) -->
-        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p class="mt-2 text-sm text-slate-500">Đang tải dữ liệu...</p>
-    </div>
-
-    <div id="table-container" class="overflow-x-auto hidden">
-        <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã Chức Vụ</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên Vị Trí Công Việc</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng Thái</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày tạo</th>
-                    <th scope="col" class="relative px-6 py-3"><span class="sr-only">Hành động</span></th>
-                </tr>
-            </thead>
-            <tbody id="positions-table-body" class="bg-white divide-y divide-slate-200">
-                <!-- Dữ liệu sẽ được render bởi JavaScript -->
-            </tbody>
-        </table>
-    </div>
+    {% with headers='<th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Mã Chức Vụ</th><th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tên Vị Trí</th><th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Trạng Thái</th><th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ngày tạo</th>' %}
+        {% include "hrm_manager/components/table_wrapper.html" with table_id="positions-table" headers_html=headers %}
+    {% endwith %}
     
-    <!-- Trạng thái không có dữ liệu -->
-    <div id="empty-state" class="text-center py-10 border border-dashed border-slate-300 rounded-lg hidden">
-        <svg class="mx-auto h-12 w-12 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
-        <h3 class="mt-2 text-sm font-semibold text-slate-900">Không tìm thấy dữ liệu</h3>
-        <p class="mt-1 text-sm text-slate-500" id="empty-state-message">Chưa có chức vụ nào. Hãy bắt đầu bằng cách thêm một chức vụ mới.</p>
-    </div>
+    {% include "hrm_manager/components/pagination.html" %}
+</div>
 
-</div> <!-- Đóng thẻ .bg-white -->
-
-<!-- Modal Tạo/Cập nhật Chức vụ -->
-<div id="position-modal" class="fixed inset-0 bg-black/50 z-40 hidden items-center justify-center p-4 transition-opacity duration-200">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-transform duration-200 scale-95" id="position-modal-content">
-        <!-- Header Modal -->
+<div id="position-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity duration-200 opacity-0">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-transform duration-200 scale-95 modal-content">
         <div class="p-4 sm:p-5 border-b flex justify-between items-center flex-shrink-0">
             <h3 class="text-lg font-semibold text-slate-800" id="position-modal-title">Quản lý chức vụ</h3>
-            <button type="button" id="btn-close-modal" class="text-slate-400 hover:text-slate-600 transition-colors">
-                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
+            <button type="button" class="text-slate-400 hover:text-slate-600 transition-colors btn-close-modal"><i class="fas fa-times text-xl"></i></button>
         </div>
-        
-        <!-- Form -->
         <form id="position-form" class="p-4 sm:p-5 space-y-4 overflow-y-auto">
-            {% csrf_token %}
             <input type="hidden" id="form-position-id" name="id">
-            
             <div>
-                <label for="form-tenvitricongviec" class="block text-sm font-medium text-slate-700 mb-1">Tên Vị Trí Công Việc <span class="text-red-500">*</span></label>
-                <input type="text" id="form-tenvitricongviec" name="tenvitricongviec" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: Trưởng phòng Kinh doanh">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tên Vị Trí <span class="text-red-500">*</span></label>
+                <input type="text" id="form-tenvitricongviec" name="tenvitricongviec" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
-            
             <div>
-                <label for="form-machucvu" class="block text-sm font-medium text-slate-700 mb-1">Mã Chức Vụ <span class="text-red-500">*</span></label>
-                <input type="text" id="form-machucvu" name="machucvu" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50" placeholder="VD: CV_KD">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Mã Chức Vụ <span class="text-red-500">*</span></label>
+                <input type="text" id="form-machucvu" name="machucvu" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 bg-slate-50">
             </div>
-            
             <div>
-                <label for="form-trangthai" class="block text-sm font-medium text-slate-700 mb-1">Trạng Thái <span class="text-red-500">*</span></label>
-                <select id="form-trangthai" name="trangthai" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Trạng Thái</label>
+                <select id="form-trangthai" name="trangthai" class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm">
                     <option value="active">Đang hoạt động</option>
                     <option value="inactive">Ngưng hoạt động</option>
                 </select>
             </div>
-
             <div>
-                <label for="form-ghichu" class="block text-sm font-medium text-slate-700 mb-1">Ghi Chú</label>
-                <textarea id="form-ghichu" name="ghichu" rows="3" class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Nhập mô tả hoặc ghi chú..."></textarea>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Ghi Chú</label>
+                <textarea id="form-ghichu" name="ghichu" rows="3" class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm"></textarea>
             </div>
         </form>
-        
-        <!-- Footer Modal -->
-        <div class="p-4 sm:p-5 border-t flex-shrink-0 flex justify-end gap-3">
-            <button type="button" id="btn-cancel-modal" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Hủy</button>
-            <button type="submit" form="position-form" id="btn-submit-form" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Lưu thay đổi</button>
+        <div class="p-4 sm:p-5 border-t flex justify-end gap-3 bg-slate-50 rounded-b-lg">
+            <button type="button" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors btn-cancel-modal">Hủy</button>
+            <button type="submit" form="position-form" class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 transition-colors">Lưu thay đổi</button>
         </div>
     </div>
 </div>
 
-<!-- Modal Xác nhận Xóa -->
-<div id="delete-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity duration-200">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-transform duration-200 scale-95" id="delete-modal-content">
-        <div class="p-6">
-            <div class="flex items-start">
-                <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-red-100 sm:h-12 sm:w-12">
-                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
-                </div>
-                <div class="ml-4 text-left">
-                    <h3 class="text-lg font-semibold text-slate-900">Xác nhận xóa chức vụ</h3>
-                    <p class="text-sm text-slate-500 mt-2">Bạn có chắc chắn muốn xóa chức vụ này không? Hành động này không thể hoàn tác.</p>
-                </div>
-            </div>
-        </div>
-        <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 rounded-b-lg">
-            <button type="button" id="btn-cancel-delete" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Hủy</button>
-            <button type="button" id="btn-confirm-delete" class="px-4 py-2 bg-red-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700 transition-colors">Xác nhận Xóa</button>
-        </div>
-    </div>
-</div>
+{% include "hrm_manager/components/modal_confirm.html" with modal_id="delete-modal" title="Xóa chức vụ" content="Bạn có chắc chắn muốn xóa chức vụ này?" btn_confirm_id="btn-confirm-delete" %}
 
-<!-- Toast (Thông báo) -->
-<div id="toast-notification" class="fixed bottom-5 right-5 z-50 bg-slate-800 text-white px-4 py-3 rounded-md shadow-lg transition-all duration-300 opacity-0 translate-x-full pointer-events-none">
-    <span id="toast-message"></span>
-</div>
-
+{% include "hrm_manager/components/toast.html" %}
 {% endblock content %}
-
 
 {% block scripts %}
 <script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/TableManager.js' %}"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Constants
-    const API_BASE_URL = "/hrm/to-chuc-nhan-su/api/v1/chuc-vu/";
-    const csrfToken = "{{ csrf_token }}";
-
+    const API_URL = "/hrm/to-chuc-nhan-su/api/v1/chuc-vu/";
+    
     // DOM Elements
-    const elements = {
-        loadingSpinner: document.getElementById('loading-spinner'),
-        tableContainer: document.getElementById('table-container'),
-        tableBody: document.getElementById('positions-table-body'),
-        emptyState: document.getElementById('empty-state'),
-        emptyStateMessage: document.getElementById('empty-state-message'),
-        searchInput: document.getElementById('search-input'),
-        searchForm: document.getElementById('search-form'),
-        positionModal: document.getElementById('position-modal'),
-        positionModalContent: document.getElementById('position-modal-content'),
-        positionModalTitle: document.getElementById('position-modal-title'),
-        positionForm: document.getElementById('position-form'),
-        btnAddNew: document.getElementById('btn-add-new'),
-        btnCloseModal: document.getElementById('btn-close-modal'),
-        btnCancelModal: document.getElementById('btn-cancel-modal'),
-        btnSubmitForm: document.getElementById('btn-submit-form'),
-        formPositionId: document.getElementById('form-position-id'),
-        formMaChucVu: document.getElementById('form-machucvu'),
-        formTenViTri: document.getElementById('form-tenvitricongviec'),
-        formTrangThai: document.getElementById('form-trangthai'),
-        formGhiChu: document.getElementById('form-ghichu'),
-        deleteModal: document.getElementById('delete-modal'),
-        deleteModalContent: document.getElementById('delete-modal-content'),
-        btnCancelDelete: document.getElementById('btn-cancel-delete'),
-        btnConfirmDelete: document.getElementById('btn-confirm-delete'),
-        toast: document.getElementById('toast-notification'),
-        toastMessage: document.getElementById('toast-message')
-    };
-
-    // State
-    let allPositions = [];
-    let searchDebounceTimer;
-    let toastTimer;
+    const positionModalEl = document.getElementById('position-modal');
+    const deleteModalEl = document.getElementById('delete-modal');
+    const positionForm = document.getElementById('position-form');
     let currentDeleteId = null;
 
-    // Utility Functions
-    function removeVietnameseAccents(str) {
-        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-    }
+    // Trạng thái modal
+    let isEditMode = false;          // true khi cập nhật
+    let autoCodeEnabled = true;      // chỉ tự sinh mã ở chế độ tạo mới
 
-    function generatePositionCode(name) {
-        if (!name) return '';
-        let normalized = removeVietnameseAccents(name);
-        normalized = normalized.replace(/\s+/g, '_');
-        normalized = normalized.replace(/[^a-zA-Z0-9_]/g, '');
-        return normalized.toUpperCase();
-    }
+    // 1. Init Table
+    const tableManager = new TableManager({
+        apiEndpoint: API_URL,
+        tableBody: document.querySelector('#positions-table tbody'),
+        paginationContainer: document.querySelector('.pagination-container'),
+        searchInput: document.getElementById('search-input'),
+        onRenderRow: (pos) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition-colors';
+            tr.dataset.position = JSON.stringify(pos);
+            
+            const statusClass = pos.trangthai === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700';
+            const statusText = pos.trangthai === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động';
 
-    function showToast(message, isError = false) {
-        if (!elements.toast || !elements.toastMessage) return;
-        clearTimeout(toastTimer);
-        elements.toastMessage.textContent = message;
-        elements.toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white`;
-        void elements.toast.offsetWidth; // Trigger reflow
-        elements.toast.classList.remove('opacity-0', 'translate-x-full', 'pointer-events-none');
-        elements.toast.classList.add('opacity-100', 'translate-x-0');
-        toastTimer = setTimeout(() => {
-            elements.toast.classList.add('opacity-0', 'translate-x-full', 'pointer-events-none');
-            elements.toast.classList.remove('opacity-100', 'translate-x-0');
-        }, 3000);
-    }
-
-    function showLoading(isLoading) {
-        if (!elements.loadingSpinner || !elements.tableContainer || !elements.emptyState) return;
-        if (isLoading) {
-            elements.loadingSpinner.classList.remove('hidden');
-            elements.tableContainer.classList.add('hidden');
-            elements.emptyState.classList.add('hidden');
-        } else {
-            elements.loadingSpinner.classList.add('hidden');
-        }
-    }
-
-    function renderStatusBadge(status) {
-        return status === 'active'
-            ? '<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Đang hoạt động</span>'
-            : '<span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">Ngưng hoạt động</span>';
-    }
-
-    function renderTable(positions) {
-        if (!elements.tableBody || !elements.tableContainer || !elements.emptyState) return;
-        if (positions.length === 0) {
-            elements.tableContainer.classList.add('hidden');
-            elements.emptyState.classList.remove('hidden');
-            elements.emptyStateMessage.innerHTML = elements.searchInput && elements.searchInput.value
-                ? `Không tìm thấy kết quả cho "<b>${elements.searchInput.value}</b>".`
-                : 'Chưa có chức vụ nào. Hãy bắt đầu bằng cách thêm một chức vụ mới.';
-        } else {
-            elements.tableContainer.classList.remove('hidden');
-            elements.emptyState.classList.add('hidden');
-            const fragment = document.createDocumentFragment();
-            positions.forEach(pos => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
-                tr.setAttribute('data-position', JSON.stringify(pos));
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${pos.machucvu || ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${pos.tenvitricongviec || ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">${renderStatusBadge(pos.trangthai)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${pos.created_at ? new Date(pos.created_at).toLocaleDateString('vi-VN') : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button class="btn-edit text-blue-600 hover:text-blue-900 transition-colors" data-id="${pos.id}">Sửa</button>
-                        <button class="btn-delete text-red-600 hover:text-red-900 transition-colors" data-id="${pos.id}">Xóa</button>
-                    </td>
-                `;
-                fragment.appendChild(tr);
-            });
-            elements.tableBody.innerHTML = '';
-            elements.tableBody.appendChild(fragment);
-        }
-    }
-
-    function filterAndRender() {
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            if (!elements.searchInput) {
-                renderTable(allPositions);
-                return;
-            }
-            const query = elements.searchInput.value.toLowerCase().trim();
-            const filtered = query
-                ? allPositions.filter(pos =>
-                    (pos.tenvitricongviec && pos.tenvitricongviec.toLowerCase().includes(query)) ||
-                    (pos.machucvu && pos.machucvu.toLowerCase().includes(query))
-                )
-                : allPositions;
-            renderTable(filtered);
-        }, 300);
-    }
-
-    function openPositionModal(positionData = null) {
-        if (!elements.positionModal || !elements.positionForm || !elements.positionModalContent) return;
-        elements.positionForm.reset();
-        elements.formPositionId.value = '';
-        elements.btnSubmitForm.disabled = false;
-        if (positionData) {
-            elements.positionModalTitle.textContent = 'Cập nhật chức vụ';
-            elements.formMaChucVu.disabled = true;
-            elements.formPositionId.value = positionData.id;
-            elements.formTenViTri.value = positionData.tenvitricongviec || '';
-            elements.formMaChucVu.value = positionData.machucvu || '';
-            elements.formTrangThai.value = positionData.trangthai || 'active';
-            elements.formGhiChu.value = positionData.ghichu || '';
-        } else {
-            elements.positionModalTitle.textContent = 'Tạo mới chức vụ';
-            elements.formMaChucVu.disabled = false;
-            elements.formMaChucVu.value = '';
-        }
-        elements.positionModal.classList.remove('hidden');
-        elements.positionModal.classList.add('flex');
-        requestAnimationFrame(() => {
-            elements.positionModal.classList.remove('opacity-0');
-            elements.positionModalContent.classList.remove('scale-95');
-            elements.positionModalContent.classList.add('scale-100');
-        });
-    }
-
-    function closePositionModal() {
-        if (!elements.positionModal || !elements.positionModalContent) return;
-        elements.positionModal.classList.add('opacity-0');
-        elements.positionModalContent.classList.remove('scale-100');
-        elements.positionModalContent.classList.add('scale-95');
-        setTimeout(() => {
-            elements.positionModal.classList.add('hidden');
-            elements.positionModal.classList.remove('flex');
-        }, 200);
-    }
-
-    function openDeleteModal(id) {
-        if (!elements.deleteModal || !elements.deleteModalContent) return;
-        currentDeleteId = id;
-        elements.deleteModal.classList.remove('hidden');
-        elements.deleteModal.classList.add('flex');
-        requestAnimationFrame(() => {
-            elements.deleteModal.classList.remove('opacity-0');
-            elements.deleteModalContent.classList.remove('scale-95');
-            elements.deleteModalContent.classList.add('scale-100');
-        });
-    }
-
-    function closeDeleteModal() {
-        if (!elements.deleteModal || !elements.deleteModalContent) return;
-        currentDeleteId = null;
-        elements.deleteModal.classList.add('opacity-0');
-        elements.deleteModalContent.classList.remove('scale-100');
-        elements.deleteModalContent.classList.add('scale-95');
-        setTimeout(() => {
-            elements.deleteModal.classList.add('hidden');
-            elements.deleteModal.classList.remove('flex');
-        }, 200);
-    }
-
-    async function fetchPositions() {
-        showLoading(true);
-        try {
-            const response = await fetch(API_BASE_URL);
-            const result = await response.json();
-            allPositions = result.success && Array.isArray(result.data) ? result.data : [];
-            filterAndRender();
-        } catch (error) {
-            allPositions = [];
-            renderTable([]);
-            showToast('Lỗi kết nối: ' + error.message, true);
-        } finally {
-            showLoading(false);
-        }
-    }
-
-    async function handleFormSubmit(e) {
-        e.preventDefault();
-        if (!elements.btnSubmitForm) return;
-        const originalText = elements.btnSubmitForm.textContent;
-        elements.btnSubmitForm.disabled = true;
-        elements.btnSubmitForm.textContent = 'Đang xử lý...';
-        const id = elements.formPositionId.value;
-        const isUpdating = !!id;
-        const url = isUpdating ? `${API_BASE_URL}${id}/` : API_BASE_URL;
-        const method = isUpdating ? 'PUT' : 'POST';
-        const body = {
-            machucvu: elements.formMaChucVu.value,
-            tenvitricongviec: elements.formTenViTri.value,
-            trangthai: elements.formTrangThai.value,
-            ghichu: elements.formGhiChu.value
-        };
-        try {
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify(body)
-            });
-            const result = await response.json();
-            if (result.success) {
-                showToast(result.message || (isUpdating ? 'Cập nhật chức vụ thành công!' : 'Tạo mới chức vụ thành công!'), false);
-                closePositionModal();
-                await fetchPositions();
-            } else {
-                const errorMsg = result.errors
-                    ? 'Đã xảy ra lỗi: ' + Object.entries(result.errors).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ')
-                    : result.message || 'Đã xảy ra lỗi.';
-                showToast(errorMsg, true);
-            }
-        } catch (error) {
-            showToast('Lỗi kết nối: ' + error.message, true);
-        } finally {
-            elements.btnSubmitForm.disabled = false;
-            elements.btnSubmitForm.textContent = originalText;
-        }
-    }
-
-    async function handleConfirmDelete() {
-        if (!currentDeleteId || !elements.btnConfirmDelete) return;
-        const originalText = elements.btnConfirmDelete.textContent;
-        elements.btnConfirmDelete.disabled = true;
-        elements.btnConfirmDelete.textContent = 'Đang xóa...';
-        try {
-            const response = await fetch(`${API_BASE_URL}${currentDeleteId}/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            const result = await response.json();
-            if (result.success) {
-                showToast(result.message || 'Xóa chức vụ thành công!', false);
-                closeDeleteModal();
-                await fetchPositions();
-            } else {
-                showToast(result.message || 'Không thể xóa chức vụ.', true);
-            }
-        } catch (error) {
-            showToast('Lỗi kết nối: ' + error.message, true);
-        } finally {
-            elements.btnConfirmDelete.disabled = false;
-            elements.btnConfirmDelete.textContent = originalText;
-        }
-    }
-
-    // Event Listeners
-    elements.btnAddNew?.addEventListener('click', () => openPositionModal(null));
-    elements.btnCloseModal?.addEventListener('click', closePositionModal);
-    elements.btnCancelModal?.addEventListener('click', closePositionModal);
-    elements.positionForm?.addEventListener('submit', handleFormSubmit);
-    elements.btnCancelDelete?.addEventListener('click', closeDeleteModal);
-    elements.btnConfirmDelete?.addEventListener('click', handleConfirmDelete);
-    elements.searchForm?.addEventListener('submit', (e) => e.preventDefault());
-    elements.searchInput?.addEventListener('input', filterAndRender);
-    elements.formTenViTri?.addEventListener('input', () => {
-        if (!elements.formPositionId.value) {
-            elements.formMaChucVu.value = generatePositionCode(elements.formTenViTri.value);
-        }
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${pos.machucvu || ''}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${pos.tenvitricongviec || ''}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">${statusText}</span></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${CommonUtils.DateUtils.format(pos.created_at)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button class="btn-edit text-blue-600 hover:text-blue-900 p-1" data-id="${pos.id}"><i class="fas fa-pen"></i></button>
+                    <button class="btn-delete text-red-600 hover:text-red-900 p-1" data-id="${pos.id}"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            return tr;
+        },
+        onError: (err) => CommonUtils.Toast.error(err.message)
     });
-    elements.tableBody?.addEventListener('click', function(e) {
+
+    // 2. Form Handling
+    function openPositionModal(positionData = null) {
+        CommonUtils.Form.reset(positionForm);
+        const titleEl = document.getElementById('position-modal-title');
+        const codeInput = document.getElementById('form-machucvu');
+        const nameInput = document.getElementById('form-tenvitricongviec');
+        const idInput = document.getElementById('form-position-id');
+
+        isEditMode = !!positionData;
+        autoCodeEnabled = !isEditMode; // chỉ tự sinh ở chế độ tạo mới
+
+        if (isEditMode) {
+            titleEl.textContent = 'Cập nhật chức vụ';
+            CommonUtils.Form.setData(positionForm, positionData);
+            codeInput.readOnly = true;
+            codeInput.classList.add('bg-slate-100');
+        } else {
+            titleEl.textContent = 'Tạo mới chức vụ';
+            idInput.value = '';                // chắc chắn xóa id cũ
+            codeInput.value = '';              // xóa mã cũ để generate lại
+            codeInput.readOnly = false;
+            codeInput.classList.remove('bg-slate-100');
+            autoCodeEnabled = true;
+        }
+        CommonUtils.Modal.open(positionModalEl);
+        // Focus tên vị trí khi tạo mới
+        if (!isEditMode) nameInput.focus();
+    }
+
+    // Event: Add New
+    const btnAdd = document.getElementById('btn-add-new');
+    if(btnAdd) btnAdd.addEventListener('click', () => openPositionModal());
+
+    // Event: Submit Form
+    positionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = positionForm.querySelector('button[type="submit"]') ||
+                          document.querySelector('button[type="submit"][form="position-form"]');
+        
+        await CommonUtils.Loading.execute(submitBtn, async () => {
+            const data = CommonUtils.Form.getData(positionForm);
+            const id = data.id;
+            const method = id ? 'put' : 'post';
+            const url = id ? `${API_URL}${id}/` : API_URL;
+            
+            await CommonUtils.API[method](url, data);
+            CommonUtils.Toast.success(id ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+            CommonUtils.Modal.close(positionModalEl);
+            tableManager.refresh();
+        });
+    });
+
+    // 3. Auto Generate Code
+    const nameInput = document.getElementById('form-tenvitricongviec');
+    const codeInput = document.getElementById('form-machucvu');
+
+    if (nameInput && codeInput) {
+        const generateCode = CommonUtils.debounce(() => {
+            if (!autoCodeEnabled) return; // chỉ chạy khi cho phép
+            const val = nameInput.value.trim();
+            codeInput.value = val ? CommonUtils.StringUtils.generatePositionCode(val) : '';
+        }, 200);
+
+        nameInput.addEventListener('input', generateCode);
+
+        // Nếu user tự sửa mã ở chế độ tạo mới -> tắt auto để không ghi đè nữa
+        codeInput.addEventListener('input', () => {
+            if (!isEditMode) autoCodeEnabled = false;
+        });
+    }
+
+    // 4. Close Modal Events
+    document.querySelectorAll('.btn-close-modal, .btn-cancel-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.fixed');
+            CommonUtils.Modal.close(modal);
+        });
+    });
+    CommonUtils.Modal.setupBackdropClose(positionModalEl);
+    CommonUtils.Modal.setupBackdropClose(deleteModalEl);
+
+    // 5. Table Actions (Edit/Delete)
+    document.querySelector('#positions-table tbody').addEventListener('click', (e) => {
         const editBtn = e.target.closest('.btn-edit');
         if (editBtn) {
-            e.preventDefault();
             const row = editBtn.closest('tr');
-            if (row) {
-                try {
-                    const data = JSON.parse(row.getAttribute('data-position'));
-                    openPositionModal(data);
-                } catch (error) {
-                    showToast('Lỗi khi đọc dữ liệu: ' + error.message, true);
-                }
-            }
-            return;
+            if (row?.dataset.position) openPositionModal(JSON.parse(row.dataset.position));
         }
+
         const deleteBtn = e.target.closest('.btn-delete');
         if (deleteBtn) {
-            e.preventDefault();
-            openDeleteModal(deleteBtn.dataset.id);
+            currentDeleteId = deleteBtn.dataset.id;
+            CommonUtils.Modal.open(deleteModalEl);
         }
     });
-    elements.positionModal?.addEventListener('click', (e) => {
-        if (e.target === elements.positionModal) closePositionModal();
-    });
-    elements.deleteModal?.addEventListener('click', (e) => {
-        if (e.target === elements.deleteModal) closeDeleteModal();
-    });
 
-    // Initialize
-    fetchPositions();
+    // 6. Confirm Delete
+    document.getElementById('btn-confirm-delete').addEventListener('click', async function() {
+        if (!currentDeleteId) return;
+        await CommonUtils.Loading.execute(this, async () => {
+            await CommonUtils.API.delete(`${API_URL}${currentDeleteId}/`);
+            CommonUtils.Toast.success('Đã xóa thành công!');
+            CommonUtils.Modal.close(deleteModalEl);
+            tableManager.refresh();
+        }, 'Đang xóa...');
+    });
 });
 </script>
 {% endblock scripts %}

@@ -316,7 +316,6 @@ class Hopdong(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     mahopdong = models.CharField(db_column='MaHopDong', blank=True, null=True)  # Field name made lowercase.
     tenhopdong = models.CharField(db_column='TenHopDong', blank=True, null=True)  # Field name made lowercase.
-    filehopdong = models.CharField(db_column='FileHopDong', blank=True, null=True)  # Field name made lowercase.
     loaihopdong = models.CharField(db_column='LoaiHopDong', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
 

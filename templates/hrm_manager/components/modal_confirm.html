@@ -1,0 +1,27 @@
+<div id="{{ modal_id|default:'delete-modal' }}" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity duration-200 opacity-0">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-transform duration-200 scale-95 modal-content">
+        <div class="p-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-red-100 sm:h-12 sm:w-12">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div class="ml-4 text-left">
+                    <h3 class="text-lg font-semibold text-slate-900" id="{{ modal_id }}-title">
+                        {{ title|default:"Xác nhận xóa" }}
+                    </h3>
+                    <p class="text-sm text-slate-500 mt-2">
+                        {{ content|default:"Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác." }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3 rounded-b-lg">
+            <button type="button" id="{{ btn_cancel_id|default:'btn-cancel-delete' }}" class="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors btn-cancel-modal">
+                Hủy
+            </button>
+            <button type="button" id="{{ btn_confirm_id|default:'btn-confirm-delete' }}" class="px-4 py-2 bg-red-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700 transition-colors">
+                {{ btn_text|default:"Xóa" }}
+            </button>
+        </div>
+    </div>
+</div>
