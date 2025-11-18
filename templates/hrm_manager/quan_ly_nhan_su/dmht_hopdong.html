@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Danh mục hợp đồng{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    <!-- Breadcrumb -->
+    <nav class="px-6 py-4 bg-white border-b border-slate-200">
+        <ol class="flex items-center space-x-2 text-sm text-slate-600">
+            <li><a href="{% url 'dashboard:dashboard' %}" class="hover:text-blue-600">Trang chủ</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="#" class="hover:text-blue-600">Quản lý nhân sự</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'hrm:to_chuc_nhan_su:danh_muc_index' %}" class="hover:text-blue-600">Danh mục hệ thống</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="font-medium text-slate-900">Danh mục hợp đồng</li>
+        </ol>
+    </nav>
+
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-slate-900">Danh mục hợp đồng</h1>
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded">
+                <p class="text-sm font-medium">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Chức năng tạo mới hợp đồng đang được xây dựng
+                </p>
+            </div>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1 max-w-md">
+                    <div class="relative">
+                        <input type="text" 
+                               id="search-input"
+                               placeholder="Tìm kiếm hợp đồng" 
+                               class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <svg class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="loai-filter" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Loại hợp đồng</option>
+                        <option value="Thử việc">Thử việc</option>
+                        <option value="Chính thức">Chính thức</option>
+                        <option value="Thời vụ">Thời vụ</option>
+                    </select>
+                    <button type="button" disabled class="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-60" title="Chức năng đang xây dựng">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                        </svg>
+                        Thêm hợp đồng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Tên hợp đồng
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Mã hợp đồng
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Thời gian hết hạn
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Loại hợp đồng
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Trạng thái
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Hành động
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                        {% for item in object_list %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="javascript:void(0);" data-id="{{ item.id }}" class="view-link text-sm font-medium text-green-600 hover:text-green-700">
+                                    {{ item.tenhopdong }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {{ item.mahopdong }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {% if item.lichsuhopdong_set.first %}
+                                    {{ item.lichsuhopdong_set.first.ngayhethan|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if item.loaihopdong %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if item.loaihopdong == 'Thử việc' %}bg-yellow-100 text-yellow-800
+                                    {% elif item.loaihopdong == 'Chính thức' %}bg-green-100 text-green-800
+                                    {% elif item.loaihopdong == 'Thời vụ' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ item.loaihopdong }}
+                                </span>
+                                {% else %}
+                                    <span class="text-slate-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if item.lichsuhopdong_set.first %}
+                                    {% if item.lichsuhopdong_set.first.trangthai == 'active' %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full"></span>
+                                        Đang hoạt động
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <span class="w-2 h-2 mr-1.5 bg-red-400 rounded-full"></span>
+                                        Hết hạn
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Chưa sử dụng
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button type="button" data-id="{{ item.id }}" class="view-btn text-green-600 hover:text-green-900 mr-3" title="Xem">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                </button>
+                                <button type="button" disabled class="text-blue-400 cursor-not-allowed mr-3" title="Chức năng đang xây dựng">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                    </svg>
+                                </button>
+                                <button type="button" data-id="{{ item.id }}" class="delete-btn text-red-600 hover:text-red-900" title="Xóa">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="empty-row">
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 text-slate-300 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                    </svg>
+                                    <p>Chưa có dữ liệu</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-sm text-slate-500">
+                    Tổng số: {{ paginator.count }} <span class="mx-2">|</span> Trang {{ page_obj.number }} / {{ paginator.num_pages }}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">&lt;</a>
+                    {% endif %}
+                    
+                    <span class="px-3 py-1 bg-green-600 text-white rounded">{{ page_obj.number }}</span>
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">&gt;</a>
+                    {% endif %}
+                    
+                    <select onchange="location.href='?page_size='+this.value" class="ml-2 px-3 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-green-500">
+                        <option value="20" {% if request.GET.page_size == '20' %}selected{% endif %}>20 / trang</option>
+                        <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50 / trang</option>
+                        <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100 / trang</option>
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Detail -->
+<div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-slate-900">Chi tiết hợp đồng</h2>
+                <button type="button" id="close-modal-btn" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
+                <div id="detail-content" class="space-y-4">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 flex justify-end">
+                <button type="button" id="close-modal-footer-btn" class="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/dmht_hopdong.js' %}"></script>
+{% endblock %}

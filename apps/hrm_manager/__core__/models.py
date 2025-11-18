@@ -866,3 +866,40 @@ class Thietlapsolieucodinh(models.Model):
         managed = False
         db_table = '"hrm"."ThietLapSoLieuCoDinh"'
         db_table_comment = 'Thiết lập số liệu cố định cho những tham số tính lương cho từng nhân viên khác nhau'
+
+class Baohiem(models.Model):
+    """Model Bảo hiểm"""
+    id = models.BigAutoField(primary_key=True)
+    mabaohiem = models.CharField(db_column='MaBaoHiem', blank=True, null=True)
+    tenbaohiem = models.CharField(db_column='TenBaoHiem', blank=True, null=True)
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."BaoHiem"'
+        db_table_comment = 'Bảng chứa danh sách các loại bảo hiểm'
+
+
+
+class NhanvienBaohiem(models.Model):
+    """Model quan hệ Nhân viên - Bảo hiểm"""
+    id = models.BigAutoField(primary_key=True)
+    masobh = models.CharField(db_column='MaSoBH', blank=True, null=True)
+    ngaybatdaudong = models.DateField(db_column='NgayBatDauDong', blank=True, null=True)
+    ngaydungdong = models.DateField(db_column='NgayDungDong', blank=True, null=True)
+    ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    noidangky = models.CharField(db_column='NoiDangKy', blank=True, null=True)
+    codongbh = models.BooleanField(db_column='CoDongBH', blank=True, null=True)
+    nhanvien = models.ForeignKey(Nhanvien, models.DO_NOTHING, blank=True, null=True)
+    baohiem = models.ForeignKey(Baohiem, models.DO_NOTHING, blank=True, null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = '"hrm"."NhanVien_BaoHiem"'
+        db_table_comment = 'Bảng quan hệ giữa Nhân viên và Bảo hiểm'

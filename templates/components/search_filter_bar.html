@@ -1,0 +1,63 @@
+{% comment %}
+  Search and Filter Bar Component
+  
+  Usage:
+    {% include "components/search_filter_bar.html" with 
+       search_placeholder="Tìm kiếm ngân hàng" 
+       show_status_filter=True 
+       create_text="Thêm ngân hàng" 
+       create_onclick="window.NganHangManager.openSidebar('create')" 
+    %}
+  
+  Context:
+    - search_placeholder: String (optional, default: "Tìm kiếm...")
+    - show_status_filter: Boolean (optional, default: False)
+    - create_text: String (required if button needed)
+    - create_onclick: String (required if button needed)
+  
+  IMPORTANT: 
+    - ID "search-input" is REQUIRED for JS
+    - ID "status-filter" is REQUIRED for JS
+  
+  Author: ThanhTrung2308
+  Created: 2025-01-15
+{% endcomment %}
+
+<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {# Search Input #}
+        <div class="flex-1 max-w-md">
+            <div class="relative">
+                <input type="text" 
+                       id="search-input"
+                       placeholder="{{ search_placeholder|default:'Tìm kiếm...' }}" 
+                       class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <svg class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </div>
+        </div>
+        
+        {# Filters and Actions #}
+        <div class="flex items-center gap-3">
+            {% if show_status_filter %}
+            <select id="status-filter" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Ngừng hoạt động</option>
+            </select>
+            {% endif %}
+            
+            {% if create_text and create_onclick %}
+            <button type="button" 
+                    onclick="{{ create_onclick }}" 
+                    class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                </svg>
+                {{ create_text }}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

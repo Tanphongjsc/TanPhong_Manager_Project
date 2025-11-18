@@ -1,0 +1,43 @@
+{% comment %}
+<!--{#
+  Breadcrumb Component
+  
+  Usage:
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+  
+  Context:
+    - breadcrumb_items: List of {title, url} dicts
+      Example: [
+        {'title': 'Quản lý nhân sự', 'url': '#'},
+        {'title': 'Danh mục hệ thống', 'url': '/hrm/danh-muc/'},
+        {'title': 'Danh mục ngân hàng', 'url': None}  # Current page
+      ]
+  
+  Author: ThanhTrung2308
+  Created: 2025-01-15
+#}-->
+{% endcomment %}
+
+<nav class="px-6 py-4 bg-white border-b border-slate-200">
+    <ol class="flex items-center space-x-2 text-sm text-slate-600">
+        <li>
+            <a href="{% url 'dashboard:dashboard' %}" class="hover:text-blue-600">
+                Trang chủ
+            </a>
+        </li>
+        <li><span class="mx-2">/</span></li>
+        
+        {% for item in breadcrumb_items %}
+            <li>
+                {% if item.url %}
+                    <a href="{{ item.url }}" class="hover:text-blue-600">{{ item.title }}</a>
+                {% else %}
+                    <span class="font-medium text-slate-900">{{ item.title }}</span>
+                {% endif %}
+            </li>
+            {% if not forloop.last %}
+                <li><span class="mx-2">/</span></li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
