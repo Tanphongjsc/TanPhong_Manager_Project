@@ -29789,3 +29789,25 @@ WARNING 2025-11-18 15:46:14,185 basehttp 56388 77976 "GET /favicon.ico HTTP/1.1"
 WARNING 2025-11-18 15:46:22,025 basehttp 56388 61164 "GET /static/js/TableManager.js HTTP/1.1" 404 1981
 WARNING 2025-11-18 15:46:25,836 log 56388 66192 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-11-18 15:46:25,838 basehttp 56388 66192 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:30:18,725 log 15748 13512 Not Found: /favicon.ico
+WARNING 2025-11-19 09:30:18,726 basehttp 15748 13512 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-19 09:31:23,590 log 15748 12512 Not Found: /favicon.ico
+WARNING 2025-11-19 09:31:23,590 basehttp 15748 12512 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-19 09:31:36,500 basehttp 15748 12512 "GET /static/js/TableManager.js HTTP/1.1" 404 1981
+WARNING 2025-11-19 09:33:45,936 basehttp 15748 13512 "GET /static/js/TableManager.js HTTP/1.1" 404 1981
+WARNING 2025-11-19 09:36:45,043 log 15748 24952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:36:45,043 basehttp 15748 24952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:36:52,221 log 15748 24616 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:36:52,222 basehttp 15748 24616 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:36:56,632 log 15748 24952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:36:56,633 basehttp 15748 24952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:36:59,716 log 15748 20004 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:36:59,716 basehttp 15748 20004 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:37:35,452 log 15748 20004 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:37:35,452 basehttp 15748 20004 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:37:37,031 log 15748 23152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:37:37,031 basehttp 15748 23152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 09:38:16,209 log 15748 23152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 09:38:16,210 basehttp 15748 23152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 10:59:12,315 log 15464 25244 Not Found: /favicon.ico
+WARNING 2025-11-19 10:59:12,316 basehttp 15464 25244 "GET /favicon.ico HTTP/1.1" 404 3131

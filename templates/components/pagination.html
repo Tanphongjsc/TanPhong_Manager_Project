@@ -1,40 +1,44 @@
 {% comment %}
-  Pagination Component
-  
-  Usage:
-    {% include "components/pagination.html" %}
-  
-  Context (from Django view):
-    - is_paginated: Boolean
-    - paginator: Django Paginator object
-    - page_obj: Django Page object
-    - request: Django request object
-  
-  Author: ThanhTrung2308
-  Created: 2025-01-15
+  Component: Pagination
+  Logic Mapping:
+    - .pagination-container: Container chính [cite: 309]
+    - .pagination-prev/next: Nút điều hướng 
+    - .pagination-page-size: Select box chọn số lượng 
 {% endcomment %}
 
-{% if is_paginated %}
-<div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-    <div class="text-sm text-slate-500">
-        Tổng số: {{ paginator.count }} <span class="mx-2">|</span> Trang {{ page_obj.number }} / {{ paginator.num_pages }}
+<div class="pagination-container flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 px-4 py-3 bg-white gap-4 sm:gap-0 rounded-b-lg">
+    
+    <div class="text-sm text-slate-600 pagination-info order-2 sm:order-1">
+        Đang tải...
     </div>
-    <div class="flex items-center gap-2">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">&lt;</a>
-        {% endif %}
-        
-        <span class="px-3 py-1 bg-green-600 text-white rounded">{{ page_obj.number }}</span>
-        
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border border-slate-300 rounded hover:bg-slate-50">&gt;</a>
-        {% endif %}
-        
-        <select onchange="location.href='?page_size='+this.value" class="ml-2 px-3 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-green-500">
-            <option value="20" {% if request.GET.page_size == '20' %}selected{% endif %}>20 / trang</option>
-            <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50 / trang</option>
-            <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100 / trang</option>
-        </select>
+    
+    <div class="flex items-center gap-3 order-1 sm:order-2">
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-600 hidden sm:inline">Hiển thị</span>
+            <select class="pagination-page-size h-9 text-sm border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white py-1 pl-2 pr-8">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+
+        <div class="flex items-center rounded-lg border border-slate-300 bg-white shadow-sm">
+            <button type="button" class="pagination-prev px-3 py-2 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors border-r border-slate-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+            </button>
+            
+            <div class="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 min-w-20 text-center border-r border-slate-300">
+                <span class="pagination-current">1</span> / <span class="pagination-total-pages">1</span>
+            </div>
+            
+            <button type="button" class="pagination-next px-3 py-2 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+            </button>
+        </div>
     </div>
 </div>
-{% endif %}

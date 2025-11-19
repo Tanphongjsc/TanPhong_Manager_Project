@@ -1,0 +1,84 @@
+{% comment %}
+  Universal Toolbar Component v2 - Fully Dynamic
+  
+  Parameters cải tiến:
+    - filter_options: (List) Danh sách các lựa chọn cho bộ lọc nhanh.
+      Cấu trúc mong đợi: List các object hoặc tuple [(value, label), ...]
+    - filter_label: (String) Label mặc định (VD: "Trạng thái", "Phòng ban"...)
+    - filter_field: (String) Tên field name cho thẻ select (VD: "status", "dept_id")
+{% endcomment %}
+
+{% comment %}
+  Universal Toolbar Component v3 (Final Synced)
+  Author: Refactored by Gemini
+  
+  Updates:
+    - Thêm thẻ <form id="filter-form"> để TableManager.js có thể gom nhóm filters.
+    - Input search nằm ngoài form filter để tránh conflict sự kiện (tùy logic, nhưng để riêng an toàn hơn cho logic 'input' vs 'change').
+{% endcomment %}
+
+<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        
+        {# --- ZONE 1: SEARCH BAR (ID: search-input) --- #}
+        {# JS TableManager sẽ bind sự kiện 'input' vào đây #}
+        <div class="flex-1 w-full lg:max-w-md">
+            <div class="relative">
+                <input type="text" 
+                       id="{{ search_id|default:'search-input' }}"
+                       value="{{ search_val|default:'' }}"
+                       placeholder="{{ search_placeholder|default:'Tìm kiếm...' }}" 
+                       class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
+                
+                <svg class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </div>
+        </div>
+        
+        {# --- ZONE 2: FILTERS & ACTIONS --- #}
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
+            
+            {# A. FILTER FORM AREA #}
+            {# Quan trọng: ID "filter-form" để JS TableManager lắng nghe sự kiện change #}
+            <form id="{{ filter_form_id|default:'filter-form' }}" class="contents"> 
+                {# 'contents' class giúp form không phá vỡ layout flex cha #}
+                
+                {% if filter_options %}
+                <select name="{{ filter_field|default:'status' }}" 
+                        class="w-full sm:w-auto px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm cursor-pointer">
+                    <option value="">{{ filter_label|default:'Tất cả trạng thái' }}</option>
+                    {% for item in filter_options %}
+                        <option value="{{ item.value }}" {% if request.GET.status == item.value %}selected{% endif %}>
+                            {{ item.label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+
+                {% if filter_template %}
+                    {% include filter_template %}
+                {% endif %}
+            </form>
+
+            {# B. CREATE BUTTON #}
+            {% if create_text %}
+                {% if create_url %}
+                <a href="{{ create_url }}" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                {% else %}
+                <button type="button" onclick="{{ create_onclick }}" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                {% endif %}
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                    </svg>
+                    <span class="whitespace-nowrap">{{ create_text }}</span>
+                {% if create_url %}</a>{% else %}</button>{% endif %}
+            {% endif %}
+            
+            {# C. EXTRA ACTIONS (Export, Print...) #}
+            {% if extra_actions_template %}
+                {% include extra_actions_template %}
+            {% endif %}
+        </div>
+    </div>
+</div>
