@@ -1,33 +1,13 @@
 /**
- * Reusable Table Manager with pagination, sorting, filtering, and bulk actions
+ * TableManager - DANH SÁCH dữ liệu với phân trang SERVER-SIDE
  * @class TableManager
+ * @role Quản lý hiển thị, phân trang, tìm kiếm SERVER-SIDE, bulk actions
+ * @note KHÔNG làm CRUD - Chỉ hiển thị và tương tác với danh sách
  */
 class TableManager {
-    /**
-     * @param {Object} options - Configuration options
-     * @param {HTMLElement} options.tableBody - Table body element
-     * @param {HTMLElement} options.paginationContainer - Pagination container
-     * @param {HTMLElement} options.searchInput - Search input element
-     * @param {HTMLElement} options.filtersForm - Filters form element
-     * @param {HTMLElement} options.selectAllCheckbox - Select all checkbox
-     * @param {HTMLElement} options.bulkActionsContainer - Bulk actions container
-     * @param {string} options.apiEndpoint - API endpoint URL
-     * @param {Object} options.apiParams - Additional API parameters
-     * @param {number} options.pageSize - Items per page
-     * @param {number} options.currentPage - Current page number
-     * @param {Function} options.onRenderRow - Row render callback
-     * @param {Function} options.onDataLoaded - Data loaded callback
-     * @param {Function} options.onSelectionChange - Selection change callback
-     * @param {Function} options.onError - Error callback
-     * @param {boolean} options.enableBulkActions - Enable bulk actions
-     * @param {boolean} options.enableSearch - Enable search
-     * @param {boolean} options.enableFilters - Enable filters
-     * @param {number} options.searchDebounce - Search debounce time (ms)
-     */
     constructor(options) {
-        // Validate required dependencies
         if (typeof AppUtils === 'undefined') {
-            throw new Error('AppUtils is required. Please load optimized_utils.js first.');
+            throw new Error('AppUtils is required. Please load utils.js first.');
         }
 
         this.options = {
@@ -38,7 +18,7 @@ class TableManager {
             selectAllCheckbox: null,
             bulkActionsContainer: null,
             
-            // API settings
+            // API
             apiEndpoint: '',
             apiParams: {},
             
@@ -61,10 +41,9 @@ class TableManager {
             ...options
         };
 
-        // State management
+        // State
         this.state = {
             data: [],
-            filteredData: [],
             selectedItems: new Set(),
             totalPages: 1,
             totalItems: 0,
@@ -74,22 +53,11 @@ class TableManager {
             currentController: null
         };
 
-        // Event listeners for cleanup
-        this.eventListeners = [];
-
-        // Debounced functions
+        this.eventManager = AppUtils.EventManager.create();
         this.debouncedSearch = null;
-
         this.init();
     }
 
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
-
-    /**
-     * Initialize table manager
-     */
     init() {
         this.setupEventListeners();
         if (this.options.apiEndpoint) {
@@ -97,45 +65,38 @@ class TableManager {
         }
     }
 
-    /**
-     * Setup all event listeners
-     */
     setupEventListeners() {
-        // Search
+        // Server-side search
         if (this.options.searchInput && this.options.enableSearch) {
             this.debouncedSearch = AppUtils.Helper.debounce(() => {
                 this.options.currentPage = 1;
                 this.fetchData();
             }, this.options.searchDebounce);
 
-            this.addEventListener(this.options.searchInput, 'input', this.debouncedSearch);
+            this.eventManager.add(this.options.searchInput, 'input', this.debouncedSearch);
         }
 
-        // Filters
+        // Server-side filters
         if (this.options.filtersForm && this.options.enableFilters) {
             const inputs = this.options.filtersForm.querySelectorAll('select, input');
             inputs.forEach(input => {
-                this.addEventListener(input, 'change', () => {
+                this.eventManager.add(input, 'change', () => {
                     this.options.currentPage = 1;
                     this.fetchData();
                 });
             });
         }
 
-        // Select All
+        // Select all
         if (this.options.selectAllCheckbox && this.options.enableBulkActions) {
-            this.addEventListener(this.options.selectAllCheckbox, 'change', (e) => {
+            this.eventManager.add(this.options.selectAllCheckbox, 'change', (e) => {
                 this.handleSelectAll(e.target.checked);
             });
         }
 
-        // Pagination
         this.setupPagination();
     }
 
-    /**
-     * Setup pagination controls
-     */
     setupPagination() {
         if (!this.options.paginationContainer) return;
 
@@ -144,15 +105,15 @@ class TableManager {
         const pageSizeSelect = this.options.paginationContainer.querySelector('.pagination-page-size');
 
         if (prevBtn) {
-            this.addEventListener(prevBtn, 'click', () => this.previousPage());
+            this.eventManager.add(prevBtn, 'click', () => this.previousPage());
         }
 
         if (nextBtn) {
-            this.addEventListener(nextBtn, 'click', () => this.nextPage());
+            this.eventManager.add(nextBtn, 'click', () => this.nextPage());
         }
 
         if (pageSizeSelect) {
-            this.addEventListener(pageSizeSelect, 'change', (e) => {
+            this.eventManager.add(pageSizeSelect, 'change', (e) => {
                 this.options.pageSize = parseInt(e.target.value, 10);
                 this.options.currentPage = 1;
                 this.fetchData();
@@ -161,21 +122,16 @@ class TableManager {
     }
 
     // ============================================================
-    // DATA FETCHING
+    // SERVER-SIDE DATA FETCHING
     // ============================================================
-
-    /**
-     * Fetch data from API
-     */
     async fetchData() {
-        // Cancel previous request
+        // Abort previous request
         if (this.state.isLoading && this.state.currentController) {
             this.state.currentController.abort();
         }
 
         this.state.isLoading = true;
         this.state.currentController = new AbortController();
-
         this.showLoading();
 
         try {
@@ -195,21 +151,15 @@ class TableManager {
             this.handleDataResponse(result);
 
         } catch (error) {
-            // Ignore abort errors
             if (error.name !== 'AbortError') {
                 this.handleError(error);
             }
-
         } finally {
             this.state.isLoading = false;
             this.state.currentController = null;
         }
     }
 
-    /**
-     * Get filter parameters from form
-     * @returns {Object} Filter parameters
-     */
     getFilterParams() {
         const params = {};
 
@@ -229,10 +179,6 @@ class TableManager {
         return params;
     }
 
-    /**
-     * Handle API response
-     * @param {Object} result - API response
-     */
     handleDataResponse(result) {
         const data = result.data || [];
         const pagination = result.pagination || {
@@ -244,6 +190,13 @@ class TableManager {
             has_prev: false
         };
 
+        // 🔧 FIX: Auto-correct page nếu out of bounds
+        if (pagination.page > pagination.total_pages && pagination.total_pages > 0) {
+            this.options.currentPage = pagination.total_pages;
+            this.fetchData();
+            return;
+        }
+
         // Update state
         this.state.data = data;
         this.state.totalItems = pagination.total;
@@ -252,20 +205,15 @@ class TableManager {
         this.state.hasPrev = pagination.has_prev;
         this.options.currentPage = pagination.page;
 
-        // Render table
+        // Render
         this.render();
         this.updatePagination(pagination);
 
-        // Callback
         if (this.options.onDataLoaded) {
             this.options.onDataLoaded(data, pagination);
         }
     }
 
-    /**
-     * Handle fetch error
-     * @param {Error} error - Error object
-     */
     handleError(error) {
         console.error('⛔ TableManager fetch error:', error);
         this.showEmpty('Không thể tải dữ liệu: ' + error.message);
@@ -280,10 +228,6 @@ class TableManager {
     // ============================================================
     // RENDERING
     // ============================================================
-
-    /**
-     * Render table rows
-     */
     render() {
         if (!this.options.tableBody) return;
 
@@ -306,25 +250,21 @@ class TableManager {
         this.options.tableBody.appendChild(fragment);
     }
 
-    /**
-     * Render single row
-     * @param {Object} item - Row data
-     * @returns {HTMLElement|null} Row element
-     */
     renderRow(item) {
         if (!this.options.onRenderRow) {
-            console.warn('TableManager: onRenderRow callback not provided');
+            console.warn('⚠️ TableManager: onRenderRow callback not provided');
             return null;
         }
 
         const row = this.options.onRenderRow(item);
+        if (!row) return null;
 
-        // Setup checkbox if bulk actions enabled
+        // Setup checkbox for bulk actions
         if (this.options.enableBulkActions) {
             const checkbox = row.querySelector('.row-checkbox');
             if (checkbox) {
                 checkbox.dataset.id = item.id;
-                this.addEventListener(checkbox, 'change', () => {
+                this.eventManager.add(checkbox, 'change', () => {
                     this.handleItemCheckbox(checkbox);
                 });
             }
@@ -333,13 +273,9 @@ class TableManager {
         return row;
     }
 
-    /**
-     * Show loading state
-     */
     showLoading() {
         if (!this.options.tableBody) return;
 
-        // Auto-calculate colspan
         const colSpan = this.options.tableBody.closest('table')
             ?.querySelector('thead tr')
             ?.children.length || 10;
@@ -356,10 +292,6 @@ class TableManager {
         `;
     }
 
-    /**
-     * Show empty state
-     * @param {string} message - Empty message
-     */
     showEmpty(message = 'Không tìm thấy dữ liệu') {
         if (!this.options.tableBody) return;
 
@@ -367,28 +299,16 @@ class TableManager {
             ?.querySelector('thead tr')
             ?.children.length || 5;
 
-        this.options.tableBody.innerHTML = `
-            <tr>
-                <td colspan="${colSpan}">
-                    <div class="empty-state">
-                        <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                        </svg>
-                        <h3 class="empty-state-title">${message}</h3>
-                    </div>
-                </td>
-            </tr>
-        `;
+        AppUtils.UI.renderEmptyState(this.options.tableBody, {
+            message,
+            colspan: colSpan,
+            icon: 'default'
+        });
     }
 
     // ============================================================
     // PAGINATION
     // ============================================================
-
-    /**
-     * Update pagination UI
-     * @param {Object} pagination - Pagination data
-     */
     updatePagination(pagination) {
         if (!this.options.paginationContainer) return;
 
@@ -397,7 +317,7 @@ class TableManager {
         const start = total > 0 ? (page - 1) * pageSize + 1 : 0;
         const end = Math.min(page * pageSize, total);
 
-        // Update info
+        // Info
         const info = this.options.paginationContainer.querySelector('.pagination-info');
         if (info) {
             info.innerHTML = total > 0
@@ -405,19 +325,15 @@ class TableManager {
                 : 'Không có dữ liệu';
         }
 
-        // Update current page
+        // Current page
         const current = this.options.paginationContainer.querySelector('.pagination-current');
-        if (current) {
-            current.textContent = page;
-        }
+        if (current) current.textContent = page;
 
-        // Update total pages
+        // Total pages
         const totalPagesEl = this.options.paginationContainer.querySelector('.pagination-total-pages');
-        if (totalPagesEl) {
-            totalPagesEl.textContent = total_pages || 1;
-        }
+        if (totalPagesEl) totalPagesEl.textContent = total_pages || 1;
 
-        // Update buttons
+        // Buttons
         const prevBtn = this.options.paginationContainer.querySelector('.pagination-prev');
         const nextBtn = this.options.paginationContainer.querySelector('.pagination-next');
 
@@ -434,9 +350,6 @@ class TableManager {
         }
     }
 
-    /**
-     * Go to next page
-     */
     nextPage() {
         if (this.state.hasNext) {
             this.options.currentPage++;
@@ -444,9 +357,6 @@ class TableManager {
         }
     }
 
-    /**
-     * Go to previous page
-     */
     previousPage() {
         if (this.state.hasPrev && this.options.currentPage > 1) {
             this.options.currentPage--;
@@ -454,10 +364,6 @@ class TableManager {
         }
     }
 
-    /**
-     * Go to specific page
-     * @param {number} page - Page number
-     */
     goToPage(page) {
         if (page >= 1 && page <= this.state.totalPages) {
             this.options.currentPage = page;
@@ -468,11 +374,6 @@ class TableManager {
     // ============================================================
     // BULK ACTIONS
     // ============================================================
-
-    /**
-     * Handle select all checkbox
-     * @param {boolean} checked - Is checked
-     */
     handleSelectAll(checked) {
         this.state.selectedItems.clear();
 
@@ -487,10 +388,6 @@ class TableManager {
         this.updateBulkActions();
     }
 
-    /**
-     * Handle individual item checkbox
-     * @param {HTMLElement} checkbox - Checkbox element
-     */
     handleItemCheckbox(checkbox) {
         const id = checkbox.dataset.id;
 
@@ -503,9 +400,6 @@ class TableManager {
         this.updateBulkActions();
     }
 
-    /**
-     * Update bulk actions UI
-     */
     updateBulkActions() {
         if (!this.options.enableBulkActions || !this.options.bulkActionsContainer) return;
 
@@ -516,14 +410,14 @@ class TableManager {
             countEl.textContent = `${count} đã chọn`;
         }
 
-        // Show/hide bulk actions bar
+        // Show/hide
         if (count > 0) {
             this.options.bulkActionsContainer.classList.add('show');
         } else {
             this.options.bulkActionsContainer.classList.remove('show');
         }
 
-        // Update select all checkbox
+        // Update select all
         if (this.options.selectAllCheckbox) {
             const allCheckboxes = this.options.tableBody.querySelectorAll('.row-checkbox');
             const checkedCount = this.options.tableBody.querySelectorAll('.row-checkbox:checked').length;
@@ -534,15 +428,11 @@ class TableManager {
                 checkedCount > 0 && checkedCount < allCheckboxes.length;
         }
 
-        // Callback
         if (this.options.onSelectionChange) {
             this.options.onSelectionChange(Array.from(this.state.selectedItems));
         }
     }
 
-    /**
-     * Clear all selections
-     */
     clearSelection() {
         this.state.selectedItems.clear();
 
@@ -557,79 +447,36 @@ class TableManager {
     }
 
     // ============================================================
-    // EVENT LISTENER MANAGEMENT
-    // ============================================================
-
-    /**
-     * Add event listener with tracking
-     * @param {HTMLElement} element - Target element
-     * @param {string} event - Event name
-     * @param {Function} handler - Event handler
-     */
-    addEventListener(element, event, handler) {
-        if (!element) return;
-        element.addEventListener(event, handler);
-        this.eventListeners.push({ element, event, handler });
-    }
-
-    // ============================================================
     // PUBLIC API
     // ============================================================
-
-    /**
-     * Refresh table data
-     */
     refresh() {
         this.fetchData();
     }
 
-    /**
-     * Get selected item IDs
-     * @returns {Array<string>} Selected IDs
-     */
     getSelectedItems() {
         return Array.from(this.state.selectedItems);
     }
 
-    /**
-     * Get current table data
-     * @returns {Array<Object>} Current data
-     */
     getData() {
         return this.state.data;
     }
 
-    /**
-     * Set additional API parameters
-     * @param {Object} params - Additional parameters
-     */
     setApiParams(params) {
         this.options.apiParams = { ...this.options.apiParams, ...params };
     }
 
-    /**
-     * Destroy table manager and cleanup
-     */
     destroy() {
-        // Cancel pending request
         if (this.state.currentController) {
             this.state.currentController.abort();
         }
 
-        // Remove all event listeners
-        this.eventListeners.forEach(({ element, event, handler }) => {
-            element.removeEventListener(event, handler);
-        });
-        this.eventListeners = [];
-
-        // Clear state
+        this.eventManager.removeAll();
         this.state.selectedItems.clear();
         this.state.data = [];
         this.state.currentController = null;
 
-        console.log('✅ TableManager destroyed and cleaned up');
+        console.log('✅ TableManager destroyed');
     }
 }
 
-// Export to window
 window.TableManager = TableManager;
