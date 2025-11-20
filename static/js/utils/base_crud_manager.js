@@ -153,6 +153,8 @@ class BaseCRUDManager {
             const itemId = target.dataset.id;
             if (!itemId) return; // Nút không có ID thì bỏ qua
 
+            const itemName = target.dataset.name || 'bản ghi này';
+
             // Xử lý Edit
             if (target.classList.contains('view-link') ||
                 target.classList.contains('view-btn') ||
@@ -163,7 +165,7 @@ class BaseCRUDManager {
             // Xử lý Delete
             else if (target.classList.contains('delete-btn')) {
                 e.preventDefault();
-                this.deleteItem(itemId);
+                this.deleteItem(itemId, itemName);
             }
         });
 
@@ -323,16 +325,27 @@ class BaseCRUDManager {
         }
 
         try {
-            const formData = this.config.getFormData
-                ? this.config.getFormData(form)
-                : new FormData(form);
+            // ✅ THAY ĐỔI: Chuyển FormData sang JSON Object
+            let payload;
+            
+            if (this.config.getFormData) {
+                // Nếu có custom getFormData thì dùng
+                payload = this.config.getFormData(form);
+            } else {
+                // Mặc định: Convert FormData -> JSON
+                const formData = new FormData(form);
+                payload = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    payload[key] = value;
+                }
+            }
 
-            // Xử lý trường hợp field Mã bị disabled (Edit mode) thì FormData sẽ không lấy được
-            // Cần append thủ công để gửi về server nếu cần thiết
+            // ✅ Xử lý field Mã bị disabled (Edit mode)
             if (this.state.currentMode === 'edit' && this.config.codeField) {
                 const codeField = document.getElementById(this.config.codeField);
                 if (codeField && codeField.disabled && codeField.value) {
-                    formData.set(this.config.codeField, codeField.value);
+                    payload[this.config.codeField] = codeField.value;
                 }
             }
 
@@ -345,10 +358,15 @@ class BaseCRUDManager {
                 ? this.config.httpMethods.update 
                 : this.config.httpMethods.create;
 
+            // ✅ THAY ĐỔI: Gửi JSON thay vì FormData
             let data;
-            if (method === 'PUT') data = await AppUtils.API.put(url, formData);
-            else if (method === 'PATCH') data = await AppUtils.API.patch(url, formData);
-            else data = await AppUtils.API.post(url, formData);
+            if (method === 'PUT') {
+                data = await AppUtils.API.put(url, payload);
+            } else if (method === 'PATCH') {
+                data = await AppUtils.API.patch(url, payload);
+            } else {
+                data = await AppUtils.API.post(url, payload);
+            }
 
             if (data.success === false) {
                 throw new Error(data.message || 'Thao tác thất bại');
@@ -359,7 +377,7 @@ class BaseCRUDManager {
             // Callback
             this.config.onAfterSubmit(data);
             
-            // ⭐ KEY CHANGE: Gọi TableManager refresh thay vì sửa DOM
+            // ⭐ Gọi TableManager refresh
             this.config.onRefreshTable();
 
             this.sidebar.close();
@@ -376,10 +394,10 @@ class BaseCRUDManager {
         }
     }
 
-    deleteItem(itemId) {
+    deleteItem(itemId, itemName) {
         AppUtils.Modal.showConfirm({
             title: this.config.texts.deleteTitle,
-            message: this.config.texts.deleteMessage('bản ghi này'), // Có thể cải tiến lấy name nếu muốn
+            message: this.config.texts.deleteMessage(itemName), // Có thể cải tiến lấy name nếu muốn
             type: 'danger',
             confirmText: 'Xóa',
             onConfirm: async () => {
@@ -401,6 +419,51 @@ class BaseCRUDManager {
                 } catch (error) {
                     console.error('⛔ Delete error:', error);
                     AppUtils.Notify.error(error.message || 'Có lỗi xảy ra');
+                }
+            }
+        });
+    }
+
+    // Hàm xóa nhiều dòng (Sử dụng Promise.all để gọi API xóa từng cái)
+    deleteMultipleItems(ids) {
+        const count = ids.length;
+        AppUtils.Modal.showConfirm({
+            title: 'Xóa',
+            message: `Bạn có chắc chắn muốn xóa ${count} bản ghi đã chọn không?`,
+            type: 'danger',
+            confirmText: `Xóa ${count} mục`,
+            onConfirm: async () => {
+                try {
+                    // Hiển thị loading
+                    AppUtils.Notify.info('Đang thực hiện xóa...', { duration: 0 });
+                    
+                    const method = this.config.httpMethods.delete;
+                    
+                    // Tạo mảng các promises (gọi API song song)
+                    const deletePromises = ids.map(id => {
+                        const url = this.config.apiUrls.delete(id);
+                        if (method === 'DELETE') return AppUtils.API.delete(url);
+                        else return AppUtils.API.post(url);
+                    });
+
+                    // Chờ tất cả chạy xong
+                    const results = await Promise.all(deletePromises);
+                    
+                    // Kiểm tra xem có cái nào lỗi không
+                    const errors = results.filter(res => res.success === false);
+                    
+                    if (errors.length > 0) {
+                        AppUtils.Notify.warning(`Đã xóa ${count - errors.length} mục. Có ${errors.length} mục không thể xóa.`);
+                    } else {
+                        AppUtils.Notify.success(`Đã xóa thành công ${count} bản ghi!`);
+                    }
+                    
+                    // Xóa xong thì refresh bảng
+                    this.config.onRefreshTable();
+
+                } catch (error) {
+                    console.error('⛔ Bulk delete error:', error);
+                    AppUtils.Notify.error('Có lỗi xảy ra trong quá trình xóa');
                 }
             }
         });

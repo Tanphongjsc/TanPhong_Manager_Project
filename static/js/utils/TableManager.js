@@ -93,6 +93,47 @@ class TableManager {
                 this.handleSelectAll(e.target.checked);
             });
         }
+        // Bulk Actions: Nút Bỏ chọn
+        if (this.options.bulkActionsContainer) {
+            const clearBtn = this.options.bulkActionsContainer.querySelector('#btn-clear-selection');
+            if (clearBtn) {
+                this.eventManager.add(clearBtn, 'click', (e) => {
+                    e.preventDefault();
+                    this.clearSelection(); // Gọi hàm có sẵn
+                });
+            }
+
+            // Bulk Actions: Nút Xóa nhiều
+            const deleteBtn = this.options.bulkActionsContainer.querySelector('#btn-bulk-delete');
+            if (deleteBtn) {
+                this.eventManager.add(deleteBtn, 'click', (e) => {
+                    e.preventDefault();
+                    const selectedIds = this.getSelectedItems();
+                    
+                    // Gọi callback onBulkDelete (được truyền từ bên ngoài vào)
+                    if (this.options.onBulkDelete && selectedIds.length > 0) {
+                        this.options.onBulkDelete(selectedIds);
+                    }
+                });
+            }
+            
+            const exportBtn = this.options.bulkActionsContainer.querySelector('#btn-bulk-export');
+            if (exportBtn) {
+                this.eventManager.add(exportBtn, 'click', (e) => {
+                    e.preventDefault();
+                    const selectedIds = this.getSelectedItems();
+                    
+                    // Gọi callback onBulkExport nếu có
+                    if (this.options.onBulkExport && selectedIds.length > 0) {
+                        this.options.onBulkExport(selectedIds);
+                    } else {
+                        // Nếu user chưa chọn gì mà ấn export -> Có thể export hết hoặc báo lỗi tùy logic
+                        AppUtils.Notify.warning('Vui lòng chọn ít nhất một bản ghi để xuất.');
+                    }
+                });
+            }
+        }
+        // ---------------------------
 
         this.setupPagination();
     }
@@ -410,20 +451,34 @@ class TableManager {
             countEl.textContent = `${count} đã chọn`;
         }
 
-        // Show/hide
+        // --- SỬA LỖI TẠI ĐÂY ---
+        // Thay vì classList.add('show'), ta xử lý class của Tailwind
         if (count > 0) {
-            this.options.bulkActionsContainer.classList.add('show');
+            // Hiện: Xóa hidden, thêm flex
+            this.options.bulkActionsContainer.classList.remove('hidden');
+            this.options.bulkActionsContainer.classList.add('flex');
+            
+            // Animation (nếu có CSS transition)
+            setTimeout(() => this.options.bulkActionsContainer.classList.add('opacity-100', 'translate-y-0'), 10);
         } else {
-            this.options.bulkActionsContainer.classList.remove('show');
+            // Ẩn: Xóa flex, thêm hidden
+            this.options.bulkActionsContainer.classList.remove('opacity-100', 'translate-y-0');
+            
+            // Đợi animation tắt rồi mới ẩn hẳn (nếu muốn mượt), hoặc ẩn luôn:
+            this.options.bulkActionsContainer.classList.remove('flex');
+            this.options.bulkActionsContainer.classList.add('hidden');
         }
 
-        // Update select all
+        // Update select all checkbox state
         if (this.options.selectAllCheckbox) {
             const allCheckboxes = this.options.tableBody.querySelectorAll('.row-checkbox');
             const checkedCount = this.options.tableBody.querySelectorAll('.row-checkbox:checked').length;
 
+            // Checked nếu chọn hết
             this.options.selectAllCheckbox.checked = 
                 allCheckboxes.length > 0 && checkedCount === allCheckboxes.length;
+            
+            // Indeterminate (dấu gạch ngang) nếu chọn 1 vài cái
             this.options.selectAllCheckbox.indeterminate = 
                 checkedCount > 0 && checkedCount < allCheckboxes.length;
         }
