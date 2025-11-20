@@ -158,6 +158,8 @@ class BaseCRUDManager {
             const itemId = target.dataset.id;
             if (!itemId) return; // Nút không có ID thì bỏ qua
 
+            const itemName = target.dataset.name || 'bản ghi này';
+
             // Xử lý Edit
             if (target.classList.contains('view-link') ||
                 target.classList.contains('view-btn') ||
@@ -168,7 +170,7 @@ class BaseCRUDManager {
             // Xử lý Delete
             else if (target.classList.contains('delete-btn')) {
                 e.preventDefault();
-                this.deleteItem(itemId);
+                this.deleteItem(itemId, itemName);
             }
         });
 
@@ -448,10 +450,10 @@ class BaseCRUDManager {
         }
     }
 
-    deleteItem(itemId) {
+    deleteItem(itemId, itemName) {
         AppUtils.Modal.showConfirm({
             title: this.config.texts.deleteTitle,
-            message: this.config.texts.deleteMessage('bản ghi này'), // Có thể cải tiến lấy name nếu muốn
+            message: this.config.texts.deleteMessage(itemName), // Có thể cải tiến lấy name nếu muốn
             type: 'danger',
             confirmText: 'Xóa',
             onConfirm: async () => {
@@ -473,6 +475,51 @@ class BaseCRUDManager {
                 } catch (error) {
                     console.error('⛔ Delete error:', error);
                     AppUtils.Notify.error(error.message || 'Có lỗi xảy ra');
+                }
+            }
+        });
+    }
+
+    // Hàm xóa nhiều dòng (Sử dụng Promise.all để gọi API xóa từng cái)
+    deleteMultipleItems(ids) {
+        const count = ids.length;
+        AppUtils.Modal.showConfirm({
+            title: 'Xóa',
+            message: `Bạn có chắc chắn muốn xóa ${count} bản ghi đã chọn không?`,
+            type: 'danger',
+            confirmText: `Xóa ${count} mục`,
+            onConfirm: async () => {
+                try {
+                    // Hiển thị loading
+                    AppUtils.Notify.info('Đang thực hiện xóa...', { duration: 0 });
+                    
+                    const method = this.config.httpMethods.delete;
+                    
+                    // Tạo mảng các promises (gọi API song song)
+                    const deletePromises = ids.map(id => {
+                        const url = this.config.apiUrls.delete(id);
+                        if (method === 'DELETE') return AppUtils.API.delete(url);
+                        else return AppUtils.API.post(url);
+                    });
+
+                    // Chờ tất cả chạy xong
+                    const results = await Promise.all(deletePromises);
+                    
+                    // Kiểm tra xem có cái nào lỗi không
+                    const errors = results.filter(res => res.success === false);
+                    
+                    if (errors.length > 0) {
+                        AppUtils.Notify.warning(`Đã xóa ${count - errors.length} mục. Có ${errors.length} mục không thể xóa.`);
+                    } else {
+                        AppUtils.Notify.success(`Đã xóa thành công ${count} bản ghi!`);
+                    }
+                    
+                    // Xóa xong thì refresh bảng
+                    this.config.onRefreshTable();
+
+                } catch (error) {
+                    console.error('⛔ Bulk delete error:', error);
+                    AppUtils.Notify.error('Có lỗi xảy ra trong quá trình xóa');
                 }
             }
         });

@@ -4,108 +4,29 @@
 {% block title %}Danh mục loại nhân viên{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50">
-    {# Breadcrumb #}
+<div class="min-h-screen bg-slate-50 flex flex-col">
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="p-6">
+    <div class="p-6 flex-1 flex flex-col">
         <h1 class="text-2xl font-bold text-slate-900 mb-6">Danh mục loại nhân viên</h1>
 
-        {# Search and Filter Bar #}
-        {% include "components/search_filter_bar.html" with search_placeholder="Tìm kiếm loại nhân viên" show_status_filter=True create_text="Thêm loại nhân viên" create_onclick="window.LoaiNhanVienManager.openSidebar('create')" %}
+        {# Toolbar #}
+        {# Chỉ cần truyền biến status_list đã được gửi từ view.py #}
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm..." create_text="Thêm loại nhân viên" create_onclick="window.LoaiNhanVienManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" %}
 
-        {# Table #}
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Tên loại nhân viên
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Mã loại nhân viên
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Trạng thái
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Hành động
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-slate-200">
-                        {% for item in object_list %}
-                        <tr class="hover:bg-slate-50">
-                            {# Cột 1: Tên loại nhân viên #}
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="javascript:void(0);" 
-                                   data-id="{{ item.id }}" 
-                                   class="view-link text-sm font-medium text-green-600 hover:text-green-700">
-                                    {{ item.tenloainv }}
-                                </a>
-                            </td>
-                            
-                            {# Cột 2: Mã loại nhân viên #}
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                {{ item.maloainv }}
-                            </td>
-                            
-                            {# Cột 3: Trạng thái #}
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {% if item.maloainv == 'NV' %}
-                                    {# ✅ Loại NV: Hiển thị badge Mặc định #}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        </svg>
-                                        Mặc định
-                                    </span>
-                                {% else %}
-                                    
-                                    {% if item.trangthai|lower == 'active' %}
-                                        {% include "components/status_toggle.html" with item_id=item.id is_active=True %}
-                                    {% else %}
-                                        {% include "components/status_toggle.html" with item_id=item.id is_active=False %}
-                                    {% endif %}
-                                </td>
-                                {% endif %}
-                            </td>
-                            
-                            {# Cột 4: Hành động #}
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                {% if item.maloainv == 'NV' %}
-                                    {# ✅ Loại NV: CHỈ có nút Xem #}
-                                    <button type="button" 
-                                            data-id="{{ item.id }}" 
-                                            class="view-btn text-green-600 hover:text-green-900" 
-                                            title="Xem chi tiết">
-                                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </button>
-                                {% else %}
-                                    {% include "components/action_buttons.html" with item_id=item.id %}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                            {% include "components/table_empty.html" with colspan=4 message="Chưa có loại nhân viên nào" %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {# Table Wrapper theo phong cách chức vụ html #}
+        {% with headers='<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên loại nhân viên</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã loại</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ghi chú</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>' %}
+            {% include "components/table_wrapper.html" with table_id="lnv-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
+        {% endwith %}
 
-            {# Pagination #}
-            {% include "components/pagination.html" %}
-        </div>
+        {# Pagination & Bulk Actions #}
+        {% include "components/pagination.html" %}
+        {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions" %}
     </div>
 </div>
 
 {# Sidebar #}
-{% include "components/crud_sidebar.html" with sidebar_id="lnv-sidebar" overlay_id="lnv-sidebar-overlay" form_id="loainhanvien-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/loainhanvien_form.html" submit_text="Thêm" %}
-
+{% include "components/crud_sidebar.html" with sidebar_id="lnv-sidebar" overlay_id="lnv-sidebar-overlay" form_id="loainhanvien-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/loainhanvien_form.html" submit_text="Lưu thông tin" %}
 {% endblock %}
 
 {% block scripts %}

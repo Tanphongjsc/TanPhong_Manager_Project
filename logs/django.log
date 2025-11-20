@@ -29811,6 +29811,7 @@ WARNING 2025-11-19 09:38:16,209 log 15748 23152 Not Found: /.well-known/appspeci
 WARNING 2025-11-19 09:38:16,210 basehttp 15748 23152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-11-19 10:59:12,315 log 15464 25244 Not Found: /favicon.ico
 WARNING 2025-11-19 10:59:12,316 basehttp 15464 25244 "GET /favicon.ico HTTP/1.1" 404 3131
+<<<<<<< HEAD
 WARNING 2025-11-19 16:18:01,729 log 83336 66836 Not Found: /favicon.ico
 WARNING 2025-11-19 16:18:01,730 basehttp 83336 66836 "GET /favicon.ico HTTP/1.1" 404 3131
 ERROR 2025-11-19 16:18:19,153 log 83336 66836 Internal Server Error: /hrm/to-chuc-nhan-su/chuc-vu/
@@ -31113,10 +31114,269 @@ Traceback (most recent call last):
   File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
     raise TemplateDoesNotExist(", ".join(not_found))
 django.template.exceptions.TemplateDoesNotExist: components/search_filter_bar.html
+=======
+WARNING 2025-11-19 16:29:55,624 log 12464 12236 Not Found: /favicon.ico
+WARNING 2025-11-19 16:29:55,625 basehttp 12464 12236 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-11-19 16:30:42,503 log 12464 7684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/ngan-hang/
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 510, in parse
+    compile_func = self.tags[command]
+                   ~~~~~~~~~^^^^^^^^^
+KeyError: 'capture'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 824, in view_dmht_nganhang_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_nganhang.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 512, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\template\base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 21: 'capture', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-11-19 16:30:42,506 basehttp 12464 7684 "GET /hrm/to-chuc-nhan-su/danh-muc/ngan-hang/ HTTP/1.1" 500 200129
+WARNING 2025-11-19 16:44:51,824 log 12464 14488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:44:51,824 basehttp 12464 14488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:50:57,591 log 12464 488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:50:57,592 basehttp 12464 488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-19 16:53:08,902 log 12464 488 Internal Server Error: /hrm/to-chuc-nhan-su/api/ngan-hang/list/
+ERROR 2025-11-19 16:53:08,902 basehttp 12464 488 "GET /hrm/to-chuc-nhan-su/api/ngan-hang/list/?page=1&page_size=10&search=12 HTTP/1.1" 500 195
+ERROR 2025-11-19 16:53:13,634 log 12464 488 Internal Server Error: /hrm/to-chuc-nhan-su/api/ngan-hang/list/
+ERROR 2025-11-19 16:53:13,635 basehttp 12464 488 "GET /hrm/to-chuc-nhan-su/api/ngan-hang/list/?page=1&page_size=10&search=1 HTTP/1.1" 500 195
+ERROR 2025-11-19 16:53:14,432 log 12464 488 Internal Server Error: /hrm/to-chuc-nhan-su/api/ngan-hang/list/
+ERROR 2025-11-19 16:53:14,433 basehttp 12464 488 "GET /hrm/to-chuc-nhan-su/api/ngan-hang/list/?page=1&page_size=10&search=12 HTTP/1.1" 500 195
+ERROR 2025-11-19 16:53:51,018 log 12464 488 Internal Server Error: /hrm/to-chuc-nhan-su/api/ngan-hang/list/
+ERROR 2025-11-19 16:53:51,020 basehttp 12464 488 "GET /hrm/to-chuc-nhan-su/api/ngan-hang/list/?page=1&page_size=10&search=ng%C3%A2n HTTP/1.1" 500 195
+WARNING 2025-11-19 16:54:34,047 log 12464 488 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/ngan-hang/18/update/
+WARNING 2025-11-19 16:54:34,241 basehttp 12464 488 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/18/update/ HTTP/1.1" 405 0
+WARNING 2025-11-19 16:54:36,852 log 12464 488 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/ngan-hang/18/update/
+WARNING 2025-11-19 16:54:37,033 basehttp 12464 488 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/18/update/ HTTP/1.1" 405 0
+WARNING 2025-11-19 16:54:43,011 log 12464 488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:54:43,012 basehttp 12464 488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:55:17,299 log 12464 488 Method Not Allowed (DELETE): /hrm/to-chuc-nhan-su/api/ngan-hang/17/delete/
+WARNING 2025-11-19 16:55:17,484 basehttp 12464 488 "DELETE /hrm/to-chuc-nhan-su/api/ngan-hang/17/delete/ HTTP/1.1" 405 0
+WARNING 2025-11-19 16:55:48,163 log 12464 488 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/bao-hiem/13/update/
+WARNING 2025-11-19 16:55:48,343 basehttp 12464 488 "PUT /hrm/to-chuc-nhan-su/api/bao-hiem/13/update/ HTTP/1.1" 405 0
+WARNING 2025-11-19 16:57:26,527 log 12464 488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:26,528 basehttp 12464 488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:57:31,654 log 12464 488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:31,655 basehttp 12464 488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:57:35,464 log 12464 16580 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:35,465 basehttp 12464 16580 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:57:52,065 log 12464 488 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:52,066 basehttp 12464 488 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:57:56,645 log 12464 1628 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:56,646 basehttp 12464 1628 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:57:59,780 log 12464 5816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:57:59,781 basehttp 12464 5816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 16:58:02,958 log 12464 5816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 16:58:02,959 basehttp 12464 5816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:02:56,151 log 13080 6340 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:02:56,151 basehttp 13080 6340 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:02:58,012 log 13080 6340 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:02:58,013 basehttp 13080 6340 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:04:00,007 log 13080 3612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:04:00,007 basehttp 13080 3612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:04:01,304 log 13080 3612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:04:01,305 basehttp 13080 3612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:06:28,807 log 13080 6340 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/loai-nhan-vien/28/update/
+WARNING 2025-11-19 17:06:29,050 basehttp 13080 6340 "PUT /hrm/to-chuc-nhan-su/api/loai-nhan-vien/28/update/ HTTP/1.1" 405 0
+WARNING 2025-11-19 17:06:51,492 log 13080 6340 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:06:51,493 basehttp 13080 6340 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:06:52,280 log 13080 6340 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:06:52,281 basehttp 13080 6340 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:10:46,295 log 13080 3612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:10:46,296 basehttp 13080 3612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:10:50,801 log 13080 3612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:10:50,802 basehttp 13080 3612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:10:52,133 log 13080 3612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:10:52,134 basehttp 13080 3612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:11:21,982 log 13080 8212 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/loai-nhan-vien/28/update/
+WARNING 2025-11-19 17:11:22,169 basehttp 13080 8212 "PUT /hrm/to-chuc-nhan-su/api/loai-nhan-vien/28/update/ HTTP/1.1" 405 0
+WARNING 2025-11-19 17:26:18,115 log 24416 9384 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:26:18,116 basehttp 24416 9384 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:26:50,940 log 24416 15492 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:26:50,941 basehttp 24416 15492 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:26:55,407 log 24416 15492 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:26:55,409 basehttp 24416 15492 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:28:23,048 log 24416 23808 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:28:23,050 basehttp 24416 23808 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:28:30,579 log 24416 8572 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:28:30,580 basehttp 24416 8572 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-19 17:37:47,220 log 24416 12808 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-19 17:37:47,221 basehttp 24416 12808 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 09:11:26,372 log 3128 20904 Not Found: /favicon.ico
+WARNING 2025-11-20 09:11:26,373 basehttp 3128 20904 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-20 09:12:08,948 log 3128 6568 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/
+WARNING 2025-11-20 09:12:08,956 basehttp 3128 6568 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:12:17,347 log 3128 6568 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/
+WARNING 2025-11-20 09:12:17,348 basehttp 3128 6568 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:12:30,004 log 3128 20904 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/
+WARNING 2025-11-20 09:12:30,005 basehttp 3128 20904 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:12:38,754 log 3128 20904 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/3/update/
+WARNING 2025-11-20 09:12:38,754 basehttp 3128 20904 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/3/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:13:07,239 log 3128 20904 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 09:13:07,239 basehttp 3128 20904 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 09:13:15,354 log 3128 20904 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 09:13:15,354 basehttp 3128 20904 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 09:13:22,574 log 3128 20884 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/
+WARNING 2025-11-20 09:13:22,575 basehttp 3128 20884 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:17:23,443 log 3128 20884 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 09:17:23,443 basehttp 3128 20884 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 09:18:09,850 log 3128 18444 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/
+WARNING 2025-11-20 09:18:09,851 basehttp 3128 18444 "PUT /hrm/to-chuc-nhan-su/api/ngan-hang/17/update/ HTTP/1.1" 400 128
+WARNING 2025-11-20 09:30:08,400 log 3128 8612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 09:30:08,400 basehttp 3128 8612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:04:23,321 log 3128 19776 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:04:23,321 basehttp 3128 19776 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:10:40,164 log 3128 2500 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:10:40,165 basehttp 3128 2500 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:11:01,062 log 3128 13080 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:11:01,063 basehttp 3128 13080 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:22:09,716 log 3128 22292 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:22:09,716 basehttp 3128 22292 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:39:21,558 log 3128 21152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:39:21,559 basehttp 3128 21152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:43:33,024 log 3128 2392 Not Found: /favicon.ico
+WARNING 2025-11-20 10:43:33,024 basehttp 3128 2392 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-20 10:43:40,289 log 3128 13268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:43:40,290 basehttp 3128 13268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:43:44,955 log 3128 13268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:43:44,955 basehttp 3128 13268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:44:06,188 log 3128 4296 Bad Request: /hrm/to-chuc-nhan-su/api/ngan-hang/create/
+WARNING 2025-11-20 10:44:06,188 basehttp 3128 4296 "POST /hrm/to-chuc-nhan-su/api/ngan-hang/create/ HTTP/1.1" 400 128
+WARNING 2025-11-20 10:49:40,581 log 17528 21932 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:49:40,582 basehttp 17528 21932 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:51:30,839 log 17528 8132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:51:30,840 basehttp 17528 8132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:51:31,847 log 17528 8132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:51:31,847 basehttp 17528 8132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:51:40,445 log 17528 21932 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:51:40,446 basehttp 17528 21932 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-20 10:51:41,234 log 17528 21932 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/loai-nhan-vien/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: components/universal_toolbar.html
+>>>>>>> hrm/develop
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
+<<<<<<< HEAD
   File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
     response = get_response(request)
                ^^^^^^^^^^^^^^^^^^^^^
@@ -31311,3 +31571,54 @@ WARNING 2025-11-20 11:42:21,725 log 64488 102784 Not Found: /.well-known/appspec
 WARNING 2025-11-20 11:42:21,726 basehttp 64488 102784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-11-20 15:21:07,780 log 64488 103712 Not Found: /favicon.ico
 WARNING 2025-11-20 15:21:07,781 basehttp 64488 103712 "GET /favicon.ico HTTP/1.1" 404 3131
+=======
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 851, in view_dmht_loainhanvien_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_loainhanvien.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: components/universal_toolbar.html
+ERROR 2025-11-20 10:51:41,234 basehttp 17528 21932 "GET /hrm/to-chuc-nhan-su/danh-muc/loai-nhan-vien/ HTTP/1.1" 500 219842
+WARNING 2025-11-20 10:51:41,497 log 17528 21932 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:51:41,498 basehttp 17528 21932 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 10:52:10,514 log 17528 21932 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 10:52:10,515 basehttp 17528 21932 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:01:15,840 log 17528 3792 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:01:15,840 basehttp 17528 3792 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:01:52,195 log 17528 3792 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:01:52,195 basehttp 17528 3792 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:13:16,009 log 17528 20360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:13:16,009 basehttp 17528 20360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:13:21,460 log 17528 12240 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:13:21,460 basehttp 17528 12240 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:13:22,708 log 17528 12240 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:13:22,708 basehttp 17528 12240 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:15:09,235 log 17528 20360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:15:09,236 basehttp 17528 20360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:21:39,124 log 16404 11916 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:21:39,124 basehttp 16404 11916 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:46:52,100 log 16404 24460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:46:52,100 basehttp 16404 24460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:47:32,681 log 16404 24460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:47:32,682 basehttp 16404 24460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:47:37,742 log 16404 24460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:47:37,743 basehttp 16404 24460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:48:06,220 log 16404 22612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:48:06,221 basehttp 16404 22612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-20 11:48:08,214 log 16404 22612 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-20 11:48:08,216 basehttp 16404 22612 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+>>>>>>> hrm/develop

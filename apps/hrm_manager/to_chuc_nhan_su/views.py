@@ -830,69 +830,42 @@ def view_tam_ung_index(request):
     """Hiển thị trang quản lý tạm ứng"""
     return render(request, "hrm_manager/quan_ly_nhan_su/quanlythongtin_quanlytamung.html")
 
+STATUS_LIST = [
+    {'value': 'active', 'label': 'Đang hoạt động'},
+    {'value': 'inactive', 'label': 'Ngừng hoạt động'}
+]
 
 def view_dmht_nganhang_list(request):
-    """Hiển thị danh sách ngân hàng"""
-    queryset = Nganhang.objects.all()
-   
-    context = get_list_context(
-        request,
-        queryset,
-        search_fields=['TenNganHang', 'MaNganHang', 'TenVietTat'],
-        filter_field=('TrangThai', 'status'),
-        page_size=20,
-        order_by='-created_at'
-    )
-
-    context['breadcrumbs'] = [
-        {'title': 'Quản lý nhân sự', 'url': '#'},
-        {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
-        {'title': 'Danh mục ngân hàng', 'url': None},
-    ]
-    
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
+            {'title': 'Danh mục ngân hàng', 'url': None},
+        ],
+        'status_list': STATUS_LIST  # <--- Truyền biến này sang HTML
+    }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_nganhang.html", context)
 
-
 def view_dmht_baohiem_list(request):
-    """Hiển thị danh sách bảo hiểm"""
-    queryset = Baohiem.objects.all()
-    
-    context = get_list_context(
-        request,
-        queryset,
-        search_fields=['TenBaoHiem', 'MaBaoHiem'],
-        filter_field=('TrangThai', 'status'),
-        page_size=20,
-        order_by='-created_at'
-    )
-
-    context['breadcrumbs'] = [
-        {'title': 'Quản lý nhân sự', 'url': '#'},
-        {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
-        {'title': 'Danh mục bảo hiểm', 'url': None},
-    ]
-    
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
+            {'title': 'Danh mục bảo hiểm', 'url': None},
+        ],
+        'status_list': STATUS_LIST # <--- Truyền biến này
+    }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_baohiem.html", context)
 
-
 def view_dmht_loainhanvien_list(request):
-    """Hiển thị danh sách loại nhân viên"""
-    queryset = Loainhanvien.objects.all()
-    
-    context = get_list_context(
-        request,
-        queryset,
-        search_fields=['TenLoaiNV', 'MaLoaiNV'],
-        filter_field=('TrangThai', 'status'),
-        page_size=20,
-        order_by='-created_at'
-    )
-    
-    context['breadcrumbs'] = [
-        {'title': 'Quản lý nhân sự', 'url': '#'},
-        {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
-        {'title': 'Danh mục loại nhân viên', 'url': None},
-    ]
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
+            {'title': 'Danh mục loại nhân viên', 'url': None},
+        ],
+        'status_list': STATUS_LIST # <--- Truyền biến này
+    }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_loainhanvien.html", context)
 
 
@@ -909,8 +882,8 @@ def api_nganhang_list(request):
     context = get_list_context(
         request,
         queryset,
-        search_fields=['TenNganHang', 'MaNganHang', 'TenVietTat'],
-        filter_field=('TrangThai', 'status'),
+        search_fields=['tennganhang', 'manganhang', 'tenviettat'],
+        filter_field=('trangthai', 'status'),
         page_size=20,
         order_by='-created_at'
     )
@@ -954,8 +927,8 @@ def api_baohiem_list(request):
     context = get_list_context(
         request,
         queryset,
-        search_fields=['TenBaoHiem', 'MaBaoHiem'],
-        filter_field=('TrangThai', 'status'),
+        search_fields=['tenbaohiem', 'mabaohiem'],
+        filter_field=('trangthai', 'status'),
         page_size=20,
         order_by='-created_at'
     )
@@ -998,8 +971,8 @@ def api_loainhanvien_list(request):
     context = get_list_context(
         request,
         queryset,
-        search_fields=['TenLoaiNV', 'MaLoaiNV'],
-        filter_field=('TrangThai', 'status'),
+        search_fields=['tenloainv', 'maloainv'],
+        filter_field=('trangthai', 'status'),
         page_size=20,
         order_by='-created_at'
     )
@@ -1062,16 +1035,19 @@ def api_nganhang_detail(request, pk):
 def api_nganhang_create(request):
     """API tạo mới ngân hàng"""
     try:
+        # SỬA LỖI: Dùng get_request_data thay vì request.POST
+        data = get_request_data(request)
+        
         is_valid, missing = validate_required_fields(
-            request.POST,
+            data,  # Truyền data đã lấy được (JSON hoặc Form)
             ['TenNganHang', 'MaNganHang']
         )
         
         if not is_valid:
             return json_error('Vui lòng nhập đầy đủ tên và mã ngân hàng')
         
-        ten_ngan_hang = get_field_value(request, 'TenNganHang')
-        ma_ngan_hang = get_field_value(request, 'MaNganHang')
+        ten_ngan_hang = data.get('TenNganHang')
+        ma_ngan_hang = data.get('MaNganHang')
         
         if not validate_unique_field(Nganhang, 'manganhang', ma_ngan_hang):
             return json_error('Mã ngân hàng đã tồn tại')
@@ -1079,8 +1055,8 @@ def api_nganhang_create(request):
         item = Nganhang.objects.create(
             tennganhang=ten_ngan_hang,
             manganhang=ma_ngan_hang,
-            tenviettat=get_field_value(request, 'TenVietTat'),
-            diachichinhanh=get_field_value(request, 'DiaChiChiNhanh'),
+            tenviettat=data.get('TenVietTat', ''),
+            diachichinhanh=data.get('DiaChiChiNhanh', ''),
             trangthai='active',
             created_at=timezone.now(),
             updated_at=timezone.now()
@@ -1092,70 +1068,55 @@ def api_nganhang_create(request):
         return json_error(str(e), status=400)
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_nganhang_update(request, pk):
-    """API cập nhật ngân hàng"""
     try:
         item = get_object_or_404(Nganhang, pk=pk)
         
-        is_valid, missing = validate_required_fields(
-            request.POST,
-            ['TenNganHang', 'MaNganHang']
-        )
+        # Dùng get_request_data để lấy data dù là POST (FormData) hay PUT (JSON)
+        data = get_request_data(request) 
         
-        if not is_valid:
-            return json_error('Vui lòng nhập đầy đủ tên và mã ngân hàng')
-        
-        ten_ngan_hang = get_field_value(request, 'TenNganHang')
-        ma_ngan_hang = get_field_value(request, 'MaNganHang')
+        # Validate thủ công vì request.POST có thể rỗng nếu dùng PUT
+        if not data.get('TenNganHang') or not data.get('MaNganHang'):
+             return json_error('Vui lòng nhập đầy đủ tên và mã ngân hàng')
+
+        ten_ngan_hang = data.get('TenNganHang')
+        ma_ngan_hang = data.get('MaNganHang')
         
         if not validate_unique_field(Nganhang, 'manganhang', ma_ngan_hang, exclude_pk=pk):
             return json_error('Mã ngân hàng đã tồn tại')
         
         item.tennganhang = ten_ngan_hang
         item.manganhang = ma_ngan_hang
-        item.tenviettat = get_field_value(request, 'TenVietTat')
-        item.diachichinhanh = get_field_value(request, 'DiaChiChiNhanh')
+        item.tenviettat = data.get('TenVietTat', '')
+        item.diachichinhanh = data.get('DiaChiChiNhanh', '')
         item.updated_at = timezone.now()
         item.save()
         
         return json_success('Cập nhật ngân hàng thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "DELETE"])
 def api_nganhang_delete(request, pk):
-    """API xóa ngân hàng"""
     try:
         item = get_object_or_404(Nganhang, pk=pk)
-        
         success, message = safe_delete(item)
-        
-        if success:
-            return json_success(message)
-        else:
-            return json_error(message)
-            
+        return json_success(message) if success else json_error(message)
     except Exception as e:
         return json_error(str(e), status=400)
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"]) 
 def api_nganhang_toggle_status(request, pk):
-    """API toggle trạng thái ngân hàng"""
     try:
         item = get_object_or_404(Nganhang, pk=pk)
-        
-        data = json.loads(request.body)
-        
+        data = get_request_data(request)
         item.trangthai = 'active' if data.get('is_active') else 'inactive'
         item.updated_at = timezone.now()
         item.save()
-        
         return json_success('Cập nhật trạng thái thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
 
@@ -1188,24 +1149,24 @@ def api_baohiem_detail(request, pk):
 def api_baohiem_create(request):
     """API tạo mới bảo hiểm"""
     try:
+        # SỬA LỖI: Lấy data JSON
+        data = get_request_data(request)
+
         is_valid, missing = validate_required_fields(
-            request.POST,
+            data, 
             ['TenBaoHiem', 'MaBaoHiem']
         )
         
         if not is_valid:
             return json_error('Vui lòng nhập đầy đủ tên và mã bảo hiểm')
         
-        ten_bao_hiem = get_field_value(request, 'TenBaoHiem')
-        ma_bao_hiem = get_field_value(request, 'MaBaoHiem')
-        
-        if not validate_unique_field(Baohiem, 'mabaohiem', ma_bao_hiem):
+        if not validate_unique_field(Baohiem, 'mabaohiem', data.get('MaBaoHiem')):
             return json_error('Mã bảo hiểm đã tồn tại')
         
         item = Baohiem.objects.create(
-            tenbaohiem=ten_bao_hiem,
-            mabaohiem=ma_bao_hiem,
-            ghichu=get_field_value(request, 'GhiChu'),
+            tenbaohiem=data.get('TenBaoHiem'),
+            mabaohiem=data.get('MaBaoHiem'),
+            ghichu=data.get('GhiChu', ''),
             trangthai='active',
             created_at=timezone.now(),
             updated_at=timezone.now()
@@ -1217,71 +1178,48 @@ def api_baohiem_create(request):
         return json_error(str(e), status=400)
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_baohiem_update(request, pk):
-    """API cập nhật bảo hiểm"""
     try:
         item = get_object_or_404(Baohiem, pk=pk)
-        
-        is_valid, missing = validate_required_fields(
-            request.POST,
-            ['TenBaoHiem', 'MaBaoHiem']
-        )
-        
-        if not is_valid:
-            return json_error('Vui lòng nhập đầy đủ tên và mã bảo hiểm')
-        
-        ten_bao_hiem = get_field_value(request, 'TenBaoHiem')
-        ma_bao_hiem = get_field_value(request, 'MaBaoHiem')
-        
-        if not validate_unique_field(Baohiem, 'mabaohiem', ma_bao_hiem, exclude_pk=pk):
-            return json_error('Mã bảo hiểm đã tồn tại')
-        
-        item.tenbaohiem = ten_bao_hiem
-        item.mabaohiem = ma_bao_hiem
-        item.ghichu = get_field_value(request, 'GhiChu')
+        data = get_request_data(request)
+
+        if not data.get('TenBaoHiem') or not data.get('MaBaoHiem'):
+            return json_error('Vui lòng nhập đầy đủ thông tin')
+
+        if not validate_unique_field(Baohiem, 'mabaohiem', data.get('MaBaoHiem'), exclude_pk=pk):
+             return json_error('Mã bảo hiểm đã tồn tại')
+
+        item.tenbaohiem = data.get('TenBaoHiem')
+        item.mabaohiem = data.get('MaBaoHiem')
+        item.ghichu = data.get('GhiChu', '')
         item.updated_at = timezone.now()
         item.save()
         
         return json_success('Cập nhật bảo hiểm thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
 
-
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "DELETE"])
 def api_baohiem_delete(request, pk):
-    """API xóa bảo hiểm"""
     try:
         item = get_object_or_404(Baohiem, pk=pk)
-        
         success, message = safe_delete(item)
-        
-        if success:
-            return json_success(message)
-        else:
-            return json_error(message)
-            
+        return json_success(message) if success else json_error(message)
     except Exception as e:
         return json_error(str(e), status=400)
 
-
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_baohiem_toggle_status(request, pk):
-    """API toggle trạng thái bảo hiểm"""
     try:
         item = get_object_or_404(Baohiem, pk=pk)
-        data = json.loads(request.body)
-        
+        data = get_request_data(request)
         item.trangthai = 'active' if data.get('is_active') else 'inactive'
         item.updated_at = timezone.now()
         item.save()
-        
         return json_success('Cập nhật trạng thái thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
-
 
 # ============================================================================
 # API URLS - LOẠI NHÂN VIÊN
@@ -1314,24 +1252,24 @@ def api_loainhanvien_detail(request, pk):
 def api_loainhanvien_create(request):
     """API tạo mới loại nhân viên"""
     try:
+        # SỬA LỖI: Lấy data JSON
+        data = get_request_data(request)
+
         is_valid, missing = validate_required_fields(
-            request.POST,
+            data, 
             ['TenLoaiNV', 'MaLoaiNV']
         )
         
         if not is_valid:
             return json_error('Vui lòng nhập đầy đủ tên và mã loại nhân viên')
         
-        ten_loai_nv = get_field_value(request, 'TenLoaiNV')
-        ma_loai_nv = get_field_value(request, 'MaLoaiNV')
-        
-        if not validate_unique_field(Loainhanvien, 'maloainv', ma_loai_nv):
+        if not validate_unique_field(Loainhanvien, 'maloainv', data.get('MaLoaiNV')):
             return json_error('Mã loại nhân viên đã tồn tại')
         
         item = Loainhanvien.objects.create(
-            tenloainv=ten_loai_nv,
-            maloainv=ma_loai_nv,
-            ghichu=get_field_value(request, 'GhiChu'),
+            tenloainv=data.get('TenLoaiNV'),
+            maloainv=data.get('MaLoaiNV'),
+            ghichu=data.get('GhiChu', ''),
             trangthai='active',
             created_at=timezone.now(),
             updated_at=timezone.now()
@@ -1343,68 +1281,48 @@ def api_loainhanvien_create(request):
         return json_error(str(e), status=400)
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_loainhanvien_update(request, pk):
-    """API cập nhật loại nhân viên"""
     try:
         item = get_object_or_404(Loainhanvien, pk=pk)
-        
-        is_valid, missing = validate_required_fields(
-            request.POST,
-            ['TenLoaiNV', 'MaLoaiNV']
-        )
-        
-        if not is_valid:
-            return json_error('Vui lòng nhập đầy đủ tên và mã loại nhân viên')
-        
-        ten_loai_nv = get_field_value(request, 'TenLoaiNV')
-        ma_loai_nv = get_field_value(request, 'MaLoaiNV')
-        
-        if not validate_unique_field(Loainhanvien, 'maloainv', ma_loai_nv, exclude_pk=pk):
-            return json_error('Mã loại nhân viên đã tồn tại')
-        
-        item.tenloainv = ten_loai_nv
-        item.maloainv = ma_loai_nv
-        item.ghichu = get_field_value(request, 'GhiChu')
+        data = get_request_data(request)
+
+        if not data.get('TenLoaiNV') or not data.get('MaLoaiNV'):
+            return json_error('Vui lòng nhập đầy đủ thông tin')
+            
+        if not validate_unique_field(Loainhanvien, 'maloainv', data.get('MaLoaiNV'), exclude_pk=pk):
+             return json_error('Mã loại nhân viên đã tồn tại')
+
+        item.tenloainv = data.get('TenLoaiNV')
+        item.maloainv = data.get('MaLoaiNV')
+        item.ghichu = data.get('GhiChu', '')
         item.updated_at = timezone.now()
         item.save()
         
         return json_success('Cập nhật loại nhân viên thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
 
-
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "DELETE"])
 def api_loainhanvien_delete(request, pk):
-    """API xóa loại nhân viên"""
     try:
         item = get_object_or_404(Loainhanvien, pk=pk)
-        
+        if item.maloainv == 'NV': # Bảo vệ mã mặc định
+             return json_error('Không thể xóa loại nhân viên mặc định')
+             
         success, message = safe_delete(item)
-        
-        if success:
-            return json_success(message)
-        else:
-            return json_error(message)
-            
+        return json_success(message) if success else json_error(message)
     except Exception as e:
         return json_error(str(e), status=400)
 
-
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "PUT"])
 def api_loainhanvien_toggle_status(request, pk):
-    """API toggle trạng thái loại nhân viên"""
     try:
         item = get_object_or_404(Loainhanvien, pk=pk)
-        
-        data = json.loads(request.body)
-        
+        data = get_request_data(request)
         item.trangthai = 'active' if data.get('is_active') else 'inactive'
         item.updated_at = timezone.now()
         item.save()
-        
         return json_success('Cập nhật trạng thái thành công')
-        
     except Exception as e:
         return json_error(str(e), status=400)
