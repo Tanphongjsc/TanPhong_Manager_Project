@@ -59,7 +59,10 @@ class BaseCRUDManager {
                 deleteTitle: config.deleteTitle || 'Xóa',
                 deleteMessage: config.deleteMessage || ((name) => `Bạn có muốn xóa '${name}'?`),
                 ...config.texts
-            }
+            },
+
+            // Cấu hình Auto Code
+            autoCode: config.autoCode || null
         };
 
         // State
@@ -67,7 +70,8 @@ class BaseCRUDManager {
             currentMode: 'create',
             currentItemId: null,
             isSubmitting: false,
-            loadController: null
+            loadController: null,
+            isCodeManuallyEdited: false // Trạng thái đã sửa thủ công
         };
 
         this.elements = {};
@@ -80,6 +84,7 @@ class BaseCRUDManager {
         this.initSidebar();
         this.initEventListeners();
         this.initValidation();
+        this.setupAutoCode();
         this.config.onAfterInit();
     }
 
@@ -199,9 +204,60 @@ class BaseCRUDManager {
         });
     }
 
+
+    /**
+     * Logic sinh mã tự động tối ưu
+     */
+    setupAutoCode() {
+        if (!this.config.autoCode || !this.config.autoCode.sourceField) return;
+
+        const { sourceField, targetField } = this.config.autoCode;
+        // Nếu không cấu hình targetField, lấy mặc định codeField của Manager
+        const targetName = targetField || this.config.codeField;
+
+        const sourceInput = this.elements.form.querySelector(`[name="${sourceField}"]`);
+        const targetInput = this.elements.form.querySelector(`[name="${targetName}"]`);
+
+        if (!sourceInput || !targetInput) return;
+
+        // 1. Hàm sinh mã (Debounce 300ms)
+        const handleGenerateCode = AppUtils.Helper.debounce(() => {
+            // Chỉ chạy khi: Đang ở mode Create VÀ Người dùng chưa can thiệp vào ô Mã
+            if (this.state.currentMode === 'create' && !this.state.isCodeManuallyEdited) {
+                const sourceValue = sourceInput.value.trim();
+                
+                // Gán giá trị trực tiếp (Việc này KHÔNG kích hoạt sự kiện 'input' của DOM)
+                targetInput.value = sourceValue ? AppUtils.Helper.generateCode(sourceValue) : '';
+                
+                // (Tùy chọn) Gọi validate thủ công để xóa báo lỗi đỏ (nếu có) mà không bật cờ sửa tay
+                AppUtils.Validation.clearError(targetName);
+            }
+        }, 300);
+
+        // 2. Lắng nghe ô TÊN (Nguồn)
+        this.eventManager.add(sourceInput, 'input', handleGenerateCode);
+
+        // 3. Lắng nghe ô MÃ (Đích) - Để phát hiện người dùng sửa tay
+        this.eventManager.add(targetInput, 'input', (e) => {
+            const val = e.target.value.trim();
+
+            if (val === '') {
+                // Nếu người dùng xóa trắng ô Mã -> Reset cờ, cho phép Auto lại
+                this.state.isCodeManuallyEdited = false;
+                
+                // Tự động sinh lại mã ngay lập tức theo tên hiện tại (nếu muốn UX mượt hơn)
+                handleGenerateCode(); 
+            } else {
+                // Người dùng gõ nội dung -> Bật cờ, chặn Auto
+                this.state.isCodeManuallyEdited = true;
+            }
+        });
+    }
+
     openSidebar(mode, itemId = null) {
         this.state.currentMode = mode;
         this.state.currentItemId = itemId;
+        this.state.isCodeManuallyEdited = false;
 
         AppUtils.Validation.clearError(this.config.codeField);
         
@@ -323,16 +379,27 @@ class BaseCRUDManager {
         }
 
         try {
-            const formData = this.config.getFormData
-                ? this.config.getFormData(form)
-                : new FormData(form);
+            // ✅ THAY ĐỔI: Chuyển FormData sang JSON Object
+            let payload;
+            
+            if (this.config.getFormData) {
+                // Nếu có custom getFormData thì dùng
+                payload = this.config.getFormData(form);
+            } else {
+                // Mặc định: Convert FormData -> JSON
+                const formData = new FormData(form);
+                payload = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    payload[key] = value;
+                }
+            }
 
-            // Xử lý trường hợp field Mã bị disabled (Edit mode) thì FormData sẽ không lấy được
-            // Cần append thủ công để gửi về server nếu cần thiết
+            // ✅ Xử lý field Mã bị disabled (Edit mode)
             if (this.state.currentMode === 'edit' && this.config.codeField) {
                 const codeField = document.getElementById(this.config.codeField);
                 if (codeField && codeField.disabled && codeField.value) {
-                    formData.set(this.config.codeField, codeField.value);
+                    payload[this.config.codeField] = codeField.value;
                 }
             }
 
@@ -345,10 +412,15 @@ class BaseCRUDManager {
                 ? this.config.httpMethods.update 
                 : this.config.httpMethods.create;
 
+            // ✅ THAY ĐỔI: Gửi JSON thay vì FormData
             let data;
-            if (method === 'PUT') data = await AppUtils.API.put(url, formData);
-            else if (method === 'PATCH') data = await AppUtils.API.patch(url, formData);
-            else data = await AppUtils.API.post(url, formData);
+            if (method === 'PUT') {
+                data = await AppUtils.API.put(url, payload);
+            } else if (method === 'PATCH') {
+                data = await AppUtils.API.patch(url, payload);
+            } else {
+                data = await AppUtils.API.post(url, payload);
+            }
 
             if (data.success === false) {
                 throw new Error(data.message || 'Thao tác thất bại');
@@ -359,7 +431,7 @@ class BaseCRUDManager {
             // Callback
             this.config.onAfterSubmit(data);
             
-            // ⭐ KEY CHANGE: Gọi TableManager refresh thay vì sửa DOM
+            // ⭐ Gọi TableManager refresh
             this.config.onRefreshTable();
 
             this.sidebar.close();

@@ -6,16 +6,16 @@
     - .pagination-page-size: Select box chọn số lượng 
 {% endcomment %}
 
-<div class="pagination-container flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 px-4 py-3 bg-white gap-4 sm:gap-0 rounded-b-lg">
+<div class="pagination-container flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 px-3 py-2 bg-white gap-3 sm:gap-0 rounded-b-lg">
     
-    <div class="text-sm text-slate-600 pagination-info order-2 sm:order-1">
+    <div class="text-xs sm:text-sm text-slate-600 pagination-info order-2 sm:order-1">
         Đang tải...
     </div>
     
     <div class="flex items-center gap-3 order-1 sm:order-2">
         <div class="flex items-center gap-2">
-            <span class="text-sm text-slate-600 hidden sm:inline">Hiển thị</span>
-            <select class="pagination-page-size h-9 text-sm border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white py-1 pl-2 pr-8">
+            <span class="text-xs sm:text-sm text-slate-600 hidden sm:inline">Hiển thị</span>
+            <select class="pagination-page-size h-8 text-xs sm:text-sm border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white py-0 pl-2 pr-7">
                 <option value="10" selected>10</option>
                 <option value="20">20</option>
                 <option value="50">50</option>
@@ -24,18 +24,18 @@
         </div>
 
         <div class="flex items-center rounded-lg border border-slate-300 bg-white shadow-sm">
-            <button type="button" class="pagination-prev px-3 py-2 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors border-r border-slate-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <button type="button" class="pagination-prev px-2.5 py-1.5 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors border-r border-slate-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
             </button>
             
-            <div class="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 min-w-20 text-center border-r border-slate-300">
+            <div class="px-2.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 min-w-[4rem] text-center border-r border-slate-300">
                 <span class="pagination-current">1</span> / <span class="pagination-total-pages">1</span>
             </div>
             
-            <button type="button" class="pagination-next px-3 py-2 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <button type="button" class="pagination-next px-2.5 py-1.5 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 transition-colors rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </button>

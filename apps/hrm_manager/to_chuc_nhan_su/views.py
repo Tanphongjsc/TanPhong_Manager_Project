@@ -25,6 +25,8 @@ from apps.hrm_manager.utils.view_helpers import (
     get_field_value,
     safe_delete,
     handle_exceptions,
+    paginate_queryset,
+    get_request_data
 )
 
 # ============================================================================
@@ -668,7 +670,14 @@ def view_bao_cao_index(request):
 @login_required
 def view_chuc_vu_index(request):
     """Hiển thị trang chức vụ"""
-    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html")
+
+    context = {
+        'breadcrumbs': [
+            {'title': 'Chức vụ', 'url': None},
+        ]
+    }
+
+    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html", context=context)
 
 
 # ==================== API CHỨC VỤ ====================
@@ -682,10 +691,19 @@ def api_chuc_vu_list(request):
         # Lấy danh sách chức vụ
         chuc_vu_list = Chucvu.objects.all().order_by('id').values()
         
+        page_obj, paginator = paginate_queryset(request, chuc_vu_list)
+     
         return JsonResponse({
             'success': True,
-            'data': list(chuc_vu_list),
-            'total': chuc_vu_list.count()
+            'data': list(page_obj),
+            'pagination': {
+                'page': page_obj.number,
+                'page_size': paginator.per_page,
+                'total': paginator.count,
+                'total_pages': paginator.num_pages,
+                'has_next': page_obj.has_next(),
+                'has_prev': page_obj.has_previous()
+            }
         })
     
     elif request.method == "POST":
@@ -751,7 +769,8 @@ def api_chuc_vu_detail(request, id):
     elif request.method == "PUT":
         # Cập nhật chức vụ
         try:
-            data = loads(request.body)
+            # data = loads(request.body)
+            data = get_request_data(request)
             
             chuc_vu.machucvu = data.get('machucvu', chuc_vu.machucvu)
             chuc_vu.tenvitricongviec = data.get('tenvitricongviec', chuc_vu.tenvitricongviec)
