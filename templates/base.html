@@ -327,7 +327,7 @@
                     <span class="text-sm text-gray-600 hidden sm:inline">Xin chào, <strong>{{ user.username }}</strong></span>
                     <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&background=3b82f6&color=fff" alt="Avatar">
                 </button>
-                <div id="user-menu-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-20 hidden origin-top-right">
+                <div id="user-menu-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-xl z-50 hidden origin-top-right">
                     <div class="px-4 py-3 border-b">
                         <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
                         <p class="text-sm text-gray-500 truncate">{{ user.email|default:"Không có email" }}</p>

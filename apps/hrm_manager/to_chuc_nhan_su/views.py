@@ -673,6 +673,7 @@ def view_chuc_vu_index(request):
 
     context = {
         'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
             {'title': 'Chức vụ', 'url': None},
         ]
     }
