@@ -46,7 +46,7 @@ class LoaiNhanVienManager extends BaseCRUDManager {
             filtersForm: document.getElementById('filter-form'),
             selectAllCheckbox: document.getElementById('select-all-checkbox'),
             bulkActionsContainer: document.getElementById('bulk-actions'),
-            enableBulkActions: true,
+            enableBulkActions: true, // Kích hoạt chức năng hành động hàng loạt 
             onBulkDelete: (ids) => this.deleteMultipleItems(ids),
             apiEndpoint: '/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/',
             
