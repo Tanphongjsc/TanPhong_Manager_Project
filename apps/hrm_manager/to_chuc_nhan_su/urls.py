@@ -36,6 +36,7 @@ urlpatterns = [
     # NHÂN VIÊN
     path('api/v1/nhan-vien/', views.api_nhan_vien_list, name='api_nhan_vien_list'),
     path('api/v1/nhan-vien/<int:id>/', views.api_nhan_vien_detail, name='api_nhan_vien_detail'),
+    path('api/v1/chuc-vu/<int:id>/toggle-status/', views.api_chuc_vu_toggle_status, name='api_chuc_vu_toggle_status'),
     
     # Danh mục hệ thống - Views
     path("danh-muc/ngan-hang/", views.view_dmht_nganhang_list, name="dmht_nganhang"),

@@ -8,20 +8,20 @@
     <!-- Breadcrumb -->
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="bg-white rounded-lg shadow-sm p-1 sm:p-2 h-full flex flex-col">
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col">
         <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
         <!-- Toolbar -->
-        <!-- create_onclick gọi hàm openSidebar được kế thừa từ BaseCRUDManager -->
-        {% include "components/toolbar.html" with search_id="search-input" placeholder="Tìm kiếm theo Tên Vị Trí..." show_add_btn=True create_text="Thêm chức vụ" create_onclick="window.ChucVuManager.openSidebar('create')" %}
+        {% include "components/toolbar.html" with search_id="search-input" placeholder="Tìm kiếm theo Tên Vị Trí..." show_add_btn=True create_text="Thêm chức vụ" create_onclick="window.ChucVuManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" btn_color="blue" %}
 
         <!-- Table -->
-        {% with headers='<th class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Mã CV</th><th class="px-3 py-1.5 text-left uppercase tracking-wider">Tên Vị Trí</th><th class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Trạng Thái</th><th class="px-3 py-1.5 text-left uppercase tracking-wider w-24">Ngày tạo</th>' %}
-            {% include "components/table_wrapper.html" with table_id="positions-table" tbody_id="table-body" headers_html=headers %}
+        {% with headers='<th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider">Tên Vị Trí</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Mã CV</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Trạng Thái</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-24">Ngày tạo</th>' %}
+            {% include "components/table_wrapper.html" with table_id="positions-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
         {% endwith %}
         
-        <!-- Pagination -->
+        <!-- Pagination & Bulk Actions -->
         {% include "components/pagination.html" %}
+        {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions" %}
     </div>
 </div>
 
@@ -41,13 +41,11 @@ class ChucVuManager extends BaseCRUDManager {
     constructor() {
         // 1. Config cho Form Sidebar (CRUD)
         super({
-            // Các ID này phải khớp với HTML include ở trên
             sidebarId: 'chucvu-sidebar',
             overlayId: 'chucvu-sidebar-overlay',
             formId: 'chucvu-form',
-            codeField: 'machucvu', // ID input mã để BaseManager tự xử lý readonly khi edit
+            codeField: 'machucvu',
             
-            // ✨ [MỚI] Chỉ cần thêm config này để kích hoạt tính năng
             autoCode: {
                 sourceField: 'tenvitricongviec', // Input nhập tên
                 targetField: 'machucvu'          // Input nhận mã (nhập vào machucvu)
@@ -59,8 +57,13 @@ class ChucVuManager extends BaseCRUDManager {
                 create: '/hrm/to-chuc-nhan-su/api/v1/chuc-vu/',
                 update: (id) => `/hrm/to-chuc-nhan-su/api/v1/chuc-vu/${id}/`,
                 delete: (id) => `/hrm/to-chuc-nhan-su/api/v1/chuc-vu/${id}/`,
+                toggleStatus: (id) => `/hrm/to-chuc-nhan-su/api/v1/chuc-vu/${id}/toggle-status/`,
             },
             
+            httpMethods: {
+                toggleStatus: 'POST',
+            },
+
             entityName: 'chức vụ',
             confirmDeleteMessage: 'Bạn có chắc chắn muốn xóa chức vụ này?',
 
@@ -72,7 +75,6 @@ class ChucVuManager extends BaseCRUDManager {
                 const form = document.getElementById('chucvu-form');
                 if (!form) return;
                 
-                // Helper gán giá trị an toàn
                 const setVal = (name, val) => {
                     const el = form.querySelector(`[name="${name}"]`);
                     if (el) el.value = val || '';
@@ -102,7 +104,6 @@ class ChucVuManager extends BaseCRUDManager {
         });
 
         this.tableManager = null;
-        this.autoCodeEnabled = true;
     }
 
     init() {
@@ -116,8 +117,11 @@ class ChucVuManager extends BaseCRUDManager {
             tableBody: document.getElementById('table-body'),
             paginationContainer: document.querySelector('.pagination-container'),
             searchInput: document.getElementById('search-input'),
-            
-            // API Endpoint lấy danh sách
+            filtersForm: document.getElementById('filter-form'),
+            selectAllCheckbox: document.getElementById('select-all-checkbox'), // ✅ THÊM
+            bulkActionsContainer: document.getElementById('bulk-actions'),      // ✅ THÊM
+            enableBulkActions: true,                                           // ✅ THÊM
+            onBulkDelete: (ids) => this.deleteMultipleItems(ids),              // ✅ THÊM
             apiEndpoint: "/hrm/to-chuc-nhan-su/api/v1/chuc-vu/",
             
             // Render từng dòng
@@ -125,19 +129,29 @@ class ChucVuManager extends BaseCRUDManager {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-200';
                 
-                const statusHtml = item.trangthai === 'active' 
-                    ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Hoạt động</span>'
-                    : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">Ngừng</span>';
+                // Toggle switch trạng thái
+                const statusHtml = `
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               class="sr-only peer status-toggle" 
+                               data-id="${item.id}" 
+                               ${item.trangthai === 'active' ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                `;
                 
                 const createdDate = AppUtils.DateUtils.format(item.created_at, 'dd/MM/yyyy');
-
+                
                 tr.innerHTML = `
-                    <td class="px-3 py-2 text-slate-900 font-medium">${item.machucvu || ''}</td>
-                    <td class="px-3 py-2 text-slate-600">
-                        <a href="javascript:void(0);" onclick="window.ChucVuManager.openSidebar('edit', ${item.id})" class="hover:text-blue-600">
+                    <td class="px-4 py-4 text-center">
+                        <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}">
+                    </td>
+                    <td class="px-3 py-2">
+                        <a href="javascript:void(0);" onclick="window.ChucVuManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:text-blue-700 font-medium">
                             ${item.tenvitricongviec || ''}
                         </a>
                     </td>
+                    <td class="px-3 py-2 text-slate-600">${item.machucvu || ''}</td>
                     <td class="px-3 py-2">${statusHtml}</td>
                     <td class="px-3 py-2 text-slate-500">${createdDate}</td>
                     <td class="px-3 py-2">
@@ -151,7 +165,7 @@ class ChucVuManager extends BaseCRUDManager {
                                 </svg>
                             </button>
                             <button type="button" 
-                                    onclick="window.ChucVuManager.deleteItem(${item.id})" 
+                                    onclick="window.ChucVuManager.deleteItem(${item.id}, '${item.tenvitricongviec}')" 
                                     class="inline-flex items-center justify-center w-7 h-7 text-red-600 hover:bg-red-50 rounded transition-colors" 
                                     title="Xóa">
                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

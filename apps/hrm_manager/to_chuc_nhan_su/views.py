@@ -675,7 +675,12 @@ def view_chuc_vu_index(request):
         'breadcrumbs': [
             {'title': 'Quản lý nhân sự', 'url': '#'},
             {'title': 'Chức vụ', 'url': None},
+        ],
+        'status_list': [
+            {'value': 'active', 'label': 'Đang hoạt động'},
+            {'value': 'inactive', 'label': 'Ngừng hoạt động'}
         ]
+        
     }
 
     return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html", context=context)
@@ -688,24 +693,30 @@ def view_chuc_vu_index(request):
 def api_chuc_vu_list(request):
     """API lấy danh sách và tạo mới chức vụ"""
     
+    queryset = Chucvu.objects.all().values()
+
+
     if request.method == "GET":
-        # Lấy danh sách chức vụ
-        chuc_vu_list = Chucvu.objects.all().order_by('id').values()
-        
-        page_obj, paginator = paginate_queryset(request, chuc_vu_list)
-     
-        return JsonResponse({
-            'success': True,
-            'data': list(page_obj),
-            'pagination': {
-                'page': page_obj.number,
-                'page_size': paginator.per_page,
-                'total': paginator.count,
-                'total_pages': paginator.num_pages,
-                'has_next': page_obj.has_next(),
-                'has_prev': page_obj.has_previous()
+        context = get_list_context(
+            request,
+            queryset,
+            search_fields=['tenvitricongviec', 'machucvu'],
+            filter_field=('trangthai', 'status'),
+            page_size=int(request.GET.get('page_size', 10)),
+        )
+
+        return json_success(
+            'Lấy danh sách chức vụ thành công',
+            data=list(context['page_obj']),
+            pagination={
+                'page': context['page_obj'].number,
+                'page_size': context['paginator'].per_page,
+                'total': context['paginator'].count,
+                'total_pages': context['paginator'].num_pages,
+                'has_next': context['page_obj'].has_next(),
+                'has_prev': context['page_obj'].has_previous()
             }
-        })
+        )
     
     elif request.method == "POST":
         # Tạo mới chức vụ
@@ -811,6 +822,19 @@ def api_chuc_vu_detail(request, id):
                 'success': False,
                 'message': f'Lỗi: {str(e)}'
             }, status=400)
+
+@login_required
+@require_http_methods(["POST", "PUT"]) 
+def api_chuc_vu_toggle_status(request, id):
+    try:
+        item = get_object_or_404(Chucvu, pk=id)
+        data = get_request_data(request)
+        item.trangthai = 'active' if data.get('is_active') else 'inactive'
+        item.updated_at = timezone.now()
+        item.save()
+        return json_success('Cập nhật trạng thái thành công')
+    except Exception as e:
+        return json_error(str(e), status=400)
 
 
 # ============================================================================
