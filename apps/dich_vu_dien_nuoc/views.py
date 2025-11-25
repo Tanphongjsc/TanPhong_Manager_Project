@@ -992,11 +992,11 @@ def api_in_thong_bao(request, notification_id):
             'company_name': company_name,
             'suggested_filename': suggested_filename,  # Tên file có tháng/năm
             'services_rows': services_rows,
-            'total_before_tax': format_number_vn(total_before_tax_calc),
-            'tax_amount': format_number_vn(total_tax_calc),
-            'total_after_tax': format_number_vn(total_after_tax_calc),
-            'discount_amount': format_number_vn(discount_amount) if discount_amount > 0 else "0.00",
-            'final_amount': format_number_vn(final_amount),
+            'total_before_tax': format_number_vn(total_before_tax_calc, decimals=0),
+            'tax_amount': format_number_vn(total_tax_calc, decimals=0),
+            'total_after_tax': format_number_vn(total_after_tax_calc, decimals=0),
+            'discount_amount': format_number_vn(discount_amount, decimals=0) if discount_amount > 0 else "0",
+            'final_amount': format_number_vn(final_amount, decimals=0),
             'amount_in_words': amount_in_words
         }
         
@@ -1053,27 +1053,41 @@ def api_in_nhieu_thong_bao(request):
             'error': str(e)
         }, status=500)
 
-def format_number_vn(number):
-    """Format số theo chuẩn: phẩy cho hàng nghìn, chấm cho thập phân"""
-    if number is None or number == 0:
-        return "0.00"
+def format_number_vn(number, decimals=2):
+    """Format số theo chuẩn: phẩy cho hàng nghìn, chấm cho thập phân.
+    decimals: số chữ số thập phân (mặc định 2). Nếu decimals == 0 thì trả về số nguyên (không có phần thập phân).
+    """
+    if number is None:
+        return "0" if decimals == 0 else "0.00"
     
-    # Làm tròn đến 1 chữ số thập phân
-    number = round(float(number), 2)
+    try:
+        number = float(number)
+    except Exception:
+        return str(number)
     
-    # Tách phần nguyên và phần thập phân
-    integer_part = int(number)
-    decimal_part = number - integer_part
-    
-    # Format phần nguyên với dấu phẩy cho hàng nghìn (giữ nguyên dấu phẩy mặc định)
-    formatted_integer = f"{integer_part:,}"
-    
-    # Nếu có phần thập phân và != 0
-    if decimal_part > 0:
-        decimal_str = f"{decimal_part:.2f}"[2:]  # Lấy phần sau dấu chấm
-        return f"{formatted_integer}.{decimal_str}"  # Dùng chấm cho thập phân
+    if decimals == 0:
+        # Làm tròn tới số nguyên gần nhất và format với dấu phẩy nhóm nghìn
+        rounded = int(round(number))
+        return f"{rounded:,}"
     else:
-        return formatted_integer
+        # Làm tròn tới decimals chữ số thập phân
+        rounded = round(number, decimals)
+        integer_part = int(abs(rounded))
+        decimal_part = abs(rounded) - integer_part
+        formatted_integer = f"{integer_part:,}"
+        # Lấy phần thập phân theo decimals
+        if decimal_part > 0:
+            # đảm bảo luôn có đúng `decimals` chữ số sau dấu chấm
+            decimal_str = f"{decimal_part:.{decimals}f}"[2:]
+            sign = "-" if rounded < 0 else ""
+            return f"{sign}{formatted_integer}.{decimal_str}"
+        else:
+            sign = "-" if rounded < 0 else ""
+            # không có phần thập phân khác 0, nhưng vẫn hiển thị .00 nếu decimals>0 ban đầu bạn muốn
+            if decimals > 0:
+                return f"{sign}{formatted_integer}." + ("0" * decimals)
+            else:
+                return f"{sign}{formatted_integer}"
     
 def view_quan_ly_loai_dich_vu (request):
     """Hiển thị danh sách loại dịch vụ"""
