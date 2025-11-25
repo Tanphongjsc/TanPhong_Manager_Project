@@ -423,3 +423,6 @@ def get_field_value(request, field_name, default=''):
     data = get_request_data(request)
     value = data.get(field_name, default)
     return value.strip() if hasattr(value, 'strip') else value
+
+
+
