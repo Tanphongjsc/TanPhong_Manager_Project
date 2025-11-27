@@ -10,7 +10,7 @@ from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from json import loads
 
 from apps.hrm_manager.__core__.models import *
@@ -35,7 +35,29 @@ from apps.hrm_manager.utils.view_helpers import (
 
 def view_cay_nhan_su_index(request):
     """Hiển thị trang cây nhân sự"""
-    return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html")
+
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Cây nhân sự', 'url': None},
+        ],
+        
+        # Dữ liệu filter cho trạng thái nhân viên
+        'status_list_nv': [
+            {'value': 'Đang làm việc', 'label': 'Đang làm việc'},
+            {'value': 'Thử việc', 'label': 'Thử việc'},
+            {'value': 'Đã nghỉ việc', 'label': 'Đã nghỉ việc'},
+        ],
+        
+        # Dữ liệu filter cho giới tính
+        'gioitinh_list' : [
+            {'value': 'Nam', 'label': 'Nam'},
+            {'value': 'Nữ', 'label': 'Nữ'},
+            {'value': 'Khác', 'label': 'Khác'},
+        ]
+    }
+
+    return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html", context=context)
 
 
 # ===============================================================
@@ -184,7 +206,7 @@ def api_phong_ban_list(request):
     
     if request.method == "GET":
         # Lấy danh sách phòng ban
-        phong_ban_list = Phongban.objects.all().values()
+        phong_ban_list = Phongban.objects.all().values().order_by('tenphongban')
 
         return JsonResponse({
             'success': True,
@@ -196,7 +218,8 @@ def api_phong_ban_list(request):
         # Tạo mới phòng ban
         try:
             data = loads(request.body)
-            phong_ban_cha = Phongban.objects.filter(id=data.get('phongbancha_id', "")).first()
+            phongbancha_id = data.get('phongbancha_id', "") if data.get('phongbancha_id') else None
+            phong_ban_cha = Phongban.objects.filter(id=phongbancha_id).first()
 
             phong_ban = Phongban.objects.create(
                 maphongban=data.get('maphongban'),
@@ -204,7 +227,7 @@ def api_phong_ban_list(request):
                 level=phong_ban_cha.level + 1 if phong_ban_cha else 1,
                 ghichu=data.get('ghichu'),
                 trangthai=data.get('trangthai', 'active'),
-                congty_id=data.get('congty'),
+                congty_id=data.get('congty_id'),
                 phongbancha_id=phong_ban_cha.id if phong_ban_cha else None,
                 created_at=datetime.now()
             )
@@ -260,10 +283,17 @@ def api_phong_ban_detail(request, id):
 
             for field in phong_ban._meta.fields:
                 if field.name in data:
-                    if field.name == 'tenphongban':
-                        setattr(phong_ban, field.name, data[field.name].title())
-                    else:
-                        setattr(phong_ban, field.name, data[field.name])
+                    value = data[field.name]
+                    
+                    # Xử lý ForeignKey: chuyển '' thành None
+                    if field.name in ['phongbancha_id', 'congty_id']:
+                        value = value if value else None
+                    
+                    # Title case cho tên
+                    if field.name == 'tenphongban' and value:
+                        value = value.title()
+                    
+                    setattr(phong_ban, field.name, value)
 
             phong_ban.updated_at = datetime.now()
             phong_ban.save()
@@ -318,6 +348,7 @@ def api_phong_ban_nhan_vien(request):
     param_query = request.GET.dict()
     page = param_query.pop('page', 1)
     page_size = param_query.pop('page_size', 10)
+    search_param = param_query.pop('search', '').strip()
     congty_id = param_query.pop('congty_id', None)
     phongban_id = param_query.pop('phongban_id', None)
     chucvu = param_query.pop('chucvu', None)
@@ -339,6 +370,10 @@ def api_phong_ban_nhan_vien(request):
             value = param_query.get(raw_key)
             if value:
                 filters &= Q(**{key: value})
+        
+        # Thêm query param tìm kiếm & nhân viên còn active
+        filters &= Q(nhanvien__hovaten__icontains=search_param) | Q(nhanvien__manhanvien__icontains=search_param) if search_param else Q()
+        filters &= Q(nhanvien__isnull=False)
 
         # Query từ Lichsucongtac với join (select_related)
         qs = Lichsucongtac.objects.filter(filters).select_related(
@@ -364,7 +399,14 @@ def api_phong_ban_nhan_vien(request):
                 'phong_ban': lichsu.phongban.tenphongban if lichsu.phongban else None,
                 'chuc_vu': lichsu.chucvu.tenvitricongviec if lichsu.chucvu else None,
             }
-            nv_data = model_to_dict(nv)
+            nv_data = {
+                'id': nv.id,
+                'manhanvien': nv.manhanvien,
+                'hovaten': nv.hovaten,
+                'email': nv.email,
+                'trangthainv': nv.trangthainv,
+                'ngayvaolam': nv.ngayvaolam,
+            }
             nv_data['cong_tac'] = cong_tac
 
             result.append(nv_data)
@@ -485,75 +527,34 @@ def api_nhan_vien_list(request):
                 gioitinh=data.get('gioitinh'),
                 ngaysinh=data.get('ngaysinh'),
                 socccd=data.get('socccd'),
-                ngayvaolam=data.get('ngayvaolam'),
-                loainv=data.get('loainv'),
-                trangthainv=data.get('trangthainv'),
-                nganhang=data.get('nganhang'),
+                ngayvaolam=data.get('ngayvaolam') if data.get('ngayvaolam') else None,
+                loainv_id=data.get('loainv'),
+                trangthainv=data.get('trangthainv') if data.get('trangthainv') else 'Đang làm việc',
+                nganhang_id=data.get('nganhang'),
                 sotknganhang=data.get('sotknganhang'),
                 tentknganhang=data.get('tentknganhang'),
                 masothue=data.get('masothue'),
                 trangthai=data.get('trangthai', 'active'),
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             
+            lich_su_new = Lichsucongtac.objects.create(
+                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
+                ketthuc=None,
+                noicongtac=data.get('noicongtac'),
+                trangthai=data.get('trangthai', 'active'),
+                nhanvien_id = nhan_vien.id,
+                phongban_id=data.get('phongban'),
+                chucvu_id=data.get('chucvu'),
+                created_at=datetime.now(),
+            )
+
             return JsonResponse({
                 'success': True,
                 'message': 'Tạo công ty thành công',
-                'data': {
-                    'id': nhan_vien.id,
-                    'manhanvien': nhan_vien.manhanvien,
-                    'hovaten': nhan_vien.hovaten,
-                    'email': nhan_vien.email,
-                    'sodienthoai': nhan_vien.sodienthoai,
-                    'diachi': nhan_vien.diachi,
-                    'gioitinh': nhan_vien.gioitinh,
-                    'ngaysinh': nhan_vien.ngaysinh,
-                    'socccd': nhan_vien.socccd,
-                    'ngayvaolam': nhan_vien.ngayvaolam,
-                    'loainv': nhan_vien.loainv,
-                    'trangthainv': nhan_vien.trangthainv,
-                    'nganhang': nhan_vien.nganhang,
-                    'sotknganhang': nhan_vien.sotknganhang,
-                    'tentknganhang': nhan_vien.tentknganhang,
-                    'masothue': nhan_vien.masothue,
-                    'trangthai': nhan_vien.trangthai,
-                    'created_at': nhan_vien.created_at,
-                }
+                'data': model_to_dict(nhan_vien)
             }, status=201)
             
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'Lỗi: {str(e)}'
-            }, status=400)
-    
-    elif request.method == "PUT":
-        # Cập nhập phòng ban nhiều nhân viên cùng lúc
-
-        try:
-            nhan_vien_ids = request.GET.get('nhan_vien_ids', [])
-            phong_ban_id = request.GET.get('phong_ban_id')
-
-            if not nhan_vien_ids or not phong_ban_id:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
-                }, status=400)
-
-            # Cập nhật phòng ban cho các nhân viên
-            Lichsucongtac.objects.filter(
-                nhanvien_id__in=nhan_vien_ids,
-                trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
-            ).update(
-                phongban_id=phong_ban_id,
-                updated_at=datetime.now()
-            )
-
-            return JsonResponse({
-                'success': True,
-                'message': 'Cập nhật phòng ban cho nhân viên thành công'
-            })
-
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -581,6 +582,7 @@ def api_nhan_vien_list(request):
 
 
 @login_required
+@transaction.atomic
 @require_http_methods(["GET", "PUT", "DELETE"])
 def api_nhan_vien_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa Nhân Viên"""
@@ -607,7 +609,10 @@ def api_nhan_vien_detail(request, id):
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
-                    setattr(nhan_vien, field.name, data[field.name])
+                    if field.name in ['loainv', 'nganhang']:
+                        setattr(nhan_vien, f"{field.name}_id", data[field.name] if data[field.name] else None)
+                    else:
+                        setattr(nhan_vien, field.name, data[field.name])
 
             nhan_vien.updated_at = datetime.now()
             nhan_vien.save()
@@ -615,26 +620,7 @@ def api_nhan_vien_detail(request, id):
             return JsonResponse({
                 'success': True,
                 'message': 'Cập nhật nhân viên thành công',
-                'data': {
-                    'id': nhan_vien.id,
-                    'manhanvien': nhan_vien.manhanvien,
-                    'hovaten': nhan_vien.hovaten,
-                    'email': nhan_vien.email,
-                    'sodienthoai': nhan_vien.sodienthoai,
-                    'diachi': nhan_vien.diachi,
-                    'gioitinh': nhan_vien.gioitinh,
-                    'ngaysinh': nhan_vien.ngaysinh,
-                    'socccd': nhan_vien.socccd,
-                    'ngayvaolam': nhan_vien.ngayvaolam,
-                    'loainv': nhan_vien.loainv,
-                    'trangthainv': nhan_vien.trangthainv,
-                    'nganhang': nhan_vien.nganhang,
-                    'sotknganhang': nhan_vien.sotknganhang,
-                    'tentknganhang': nhan_vien.tentknganhang,
-                    'masothue': nhan_vien.masothue,
-                    'trangthai': nhan_vien.trangthai,
-                    'created_at': nhan_vien.created_at,
-                }
+                'data': model_to_dict(nhan_vien)
             })
             
         except Exception as e:
@@ -650,6 +636,161 @@ def api_nhan_vien_detail(request, id):
             return JsonResponse({
                 'success': True,
                 'message': 'Xóa nhân viên thành công'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
+
+
+# ==================== API LỊCH SỬ CÔNG TÁC ====================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+@transaction.atomic
+def api_lich_su_cong_tac_list(request):
+    """API lấy danh sách lịch sử, thêm mới công tác"""
+
+    if request.method == "GET":
+        # Lấy danh sách lịch sử công tác
+        trang_thai = request.GET.get("trangthai", 'all')
+
+        lich_su_qs = Lichsucongtac.objects.all().values()
+
+        if trang_thai != 'all':
+            lich_su_qs = lich_su_qs.filter(trangthai=trang_thai)
+
+        return JsonResponse({
+            'success': True,
+            'data': list(lich_su_qs),
+            'total': len(lich_su_qs)
+        })
+
+
+    if request.method == "POST":
+        # Tạo mới lịch sử công tác
+        try:
+            data = loads(request.body)
+            nhanvien_id = data.get('nhanvien_id')
+
+            lich_su_old = get_object_or_404(Lichsucongtac, nhanvien_id=nhanvien_id, trangthai='active')
+            if lich_su_old:
+                lich_su_old.ketthuc = data.get('batdau')
+                lich_su_old.trangthai = 'inactive'
+                lich_su_old.updated_at = datetime.now()
+                lich_su_old.save()
+
+            lich_su_new = Lichsucongtac.objects.create(
+                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
+                ketthuc=None,
+                noicongtac=data.get('noicongtac'),
+                trangthai=data.get('trangthai', 'active'),
+                nhanvien_id = data.get('nhanvien_id'),
+                phongban_id=data.get('phongban_id'),
+                chucvu_id=data.get('chucvu_id'),
+                created_at=datetime.now() + timedelta(days=1),
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Tạo lịch sử công tác thành công',
+                'data': model_to_dict(lich_su_new)
+            }, status=201)
+        
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
+    
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def api_lich_su_cong_tac_chuyen_cong_tac(request): 
+    # Cập nhập phòng ban nhiều nhân viên cùng lúc
+
+    try:
+        nhan_vien_ids = request.GET.get('nhan_vien_ids', [])
+        phong_ban_id = request.GET.get('phong_ban_id')
+
+        if not nhan_vien_ids or not phong_ban_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
+            }, status=400)
+
+        # Cập nhật phòng ban cho các nhân viên
+        Lichsucongtac.objects.filter(
+            nhanvien_id__in=nhan_vien_ids,
+            trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
+        ).update(
+            phongban_id=phong_ban_id,
+            updated_at=datetime.now()
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Cập nhật phòng ban cho nhân viên thành công'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Lỗi: {str(e)}'
+        }, status=400)
+
+
+@login_required
+@require_http_methods(["GET", "PUT", "DELETE"])
+@transaction.atomic
+def api_lich_su_cong_tac_detail(request, id):
+    """API lấy chi tiết, cập nhật và xóa lịch sử công tác"""
+
+    trang_thai = request.GET.get("trangthai", 'all')
+    lich_su = Lichsucongtac.objects.filter(nhanvien_id=id, trangthai = trang_thai).select_related('phongban', 'chucvu').first()
+
+    print("HRM", trang_thai, lich_su)
+
+    if request.method == "GET":
+        # Lấy chi tiết lịch sử công tác
+        return JsonResponse({
+            'success': True,
+            'data': model_to_dict(lich_su) if lich_su else {}
+        })
+
+    elif request.method == "PUT":
+        # Cập nhật lịch sử công tác
+        try:
+            data = loads(request.body)
+
+            for field in lich_su._meta.fields:
+                if field.name in data:
+                    setattr(lich_su, field.name, data[field.name])
+            
+            lich_su.updated_at = datetime.now()
+            lich_su.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Cập nhật lịch sử công tác thành công',
+                'data': model_to_dict(lich_su)
+            }, status=200)
+        
+        except Exception as e:
+            return JsonResponse({
+                "success": False,
+                "message": f"Lỗi: {str(e)}"
+            }, status=400)
+
+    elif request.method == "DELETE":
+        # Xóa lịch sử công tác
+        try:
+            lich_su.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Xóa lịch sử công tác thành công'
             })
         except Exception as e:
             return JsonResponse({

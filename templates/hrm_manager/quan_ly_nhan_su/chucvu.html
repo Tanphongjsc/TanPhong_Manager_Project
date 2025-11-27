@@ -12,7 +12,7 @@
         <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
         <!-- Toolbar -->
-        {% include "components/toolbar.html" with search_id="search-input" placeholder="Tìm kiếm theo Tên Vị Trí..." show_add_btn=True create_text="Thêm chức vụ" create_onclick="window.ChucVuManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" btn_color="blue" %}
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm theo Tên hoặc mã..." show_add_btn=True create_text="Thêm chức vụ" create_onclick="window.ChucVuManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" btn_color="blue" %}
 
         <!-- Table -->
         {% with headers='<th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider">Tên Vị Trí</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Mã CV</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Trạng Thái</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-24">Ngày tạo</th>' %}
