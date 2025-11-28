@@ -1,6 +1,6 @@
 /**
  * QUẢN LÝ CÂY TỔ CHỨC & NHÂN SỰ
- * Updated: Fix logic Create/Edit conflict, Work History display, and UI Loading states.
+ * Optimized with AppUtils: Form, API, Validation, EventManager, UI.
  */
 
 // --- 1. QUẢN LÝ CÂY TỔ CHỨC ---
@@ -29,17 +29,15 @@ class TreeManager {
         try {
             const res = await AppUtils.API.get(this.apiUrl);
             this.renderTree(res.data || []);
-        } catch {
-            this.els.root.innerHTML = '<div class="text-center py-4 text-red-400 text-xs">Lỗi tải dữ liệu cây tổ chức</div>';
+        } catch (e) {
+            this.els.root.innerHTML = '<div class="text-center py-4 text-red-400 text-xs">Lỗi tải dữ liệu</div>';
+            AppUtils.Notify.error('Không thể tải cây tổ chức');
         }
     }
 
     renderTree(data) {
         this.els.root.innerHTML = '';
-        if (!data.length) {
-            this.els.root.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Chưa có dữ liệu</div>';
-            return;
-        }
+        if (!data.length) return this.els.root.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Chưa có dữ liệu</div>';
 
         const build = (items, container) => {
             items.forEach(item => {
@@ -48,25 +46,24 @@ class TreeManager {
                 const div = clone.querySelector('.tree-item');
                 const childrenUl = clone.querySelector('.tree-children');
 
-                // Logic xác định Công ty hay Phòng ban
                 const isCompany = item.type === 'company' || (!item.phongbancha_id && item.tencongty_vi);
                 const name = isCompany ? item.tencongty_vi : item.tenphongban;
                 const companyId = isCompany ? item.id : (item.congty_id || item.company_id || item.congty?.id);
 
                 div.dataset.id = item.id;
                 div.dataset.companyId = companyId || '';
-                div.dataset.isCompany = isCompany ? '1' : '0';
 
                 clone.querySelector('.tree-name').textContent = name;
                 clone.querySelector('.tree-icon').className = `tree-icon fas ${isCompany ? 'fa-building text-blue-600' : 'fa-folder text-yellow-500'}`;
 
-                // Xử lý nút bấm trên Mobile
+                // Mobile Actions
                 if (window.innerWidth < 1024) {
                     const actions = clone.querySelector('.group-hover\\:flex');
-                    if(actions) actions.className = actions.className.replace('hidden', 'flex lg:hidden lg:group-hover:flex');
+                    if(actions) actions.classList.replace('hidden', 'flex'); // Simplified class switch
+                    if(actions) actions.classList.add('lg:hidden', 'lg:group-hover:flex');
                 }
 
-                // Xử lý node con
+                // Children
                 const children = item.children || item.departments;
                 if (children?.length) {
                     const toggle = clone.querySelector('.tree-toggle');
@@ -81,17 +78,14 @@ class TreeManager {
                     build(children, childrenUl);
                 }
 
-                // Sự kiện click vào item
+                // Node Selection
                 div.onclick = (e) => {
                     if (e.target.closest('button')) return;
                     this.selectNode(div, item.id, name, isCompany);
                 };
 
-                // Các nút CRUD nhỏ
-                const bind = (sel, fn) => {
-                    const b = div.querySelector(sel);
-                    if(b) b.onclick = (e) => { e.stopPropagation(); fn(); };
-                };
+                // CRUD Buttons
+                const bind = (sel, fn) => { const b = div.querySelector(sel); if(b) b.onclick = (e) => { e.stopPropagation(); fn(); }; };
                 
                 if (isCompany) {
                     bind('.btn-add-sub', () => window.DeptManager.openAddSub(item.id, true, name, companyId));
@@ -102,7 +96,6 @@ class TreeManager {
                     bind('.btn-edit', () => window.DeptManager.openEditDept(item.id));
                     bind('.btn-delete', () => window.DeptManager.deleteDept(item.id, name));
                 }
-
                 container.appendChild(li);
             });
         };
@@ -110,19 +103,14 @@ class TreeManager {
     }
 
     selectNode(el, id, name, isCompany) {
-        document.querySelectorAll('.tree-item').forEach(i => 
-            i.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium')
-        );
+        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium'));
         this.els.viewAll.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium');
         
         el.classList.add('bg-blue-50', 'text-blue-700', 'font-medium');
         this.els.title.textContent = name;
         this.toggleSidebar(false);
 
-        // Filter Table
-        window.EmployeeManager.filterByOrg(
-            isCompany ? { congty_id: id, phongban_id: null } : { phongban_id: id, congty_id: null }
-        );
+        window.EmployeeManager.filterByOrg(isCompany ? { congty_id: id, phongban_id: null } : { phongban_id: id, congty_id: null });
     }
 
     toggleSidebar(show) {
@@ -136,7 +124,7 @@ class TreeManager {
             window.EmployeeManager.resetFilter();
         });
 
-        // Search debounce
+        // Debounce Search using AppUtils.Helper
         this.eventManager.add(this.els.search, 'input', AppUtils.Helper.debounce((e) => {
             const val = AppUtils.Helper.removeAccents(e.target.value.toLowerCase());
             this.els.root.querySelectorAll('.tree-item').forEach(item => {
@@ -144,7 +132,7 @@ class TreeManager {
                 const text = AppUtils.Helper.removeAccents(item.textContent.toLowerCase());
                 const match = text.includes(val);
                 li.style.display = match ? 'block' : 'none';
-                if (match && val) {
+                if (match && val) { // Show parents
                     let p = li.parentElement.closest('li');
                     while(p) { p.style.display = 'block'; p.querySelector('.tree-children')?.classList.remove('hidden'); p = p.parentElement.closest('li'); }
                 }
@@ -154,7 +142,7 @@ class TreeManager {
     }
 }
 
-// --- 2. QUẢN LÝ NHÂN VIÊN (Trọng tâm sửa lỗi) ---
+// --- 2. QUẢN LÝ NHÂN VIÊN ---
 class EmployeeManager extends BaseCRUDManager {
     constructor() {
         super({
@@ -172,7 +160,7 @@ class EmployeeManager extends BaseCRUDManager {
             },
             onRefreshTable: () => this.tableManager?.refresh(),
             fillFormData: (data) => this._fillEmployeeForm(data),
-            onResetForm: () => this._resetCustomState() // Reset state tùy chỉnh khi form reset
+            onResetForm: () => this._resetCustomState()
         });
 
         this.lookupData = { chucvu: [], nganhang: [], phongban: [] };
@@ -188,7 +176,6 @@ class EmployeeManager extends BaseCRUDManager {
         this._initExtraButtons();
     }
 
-    // --- Data & Init ---
     async loadLookupData() {
         try {
             const [cv, nh, pb] = await Promise.all([
@@ -198,30 +185,186 @@ class EmployeeManager extends BaseCRUDManager {
             ]);
             this.lookupData = { chucvu: cv.data || [], nganhang: nh.data || [], phongban: pb.data || [] };
             
-            this._populateSelect('chucvu', this.lookupData.chucvu, 'id', 'tenvitricongviec');
-            this._populateSelect('nganhang', this.lookupData.nganhang, 'id', 'TenNganHang');
+            // Render basic selects
+            const fillSelect = (id, items, valK, textK) => {
+                const el = document.getElementById(id);
+                if(el) el.innerHTML = '<option value="">-- Chọn --</option>' + items.map(i => `<option value="${i[valK]}">${i[textK] || i[valK]}</option>`).join('');
+            };
+            fillSelect('chucvu', this.lookupData.chucvu, 'id', 'tenvitricongviec');
+            fillSelect('nganhang', this.lookupData.nganhang, 'id', 'TenNganHang');
+            
             this._initPhongbanDropdown();
-        } catch (e) { console.error(e); }
-    }
-
-    _populateSelect(id, data, valKey, textKey) {
-        const el = document.getElementById(id);
-        if(el) el.innerHTML = '<option value="">-- Chọn --</option>' + data.map(i => `<option value="${i[valKey]}">${i[textKey] || i[valKey]}</option>`).join('');
+        } catch (e) { console.error('Lookup Data Error', e); }
     }
 
     _initExtraButtons() {
-        // Thêm nút Lưu & Thêm mới
-        const container = document.getElementById('employee-sidebar-extra-actions');
-        if (container) {
-            container.innerHTML = `
-                <button type="button" id="btn-save-and-new" class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2">
-                    <i class="fas fa-plus"></i> <span>Lưu & Thêm mới</span>
-                </button>`;
+        this.extraActionsContainer = document.getElementById('employee-sidebar-extra-actions');
+    }
+
+    // --- LOGIC FORM & DATA ---
+
+    openSidebar(mode, itemId = null) {
+        this._resetCustomState();
+        if (mode === 'create') {
+            const idInput = this.elements.form.querySelector('input[name="id"]');
+            if(idInput) { idInput.value = ''; idInput.setAttribute('value', ''); }
+        }
+        this.currentItemId = itemId;
+        super.openSidebar(mode, itemId); // Call Parent
+
+        // Render Extra UI
+        const c = this.extraActionsContainer;
+        if (!c) return;
+        c.innerHTML = '';
+        c.classList.toggle('hidden', false);
+
+        if (mode === 'create') {
+            c.innerHTML = `<button type="button" id="btn-save-and-new" class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"><i class="fas fa-plus"></i> <span>Lưu & Thêm mới</span></button>`;
             this.eventManager.add(document.getElementById('btn-save-and-new'), 'click', () => this.submitForm(true));
+        } else {
+            c.innerHTML = `<button type="button" id="btn-view-detail" class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2"><i class="fas fa-external-link-alt"></i> <span>Xem chi tiết</span></button>`;
+            this.eventManager.add(document.getElementById('btn-view-detail'), 'click', () => {
+                if(this.currentItemId) window.location.href = document.getElementById('url-emp-detail-pattern').value.replace('0', this.currentItemId);
+            });
         }
     }
 
-    // --- Custom Dropdown Logic ---
+    async loadItemData(id) {
+        try {
+            const [empRes, congTacRes] = await Promise.all([
+                AppUtils.API.get(this.config.apiUrls.detail(id)),
+                AppUtils.API.get(`/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/${id}/`, { trangthai: 'active' })
+            ]);
+
+            const empData = empRes.data || empRes;
+            // Use DateUtils to ensure input[type=date] works
+            ['ngaysinh', 'ngayvaolam'].forEach(field => {
+                if (empData[field]) empData[field] = AppUtils.DateUtils.toInputValue(empData[field]);
+            });
+
+            this._fillEmployeeForm(empData);
+            
+            this.currentCongTac = Array.isArray(congTacRes.data) ? congTacRes.data[0] : (congTacRes.data || congTacRes);
+            if (this.currentCongTac) this._fillCongTacData(this.currentCongTac);
+            
+        } catch (e) {
+            console.error(e);
+            AppUtils.Notify.error('Không thể tải thông tin chi tiết');
+        }
+    }
+
+    _fillEmployeeForm(data) {
+        AppUtils.Form.setData(this.elements.form, data);
+        if (data.nganhang) {
+            const nhId = typeof data.nganhang === 'object' ? data.nganhang.id : data.nganhang;
+            const el = this.elements.form.querySelector('[name="nganhang"]');
+            if(el) el.value = nhId || '';
+        }
+    }
+
+    _fillCongTacData(congTac) {
+        const cvId = congTac.chucvu_id || congTac.chucvu?.id || congTac.chucvu;
+        const form = this.elements.form;
+        if(form.elements['chucvu']) form.elements['chucvu'].value = cvId || '';
+
+        const pbId = congTac.phongban_id || congTac.phongban?.id || congTac.phongban;
+        let pbName = congTac.noicongtac || congTac.phongban?.tenphongban;
+        if (!pbName && pbId) {
+            const found = this.lookupData.phongban.find(p => p.id == pbId);
+            if(found) pbName = found.tenphongban;
+        }
+        this._selectPhongban(pbId, pbName);
+    }
+
+    _resetCustomState() {
+        this._selectPhongban('', '');
+        this.currentCongTac = null;
+        const cv = this.elements.form.querySelector('[name="chucvu"]');
+        if(cv) cv.value = '';
+    }
+
+    // --- MAIN SUBMIT LOGIC (Refactored) ---
+    async submitForm(saveAndNew = false) {
+        const form = this.elements.form;
+        AppUtils.Form.clearErrors(form);
+
+        // 1. Validate
+        const cvVal = form.querySelector('[name="chucvu"]')?.value;
+        const pbVal = form.querySelector('[name="phongban"]')?.value;
+        
+        if (!AppUtils.Validation.required(cvVal)) return AppUtils.Notify.warning('Vui lòng chọn chức vụ');
+        if (!AppUtils.Validation.required(pbVal)) return AppUtils.Notify.warning('Vui lòng chọn phòng ban');
+
+        // 2. Button Loading Helper
+        const submitBtn = document.querySelector(`#${this.config.sidebarId} [data-sidebar-submit]`);
+        const saveNewBtn = document.getElementById('btn-save-and-new');
+        const setBtnLoading = (btn, isLoading) => {
+            if(!btn) return;
+            if(isLoading) {
+                btn.dataset.originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...`;
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
+                btn.disabled = false;
+            }
+        };
+
+        const activeBtn = saveAndNew ? saveNewBtn : submitBtn;
+        setBtnLoading(activeBtn, true);
+        if(submitBtn && submitBtn !== activeBtn) submitBtn.disabled = true;
+
+        try {
+            // 3. Prepare Data
+            const data = AppUtils.Form.getData(form);
+            const isEdit = !!data.id;
+            
+            const empPayload = { ...data };
+            delete empPayload.chucvu; 
+            delete empPayload.phongban;
+
+            const url = isEdit ? this.config.apiUrls.update(data.id) : this.config.apiUrls.create;
+            const res = await AppUtils.API[isEdit ? 'put' : 'post'](url, empPayload);
+            const nhanvienId = res.data?.id || res.id;
+
+            // 4. Create History Record (Transaction-like)
+            if (nhanvienId) {
+                await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                    nhanvien_id: nhanvienId,
+                    phongban_id: pbVal,
+                    chucvu_id: cvVal,
+                    noicongtac: this.phongbanDropdown.selectedText,
+                    trangthai: 'active'
+                });
+            }
+
+            AppUtils.Notify.success(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
+            this.config.onRefreshTable?.();
+
+            if (saveAndNew) {
+                AppUtils.Form.reset(form);
+                this._resetCustomState();
+                // Ensure ID is cleared
+                const idInput = form.querySelector('input[name="id"]');
+                if(idInput) { idInput.value = ''; idInput.removeAttribute('value'); }
+                form.querySelector('[name="hovaten"]')?.focus();
+            } else {
+                this.sidebar.close();
+            }
+
+        } catch (err) {
+            console.error(err);
+            const errs = err?.errors || err?.data?.errors;
+            if (errs) AppUtils.Form.showErrors(form, errs);
+            else AppUtils.Notify.error('Lỗi khi lưu dữ liệu. Vui lòng thử lại.');
+        } finally {
+            setBtnLoading(activeBtn, false);
+            if(submitBtn) submitBtn.disabled = false;
+            if(saveNewBtn) saveNewBtn.disabled = false;
+        }
+    }
+
+    // --- CUSTOM DROPDOWN (Cleaned) ---
     _initPhongbanDropdown() {
         const els = {
             btn: document.getElementById('phongban-dropdown-btn'),
@@ -234,6 +377,7 @@ class EmployeeManager extends BaseCRUDManager {
 
         this._renderPhongbanList('');
 
+        // Use EventManager for everything
         this.eventManager.add(els.btn, 'click', (e) => {
             e.stopPropagation();
             this.phongbanDropdown.isOpen = !this.phongbanDropdown.isOpen;
@@ -243,7 +387,7 @@ class EmployeeManager extends BaseCRUDManager {
         });
 
         this.eventManager.add(els.search, 'input', AppUtils.Helper.debounce((e) => this._renderPhongbanList(e.target.value), 200));
-
+        
         this.eventManager.add(document, 'click', (e) => {
             if (!els.btn.contains(e.target) && !els.menu.contains(e.target)) {
                 this.phongbanDropdown.isOpen = false;
@@ -265,18 +409,14 @@ class EmployeeManager extends BaseCRUDManager {
             AppUtils.Helper.removeAccents((pb.tenphongban || '').toLowerCase()).includes(search)
         );
 
-        if (!matches.length) {
-            list.innerHTML = '<li class="px-3 py-2 text-sm text-slate-400 text-center">Không tìm thấy</li>';
-            return;
-        }
+        if (!matches.length) return list.innerHTML = '<li class="px-3 py-2 text-sm text-slate-400 text-center">Không tìm thấy</li>';
 
-        list.innerHTML = `<li class="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50 cursor-pointer border-b border-slate-100" data-phongban-id="" data-phongban-name="-- Chọn phòng ban --"><i class="fas fa-times-circle mr-1"></i> Bỏ chọn</li>` +
-        matches.map(pb => {
+        let html = `<li class="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50 cursor-pointer border-b border-slate-100" data-phongban-id="" data-phongban-name="-- Chọn phòng ban --"><i class="fas fa-times-circle mr-1"></i> Bỏ chọn</li>`;
+        html += matches.map(pb => {
             const isSel = this.phongbanDropdown.selectedId == pb.id;
-            return `<li class="px-3 py-1.5 text-sm hover:bg-blue-50 cursor-pointer flex items-center justify-between ${isSel ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}" data-phongban-id="${pb.id}" data-phongban-name="${pb.tenphongban}">
-                <span><i class="fas fa-folder text-yellow-500 mr-2 text-xs"></i>${pb.tenphongban}</span>
-            </li>`;
+            return `<li class="px-3 py-1.5 text-sm hover:bg-blue-50 cursor-pointer flex items-center justify-between ${isSel ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}" data-phongban-id="${pb.id}" data-phongban-name="${pb.tenphongban}"><span><i class="fas fa-folder text-yellow-500 mr-2 text-xs"></i>${pb.tenphongban}</span></li>`;
         }).join('');
+        list.innerHTML = html;
     }
 
     _selectPhongban(id, name) {
@@ -297,187 +437,7 @@ class EmployeeManager extends BaseCRUDManager {
         this.phongbanDropdown.isOpen = false;
     }
 
-    // --- SỬA LỖI LOGIC OPEN SIDEBAR & FILL DATA ---
-
-    openSidebar(mode, itemId = null) {
-        // [FIX ISSUE 3]: Reset dữ liệu phòng ban/công tác TRƯỚC khi mở
-        this._resetCustomState();
-
-        // [FIX ISSUE 2]: Đảm bảo ID bị xóa sạch nếu là Create
-        if (mode === 'create') {
-            const idInput = this.elements.form.querySelector('input[name="id"]');
-            if (idInput) {
-                idInput.value = ''; 
-                idInput.setAttribute('value', ''); // Xóa attribute để chắc chắn
-            }
-        }
-        
-        super.openSidebar(mode, itemId);
-        
-        // Ẩn hiện nút extra
-        const extra = document.getElementById('employee-sidebar-extra-actions');
-        if (extra) extra.classList.toggle('hidden', mode !== 'create');
-    }
-
-    async loadItemData(id) {
-        try {
-            // [FIX ISSUE 1]: Load cả Nhân viên + Lịch sử công tác
-            const [empRes, congTacRes] = await Promise.all([
-                AppUtils.API.get(this.config.apiUrls.detail(id)),
-                AppUtils.API.get(`/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/${id}/`, { trangthai: 'active' })
-            ]);
-
-            const empData = empRes.data || empRes;
-            // Lấy object đầu tiên nếu API trả về mảng, hoặc object trực tiếp
-            const activeCongTac = Array.isArray(congTacRes.data) ? congTacRes.data[0] : (congTacRes.data || congTacRes);
-            this.currentCongTac = activeCongTac;
-
-            this._fillEmployeeForm(empData);
-            
-            // [FIX ISSUE 1]: Điền dữ liệu Công tác vào UI
-            if (this.currentCongTac) {
-                this._fillCongTacData(this.currentCongTac);
-            }
-        } catch (e) {
-            console.error('Load Error:', e);
-            AppUtils.Notify.error('Không thể tải thông tin chi tiết');
-        }
-    }
-
-    _fillEmployeeForm(data) {
-        AppUtils.Form.setData(this.elements.form, data);
-        if (data.nganhang) {
-            const nhId = typeof data.nganhang === 'object' ? data.nganhang.id : data.nganhang;
-            const el = this.elements.form.querySelector('[name="nganhang"]');
-            if(el) el.value = nhId || '';
-        }
-    }
-
-    _fillCongTacData(congTac) {
-        // 1. Fill Chức vụ
-        const cvId = congTac.chucvu_id || congTac.chucvu?.id || congTac.chucvu;
-        const cvEl = this.elements.form.querySelector('[name="chucvu"]');
-        if (cvEl && cvId) cvEl.value = cvId;
-
-        // 2. Fill Phòng ban (Custom Dropdown)
-        const pbId = congTac.phongban_id || congTac.phongban?.id || congTac.phongban;
-        let pbName = congTac.noicongtac || congTac.phongban?.tenphongban;
-
-        // Nếu API công tác ko trả về tên phòng ban, tìm trong lookupData
-        if (!pbName && pbId) {
-            const found = this.lookupData.phongban.find(p => p.id == pbId);
-            if (found) pbName = found.tenphongban;
-        }
-
-        this._selectPhongban(pbId, pbName);
-    }
-
-    _resetCustomState() {
-        // Hàm này được gọi khi reset form hoặc mở sidebar mới
-        this._selectPhongban('', '');
-        this.currentCongTac = null;
-        const cvEl = this.elements.form.querySelector('[name="chucvu"]');
-        if(cvEl) cvEl.value = '';
-    }
-
-    // --- SỬA LỖI LOGIC SUBMIT (BUTTON STATE) ---
-
-    async submitForm(saveAndNew = false) {
-        const form = this.elements.form;
-        AppUtils.Form.clearErrors(form);
-
-        // Validation Custom
-        const cvVal = form.querySelector('[name="chucvu"]')?.value;
-        const pbVal = form.querySelector('[name="phongban"]')?.value;
-        if (!cvVal) return AppUtils.Notify.warning('Vui lòng chọn chức vụ');
-        if (!pbVal) return AppUtils.Notify.warning('Vui lòng chọn phòng ban');
-
-        // [FIX ISSUE 4]: Button Loading State
-        const submitBtn = document.querySelector(`#${this.config.sidebarId} [data-sidebar-submit]`);
-        const saveNewBtn = document.getElementById('btn-save-and-new');
-        const activeBtn = saveAndNew ? saveNewBtn : submitBtn;
-        
-        // Lưu trạng thái cũ
-        const originalText = activeBtn ? activeBtn.innerHTML : '';
-        if (activeBtn) {
-            activeBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...`;
-            activeBtn.disabled = true; // Chặn click lặp lại
-        }
-
-        // Disable tất cả nút để an toàn
-        if(submitBtn) submitBtn.disabled = true;
-        if(saveNewBtn) saveNewBtn.disabled = true;
-
-        try {
-            const data = AppUtils.Form.getData(form);
-            const isEdit = !!data.id; // Check ID từ form data đã get
-
-            // Payload Nhân viên
-            const empPayload = { 
-                ...data, 
-                nganhang: data.nganhang || null, 
-                ngaysinh: data.ngaysinh || null, 
-                ngayvaolam: data.ngayvaolam || null 
-            };
-            // Xóa field ảo không thuộc model NhanVien
-            delete empPayload.chucvu; 
-            delete empPayload.phongban; 
-
-            const url = isEdit ? this.config.apiUrls.update(data.id) : this.config.apiUrls.create;
-            const method = isEdit ? 'put' : 'post';
-
-            const res = await AppUtils.API[method](url, empPayload);
-            const nhanvienId = res.data?.id || res.id;
-
-            // Payload Công tác (Luôn tạo mới history hoặc update logic tùy backend, ở đây giả sử tạo record mới cho history log)
-            // Nếu backend yêu cầu update record công tác cũ thì cần logic khác, 
-            // nhưng thường lịch sử công tác là log mới. Ở đây ta post mới.
-            if (nhanvienId) {
-                await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
-                    nhanvien_id: nhanvienId,
-                    phongban_id: pbVal,
-                    chucvu_id: cvVal,
-                    noicongtac: this.phongbanDropdown.selectedText,
-                    trangthai: 'active' // Đảm bảo record này là active
-                });
-            }
-
-            AppUtils.Notify.success(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
-            this.config.onRefreshTable?.();
-
-            if (saveAndNew) {
-                // [FIX ISSUE 2]: Reset triệt để cho lần thêm tiếp theo
-                AppUtils.Form.reset(form);
-                this._resetCustomState();
-                
-                // Cực kỳ quan trọng: Xóa ID thủ công lần nữa
-                const idInput = form.querySelector('input[name="id"]');
-                if(idInput) {
-                    idInput.value = '';
-                    idInput.removeAttribute('value');
-                }
-
-                form.querySelector('[name="hovaten"]')?.focus();
-            } else {
-                this.sidebar.close();
-            }
-
-        } catch (err) {
-            console.error(err);
-            const errs = err?.errors || err?.data?.errors;
-            if (errs) AppUtils.Form.showErrors(form, errs);
-            else AppUtils.Notify.error('Lỗi khi lưu dữ liệu. Vui lòng thử lại.');
-        } finally {
-            // [FIX ISSUE 4]: Restore Button State
-            if (activeBtn) {
-                activeBtn.innerHTML = originalText;
-            }
-            if(submitBtn) submitBtn.disabled = false;
-            if(saveNewBtn) saveNewBtn.disabled = false;
-        }
-    }
-
-    // --- Table & Filter ---
+    // --- TABLE ---
     initTable() {
         this.tableManager = new TableManager({
             tableBody: document.getElementById('table-body'),
@@ -497,62 +457,33 @@ class EmployeeManager extends BaseCRUDManager {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-200';
         
-        // Badge màu theo trạng thái (giữ nguyên dạng hiển thị cũ)
-        const statusClass = item.trangthainv === 'Đang làm việc' ? 'bg-green-100 text-green-700' : 
-                           (item.trangthainv === 'Đã nghỉ việc' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700');
+        const statusMap = { 'Đang làm việc': 'green', 'Đã nghỉ việc': 'red', 'default': 'blue' };
+        const color = statusMap[item.trangthainv] || statusMap['default'];
+        const statusClass = `bg-${color}-100 text-${color}-700`;
         
-        // Lấy tên phòng ban từ object cong_tac hoặc hiển thị '-'
         const pbName = item.cong_tac?.phong_ban || '-';
+        // Use DateUtils
         const ngayVaoLam = AppUtils.DateUtils.format(item.ngayvaolam, 'dd/MM/yyyy') || '-';
 
         tr.innerHTML = `
-            <td class="px-4 py-2 text-center">
-                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}">
-            </td>
-            <td class="px-3 py-2">
-                <a href="javascript:void(0);" onclick="window.EmployeeManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:text-blue-700 font-medium block">
-                    ${item.hovaten || ''}
-                </a>
-                <span class="text-xs text-slate-500">${item.email || ''}</span>
-            </td>
+            <td class="px-4 py-2 text-center"><input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}"></td>
+            <td class="px-3 py-2"><a href="javascript:void(0);" onclick="window.EmployeeManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:text-blue-700 font-medium block">${item.hovaten || ''}</a><span class="text-xs text-slate-500">${item.email || ''}</span></td>
             <td class="px-3 py-2 font-mono text-xs text-slate-600">${item.manhanvien || ''}</td>
-            <td class="px-3 py-2 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                    ${item.trangthainv || '-'}
-                </span>
-            </td>
+            <td class="px-3 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusClass}">${item.trangthainv || '-'}</span></td>
             <td class="px-3 py-2 text-sm text-slate-600">${pbName}</td>
             <td class="px-3 py-2 text-sm text-slate-500 whitespace-nowrap">${ngayVaoLam}</td>
-            <td class="px-3 py-2 whitespace-nowrap">
-                <div class="flex items-center justify-end gap-1">
-                    <button type="button" 
-                            onclick="window.EmployeeManager.openSidebar('edit', ${item.id})" 
-                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" 
-                            title="Sửa">
-                        <i class="fas fa-pen w-4 h-4"></i>
-                    </button>
-                    <button type="button" 
-                            onclick="window.EmployeeManager.deleteItem(${item.id}, '${item.hovaten}')" 
-                            class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" 
-                            title="Xóa">
-                        <i class="fas fa-trash w-4 h-4"></i>
-                    </button>
-                </div>
-            </td>
-        `;
+            <td class="px-3 py-2 whitespace-nowrap"><div class="flex items-center justify-end gap-1">
+                <button type="button" onclick="window.EmployeeManager.openSidebar('edit', ${item.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Sửa"><i class="fas fa-pen w-4 h-4"></i></button>
+                <button type="button" onclick="window.EmployeeManager.deleteItem(${item.id}, '${item.hovaten}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Xóa"><i class="fas fa-trash w-4 h-4"></i></button>
+            </div></td>`;
         return tr;
     }
 
-    filterByOrg(params) {
-        this.tableManager?.setApiParams(params);
-        this.tableManager?.refresh();
-    }
-    resetFilter() {
-        this.filterByOrg({ phongban_id: null, congty_id: null });
-    }
+    filterByOrg(params) { this.tableManager?.setApiParams(params); this.tableManager?.refresh(); }
+    resetFilter() { this.filterByOrg({ phongban_id: null, congty_id: null }); }
 }
 
-// --- 3. QUẢN LÝ CÔNG TY ---
+// --- 3. QUẢN LÝ CÔNG TY (Cleaned) ---
 class CompanyManager extends BaseCRUDManager {
     constructor() {
         super({
@@ -572,20 +503,12 @@ class CompanyManager extends BaseCRUDManager {
             fillFormData: (data) => AppUtils.Form.setData(this.elements.form, data)
         });
     }
-
-    openAddCompany() {
-        this.openSidebar('create');
-        this.sidebar.setTitle("Thêm công ty mới");
-    }
-
-    openEditCompany(id) {
-        this.openSidebar('edit', id);
-        this.sidebar.setTitle("Sửa công ty");
-    }
+    openAddCompany() { this.openSidebar('create'); this.sidebar.setTitle("Thêm công ty mới"); }
+    openEditCompany(id) { this.openSidebar('edit', id); this.sidebar.setTitle("Sửa công ty"); }
     deleteCompany(id, name) { this.deleteItem(id, name); }
 }
 
-// --- 4. QUẢN LÝ PHÒNG BAN ---
+// --- 4. QUẢN LÝ PHÒNG BAN (Cleaned) ---
 class DeptManager extends BaseCRUDManager {
     constructor() {
         super({
@@ -612,8 +535,6 @@ class DeptManager extends BaseCRUDManager {
     openAddSub(parentId, isParentCompany, parentName, companyId = null) {
         this.openSidebar('create');
         this.sidebar.setTitle(isParentCompany ? "Thêm phòng ban thuộc công ty" : "Thêm phòng ban con");
-        
-        // Set hidden fields
         const form = this.elements.form;
         form.querySelector('[name="congty_id"]').value = isParentCompany ? parentId : (companyId || '');
         form.querySelector('[name="phongbancha_id"]').value = !isParentCompany ? parentId : '';

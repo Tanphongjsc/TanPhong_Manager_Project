@@ -9,9 +9,11 @@ from django.db.models import OuterRef, Subquery, Q, Prefetch
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
+
 import json
 from datetime import datetime, timedelta
 from json import loads
+from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import *
 
@@ -58,6 +60,22 @@ def view_cay_nhan_su_index(request):
     }
 
     return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html", context=context)
+
+def view_nhan_vien_index(request, id):
+    """Hiển thị trang chi tiết nhân viên từ cây nhân sự"""
+
+    nhan_vien = get_object_or_404(Nhanvien, id=id)
+
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Cây nhân sự', 'url': reverse('hrm:to_chuc_nhan_su:cay_nhan_su_index')},
+            {'title': nhan_vien.hovaten, 'url': None},
+        ],
+        'nhan_vien': nhan_vien,
+    }
+
+    return render(request, "hrm_manager/quan_ly_nhan_su/nhanvien_detail.html", context=context)
 
 
 # ===============================================================
@@ -324,11 +342,12 @@ def api_phong_ban_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Phòng Ban
         try:
-            phong_ban_con = Phongban.objects.filter(phongbancha_id=phong_ban.id)
-            phong_ban_con.delete()
+            phong_ban_cons_ids = get_all_child_department_ids(phong_ban.id)
+            phong_ban_con_list = Phongban.objects.filter(id__in=phong_ban_cons_ids)
+            phong_ban_con_list.delete() # Xóa các phòng ban con trước
 
-            # Xóa phòng ban hiện tại
-            phong_ban.delete()
+            phong_ban.delete() # Xóa phòng ban hiện tại
+
             return JsonResponse({
                 'success': True,
                 'message': 'Xóa phòng ban thành công'
@@ -346,20 +365,20 @@ def api_phong_ban_nhan_vien(request):
 
     # Lấy tham số lọc từ query params
     param_query = request.GET.dict()
+    print(param_query.get('phongban_id', None))
     page = param_query.pop('page', 1)
     page_size = param_query.pop('page_size', 10)
     search_param = param_query.pop('search', '').strip()
     congty_id = param_query.pop('congty_id', None)
-    phongban_id = param_query.pop('phongban_id', None)
-    chucvu = param_query.pop('chucvu', None)
+    phongban_ids = get_all_child_department_ids(param_query.pop('phongban_id', None), isnclude_root=True)
+
+    print("PHÒNG BAN IDS:", phongban_ids)
 
     try:        
         # Build filters từ Lichsucongtac
         filters = Q(trangthai='active')  # Bắt buộc active từ Lichsu
-        if chucvu:
-            filters &= Q(chucvu_id=chucvu)  # Giả sử chucvu là ID
-        if phongban_id:
-            filters &= Q(phongban_id=phongban_id)
+        if phongban_ids:
+            filters &= Q(phongban__id__in=phongban_ids)
         elif congty_id:
             filters &= Q(phongban__congty_id=congty_id)
         
@@ -438,12 +457,12 @@ def api_phong_ban_tree(request):
 
     try:
         # 1. Lấy tất cả công ty
-        cong_ty_qs = Congty.objects.values('id', 'tencongty_vi', 'macongty').order_by('id')  # chỉ lấy field cần thiết
+        cong_ty_qs = Congty.objects.values('id', 'tencongty_vi', 'macongty').order_by('id')
 
         # 2. Lấy tất cả phòng ban + prefetch công ty để tránh N+1
         phong_ban_qs = Phongban.objects.select_related('congty').values(
             'id', 'tenphongban', 'phongbancha_id', 'congty_id', 'level', 'maphongban'
-        ).order_by('id')
+        ).order_by('tenphongban')
 
         # Chuyển thành dict để tra cứu nhanh
         phong_ban_dict = {pb['id']: {**pb, 'children': []} for pb in phong_ban_qs} # Thêm trường 'children' để xây dựng cây
@@ -465,7 +484,7 @@ def api_phong_ban_tree(request):
                 if congty_id not in root_by_company:
                     root_by_company[congty_id] = []
                 root_by_company[congty_id].append(pb)
-        
+
         # Kết hợp công ty với cây phòng ban
         for cong_ty in cong_ty_qs:
             cong_ty_id = cong_ty['id']
@@ -482,6 +501,42 @@ def api_phong_ban_tree(request):
             'message': f'Lỗi: {str(e)}'
         }, status=400)
 
+# ------ PHONG BAN HELPER FUNCTIONS ------
+def get_all_child_department_ids(root_id, isnclude_root=False):
+    """
+    Trả về list tất cả ID con, cháu, chắt... của một phòng ban.
+    Tối ưu: Chỉ tốn đúng 1 câu lệnh truy vấn Database.
+    """
+    if not root_id:
+        return []
+    
+    # Lấy dữ liệu thô (Chỉ lấy cột cần thiết để tối ưu bộ nhớ)
+    all_nodes = Phongban.objects.values_list('id', 'phongbancha_id')
+
+    # Xây dựng bản đồ Cha-Con
+    parent_map = defaultdict(list)
+    for ID, parent_ID in all_nodes:
+        if parent_ID: # Nếu có cha
+            parent_map[parent_ID].append(ID)
+    
+    # Thu thập kết quả
+    results = []
+    stack = [int(root_id)]  # Bắt đầu từ node gốc
+    
+    while stack:
+        current_id = stack.pop()
+        
+        # Tìm các con trực tiếp của node đang xét
+        direct_children = parent_map.get(current_id, [])
+        
+        if direct_children:
+            results.extend(direct_children) # Thêm vào kết quả
+            stack.extend(direct_children)   # Thêm vào stack để tiếp tục tìm con của chúng
+
+    if isnclude_root:
+        results.append(int(root_id))
+
+    return results
 
 # ==================== API NHÂN VIÊN ====================
 
@@ -612,7 +667,7 @@ def api_nhan_vien_detail(request, id):
                     if field.name in ['loainv', 'nganhang']:
                         setattr(nhan_vien, f"{field.name}_id", data[field.name] if data[field.name] else None)
                     else:
-                        setattr(nhan_vien, field.name, data[field.name])
+                        setattr(nhan_vien, field.name, data.get(field.name) if data.get(field.name) else None)
 
             nhan_vien.updated_at = datetime.now()
             nhan_vien.save()
@@ -750,8 +805,6 @@ def api_lich_su_cong_tac_detail(request, id):
 
     trang_thai = request.GET.get("trangthai", 'all')
     lich_su = Lichsucongtac.objects.filter(nhanvien_id=id, trangthai = trang_thai).select_related('phongban', 'chucvu').first()
-
-    print("HRM", trang_thai, lich_su)
 
     if request.method == "GET":
         # Lấy chi tiết lịch sử công tác

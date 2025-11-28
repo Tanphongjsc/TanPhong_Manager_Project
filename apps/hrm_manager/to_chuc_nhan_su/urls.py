@@ -10,6 +10,7 @@ urlpatterns = [
     
     # Trang chính
     path("cay-nhan-su/", views.view_cay_nhan_su_index, name="cay_nhan_su_index"),
+    path("cay-nhan-su/nhan-vien/<int:id>/", views.view_nhan_vien_index, name="cay_nhan_su_nhan_vien_index"),
     path("bao-cao/", views.view_bao_cao_index, name="bao_cao_index"),
     path("chuc-vu/", views.view_chuc_vu_index, name="chuc_vu_index"),
     path("danh-muc/", views.view_danh_muc_index, name="danh_muc_index"),
