@@ -32006,3 +32006,585 @@ django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_nghi
 ERROR 2025-11-25 11:43:08,390 basehttp 22168 9280 "GET /hrm/cham-cong/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 93936
 WARNING 2025-11-25 11:43:10,384 log 22168 9280 Not Found: /cham-cong/api/ca-lam-viec/list/
 WARNING 2025-11-25 11:43:10,385 basehttp 22168 9280 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+WARNING 2025-11-25 16:25:26,390 log 21132 13772 Not Found: /cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-25 16:25:26,390 basehttp 21132 13772 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+WARNING 2025-11-25 16:29:13,228 log 16512 22024 Not Found: /cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-25 16:29:13,234 basehttp 16512 22024 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+WARNING 2025-11-25 16:34:20,005 log 16512 13652 Not Found: /cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-25 16:34:20,005 basehttp 16512 13652 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+WARNING 2025-11-26 10:25:58,866 log 19656 18732 Not Found: /favicon.ico
+WARNING 2025-11-26 10:25:58,867 basehttp 19656 18732 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-26 10:26:04,786 log 19656 20524 Not Found: /cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-26 10:26:04,786 basehttp 19656 20524 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+ERROR 2025-11-26 10:26:06,417 log 19656 20524 Internal Server Error: /hrm/cham-cong/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 77, in view_lich_nghi
+    return render(request, "hrm_manager/cham_cong/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_nghi/lich_nghi.html
+ERROR 2025-11-26 10:26:06,419 basehttp 19656 20524 "GET /hrm/cham-cong/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 93946
+ERROR 2025-11-26 10:26:10,304 log 19656 20524 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 53, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-11-26 10:26:10,305 basehttp 19656 20524 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94242
+ERROR 2025-11-26 10:56:14,103 log 19656 20280 Internal Server Error: /hrm/cham-cong/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 77, in view_lich_nghi
+    return render(request, "hrm_manager/cham_cong/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_nghi/lich_nghi.html
+ERROR 2025-11-26 10:56:14,104 basehttp 19656 20280 "GET /hrm/cham-cong/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 93946
+WARNING 2025-11-26 11:15:23,250 log 15560 11036 Not Found: /cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-26 11:15:23,251 basehttp 15560 11036 "GET /cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 3215
+WARNING 2025-11-26 11:20:25,785 log 15560 11644 Not Found: /hrm/cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-26 11:20:25,786 basehttp 15560 11644 "GET /hrm/cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 9627
+WARNING 2025-11-26 11:21:11,593 log 15560 23112 Not Found: /hrm/cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-26 11:21:11,594 basehttp 15560 23112 "GET /hrm/cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 9627
+WARNING 2025-11-26 11:21:16,146 log 15560 23112 Not Found: /favicon.ico
+WARNING 2025-11-26 11:21:16,146 basehttp 15560 23112 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-26 11:21:22,503 log 15560 23112 Not Found: /hrm/cham-cong/api/ca-lam-viec/list/
+WARNING 2025-11-26 11:21:22,503 basehttp 15560 23112 "GET /hrm/cham-cong/api/ca-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 404 9627
+WARNING 2025-11-26 11:24:08,048 log 17844 20356 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:24:08,049 basehttp 17844 20356 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:25:10,287 log 17844 4056 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:25:10,287 basehttp 17844 4056 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-26 11:25:31,604 log 17844 13384 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 71, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-11-26 11:25:31,606 basehttp 17844 13384 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94221
+WARNING 2025-11-26 11:25:31,884 log 17844 13384 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:25:31,885 basehttp 17844 13384 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:25:32,871 log 17844 13384 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:25:32,871 basehttp 17844 13384 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:25:33,135 log 17844 13384 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:25:33,136 basehttp 17844 13384 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:42:11,995 log 17844 8708 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:42:11,996 basehttp 17844 8708 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:52:35,178 log 17844 9756 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:52:35,179 basehttp 17844 9756 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:53:13,815 log 17844 25048 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:53:13,816 basehttp 17844 25048 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:56:55,335 log 17844 25048 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:56:55,336 basehttp 17844 25048 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 11:58:31,618 log 17844 10456 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 11:58:31,619 basehttp 17844 10456 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 12:00:29,988 log 17844 10456 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 12:00:29,989 basehttp 17844 10456 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 12:01:02,969 log 17844 15684 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 12:01:02,969 basehttp 17844 15684 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 12:06:54,218 log 17844 3000 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 12:06:54,219 basehttp 17844 3000 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 12:06:56,164 log 17844 15684 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 12:06:56,164 basehttp 17844 15684 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 12:07:44,562 log 17844 3000 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 12:07:44,562 basehttp 17844 3000 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 14:51:29,882 log 8504 12436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 14:51:29,902 basehttp 8504 12436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 14:51:34,543 log 8504 12436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 14:51:34,544 basehttp 8504 12436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 14:51:35,214 log 8504 22164 Not Found: /favicon.ico
+WARNING 2025-11-26 14:51:35,214 basehttp 8504 22164 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-26 14:51:40,239 log 8504 22164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 14:51:40,240 basehttp 8504 22164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 14:51:42,854 log 8504 12436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 14:51:42,854 basehttp 8504 12436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 14:58:24,525 log 8504 10600 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 14:58:24,525 basehttp 8504 10600 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:47:26,003 log 8504 25112 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:47:26,003 basehttp 8504 25112 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:49:40,252 log 8504 2036 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:49:40,252 basehttp 8504 2036 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:50:51,275 log 8504 25112 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:50:51,275 basehttp 8504 25112 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:50:52,463 log 8504 2036 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:50:52,463 basehttp 8504 2036 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:51:02,648 log 8504 2036 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:51:02,649 basehttp 8504 2036 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:54:18,673 log 8504 17944 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:54:18,674 basehttp 8504 17944 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:55:00,362 log 8504 17944 Not Found: /hrm/cham-cong/api/ca-lam-viec/2/delete/
+WARNING 2025-11-26 15:55:00,363 basehttp 8504 17944 "POST /hrm/cham-cong/api/ca-lam-viec/2/delete/ HTTP/1.1" 404 10003
+WARNING 2025-11-26 15:55:42,817 log 8504 17944 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:55:42,818 basehttp 8504 17944 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:55:43,636 log 8504 17944 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:55:43,639 basehttp 8504 17944 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:55:47,048 log 8504 25112 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:55:47,050 basehttp 8504 25112 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 15:57:33,049 log 6424 10908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 15:57:33,050 basehttp 6424 10908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:00:56,466 log 6424 19724 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:00:56,467 basehttp 6424 19724 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:00:57,654 log 6424 19724 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:00:57,655 basehttp 6424 19724 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:03:16,106 log 6424 19724 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:03:16,106 basehttp 6424 19724 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:09:51,986 log 23188 4720 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:09:51,988 basehttp 23188 4720 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:09:58,369 log 23188 484 Not Found: /hrm/cham-cong/ca-lam-viec/1/update/
+WARNING 2025-11-26 16:09:58,370 basehttp 23188 484 "GET /hrm/cham-cong/ca-lam-viec/1/update/ HTTP/1.1" 404 10394
+WARNING 2025-11-26 16:09:58,674 log 23188 484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:09:58,674 basehttp 23188 484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:10:00,532 log 23188 484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:10:00,533 basehttp 23188 484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:10:00,812 log 23188 484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:10:00,813 basehttp 23188 484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:45:34,392 log 16712 9776 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:45:34,392 basehttp 16712 9776 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:45:37,406 log 16712 5460 Not Found: /hrm/cham-cong/ca-lam-viec/1/update/
+WARNING 2025-11-26 16:45:37,407 basehttp 16712 5460 "GET /hrm/cham-cong/ca-lam-viec/1/update/ HTTP/1.1" 404 10394
+WARNING 2025-11-26 16:45:37,703 log 16712 5460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:45:37,703 basehttp 16712 5460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:45:38,656 log 16712 5460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:45:38,657 basehttp 16712 5460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:45:38,922 log 16712 5460 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:45:38,922 basehttp 16712 5460 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:58:46,499 log 1984 11044 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:58:46,499 basehttp 1984 11044 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:58:48,262 log 1984 23580 Not Found: /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/
+WARNING 2025-11-26 16:58:48,263 basehttp 1984 23580 "GET /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/ HTTP/1.1" 404 11631
+WARNING 2025-11-26 16:58:48,565 log 1984 23580 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:58:48,566 basehttp 1984 23580 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:58:58,736 log 1984 23580 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:58:58,737 basehttp 1984 23580 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:58:58,989 log 1984 23580 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:58:58,990 basehttp 1984 23580 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:59:06,662 log 1984 23580 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:59:06,668 basehttp 1984 23580 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:59:08,431 log 1984 11044 Not Found: /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/
+WARNING 2025-11-26 16:59:08,432 basehttp 1984 11044 "GET /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/ HTTP/1.1" 404 11631
+WARNING 2025-11-26 16:59:08,725 log 1984 11044 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:59:08,726 basehttp 1984 11044 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:59:09,599 log 1984 11044 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:59:09,599 basehttp 1984 11044 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 16:59:09,859 log 1984 11044 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 16:59:09,860 basehttp 1984 11044 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 17:00:31,003 log 1984 11044 Not Found: /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/
+WARNING 2025-11-26 17:00:31,004 basehttp 1984 11044 "GET /hrm/cham-cong/thiet-ke-lich/ca-lam-viec/1/update/ HTTP/1.1" 404 11631
+WARNING 2025-11-26 17:00:31,296 log 1984 11044 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 17:00:31,297 basehttp 1984 11044 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 17:02:44,673 log 10740 16208 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 17:02:44,674 basehttp 10740 16208 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 17:02:54,495 log 10740 3124 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 17:02:54,495 basehttp 10740 3124 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 17:02:57,221 log 10740 16208 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 17:02:57,222 basehttp 10740 16208 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-26 17:15:40,014 log 10740 8176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-26 17:15:40,014 basehttp 10740 8176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-27 09:29:13,232 log 21136 21000 Not Found: /favicon.ico
+WARNING 2025-11-27 09:29:13,232 basehttp 21136 21000 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-11-27 10:28:05,074 log 22024 5284 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 104, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-11-27 10:28:05,082 basehttp 22024 5284 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94227
+ERROR 2025-11-27 11:29:41,693 log 652 12444 Internal Server Error: /hrm/cham-cong/lam-them/quy-tac/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 163, in view_quytac_lam_them
+    return render(request, "hrm_manager/cham_cong/lam_them/quytac_lam_them.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lam_them/quytac_lam_them.html
+ERROR 2025-11-27 11:29:41,693 basehttp 652 12444 "GET /hrm/cham-cong/lam-them/quy-tac/ HTTP/1.1" 500 93328
+WARNING 2025-11-28 09:33:14,806 log 24320 16012 Not Found: /favicon.ico
+WARNING 2025-11-28 09:33:14,810 basehttp 24320 16012 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-28 09:33:39,811 log 24320 11464 Bad Request: /hrm/cham-cong/api/ca-lam-viec/1/delete/
+WARNING 2025-11-28 09:33:39,812 basehttp 24320 11464 "POST /hrm/cham-cong/api/ca-lam-viec/1/delete/ HTTP/1.1" 400 278
+WARNING 2025-11-28 10:10:40,994 log 24320 24860 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 10:10:40,994 basehttp 24320 24860 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-11-28 11:21:20,688 log 24320 5564 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 104, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-11-28 11:21:20,693 basehttp 24320 5564 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94222
+ERROR 2025-11-28 14:41:12,559 log 24320 20924 Internal Server Error: /hrm/cham-cong/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 128, in view_lich_nghi
+    return render(request, "hrm_manager/cham_cong/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_nghi/lich_nghi.html
+ERROR 2025-11-28 14:41:12,564 basehttp 24320 20924 "GET /hrm/cham-cong/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 93897
+WARNING 2025-11-28 14:59:12,049 log 24320 2516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 14:59:12,049 basehttp 24320 2516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:00:34,306 log 24320 2516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:00:34,307 basehttp 24320 2516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:00:36,160 log 24320 496 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:00:36,161 basehttp 24320 496 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:05:51,039 log 25152 7976 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:05:51,040 basehttp 25152 7976 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:18:04,114 log 25152 15292 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:18:04,115 basehttp 25152 15292 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:22:44,158 log 25152 13952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:22:44,160 basehttp 25152 13952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:23:53,105 log 25152 13952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:23:53,106 basehttp 25152 13952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:23:59,996 log 25152 11176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:23:59,997 basehttp 25152 11176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:24:01,138 log 25152 13952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:24:01,139 basehttp 25152 13952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:24:01,416 log 25152 13952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:24:01,416 basehttp 25152 13952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:24:03,639 log 25152 13952 Bad Request: /hrm/cham-cong/api/ca-lam-viec/1/delete/
+WARNING 2025-11-28 15:24:03,639 basehttp 25152 13952 "POST /hrm/cham-cong/api/ca-lam-viec/1/delete/ HTTP/1.1" 400 278
+WARNING 2025-11-28 15:25:07,987 log 25152 13952 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:25:07,987 basehttp 25152 13952 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:25:10,777 log 25152 11176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:25:10,778 basehttp 25152 11176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:25:11,053 log 25152 11176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:25:11,053 basehttp 25152 11176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:42,857 log 14236 21896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:42,858 basehttp 14236 21896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:48,710 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:48,713 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:49,983 log 14236 21896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:49,984 basehttp 14236 21896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:50,253 log 14236 21896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:50,254 basehttp 14236 21896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:51,966 log 14236 21896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:51,966 basehttp 14236 21896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:53,263 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:53,264 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:53,505 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:53,506 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:30:56,918 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:30:56,918 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:32:26,726 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:32:26,728 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:32:51,882 log 14236 21896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:32:51,882 basehttp 14236 21896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:37:03,475 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:37:03,476 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:39:13,962 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:39:13,963 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:40:08,072 log 14236 14084 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:40:08,073 basehttp 14236 14084 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 15:40:10,962 log 14236 1696 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 15:40:10,964 basehttp 14236 1696 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:05:37,100 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:05:37,101 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:05:41,633 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:05:41,639 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:05:44,912 log 24424 13948 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:05:44,912 basehttp 24424 13948 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:06:19,803 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:06:19,804 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:06:21,724 log 24424 13948 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:06:21,724 basehttp 24424 13948 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:19,979 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:19,980 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:21,934 log 24424 13948 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:21,935 basehttp 24424 13948 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:31,541 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:31,541 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:35,116 log 24424 13948 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:35,116 basehttp 24424 13948 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:39,155 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:39,157 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:45,423 log 24424 13948 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:45,429 basehttp 24424 13948 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:47,860 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:47,860 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:48,108 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:48,114 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:08:52,646 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:08:52,646 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:11:06,462 log 24424 12484 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:11:06,462 basehttp 24424 12484 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:19:59,363 log 24424 14668 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:19:59,369 basehttp 24424 14668 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:20:05,522 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:20:05,522 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:20:07,792 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:20:07,792 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:20:13,326 log 24424 14668 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:20:13,326 basehttp 24424 14668 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:20:34,073 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:20:34,073 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:22:37,613 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:22:37,617 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:23:01,953 log 24424 14668 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:23:01,953 basehttp 24424 14668 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:25:51,273 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:25:51,274 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:25:53,278 log 24424 14668 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:25:53,278 basehttp 24424 14668 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:26:13,651 log 24424 7928 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:26:13,653 basehttp 24424 7928 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:26:18,208 log 24424 14668 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:26:18,208 basehttp 24424 14668 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:36:22,313 log 24424 21512 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:36:22,314 basehttp 24424 21512 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:36:26,394 log 24424 16752 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:36:26,400 basehttp 24424 16752 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:49:45,054 log 24424 25308 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:49:45,056 basehttp 24424 25308 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:52:33,913 log 24424 3356 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:52:33,914 basehttp 24424 3356 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:54:15,727 log 24424 3356 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:54:15,728 basehttp 24424 3356 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 16:54:18,873 log 24424 25136 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 16:54:18,873 basehttp 24424 25136 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:04:36,200 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:04:36,200 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:05:58,366 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:05:58,366 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:07:47,087 log 24424 24144 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:07:47,088 basehttp 24424 24144 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:07:52,368 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:07:52,369 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:07:52,624 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:07:52,626 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:07:53,975 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:07:53,975 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:08:29,093 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:08:29,094 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:08:57,003 log 24424 24144 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:08:57,004 basehttp 24424 24144 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:09:18,869 log 24424 16908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:09:18,870 basehttp 24424 16908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:09:21,352 log 24424 24144 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:09:21,352 basehttp 24424 24144 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:08,335 log 484 20252 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:08,336 basehttp 484 20252 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:27,627 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:27,627 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:33,397 log 484 8816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:33,402 basehttp 484 8816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:36,238 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:36,238 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:40,419 log 484 8816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:40,420 basehttp 484 8816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:41,596 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:41,597 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:48,143 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:48,144 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:14:50,705 log 484 8816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:14:50,706 basehttp 484 8816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:15:32,583 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:15:32,583 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 17:15:34,757 log 484 21892 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 17:15:34,758 basehttp 484 21892 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:37:45,523 log 4768 22860 Not Found: /favicon.ico
+WARNING 2025-11-28 22:37:45,524 basehttp 4768 22860 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-11-28 22:39:37,733 log 4768 21164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:39:37,734 basehttp 4768 21164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:39:42,940 log 4768 21164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:39:42,942 basehttp 4768 21164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:39:48,286 log 4768 21436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:39:48,288 basehttp 4768 21436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:27,628 log 4768 21164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:27,629 basehttp 4768 21164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:31,990 log 4768 21436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:31,992 basehttp 4768 21436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:32,296 log 4768 21436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:32,296 basehttp 4768 21436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:34,873 log 4768 21164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:34,874 basehttp 4768 21164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:40,576 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:40,577 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:40,859 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:40,860 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:40:43,044 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:40:43,045 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:41:03,551 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:41:03,553 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:41:04,694 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:41:04,695 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:41:11,733 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:41:11,733 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:41:11,992 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:41:11,992 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:41:39,537 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:41:39,537 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:44:51,482 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:44:51,482 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:44:51,775 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:44:51,776 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:44:53,547 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:44:53,547 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:45:09,580 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:45:09,580 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:45:14,165 log 4768 21164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:45:14,166 basehttp 4768 21164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:46:05,661 log 4768 20200 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:46:05,662 basehttp 4768 20200 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:55:05,108 log 4768 15012 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 22:55:05,108 basehttp 4768 15012 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 22:58:31,571 log 21952 8336 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-11-28 22:58:31,573 basehttp 21952 8336 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 89
+WARNING 2025-11-28 23:02:36,144 log 21952 5436 Bad Request: /hrm/cham-cong/api/ca-lam-viec/9/delete/
+WARNING 2025-11-28 23:02:36,145 basehttp 21952 5436 "POST /hrm/cham-cong/api/ca-lam-viec/9/delete/ HTTP/1.1" 400 180
+WARNING 2025-11-28 23:03:28,941 log 21952 16784 Bad Request: /hrm/cham-cong/api/ca-lam-viec/detail/7/
+WARNING 2025-11-28 23:03:28,942 basehttp 21952 16784 "GET /hrm/cham-cong/api/ca-lam-viec/detail/7/ HTTP/1.1" 400 70
+WARNING 2025-11-28 23:03:33,991 log 21952 16784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:03:33,992 basehttp 21952 16784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:03:39,288 log 21952 16784 Bad Request: /hrm/cham-cong/api/ca-lam-viec/detail/7/
+WARNING 2025-11-28 23:03:39,289 basehttp 21952 16784 "GET /hrm/cham-cong/api/ca-lam-viec/detail/7/ HTTP/1.1" 400 70
+WARNING 2025-11-28 23:03:54,205 log 21952 16784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:03:54,206 basehttp 21952 16784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:04:00,407 log 21952 17096 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:04:00,408 basehttp 21952 17096 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:04:02,530 log 21952 16784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:04:02,532 basehttp 21952 16784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:04:02,804 log 21952 16784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:04:02,806 basehttp 21952 16784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:04:12,826 log 21952 16784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:04:12,827 basehttp 21952 16784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:08:35,538 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:08:35,539 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:08:43,502 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:08:43,503 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:08:55,973 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:08:55,973 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:08:57,072 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:08:57,072 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:10:08,471 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:10:08,472 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:10:19,262 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:10:19,263 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:10:53,238 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:10:53,240 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:11:54,041 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:11:54,043 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:13:32,873 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:13:32,874 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:13:37,480 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:13:37,481 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:13:53,741 log 21952 5436 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:13:53,742 basehttp 21952 5436 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:13:56,715 log 21952 12804 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:13:56,715 basehttp 21952 12804 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:13:58,714 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:13:58,716 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:14:14,383 log 21952 12804 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:14:14,384 basehttp 21952 12804 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:14:15,760 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:14:15,760 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:14:31,050 log 21952 17688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:14:31,052 basehttp 21952 17688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:15:38,322 log 7700 8860 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:15:38,324 basehttp 7700 8860 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-28 23:15:45,238 log 7700 13964 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-11-28 23:15:45,239 basehttp 7700 13964 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-11-29 09:23:38,578 log 5772 8380 Not Found: /favicon.ico
+WARNING 2025-11-29 09:23:38,579 basehttp 5772 8380 "GET /favicon.ico HTTP/1.1" 404 3131

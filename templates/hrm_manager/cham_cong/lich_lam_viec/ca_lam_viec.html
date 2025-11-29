@@ -5,40 +5,40 @@
 
 {% block content %}
 <div class="flex flex-col h-full space-y-4">
-    {# 1. Breadcrumb #}
+    {# Breadcrumb #}
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
     <div class="bg-white shadow-sm p-1 sm:p-4 rounded-lg h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-4">Quản lý Lịch làm việc</h1>
-
-        {# 2. Tab Navigation - QUAN TRỌNG #}
-        {# Biến 'tabs' được truyền từ view_ca_lam_viec trong views.py #}
+        <h1 class="text-2xl font-bold text-slate-900 mb-4">Lịch làm việc</h1>
+        
+        {# Tabs #}
         {% include "components/tab_nav.html" with tabs=tabs %}
 
-        {# 3. Nội dung chính của Tab CA LÀM VIỆC #}
-        <div class="flex-1 flex flex-col">
-            
-            {# Toolbar: Tìm kiếm, Lọc, Nút thêm mới #}
-            {% include "components/toolbar.html" with search_id="search-ca" search_placeholder="Tìm tên ca, mã ca..." create_text="Thêm ca làm việc" create_onclick="window.CaLamViecManager.openSidebar('create')" filter_form_id="filter-ca" filter_options=status_list filter_field="status" %}
+        <div class="flex-1 flex flex-col mt-2 relative"> {# TOOLBAR #}
+            {% url 'hrm:cham_cong:thiet_ke_ca_create' as create_url_val %}
+            {% include "components/toolbar.html" with search_id="search-ca" search_placeholder="Tìm kiếm theo tên & mã ca" create_text="Thêm ca" create_url=create_url_val|default:'#' filter_form_id="filter-ca" filter_options=filter_options filter_field="loaichamcong" filter_label="Loại ca" %}
 
-            {# Table Wrapper: Nơi hiển thị dữ liệu #}
-            {% with headers='<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tên Ca</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Mã Ca</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Giờ làm việc</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Nghỉ trưa</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Trạng thái</th>' %}
-                {% include "components/table_wrapper.html" with table_id="ca-table" tbody_id="table-body-ca" headers_html=headers show_checkbox=True %}
+            {# TABLE WRAPPER #}
+            {# Quan trọng: show_checkbox=True để hiện cột check #}
+            {# Quan trọng: select_all_id phải khớp với config trong JS #}
+            {% with headers='<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/4">Tên ca làm việc</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/6">Mã ca</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/6">Loại ca</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/3">Khung giờ</th>' %}
+                
+                {% include "components/table_wrapper.html" with table_id="ca-table" tbody_id="table-body-ca" headers_html=headers show_checkbox=True select_all_id="select-all-ca" %}
+            
             {% endwith %}
 
-            {# Pagination & Bulk Actions #}
+            {# PAGINATION #}
             {% include "components/pagination.html" %}
+
+            {# === PHẦN BẠN ĐANG THIẾU ĐÂY === #}
+            {# BULK ACTIONS (Thanh công cụ xóa nhiều) #}
+            {# ID phải khớp với config trong JS: bulk-actions-ca #}
             {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions-ca" %}
         </div>
     </div>
 </div>
-
-{# 4. Sidebar Form (Ẩn mặc định, hiện khi bấm Thêm/Sửa) #}
-{# Lưu ý: form_fields_template bạn cần tạo riêng hoặc để trống tạm thời #}
-{% include "components/crud_sidebar.html" with sidebar_id="ca-sidebar" overlay_id="ca-sidebar-overlay" form_id="ca-form" form_fields_template="hrm_manager/cham_cong/partials/ca_form.html" submit_text="Lưu Ca" %}
 {% endblock %}
 
 {% block scripts %}
-{# Script JS quản lý riêng cho trang này #}
 <script src="{% static 'js/cham_cong/ca_lam_viec.js' %}"></script>
 {% endblock %}
