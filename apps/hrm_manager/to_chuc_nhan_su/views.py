@@ -72,7 +72,32 @@ def view_nhan_vien_index(request, id):
             {'title': 'Cây nhân sự', 'url': reverse('hrm:to_chuc_nhan_su:cay_nhan_su_index')},
             {'title': nhan_vien.hovaten, 'url': None},
         ],
-        'nhan_vien': nhan_vien,
+        'tabs': [
+            {
+                "id": "basic", 
+                "name": "Thông tin cơ bản",   # Dự phòng nếu component dùng {{ tab.name }}
+                "title": "Thông tin cơ bản",  # Dự phòng nếu component dùng {{ tab.title }}
+                "url": "#tab-basic", 
+                "active": True
+            },
+            {
+                "id": "history", 
+                "name": "Lịch sử công tác", 
+                "title": "Lịch sử công tác", 
+                "url": "#tab-history", 
+                "active": False
+            },
+            {
+                "id": "contracts", 
+                "name": "Hợp đồng lao động", 
+                "title": "Hợp đồng lao động", 
+                "url": "#tab-contracts", 
+                "active": False
+            },
+        ],
+
+        'employee': nhan_vien,
+        'current_job': nhan_vien.lichsucongtac_set.filter(trangthai='active').first(),
     }
 
     return render(request, "hrm_manager/quan_ly_nhan_su/nhanvien_detail.html", context=context)
@@ -767,8 +792,8 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
     # Cập nhập phòng ban nhiều nhân viên cùng lúc
 
     try:
-        nhan_vien_ids = request.GET.get('nhan_vien_ids', [])
-        phong_ban_id = request.GET.get('phong_ban_id')
+        nhan_vien_ids = loads(request.body).get('nhan_vien_ids', [])
+        phong_ban_id = loads(request.body).get('phong_ban_id')
 
         if not nhan_vien_ids or not phong_ban_id:
             return JsonResponse({

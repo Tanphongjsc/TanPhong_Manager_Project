@@ -1,0 +1,26 @@
+{% comment %}
+  Component: Tab Navigation
+  Usage: {% include "components/tab_nav.html" with tabs=tabs %}
+  Structure of tabs item:
+  {
+      'label': 'Tên hiển thị',
+      'url': '/duong-dan/',
+      'url_name': 'ten_url_name_trong_urls_py' (để check active)
+  }
+{% endcomment %}
+
+<div class="border-b border-slate-200 mb-4">
+    <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+        {% for tab in tabs %}
+            <a href="{{ tab.url }}" 
+               class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-200
+               {% if request.resolver_match.url_name == tab.url_name %}
+                   border-blue-600 text-blue-600
+               {% else %}
+                   border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300
+               {% endif %}">
+                {{ tab.label }}
+            </a>
+        {% endfor %}
+    </nav>
+</div>

@@ -1,45 +1,66 @@
 {% comment %}
   Component: Bulk Actions
-  Logic Mapping:
-    - .bulk-selected-count: Nơi hiển thị số lượng [cite: 393]
-    - Container transition: JS sẽ add/remove class "show"
+  Updates: 
+  1. Hiển thị text "đã chọn" trên mọi màn hình (xóa class hidden sm:inline).
+  2. Nút Xóa/Export hiển thị màu trực tiếp thay vì chỉ hover.
+  3. Cải tiến UX cho nút Xóa và Xuất Excel với icon + text responsive.
 {% endcomment %}
 
 <div id="{{ id|default:'bulk-actions' }}" 
-     class="bulk-actions-container hidden opacity-0 transform -translate-y-2 transition-all duration-300 ease-in-out items-center justify-between gap-4 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4 shadow-sm [&.show]:flex [&.show]:opacity-100 [&.show]:translate-y-0">
+    class="bulk-actions-container hidden opacity-0 transform translate-y-4 transition-all duration-300 ease-in-out fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-3xl bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 items-center justify-between gap-3 [&.show]:flex [&.show]:opacity-100 [&.show]:translate-y-0">    
     
-    <div class="flex items-center gap-3">
-        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 shrink-0">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </span>
-        <span class="text-sm font-medium text-blue-900 bulk-selected-count">0 đã chọn</span>
+    <div class="flex items-center gap-2 pl-2">
+        <div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm shrink-0">
+            <span class="bulk-selected-count">0</span>
+        </div>
+        <span class="text-sm font-semibold text-slate-700 whitespace-nowrap">đã chọn</span>
     </div>
     
     <div class="flex items-center gap-2">
-        {% if show_delete %}
-        <button type="button" id="{{ delete_btn_id|default:'btn-bulk-delete' }}" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 text-red-700 text-sm font-medium rounded-md hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-            </svg>
-            <span class="hidden sm:inline">Xóa</span>
-        </button>
-        {% endif %}
-        
-        {% if show_export %}
-        <button type="button" id="{{ export_btn_id|default:'btn-bulk-export' }}" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-green-200 text-green-700 text-sm font-medium rounded-md hover:bg-green-50 hover:border-green-300 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            <span class="hidden sm:inline">Xuất Excel</span>
-        </button>
-        {% endif %}
-        
-        <div class="h-6 w-px bg-blue-200 mx-1"></div>
 
-        <button type="button" id="{{ clear_btn_id|default:'btn-clear-selection' }}" class="text-sm text-slate-500 hover:text-slate-800 transition-colors px-2 whitespace-nowrap">
-            Bỏ chọn
+        {% if show_actions %}
+        <div class="relative group">
+            <button type="button" id="btn-bulk-more" class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors">
+                <i class="fas fa-bolt text-xs"></i> 
+                <span class="hidden sm:inline">Thao tác</span>
+                <i class="fas fa-chevron-up text-[10px] ml-1"></i>
+            </button>
+
+            <div id="bulk-options-menu" class="hidden absolute bottom-full right-0 mb-2 w-56 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden origin-bottom-right z-40 animate-fade-in-up">
+                <div class="p-1">
+                    <button type="button" data-action="transfer" class="bulk-action-item w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-md flex items-center gap-3 transition-colors">
+                        <i class="fas fa-exchange-alt w-4 text-center text-slate-400"></i> Cập nhật Bộ phận
+                    </button>
+                    <button type="button" data-action="terminate" class="bulk-action-item w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-3 transition-colors border-t border-slate-50">
+                        <i class="fas fa-user-times w-4 text-center text-red-400"></i> Cho Nghỉ Việc
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="h-5 w-px bg-slate-200 mx-1"></div>
+
+        {% if show_delete %}
+        <button type="button" id="{{ delete_btn_id|default:'btn-bulk-delete' }}" 
+            class="group flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
+            <i class="fas fa-trash text-xs group-hover:scale-110 transition-transform"></i>
+            <span class="hidden md:inline">Xóa</span>
+        </button>
+        {% endif %}
+
+        {% if show_export %}
+        <button type="button" id="{{ export_btn_id|default:'btn-bulk-export' }}" 
+            class="group flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
+            <i class="fas fa-file-excel text-xs group-hover:scale-110 transition-transform"></i>
+            <span class="hidden md:inline">Xuất</span>
+        </button>
+        {% endif %}
+        
+        <button type="button" id="{{ clear_btn_id|default:'btn-clear-selection' }}" 
+            class="ml-1 p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors active:scale-90" 
+            title="Bỏ chọn">
+            <i class="fas fa-times"></i>
         </button>
     </div>
 </div>

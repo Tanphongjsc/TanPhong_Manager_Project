@@ -1,4 +1,262 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Cây nhân sự & Danh sách{% endblock %}
+{% block title %}Chi tiết: {{ employee.hovaten }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {# 1. Breadcrumb #}
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full items-start pb-10">
+        
+        {# LEFT COLUMN: PROFILE CARD #}
+        <div class="col-span-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 relative lg:sticky lg:top-4 z-10">
+             {# Nút Sửa: Gọi EmployeeManager đã được fix lỗi #}
+            <button onclick="window.EmployeeManager.openSidebar('edit', '{{ employee.id }}')" 
+                    class="absolute top-4 right-4 text-slate-400 hover:text-blue-600 p-2 hover:bg-slate-50 rounded-full transition-colors">
+                <i class="fas fa-pen"></i>
+            </button>
+
+            <div class="flex flex-col items-center text-center">
+                <div class="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold mb-4 shadow-sm border-4 border-white ring-1 ring-slate-100">
+                    {{ employee.hovaten|slice:":2"|upper }}
+                </div>
+                <h2 class="text-xl font-bold text-slate-900">{{ employee.hovaten }}</h2>
+                <span class="text-sm text-slate-500 mt-1">Mã: {{ employee.manhanvien }}</span>
+                
+                <div class="mt-3">
+                    {% if employee.trangthainv == 'Đang làm việc' %}
+                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                            {{ employee.trangthainv }}
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                            {{ employee.trangthainv }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr class="my-6 border-slate-100">
+
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Bộ phận</span>
+                    <span class="font-medium text-slate-900 text-right">{{ employee.cong_tac.phong_ban|default:"--" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Chức vụ</span>
+                    <span class="font-medium text-blue-600 text-right">{{ employee.cong_tac.chuc_vu|default:"--" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Ngày vào làm</span>
+                    <span class="font-medium text-slate-900">{{ employee.ngayvaolam|date:"d/m/Y" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Email</span>
+                    <span class="font-medium text-slate-900 truncate max-w-[150px]" title="{{ employee.email }}">{{ employee.email }}</span>
+                </div>
+                 <div class="flex justify-between">
+                    <span class="text-slate-500">Điện thoại</span>
+                    <span class="font-medium text-slate-900">{{ employee.sodienthoai }}</span>
+                </div>
+            </div>
+        </div>
+
+        {# RIGHT COLUMN: TABS & CONTENT #}
+        <div class="col-span-1 lg:col-span-3 flex flex-col gap-4">
+            
+            {# Header Actions #}
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3">
+                <h3 class="font-bold text-slate-800 text-lg">Hồ sơ chi tiết</h3>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="window.DetailManager.resignEmployee()" class="flex-1 sm:flex-none px-4 py-2 border border-slate-300 text-slate-700 rounded hover:bg-slate-50 font-medium text-sm transition-colors">
+                        Thôi việc
+                    </button>
+                    <button onclick="window.DetailManager.deleteEmployee()" class="flex-1 sm:flex-none px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium text-sm transition-colors shadow-sm">
+                        Xóa nhân viên
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm min-h-[500px]">
+                {# 2. Tab Navigation - Sử dụng component #}
+                <div class="border-b border-slate-200 px-2 pt-2">
+                    {% include "components/tab_nav.html" with tabs=tabs %}
+                </div>
+
+                {# TAB CONTENT 1: BASIC INFO #}
+                <div id="tab-basic" class="tab-pane p-6 block animate-fade-in">
+                    <h4 class="text-sm uppercase font-bold text-slate-400 mb-4 tracking-wider">Thông tin cá nhân</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {# Helper Render Field #}
+                        {% with label_cls="block text-xs text-slate-500 mb-1" val_cls="text-sm font-medium text-slate-900 border-b border-slate-100 pb-2" %}
+                            
+                            <div>
+                                <label class="{{ label_cls }}">Họ và tên</label>
+                                <div class="{{ val_cls }}">{{ employee.hovaten }}</div>
+                            </div>
+                            <div>
+                                <label class="{{ label_cls }}">Giới tính</label>
+                                <div class="{{ val_cls }}">{{ employee.gioitinh|default:"--" }}</div>
+                            </div>
+                            <div>
+                                <label class="{{ label_cls }}">Ngày sinh</label>
+                                <div class="{{ val_cls }}">{{ employee.ngaysinh|date:"d/m/Y"|default:"--" }}</div>
+                            </div>
+                            <div>
+                                <label class="{{ label_cls }}">CCCD/CMND</label>
+                                <div class="{{ val_cls }}">{{ employee.cccd|default:"--" }}</div>
+                            </div>
+                            <div>
+                                <label class="{{ label_cls }}">Ngân hàng</label>
+                                <div class="{{ val_cls }}">{{ employee.nganhang.TenNganHang|default:"--" }}</div>
+                            </div>
+                            <div>
+                                <label class="{{ label_cls }}">Số tài khoản</label>
+                                <div class="{{ val_cls }}">{{ employee.taikhoannganhang|default:"--" }}</div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="{{ label_cls }}">Địa chỉ thường trú</label>
+                                <div class="{{ val_cls }}">{{ employee.diachi|default:"--" }}</div>
+                            </div>
+
+                        {% endwith %}
+                    </div>
+                </div>
+
+                {# TAB CONTENT 2: HISTORY #}
+                <div id="tab-history" class="tab-pane hidden p-0 sm:p-4 animate-fade-in">
+                    {# Sử dụng table_wrapper #}
+                    {% with headers='<th class="px-4 py-3 text-left text-xs uppercase text-slate-500">Thời gian</th><th class="px-4 py-3 text-left text-xs uppercase text-slate-500">Bộ phận</th><th class="px-4 py-3 text-left text-xs uppercase text-slate-500">Chức vụ</th><th class="px-4 py-3 text-left text-xs uppercase text-slate-500">Trạng thái</th>' %}
+                        {% include "components/table_wrapper.html" with table_id="history-table" tbody_id="history-body" headers_html=headers %}
+                    {% endwith %}
+                </div>
+
+                {# TAB CONTENT 3: CONTRACTS #}
+                <div id="tab-contracts" class="tab-pane hidden p-10 text-center animate-fade-in">
+                    <div class="text-slate-300 mb-3"><i class="fas fa-file-contract text-5xl"></i></div>
+                    <p class="text-slate-500">Chức năng quản lý hợp đồng đang cập nhật.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Hidden config #}
+<input type="hidden" id="emp-id" value="{{ employee.id }}">
+<input type="hidden" id="redirect-url" value="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}">
+
+{# 4. Sidebar Form - Chỉ include Employee Sidebar #}
+{% include "components/crud_sidebar.html" with sidebar_id="employee-sidebar" overlay_id="employee-sidebar-overlay" form_id="employee-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/nhanvien_form.html" title="Cập nhật nhân viên" submit_text="Lưu thay đổi" %}
+
+{% endblock %}
+
+{% block styles %}
+<style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{# Load JS gốc (Đã sửa lỗi check null ở Bước 1) #}
+<script src="{% static 'js/quan_ly_nhan_su/cay_nhan_su.js' %}"></script>
+
+<script>
+    /**
+     * Logic riêng cho trang Detail
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        const els = {
+            tabs: document.querySelectorAll('a[href^="#tab-"]'), // Selector cho tab links
+            panes: document.querySelectorAll('.tab-pane'),
+            empId: document.getElementById('emp-id').value,
+            historyBody: document.getElementById('history-body')
+        };
+
+        // 1. Tab Switching Logic
+        els.tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = tab.getAttribute('href');
+
+                // Update UI Tabs
+                els.tabs.forEach(t => {
+                    t.classList.remove('border-blue-600', 'text-blue-600');
+                    t.classList.add('border-transparent', 'text-slate-500', 'hover:border-slate-300');
+                });
+                tab.classList.remove('border-transparent', 'text-slate-500', 'hover:border-slate-300');
+                tab.classList.add('border-blue-600', 'text-blue-600');
+
+                // Show Content
+                els.panes.forEach(p => p.classList.add('hidden'));
+                const target = document.querySelector(targetId);
+                if(target) {
+                    target.classList.remove('hidden');
+                    // Load data if switching to history tab
+                    if(targetId === '#tab-history' && !target.dataset.loaded) {
+                        loadHistory();
+                        target.dataset.loaded = "true";
+                    }
+                }
+            });
+        });
+
+        // 2. Load History Data
+        async function loadHistory() {
+            if(!els.historyBody) return;
+            els.historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+            
+            try {
+                const res = await AppUtils.API.get(`/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/?nhanvien_id=${els.empId}`);
+                const data = res.data || res;
+                
+                if(!data.length) {
+                    els.historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400 text-sm">Chưa có lịch sử công tác</td></tr>';
+                    return;
+                }
+
+                els.historyBody.innerHTML = data.map(item => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                        <td class="px-4 py-3 text-sm text-slate-600">${AppUtils.DateUtils.format(item.created_at, 'dd/MM/yyyy')}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-slate-800">${item.phongban?.tenphongban || item.noicongtac || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-slate-600">${item.chucvu?.tenvitricongviec || '-'}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-0.5 rounded text-xs font-medium ${item.trangthai==='active'?'bg-green-50 text-green-700':'bg-slate-100 text-slate-500'}">
+                                ${item.trangthai==='active'?'Hiện tại':'Cũ'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch(e) {
+                els.historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-400 text-xs">Lỗi tải dữ liệu</td></tr>';
+            }
+        }
+
+        // 3. Global Actions (Delete/Resign)
+        window.DetailManager = {
+            async deleteEmployee() {
+                if(await AppUtils.Notify.confirm('Xóa nhân viên?', 'Hành động không thể hoàn tác.', 'warning')) {
+                    try {
+                        await AppUtils.API.delete(`/hrm/to-chuc-nhan-su/api/v1/nhan-vien/${els.empId}/`);
+                        AppUtils.Notify.success('Đã xóa thành công');
+                        window.location.href = document.getElementById('redirect-url').value;
+                    } catch(e) { AppUtils.Notify.error('Lỗi khi xóa'); }
+                }
+            },
+            async resignEmployee() {
+                if(await AppUtils.Notify.confirm('Cho thôi việc?', 'Trạng thái sẽ chuyển thành Đã nghỉ việc.', 'info')) {
+                    try {
+                        await AppUtils.API.patch(`/hrm/to-chuc-nhan-su/api/v1/nhan-vien/${els.empId}/`, {trangthainv: 'Đã nghỉ việc'});
+                        AppUtils.Notify.success('Đã cập nhật');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } catch(e) { AppUtils.Notify.error('Lỗi cập nhật'); }
+                }
+            }
+        };
+    });
+</script>
+{% endblock %}

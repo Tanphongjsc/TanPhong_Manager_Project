@@ -174,6 +174,7 @@ class EmployeeManager extends BaseCRUDManager {
         this.initTable();
         this.loadLookupData();
         this._initExtraButtons();
+        this._initBulkActions();
     }
 
     async loadLookupData() {
@@ -200,6 +201,181 @@ class EmployeeManager extends BaseCRUDManager {
     _initExtraButtons() {
         this.extraActionsContainer = document.getElementById('employee-sidebar-extra-actions');
     }
+
+// --- LOGIC XỬ LÝ HÀNG LOẠT (BULK) ---
+    _initBulkActions() {
+        // UI Elements
+        const els = {
+            btnMore: document.getElementById('btn-bulk-more'),
+            menu: document.getElementById('bulk-options-menu'),
+            transferModalBtn: document.getElementById('btn-save-transfer'),
+            actionsContainer: document.querySelector('.bulk-actions-container') // Container chính
+        };
+
+        if (!els.btnMore) return;
+
+        // 1. Toggle Dropdown Menu
+        this.eventManager.add(els.btnMore, 'click', (e) => {
+            e.stopPropagation();
+            els.menu.classList.toggle('hidden');
+        });
+
+        // 2. Close Menu when clicking outside
+        this.eventManager.add(document, 'click', (e) => {
+            if (!els.btnMore.contains(e.target) && !els.menu.contains(e.target)) {
+                els.menu.classList.add('hidden');
+            }
+        });
+
+        // 3. Handle Action Clicks (Event Delegation)
+        // Lắng nghe click vào các nút con có attribute [data-action]
+        this.eventManager.add(els.menu, 'click', (e) => {
+            const actionBtn = e.target.closest('[data-action]');
+            if (!actionBtn) return;
+            
+            els.menu.classList.add('hidden'); // Ẩn menu ngay
+            const actionType = actionBtn.dataset.action;
+            this.handleBulkAction(actionType);
+        });
+
+        // 4. Handle Modal Submit (Transfer)
+        if (els.transferModalBtn) {
+            this.eventManager.add(els.transferModalBtn, 'click', () => this.submitBulkTransfer());
+        }
+    }
+
+    /**
+     * Hàm điều phối xử lý hành động
+     * @param {string} actionType - 'transfer' | 'terminate'
+     */
+    handleBulkAction(actionType) {
+        const selectedIds = this.tableManager.getSelectedItems();
+        if (!selectedIds.length) return AppUtils.Notify.warning('Chưa chọn nhân viên nào');
+
+        switch (actionType) {
+            case 'transfer':
+                this.openTransferModal(selectedIds.length);
+                break;
+                
+            case 'terminate':
+                AppUtils.Modal.showConfirm({
+                    title: 'Xác nhận nghỉ việc',
+                    message: `Bạn có chắc chắn muốn thiết lập trạng thái <b>"Đã nghỉ việc"</b> cho <b class="text-red-600">${selectedIds.length}</b> nhân viên đã chọn?`,
+                    type: 'danger',
+                    confirmText: 'Đồng ý',
+                    onConfirm: () => this.executeBulkAPI('terminate', selectedIds)
+                });
+                break;
+        }
+    }
+
+    // --- Logic Modal Chuyển công tác ---
+    
+    openTransferModal(count) {
+        // 1. Fill data
+        const countEl = document.getElementById('bulk-transfer-count');
+        const select = document.getElementById('bulk-transfer-select');
+        
+        if (countEl) countEl.textContent = count;
+        
+        // Populate Select từ lookupData đã cache (Tránh gọi lại API)
+        if (select && this.lookupData.phongban) {
+            select.innerHTML = '<option value="">-- Chọn phòng ban mới --</option>' + 
+                this.lookupData.phongban.map(pb => `<option value="${pb.id}">${pb.tenphongban}</option>`).join('');
+        }
+
+        // 2. Clear error & form
+        const errEl = document.getElementById('err-bulk-dept');
+        if(errEl) errEl.classList.add('hidden');
+        document.getElementById('form-bulk-transfer')?.reset();
+
+        // 3. Show Modal
+        this.toggleModal('modal-bulk-transfer', true);
+    }
+
+    toggleModal(modalId, show) {
+        const modal = document.getElementById(modalId);
+        if(!modal) return;
+        
+        // Sử dụng Tailwind classes để show/hide
+        if(show) {
+            modal.classList.remove('hidden');
+            // Animation nhẹ (Optional)
+            modal.querySelector('div[class*="transform"]')?.classList.add('scale-100');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    async submitBulkTransfer() {
+        const form = document.getElementById('form-bulk-transfer');
+        const errEl = document.getElementById('err-bulk-dept');
+        const btn = document.getElementById('btn-save-transfer');
+
+        // 1. Validation dùng AppUtils
+        const formData = AppUtils.Form.getData(form);
+        if (!formData.phong_ban_id) {
+            if(errEl) errEl.classList.remove('hidden');
+            return;
+        }
+
+        // 2. Prepare Data
+        const selectedIds = this.tableManager.getSelectedItems();
+        const payload = {
+            nhan_vien_ids: selectedIds,
+            phong_ban_id: formData.phong_ban_id
+        };
+
+        // 3. Call API with Loading State
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Đang xử lý...';
+        btn.disabled = true;
+
+        try {
+            await this.executeBulkAPI('transfer', payload, false); // false = don't double call logic
+            this.toggleModal('modal-bulk-transfer', false);
+        } catch (e) {
+            // Error handled in executeBulkAPI or here if specifically needed
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    /**
+     * Hàm gọi API chung cho Bulk Actions
+     * @param {string} type - 'transfer' | 'terminate'
+     * @param {any} payload - Data body
+     * @param {boolean} showSuccessMsg - Có hiển thị toast success mặc định không
+     */
+    async executeBulkAPI(type, payload, showSuccessMsg = true) {
+        let url = '';
+        let body = payload;
+
+        if (type === 'transfer') {
+            url = '/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/chuyen-cong-tac/';
+        } else if (type === 'terminate') {
+            // Giả sử API nghỉ việc
+            url = '/hrm/to-chuc-nhan-su/api/v1/nhan-vien/nghi-viec-bulk/'; 
+            body = { ids: payload };
+        }
+
+        try {
+            const res = await AppUtils.API.post(url, body);
+
+            if (showSuccessMsg) AppUtils.Notify.success('Thao tác thành công!');
+            
+            // Refresh UI
+            this.tableManager.clearSelection();
+            this.tableManager.refresh(); 
+            window.TreeManager.fetchTree(); // Refresh cây tổ chức
+
+        } catch (error) {
+            console.error(error);
+            AppUtils.Notify.error(error.message || 'Có lỗi xảy ra');
+        }
+    }
+
 
     // --- LOGIC FORM & DATA ---
 
@@ -479,7 +655,13 @@ class EmployeeManager extends BaseCRUDManager {
         return tr;
     }
 
-    filterByOrg(params) { this.tableManager?.setApiParams(params); this.tableManager?.refresh(); }
+    filterByOrg(params) { 
+        if (this.tableManager) {
+            this.tableManager.options.currentPage = 1;
+            this.tableManager.setApiParams(params); 
+            this.tableManager.refresh();
+        }
+    }
     resetFilter() { this.filterByOrg({ phongban_id: null, congty_id: null }); }
 }
 
@@ -558,13 +740,36 @@ class DeptManager extends BaseCRUDManager {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    window.TreeManager = new TreeManager();
-    window.EmployeeManager = new EmployeeManager();
-    window.CompanyManager = new CompanyManager();
-    window.DeptManager = new DeptManager();
-    
-    window.TreeManager.init();
-    window.EmployeeManager.init();
-    window.CompanyManager.init();
-    window.DeptManager.init();
+    // 1. Chỉ khởi tạo TreeManager nếu có cây (trang Index)
+    if (document.getElementById('tree-root')) {
+        window.TreeManager = new TreeManager();
+        window.TreeManager.init();
+    }
+
+    // 2. Chỉ khởi tạo CompanyManager nếu có form công ty
+    if (document.getElementById('company-sidebar')) {
+        window.CompanyManager = new CompanyManager();
+        window.CompanyManager.init();
+    }
+
+    // 3. Chỉ khởi tạo DeptManager nếu có form phòng ban
+    if (document.getElementById('dept-sidebar')) {
+        window.DeptManager = new DeptManager();
+        window.DeptManager.init();
+    }
+
+    // 4. EmployeeManager: Cần dùng chung cho cả Index (tạo mới) và Detail (sửa)
+    // Kiểm tra nếu có sidebar nhân viên thì mới khởi tạo
+    if (document.getElementById('employee-sidebar')) {
+        window.EmployeeManager = new EmployeeManager();
+        
+        // Nếu đang ở trang Detail (không có bảng table-body), 
+        // ta override hàm onRefreshTable để reload trang thay vì refresh bảng
+        if (!document.getElementById('table-body')) {
+            window.EmployeeManager.init(); // Init cơ bản
+            window.EmployeeManager.config.onRefreshTable = () => window.location.reload();
+        } else {
+            window.EmployeeManager.init(); // Init đầy đủ có bảng
+        }
+    }
 });
