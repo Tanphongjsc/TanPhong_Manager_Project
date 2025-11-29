@@ -7,6 +7,8 @@ from apps.hrm_manager.__core__.models import *
 import json
 from django.utils import timezone
 from django.db import transaction
+from . services import CaLamViecService
+from .validators import validate_shift_details
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context, 
@@ -15,6 +17,10 @@ from apps.hrm_manager.utils.view_helpers import (
     json_success, 
     json_error, 
     safe_delete,
+    get_request_data,          
+    get_object_or_json_error,  
+    validate_required_fields,  
+    validate_unique_field
 )
 # --- HELPERS ĐỂ CẤU HÌNH TABS ---
 
@@ -214,22 +220,23 @@ def api_calamviec_list(request):
         queryset=Khunggiolamviec.objects.order_by('thoigianbatdau')
     )
     
-    # 1. Annotate để đánh dấu ưu tiên: CAHANHCHINH = 0, Các ca khác = 1
+    # 1. Annotate ưu tiên: CAHANHCHINH = 0, Các ca khác = 1
     queryset = Calamviec.objects.prefetch_related(khung_gio_prefetch).annotate(
         is_system_default=Case(
             When(macalamviec='CAHANHCHINH', then=Value(0)),
             default=Value(1),
             output_field=IntegerField(),
         )
-    ).order_by('is_system_default', '-created_at') # <--- Sắp xếp: Ưu tiên (0) lên trước, sau đó mới đến ngày tạo
+    ).order_by('is_system_default', '-created_at') # CAHANHCHINH lên đầu, sau đó mới đến ngày tạo
     
+    # Sử dụng Helper tạo context list
     context = get_list_context(
         request,
         queryset,
         search_fields=['tencalamviec', 'macalamviec'],
         filter_field=('loaichamcong', 'loaichamcong'),
         page_size=20,
-        order_by=None # <--- Quan trọng: Để None để helper không ghi đè thứ tự sắp xếp của queryset
+        order_by=None # Để None để giữ nguyên thứ tự sắp xếp của queryset
     )
     
     page_obj = context['page_obj']
@@ -264,184 +271,142 @@ def api_calamviec_list(request):
         }
     )
 
+
 @require_http_methods(["GET"])
+@handle_exceptions
 def api_calamviec_detail(request, pk):
-    try:
-        ca = get_object_or_404(Calamviec, pk=pk)
-        
-        khung_gios = []
-        for kg in ca.khunggiolamviec_set.order_by('id'):
-            khung_gios.append({
-                'id': kg.id,
-                'GioBatDau': kg.thoigianbatdau.strftime('%H:%M') if kg.thoigianbatdau else None,
-                'GioKetThuc': kg.thoigianketthuc.strftime('%H:%M') if kg.thoigianketthuc else None,
-                'Cong': kg.congcuakhunggio,
-                
-                # Rule Cố định (Lấy từ trường cũ)
-                'DenMuonCP': kg.thoigianchophepdenmuon,
-                'VeSomCP': kg.thoigianchophepvesomnhat,
-                'KhongTinhCongNeuMuonHon': kg.thoigiandimuonkhongtinhchamcong, 
-                'KhongTinhCongNeuSomHon': kg.thoigianvesomkhongtinhchamcong,
-                'CheckInSomNhat': kg.thoigianchophepchamcongsomnhat.strftime('%H:%M') if kg.thoigianchophepchamcongsomnhat else None,
-                'CheckOutMuonNhat': kg.thoigianchophepvemuonnhat.strftime('%H:%M') if kg.thoigianchophepvemuonnhat else None,
-                
-                # Rule Linh động 
-                'LinhDongDenMuon': kg.sophutdenmuon, 
-                'LinhDongVeSom': kg.sophutdensom,
+    """API Lấy chi tiết 1 ca (Dùng cho form Update)"""
+    # Helper: Lấy object hoặc trả về lỗi 404 JSON
+    ca = get_object_or_json_error(Calamviec, pk, "Không tìm thấy ca làm việc")
+    if not isinstance(ca, Calamviec): return ca # Trả về lỗi nếu có
 
-                # Rule Tự do
-                'MinPhutLamViec': kg.thoigianlamviectoithieu,
-                'YeuCauChamCong': kg.yeucauchamcong
-            })
+    # Lấy danh sách khung giờ chi tiết
+    khung_gios = []
+    for kg in ca.khunggiolamviec_set.order_by('id'):
+        khung_gios.append({
+            'id': kg.id,
+            'GioBatDau': kg.thoigianbatdau.strftime('%H:%M') if kg.thoigianbatdau else None,
+            'GioKetThuc': kg.thoigianketthuc.strftime('%H:%M') if kg.thoigianketthuc else None,
+            'Cong': kg.congcuakhunggio,
+            
+            # Rule Cố định (Lấy từ trường cũ)
+            'DenMuonCP': kg.thoigianchophepdenmuon,
+            'VeSomCP': kg.thoigianchophepvesomnhat,
+            'KhongTinhCongNeuMuonHon': kg.thoigiandimuonkhongtinhchamcong, 
+            'KhongTinhCongNeuSomHon': kg.thoigianvesomkhongtinhchamcong,
+            'CheckInSomNhat': kg.thoigianchophepchamcongsomnhat.strftime('%H:%M') if kg.thoigianchophepchamcongsomnhat else None,
+            'CheckOutMuonNhat': kg.thoigianchophepvemuonnhat.strftime('%H:%M') if kg.thoigianchophepvemuonnhat else None,
+            
+            # Rule Linh động (Lấy từ trường MỚI)
+            'LinhDongDenMuon': kg.sophutdenmuon, 
+            'LinhDongVeSom': kg.sophutdensom,
 
-        nghi_trua_data = None
-        nghi_trua_obj = ca.khunggionghitrua_set.first() 
-        if nghi_trua_obj:
-            nghi_trua_data = {
-                'BatDau': nghi_trua_obj.giobatdau.strftime('%H:%M'),
-                'KetThuc': nghi_trua_obj.gioketthuc.strftime('%H:%M')
-            }
+            # Rule Tự do
+            'MinPhutLamViec': kg.thoigianlamviectoithieu,
+            'YeuCauChamCong': kg.yeucauchamcong
+        })
 
-        data = {
-            'id': ca.id,
-            'TenCa': ca.tencalamviec,
-            'MaCa': ca.macalamviec,
-            'LoaiCa': ca.loaichamcong,
-            'TongCong': ca.tongthoigianlamvieccuaca,
-            'KhongCanCheckout': not ca.cocancheckout,
-            'SoLanChamCong': ca.solanchamcongtrongngay,
-            'ChiTietKhungGio': khung_gios,
-            'NghiTrua': nghi_trua_data
+    # Lấy thông tin nghỉ trưa
+    nghi_trua_data = None
+    nghi_trua_obj = ca.khunggionghitrua_set.first() 
+    if nghi_trua_obj:
+        nghi_trua_data = {
+            'BatDau': nghi_trua_obj.giobatdau.strftime('%H:%M'),
+            'KetThuc': nghi_trua_obj.gioketthuc.strftime('%H:%M')
         }
-        return json_success('Lấy chi tiết thành công', data=data)
-    except Exception as e:
-        return json_error(str(e))
+
+    data = {
+        'id': ca.id,
+        'TenCa': ca.tencalamviec,
+        'MaCa': ca.macalamviec,
+        'LoaiCa': ca.loaichamcong,
+        'TongCong': ca.tongthoigianlamvieccuaca,
+        'KhongCanCheckout': not ca.cocancheckout,
+        'SoLanChamCong': ca.solanchamcongtrongngay,
+        'ChiTietKhungGio': khung_gios,
+        'NghiTrua': nghi_trua_data
+    }
+    return json_success('Lấy chi tiết thành công', data=data)
+
 
 @require_http_methods(["POST"])
+@handle_exceptions
 def api_calamviec_create(request):
-    """API Tạo mới"""
-    try:
-        data = json.loads(request.body)
-        ma_ca = data.get('MaCa', '').strip().upper()
-        if Calamviec.objects.filter(macalamviec=ma_ca).exists():
-            return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
+    """
+    API Tạo mới Ca
+    ✅ Refactored: Sử dụng Service Layer + Validators
+    """
+    data = get_request_data(request)
+    
+    # 1. Validate trường bắt buộc
+    is_valid, missing = validate_required_fields(data, ['TenCa', 'MaCa'])
+    if not is_valid:
+        return json_error(f"Vui lòng nhập đầy đủ: {', '.join(missing)}")
 
-        with transaction.atomic():
-            ca_moi = Calamviec.objects.create(
-                tencalamviec=data.get('TenCa'),
-                macalamviec=ma_ca,
-                loaichamcong=data.get('LoaiCa'),
-                tongthoigianlamvieccuaca=data.get('TongCong', 0),
-                congcuacalamviec=int(data.get('TongCong', 0)),
-                sokhunggiotrongca=data.get('SoKhungGio', 1),
-                cocancheckout=not data.get('KhongCanCheckout', False),
-                solanchamcongtrongngay=data.get('SoLanChamCong', 1),
-                conghitrua=bool(data.get('NghiTrua')), 
-                trangthai='active',
-                created_at=timezone.now()
-            )
-            _save_shift_details(ca_moi, data)
-            
+    # 2. Validate unique Mã
+    ma_ca = data.get('MaCa', '').strip().upper()
+    if not validate_unique_field(Calamviec, 'macalamviec', ma_ca):
+        return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
+
+    # ✅ 3. Validate nghiệp vụ HRM (Overlap, Nghỉ trưa)
+    is_valid, error_msg = validate_shift_details(data)
+    if not is_valid:
+        return json_error(error_msg)
+
+    # ✅ 4. Gọi Service tạo mới (Logic tách ra)
+    try:
+        ca_moi = CaLamViecService.create_ca(data)
         return json_success("Thêm mới thành công", id=ca_moi.id)
     except Exception as e:
-        return json_error(f"Lỗi khi tạo: {str(e)}")
+        return json_error(f"Lỗi khi lưu: {str(e)}")
+
 
 @require_http_methods(["PUT", "POST"])
+@handle_exceptions
 def api_calamviec_update(request, pk):
-    """API Cập nhật"""
+    """
+    API Cập nhật Ca
+    ✅ Refactored: Sử dụng Service Layer + Validators
+    """
+    ca = get_object_or_json_error(Calamviec, pk, "Không tìm thấy ca làm việc")
+    if not isinstance(ca, Calamviec): 
+        return ca
+    
+    data = get_request_data(request)
+    
+    # 1. Validate unique Mã (trừ chính nó)
+    ma_ca = data.get('MaCa', '').strip().upper()
+    if not validate_unique_field(Calamviec, 'macalamviec', ma_ca, exclude_pk=pk):
+        return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
+
+    # ✅ 2. Validate nghiệp vụ HRM
+    is_valid, error_msg = validate_shift_details(data)
+    if not is_valid:
+        return json_error(error_msg)
+
+    # ✅ 3. Gọi Service cập nhật
     try:
-        data = json.loads(request.body)
-        ca = get_object_or_404(Calamviec, pk=pk)
-        
-        ma_ca = data.get('MaCa', '').strip().upper()
-        if Calamviec.objects.filter(macalamviec=ma_ca).exclude(pk=pk).exists():
-            return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
-
-        with transaction.atomic():
-            ca.tencalamviec = data.get('TenCa')
-            ca.macalamviec = ma_ca
-            ca.loaichamcong = data.get('LoaiCa')
-            ca.tongthoigianlamvieccuaca = data.get('TongCong', 0)
-            ca.congcuacalamviec = int(data.get('TongCong', 0))
-            ca.sokhunggiotrongca = data.get('SoKhungGio', 1)
-            ca.solanchamcongtrongngay = data.get('SoLanChamCong', 1)
-            ca.cocancheckout = not data.get('KhongCanCheckout', False)
-            ca.conghitrua = bool(data.get('NghiTrua'))
-            ca.updated_at = timezone.now()
-            ca.save()
-
-            # Xóa cũ -> Tạo mới
-            # 1. Xóa khung giờ làm việc
-            ca.khunggiolamviec_set.all().delete()
-            # 2. Xóa khung giờ nghỉ trưa
-            ca.khunggionghitrua_set.all().delete()
-            
-            _save_shift_details(ca, data)
-
+        CaLamViecService.update_ca(ca, data)
         return json_success("Cập nhật thành công")
     except Exception as e:
-        return json_error(f"Lỗi khi cập nhật: {str(e)}")
+        return json_error(f"Lỗi khi lưu: {str(e)}")
+
 
 @require_http_methods(["POST", "DELETE"])
+@handle_exceptions
 def api_calamviec_delete(request, pk):
-    """API Xóa Ca"""
-    try:
-        item = get_object_or_404(Calamviec, pk=pk)
-        
-        # === THÊM LOGIC CHẶN XÓA CA HÀNH CHÍNH TẠI ĐÂY ===
-        if item.macalamviec == 'CAHANHCHINH':
-            return json_error("Đây là ca làm việc mặc định của hệ thống, không được phép xóa!")
-        # ==================================================
-        
-        # Xóa các bảng con trước để tránh lỗi Foreign Key
-        item.khunggiolamviec_set.all().delete()
-        item.khunggionghitrua_set.all().delete()
-        
-        success, message = safe_delete(item)
-        if success:
-            return json_success("Xóa thành công!")
-        else:
-            return json_error(message)
-    except Exception as e:
-        return json_error(str(e), status=500)
+    """
+    API Xóa Ca
+    ✅ Refactored: Sử dụng Service Layer
+    """
+    item = get_object_or_json_error(Calamviec, pk, "Không tìm thấy dữ liệu")
+    if not isinstance(item, Calamviec): 
+        return item
 
-# ============================================================================
-# 3. HELPER FUNCTION
-# ============================================================================
-
-def _save_shift_details(ca_instance, data):
-    khung_gios = data.get('ChiTietKhungGio', [])
-    nghi_trua = data.get('NghiTrua') 
-
-    for kg in khung_gios:
-        Khunggiolamviec.objects.create(
-            calamviec=ca_instance,
-            thoigianbatdau=kg.get('GioBatDau') or None,
-            thoigianketthuc=kg.get('GioKetThuc') or None,
-            congcuakhunggio=kg.get('Cong', 0),
-            
-            # 1. Cố định: Lưu vào trường cũ
-            thoigianchophepdenmuon=kg.get('DenMuonCP', 0),
-            thoigianchophepvesomnhat=kg.get('VeSomCP', 0),
-            
-            # 2. Linh động: LƯU VÀO TRƯỜNG MỚI
-            sophutdenmuon=kg.get('LinhDongDenMuon', 0),
-            sophutdensom=kg.get('LinhDongVeSom', 0),
-            
-            # Các trường chung
-            thoigiandimuonkhongtinhchamcong=kg.get('KhongTinhCongNeuMuonHon', 0),
-            thoigianvesomkhongtinhchamcong=kg.get('KhongTinhCongNeuSomHon', 0),
-            thoigianchophepchamcongsomnhat=kg.get('CheckInSomNhat') or None,
-            thoigianchophepvemuonnhat=kg.get('CheckOutMuonNhat') or None,
-            thoigianlamviectoithieu=kg.get('MinPhutLamViec', 0),
-            yeucauchamcong=kg.get('YeuCauChamCong', True),
-            created_at=timezone.now()
-        )
-
-    if nghi_trua:
-        Khunggionghitrua.objects.create(
-            calamviec=ca_instance,
-            giobatdau=nghi_trua.get('BatDau'),
-            gioketthuc=nghi_trua.get('KetThuc'),
-            created_at=timezone.now()
-        )
+    # ✅ Gọi Service xóa (Logic check CAHANHCHINH ở trong Service)
+    success, message = CaLamViecService.delete_ca(item)
+    
+    if success:
+        return json_success(message)
+    else:
+        return json_error(message)
