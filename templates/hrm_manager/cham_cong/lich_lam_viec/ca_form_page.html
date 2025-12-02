@@ -9,32 +9,28 @@
 
     <div class="bg-white shadow-sm rounded-lg mt-4 mx-4">
         <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-slate-900">{{ title|default:"Thêm mới ca làm việc" }}</h1>
+            <h1 id="page-title" class="text-xl font-bold text-slate-900">
+                {{ title|default:"Thêm mới ca làm việc" }}
+            </h1>
         </div>
 
         <form id="ca-form" class="p-6 space-y-8">
             {% csrf_token %}
-            
+
+            {# ===================== THIẾT LẬP CƠ BẢN ===================== #}
             <div class="space-y-4">
-                <h3 class="text-sm font-bold text-green-600 uppercase tracking-wider border-b border-slate-100 pb-2">
-                    <i class="fas fa-info-circle mr-2"></i>Thiết lập cơ bản
-                </h3>
+                {% include "components/section_header.html" with title="Thiết lập cơ bản" icon_class="fas fa-info-circle" %}
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Tên ca làm việc <span class="text-red-500">*</span></label>
-                        <input type="text" name="tencalamviec" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="VD: Ca Hành Chính">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Mã ca <span class="text-red-500">*</span></label>
-                        <input type="text" name="macalamviec" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="VD: HC01">
-                    </div>
+                    {% include "components/form_field_text.html" with label="Tên ca làm việc" name="tencalamviec" required=True placeholder="VD: Ca Hành Chính" %}
+
+                    {% include "components/form_field_text.html" with label="Mã ca" name="macalamviec" required=True placeholder="VD: HC01" %}
                 </div>
             </div>
 
+            {# ===================== THIẾT LẬP CA CHI TIẾT ===================== #}
             <div class="space-y-4">
-                <h3 class="text-sm font-bold text-green-600 uppercase tracking-wider border-b border-slate-100 pb-2">
-                    <i class="fas fa-cogs mr-2"></i>Thiết lập ca chi tiết
-                </h3>
+                {% include "components/section_header.html" with title="Thiết lập ca chi tiết" icon_class="fas fa-cogs" %}
 
                 <div class="space-y-2">
                     <div class="flex items-center space-x-8">
@@ -52,12 +48,19 @@
                             <span class="ml-2 text-sm text-slate-700">Tự do</span>
                         </label>
                     </div>
-                    
-                    <p id="desc-co-dinh" class="text-sm text-slate-500 italic ml-[130px]">CBNV phải đi làm cố định trong một khung giờ vào ca, ra ca cụ thể</p>
-                    <p id="desc-linh-dong" class="text-sm text-slate-500 italic ml-[130px] hidden">Cho phép CBNV linh động trong khung giờ vào, ra ca, chỉ cần đủ tổng giờ làm</p>
-                    <p id="desc-tu-do" class="text-sm text-slate-500 italic ml-[130px] hidden">Cho phép CBVN tự do tổng giờ làm, chỉ cần chấm công hoặc không cần chấm công</p>
+
+                    <p id="desc-co-dinh" class="text-sm text-slate-500 italic ml-[130px]">
+                        CBNV phải đi làm cố định trong một khung giờ vào ca, ra ca cụ thể
+                    </p>
+                    <p id="desc-linh-dong" class="text-sm text-slate-500 italic ml-[130px] hidden">
+                        Cho phép CBNV linh động trong khung giờ vào, ra ca, chỉ cần đủ tổng giờ làm
+                    </p>
+                    <p id="desc-tu-do" class="text-sm text-slate-500 italic ml-[130px] hidden">
+                        Cho phép CBNV tự do tổng giờ làm, chỉ cần chấm công hoặc không cần chấm công
+                    </p>
                 </div>
 
+                {# ----------------- BLOCK CỐ ĐỊNH ----------------- #}
                 <div id="block-co-dinh" class="shift-config-block space-y-6 p-6 bg-slate-50 rounded-lg border border-slate-200">
                     <div class="flex items-center space-x-6">
                         <span class="text-sm font-medium text-slate-700 w-48">Số khung giờ trong ca:</span>
@@ -77,18 +80,15 @@
                     </div>
 
                     <div class="text-sm font-medium text-slate-700 bg-green-50 p-3 rounded border border-green-200 inline-block">
-                        Tổng thời gian làm việc của ca: <span id="total-work-time" class="text-green-700 font-bold ml-1">00 giờ 00 phút</span>
+                        Tổng thời gian làm việc của ca:
+                        <span id="total-work-time" class="text-green-700 font-bold ml-1">00 giờ 00 phút</span>
                     </div>
 
                     <div id="segments-container" class="space-y-6"></div>
 
                     <div id="lunch-break-section" class="border-t border-slate-200 pt-4 hidden">
                         <div class="flex items-center mb-3">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="has-lunch-break" class="sr-only peer status-toggle">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                <span class="ml-3 text-sm font-medium text-slate-700">Nghỉ giữa giờ (nghỉ trưa)</span>
-                            </label>
+                            {% include "components/form_toggle.html" with id="has-lunch-break" name="" label="Nghỉ giữa giờ (nghỉ trưa)" extra_input_class="status-toggle" %}
                         </div>
                         <div id="lunch-time-inputs" class="flex items-center space-x-4 ml-14 hidden">
                             <div class="w-32">
@@ -103,16 +103,19 @@
                     </div>
                 </div>
 
+                {# ----------------- BLOCK LINH ĐỘNG ----------------- #}
                 <div id="block-linh-dong" class="shift-config-block hidden p-6 bg-slate-50 rounded-lg border border-slate-200 space-y-6">
-                    
                     <div class="text-sm font-medium text-slate-700 bg-green-50 p-3 rounded border border-green-200 inline-block">
-                        Tổng thời gian làm việc của ca: <span id="ld-total-work-time" class="text-green-700 font-bold ml-1">00 giờ 00 phút</span>
+                        Tổng thời gian làm việc của ca:
+                        <span id="ld-total-work-time" class="text-green-700 font-bold ml-1">00 giờ 00 phút</span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
-                                <label class="text-sm font-bold text-slate-700 w-32">Giờ bắt đầu <span class="text-red-500">*</span></label>
+                                <label class="text-sm font-bold text-slate-700 w-32">
+                                    Giờ bắt đầu <span class="text-red-500">*</span>
+                                </label>
                                 <div class="w-36">
                                     <input type="text" name="ld_batdau" class="time-input w-full px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-slate-700 bg-white" placeholder="08:00" maxlength="5">
                                 </div>
@@ -133,7 +136,9 @@
 
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
-                                <label class="text-sm font-bold text-slate-700 w-32">Giờ kết thúc <span class="text-red-500">*</span></label>
+                                <label class="text-sm font-bold text-slate-700 w-32">
+                                    Giờ kết thúc <span class="text-red-500">*</span>
+                                </label>
                                 <div class="w-36">
                                     <input type="text" name="ld_ketthuc" class="time-input w-full px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-slate-700 bg-white" placeholder="17:00" maxlength="5">
                                 </div>
@@ -161,7 +166,6 @@
                                 <input type="number" name="ld_flex_late" class="w-24 px-3 py-1.5 border border-slate-300 rounded text-right focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="0">
                                 <span class="text-sm text-slate-500">phút</span>
                             </div>
-                            
                             <p class="text-xs text-slate-400 mt-1 ml-48 italic">
                                 Đến muộn bao nhiêu phút thì nhân viên cần phải ở lại muộn bấy nhiêu phút để đủ công
                             </p>
@@ -178,11 +182,7 @@
 
                     <div class="border-t border-slate-200 pt-4">
                         <div class="flex items-center mb-2">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="ld-has-lunch-break" class="sr-only peer status-toggle">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                <span class="ml-3 text-sm font-medium text-slate-700">Nghỉ giữa giờ</span>
-                            </label>
+                            {% include "components/form_toggle.html" with id="ld-has-lunch-break" name="" label="Nghỉ giữa giờ" extra_input_class="status-toggle" %}
                         </div>
                         <div id="ld-lunch-time-inputs" class="flex items-center space-x-4 ml-14 mt-2 hidden">
                             <div class="w-32">
@@ -197,10 +197,13 @@
                     </div>
                 </div>
 
+                {# ----------------- BLOCK TỰ DO ----------------- #}
                 <div id="block-tu-do" class="shift-config-block hidden p-6 bg-slate-50 rounded-lg border border-slate-200 space-y-6">
                     <div class="bg-white p-6 rounded border border-slate-200 space-y-6">
                         <div class="flex items-center">
-                            <label class="text-sm font-bold text-slate-700 w-32">Giờ bắt đầu: <span class="text-red-500">*</span></label>
+                            <label class="text-sm font-bold text-slate-700 w-32">
+                                Giờ bắt đầu: <span class="text-red-500">*</span>
+                            </label>
                             <div class="flex items-center gap-3">
                                 <div class="w-32">
                                     <input type="text" name="td_batdau" class="time-input w-full px-3 py-2 border border-slate-300 rounded-lg text-center font-medium bg-white" maxlength="5" placeholder="00:00">
@@ -213,15 +216,13 @@
                         </div>
 
                         <div class="flex items-center">
-                            <label class="text-sm font-medium text-slate-700 w-32">Yêu cầu chấm công</label>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="toggle-yeucau" name="yeucauchamcong" class="sr-only peer status-toggle">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
+                            {% include "components/form_toggle.html" with id="toggle-yeucau" name="yeucauchamcong" label="Yêu cầu chấm công" extra_input_class="status-toggle" %}
                         </div>
 
                         <div id="min-work-time-container" class="hidden flex items-center animate-fade-in">
-                            <label class="text-sm font-bold text-slate-700 w-48">Thời lượng tối thiểu phải làm <span class="text-red-500">*</span></label>
+                            <label class="text-sm font-bold text-slate-700 w-48">
+                                Thời lượng tối thiểu phải làm <span class="text-red-500">*</span>
+                            </label>
                             <input type="number" name="thoigianlamviectoithieu" class="w-32 px-3 py-2 border border-slate-300 rounded-lg" placeholder="180">
                             <span class="ml-2 text-sm text-slate-600">phút</span>
                         </div>
@@ -229,34 +230,24 @@
                 </div>
             </div>
 
+            {# ===================== THIẾT LẬP CÔNG ===================== #}
             <div class="space-y-4">
-                <h3 class="text-sm font-bold text-green-600 uppercase tracking-wider border-b border-slate-100 pb-2">
-                    <i class="fas fa-calculator mr-2"></i>Thiết lập công
-                </h3>
+                {% include "components/section_header.html" with title="Thiết lập công" icon_class="fas fa-calculator" %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Công của ca <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Công của ca <span class="text-red-500">*</span>
+                        </label>
                         <input type="number" step="0.1" name="congcuaca" id="total-workday" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all" placeholder="1.0">
                     </div>
                     <div class="pt-6">
-                        <div class="flex items-center">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="khongcancheckout" class="sr-only peer status-toggle">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                <span class="ml-3 text-sm font-medium text-slate-700">Không cần Checkout</span>
-                            </label>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1 ml-14">Hệ thống tự động ghi nhận giờ checkout là giờ kết thúc của ca làm việc</p>
+                        {% include "components/form_toggle.html" with id="khongcancheckout" name="khongcancheckout" label="Không cần Checkout" extra_input_class="status-toggle" description="Hệ thống tự động ghi nhận giờ checkout là giờ kết thúc của ca làm việc" %}
                     </div>
                 </div>
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-4 z-10 shadow-lg md:pl-[270px]">
-                <a href="{% url 'hrm:cham_cong:thiet_ke_ca' %}" class="px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Hủy</a>
-                <button type="button" id="btn-save" class="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm transition-colors flex items-center">
-                    <i class="fas fa-save mr-2"></i>Lưu lại
-                </button>
-            </div>
+            {# ===================== FOOTER CỐ ĐỊNH ===================== #}
+            {% include "components/form_footer_fixed.html" with cancel_url=cancel_url submit_id="btn-save" submit_text="Lưu lại" %}
         </form>
     </div>
 </div>

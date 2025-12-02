@@ -869,7 +869,134 @@ const AppUtils = (() => {
             return normalized.toUpperCase();
         }
     };
+    // ============================================================
+    // DELETE OPERATIONS - Tái sử dụng cho mọi loại CRUD
+    // ============================================================
+    const DeleteOperations = {
+        /**
+         * Xóa đơn lẻ với confirm modal
+         * @param {Object} options
+         * @param {string|number} options.id - ID item cần xóa
+         * @param {string} options.name - Tên hiển thị trong modal
+         * @param {Function|string} options.url - URL hoặc function(id) trả về URL
+         * @param {Function} options.onSuccess - Callback khi xóa thành công
+         * @param {string} [options.method='POST'] - HTTP method
+         * @param {string} [options.title] - Tiêu đề modal
+         * @param {string} [options.message] - Nội dung modal
+         */
+        confirmDelete(options) {
+            const {
+                id,
+                name,
+                url,
+                onSuccess,
+                method = 'POST',
+                title = 'Xác nhận xóa',
+                message = null
+            } = options;
 
+            const displayMessage = message || `Bạn có chắc chắn muốn xóa "${name}"?`;
+            const finalUrl = typeof url === 'function' ? url(id) : url;
+
+            Modal.showConfirm({
+                title,
+                message: displayMessage,
+                type: 'danger',
+                confirmText: 'Xóa',
+                onConfirm: async () => {
+                    try {
+                        let result;
+                        if (method === 'DELETE') {
+                            result = await API.delete(finalUrl);
+                        } else {
+                            result = await API.post(finalUrl);
+                        }
+
+                        if (result.success === false) {
+                            throw new Error(result.message || 'Xóa thất bại');
+                        }
+
+                        Notify.success(result.message || 'Xóa thành công! ');
+                        if (onSuccess) onSuccess(result);
+
+                    } catch (err) {
+                        console.error('⛔ Delete error:', err);
+                        Notify.error(err.message || 'Có lỗi xảy ra khi xóa');
+                    }
+                }
+            });
+        },
+
+        /**
+         * Xóa nhiều items với confirm modal
+         * @param {Object} options
+         * @param {Array} options.ids - Mảng ID cần xóa
+         * @param {Function|string} options.url - URL cho từng item hoặc function(id)
+         * @param {string} [options.bulkUrl] - URL xóa nhiều (ưu tiên nếu có)
+         * @param {Function} options.onSuccess - Callback khi xóa thành công
+         * @param {string} [options. method='POST'] - HTTP method
+         */
+        confirmBulkDelete(options) {
+            const {
+                ids,
+                url,
+                bulkUrl = null,
+                onSuccess,
+                method = 'POST'
+            } = options;
+
+            const count = ids.length;
+
+            if (count === 0) {
+                Notify.warning('Vui lòng chọn ít nhất một mục để xóa');
+                return;
+            }
+
+            Modal.showConfirm({
+                title: 'Xóa nhiều',
+                message: `Bạn có chắc chắn muốn xóa ${count} mục đã chọn?`,
+                type: 'danger',
+                confirmText: `Xóa ${count} mục`,
+                onConfirm: async () => {
+                    try {
+                        if (bulkUrl) {
+                            // Ưu tiên API bulk delete
+                            const result = await API.post(bulkUrl, { ids });
+                            if (result.success === false) {
+                                throw new Error(result.message);
+                            }
+                        } else {
+                            // Fallback: Xóa từng cái song song
+                            const promises = ids.map(id => {
+                                const finalUrl = typeof url === 'function' ?  url(id) : url;
+                                return method === 'DELETE'
+                                    ? API.delete(finalUrl)
+                                    : API.post(finalUrl);
+                            });
+
+                            const results = await Promise. all(promises);
+                            const errors = results.filter(r => r.success === false);
+
+                            if (errors.length > 0) {
+                                Notify.warning(
+                                    `Đã xóa ${count - errors.length}/${count} mục.  Có ${errors.length} mục không thể xóa.`
+                                );
+                                if (onSuccess) onSuccess();
+                                return;
+                            }
+                        }
+
+                        Notify.success(`Đã xóa thành công ${count} mục! `);
+                        if (onSuccess) onSuccess();
+
+                    } catch (err) {
+                        console.error('⛔ Bulk delete error:', err);
+                        Notify. error(err.message || 'Có lỗi xảy ra khi xóa');
+                    }
+                }
+            });
+        }
+    };
     // ============================================================
     // PUBLIC API
     // ============================================================
@@ -886,9 +1013,11 @@ const AppUtils = (() => {
         UI,
         Helper,
         DateUtils,
+        DeleteOperations,
         get config() { return { ...config }; },
         get csrfToken() { return csrfToken; }
     };
+    
 })();
 
 // ============================================================

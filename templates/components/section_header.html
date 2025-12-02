@@ -1,0 +1,15 @@
+{% comment %}
+  Component: Form Section Header
+  Usage:
+    {% include "components/form_section_header.html" with
+        title="Thiết lập cơ bản"
+        icon_class="fas fa-info-circle"
+    %}
+{% endcomment %}
+
+<h3 class="text-sm font-bold text-green-600 uppercase tracking-wider border-b border-slate-100 pb-2">
+    {% if icon_class %}
+        <i class="{{ icon_class }} mr-2"></i>
+    {% endif %}
+    {{ title }}
+</h3>

@@ -2,24 +2,12 @@
 File: apps/hrm_manager/cham_cong/validators. py
 Mô tả: Validators cho Ca làm việc (HRM Business Logic)
 """
-
-def parse_time(time_str):
-    """Parse HH:MM string thành minutes từ midnight."""
-    if not time_str or len(time_str) != 5:
-        return None
-    try:
-        h, m = map(int, time_str.split(':'))
-        if 0 <= h <= 23 and 0 <= m <= 59:
-            return h * 60 + m
-        return None
-    except ValueError:
-        return None
+from apps.hrm_manager.utils.view_helpers import parse_time_to_minutes as parse_time
 
 
 def validate_shift_details(data):
     """
     Validate ChiTietKhungGio: overlap, nghỉ trưa trong giờ làm. 
-    ✅ Logic khớp 100% với ca_form.js validateData()
     
     Args:
         data: Dict payload từ request (TenCa, MaCa, ChiTietKhungGio, NghiTrua...)
@@ -58,12 +46,14 @@ def validate_shift_details(data):
         
         # Tính absolute minutes (xử lý qua đêm)
         start_abs = start + (current_day_offset * 1440)
+        
+        # Nếu giờ bắt đầu nhỏ hơn giờ kết thúc của slot trước -> Đã sang ngày hôm sau
         if previous_slot_latest_out_abs != -1 and start < (previous_slot_latest_out_abs % 1440):
             current_day_offset += 1
             start_abs = start + (current_day_offset * 1440)
         
         end_abs = end + (current_day_offset * 1440)
-        if end <= start:
+        if end <= start: # Ca qua đêm
             end_abs += 1440
         
         # Check-in sớm nhất
@@ -82,8 +72,21 @@ def validate_shift_details(data):
             late_out = parse_time(kg['CheckOutMuonNhat'])
             if late_out is None:
                 return False, f"{label}: Thời gian check-out muộn nhất không hợp lệ"
+            
+            temp_end_time = end_abs % 1440
+            gap = 0
+            
+            if late_out < temp_end_time:
+                gap = (late_out + 1440) - temp_end_time
+            else:
+                gap = late_out - temp_end_time
+            
+            # Nếu chênh lệch quá 12 tiếng -> Coi là nhập sai thay vì tự động hiểu là hôm sau
+            if gap > 720: 
+                return False, f"{label}: Check-out muộn nhất chênh lệch quá lớn (>12h) so với giờ kết thúc"
+
             late_out_abs = late_out + ((end_abs // 1440) * 1440)
-            if late_out < (end_abs % 1440):
+            if late_out < temp_end_time:
                 late_out_abs += 1440
         
         # Validate ranges

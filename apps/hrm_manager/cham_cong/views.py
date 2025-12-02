@@ -82,7 +82,8 @@ def view_ca_lam_viec_create(request):
     ]
     return render(request, "hrm_manager/cham_cong/lich_lam_viec/ca_form_page.html", {
         'title': 'Thêm mới ca làm việc',
-        'breadcrumbs': breadcrumbs
+        'breadcrumbs': breadcrumbs,
+        'cancel_url': reverse('hrm:cham_cong:thiet_ke_ca')
     })
 
 def view_ca_lam_viec_update(request, pk):
@@ -95,7 +96,8 @@ def view_ca_lam_viec_update(request, pk):
     return render(request, "hrm_manager/cham_cong/lich_lam_viec/ca_form_page.html", {
         'title': 'Cập nhật ca làm việc',
         'breadcrumbs': breadcrumbs,
-        'item_id': pk # Truyền ID xuống để JS biết đường gọi API detail
+        'item_id': pk, # Truyền ID xuống để JS biết đường gọi API detail
+        'cancel_url': reverse('hrm:cham_cong:thiet_ke_ca')
     })
 
 def view_lich_lam_viec(request):
@@ -320,7 +322,7 @@ def api_calamviec_detail(request, pk):
         'TenCa': ca.tencalamviec,
         'MaCa': ca.macalamviec,
         'LoaiCa': ca.loaichamcong,
-        'TongCong': ca.tongthoigianlamvieccuaca,
+        'TongCong': ca.congcuacalamviec,
         'KhongCanCheckout': not ca.cocancheckout,
         'SoLanChamCong': ca.solanchamcongtrongngay,
         'ChiTietKhungGio': khung_gios,
@@ -348,11 +350,6 @@ def api_calamviec_create(request):
     if not validate_unique_field(Calamviec, 'macalamviec', ma_ca):
         return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
 
-    # ✅ 3. Validate nghiệp vụ HRM (Overlap, Nghỉ trưa)
-    is_valid, error_msg = validate_shift_details(data)
-    if not is_valid:
-        return json_error(error_msg)
-
     # ✅ 4. Gọi Service tạo mới (Logic tách ra)
     try:
         ca_moi = CaLamViecService.create_ca(data)
@@ -378,11 +375,6 @@ def api_calamviec_update(request, pk):
     ma_ca = data.get('MaCa', '').strip().upper()
     if not validate_unique_field(Calamviec, 'macalamviec', ma_ca, exclude_pk=pk):
         return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
-
-    # ✅ 2. Validate nghiệp vụ HRM
-    is_valid, error_msg = validate_shift_details(data)
-    if not is_valid:
-        return json_error(error_msg)
 
     # ✅ 3. Gọi Service cập nhật
     try:

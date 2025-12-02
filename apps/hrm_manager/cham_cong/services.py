@@ -5,8 +5,9 @@ Mô tả: Service Layer cho Ca làm việc (Tách logic CRUD ra khỏi views)
 
 from django.utils import timezone
 from django. db import transaction
+from django.core.exceptions import ValidationError
 from apps.hrm_manager.__core__.models import Calamviec, Khunggiolamviec, Khunggionghitrua
-
+from .validators import validate_shift_details
 
 class CaLamViecService:
     """
@@ -25,12 +26,17 @@ class CaLamViecService:
         Returns:
             Calamviec instance
         """
+
+        is_valid, error = validate_shift_details(data)
+        if not is_valid:
+            raise ValidationError(error)
+        
         with transaction.atomic():
             ca_moi = Calamviec. objects.create(
                 tencalamviec=data. get('TenCa'),
                 macalamviec=data.get('MaCa', ''). strip(). upper(),
                 loaichamcong=data.get('LoaiCa'),
-                tongthoigianlamvieccuaca=data.get('TongCong', 0),
+                tongthoigianlamvieccuaca=data.get('TongThoiGian', 0),
                 congcuacalamviec=float(data.get('TongCong', 0)),
                 sokhunggiotrongca=data.get('SoKhungGio', 1),
                 cocancheckout=not data.get('KhongCanCheckout', False),
@@ -57,12 +63,17 @@ class CaLamViecService:
         Returns:
             Calamviec instance đã update
         """
+
+        is_valid, error = validate_shift_details(data)
+        if not is_valid:
+            raise ValidationError(error)
+        
         with transaction.atomic():
             # Update fields
             ca_instance.tencalamviec = data.get('TenCa')
             ca_instance.macalamviec = data.get('MaCa', '').strip(). upper()
             ca_instance. loaichamcong = data.get('LoaiCa')
-            ca_instance.tongthoigianlamvieccuaca = data.get('TongCong', 0)
+            ca_instance.tongthoigianlamvieccuaca = data.get('TongThoiGian', 0)
             ca_instance.congcuacalamviec = float(data.get('TongCong', 0))
             ca_instance.sokhunggiotrongca = data.get('SoKhungGio', 1)
             ca_instance.solanchamcongtrongngay = data.get('SoLanChamCong', 1)

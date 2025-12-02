@@ -32588,3 +32588,386 @@ WARNING 2025-11-28 23:15:45,238 log 7700 13964 Not Found: /.well-known/appspecif
 WARNING 2025-11-28 23:15:45,239 basehttp 7700 13964 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-11-29 09:23:38,578 log 5772 8380 Not Found: /favicon.ico
 WARNING 2025-11-29 09:23:38,579 basehttp 5772 8380 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-01 11:35:34,478 log 7664 20720 Not Found: /favicon.ico
+WARNING 2025-12-01 11:35:34,478 basehttp 7664 20720 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-01 11:35:56,868 log 7664 24880 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 121, in view_tong_hop_lich
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/tong_hop_lich.html
+ERROR 2025-12-01 11:35:56,873 basehttp 7664 24880 "GET /hrm/cham-cong/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93738
+WARNING 2025-12-01 11:39:43,876 log 7664 7424 Not Found: /favicon.ico
+WARNING 2025-12-01 11:39:43,876 basehttp 7664 7424 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-01 11:56:05,277 log 7664 13560 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-01 11:56:05,277 basehttp 7664 13560 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 85
+ERROR 2025-12-01 15:08:17,460 log 7664 17424 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 110, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-12-01 15:08:17,463 basehttp 7664 17424 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 93923
+WARNING 2025-12-02 14:52:47,626 log 23220 17396 Not Found: /favicon.ico
+WARNING 2025-12-02 14:52:47,636 basehttp 23220 17396 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-02 15:57:43,973 log 4212 24956 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 15:57:43,975 basehttp 4212 24956 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 203
+WARNING 2025-12-02 15:57:49,274 log 4212 24956 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 15:57:49,275 basehttp 4212 24956 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:10:18,991 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:10:18,991 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:10:38,679 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:10:38,679 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:10:43,599 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:10:43,599 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:13:32,700 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:13:32,700 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:13:39,524 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:13:39,524 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:13:44,571 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:13:44,571 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:13:49,310 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:13:49,310 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:13:56,036 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:13:56,036 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:14:01,308 log 4212 17080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:14:01,308 basehttp 4212 17080 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 203
+WARNING 2025-12-02 16:23:54,854 log 14496 9456 Not Found: /favicon.ico
+WARNING 2025-12-02 16:23:54,855 basehttp 14496 9456 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-02 16:24:15,153 log 14496 22860 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:24:15,153 basehttp 14496 22860 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 230
+WARNING 2025-12-02 16:24:48,033 log 14496 22860 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:24:48,033 basehttp 14496 22860 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 230
+WARNING 2025-12-02 16:24:53,167 log 14496 22860 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:24:53,167 basehttp 14496 22860 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 230
+WARNING 2025-12-02 16:25:50,400 log 14496 22860 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:25:50,409 basehttp 14496 22860 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 232
+WARNING 2025-12-02 16:26:02,290 log 14496 22860 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:26:02,290 basehttp 14496 22860 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 232
+WARNING 2025-12-02 16:26:41,709 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:26:41,709 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:26:52,566 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:26:52,566 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:27:13,193 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:27:13,193 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 180
+WARNING 2025-12-02 16:28:09,772 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:28:09,775 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 153
+WARNING 2025-12-02 16:28:16,693 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:28:16,693 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 155
+WARNING 2025-12-02 16:28:24,116 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:28:24,116 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 178
+WARNING 2025-12-02 16:28:28,691 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:28:28,691 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 178
+WARNING 2025-12-02 16:28:35,186 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:28:35,186 basehttp 16128 24180 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 153
+WARNING 2025-12-02 16:29:10,988 log 16128 24180 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:29:10,988 basehttp 16128 24180 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 16:31:04,327 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:31:04,327 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:31:09,279 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:31:09,279 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:31:29,597 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:31:29,597 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:31:42,292 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:31:42,292 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 184
+WARNING 2025-12-02 16:31:49,360 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:31:49,360 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 184
+WARNING 2025-12-02 16:32:08,579 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:32:08,579 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 153
+WARNING 2025-12-02 16:32:16,022 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:32:16,022 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 184
+WARNING 2025-12-02 16:32:24,710 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:32:24,710 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 184
+WARNING 2025-12-02 16:32:48,439 log 16128 8528 Bad Request: /hrm/cham-cong/api/ca-lam-viec/27/update/
+WARNING 2025-12-02 16:32:48,439 basehttp 16128 8528 "PUT /hrm/cham-cong/api/ca-lam-viec/27/update/ HTTP/1.1" 400 180
+WARNING 2025-12-02 16:35:42,933 log 16128 9080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:35:42,933 basehttp 16128 9080 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 202
+WARNING 2025-12-02 16:35:47,557 log 16128 9080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:35:47,563 basehttp 16128 9080 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 202
+WARNING 2025-12-02 16:37:03,867 log 16128 9080 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:37:03,867 basehttp 16128 9080 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 195
+WARNING 2025-12-02 16:44:32,774 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/29/update/
+WARNING 2025-12-02 16:44:32,774 basehttp 16128 12056 "PUT /hrm/cham-cong/api/ca-lam-viec/29/update/ HTTP/1.1" 400 202
+WARNING 2025-12-02 16:44:38,215 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/29/update/
+WARNING 2025-12-02 16:44:38,215 basehttp 16128 12056 "PUT /hrm/cham-cong/api/ca-lam-viec/29/update/ HTTP/1.1" 400 202
+WARNING 2025-12-02 16:45:03,945 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:45:03,945 basehttp 16128 12056 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 184
+WARNING 2025-12-02 16:47:27,941 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:47:27,941 basehttp 16128 12056 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 180
+WARNING 2025-12-02 16:48:07,008 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:48:07,008 basehttp 16128 12056 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:48:20,704 log 16128 12056 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:48:20,709 basehttp 16128 12056 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:51:34,061 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:51:34,061 basehttp 16128 3712 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:51:40,897 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:51:40,897 basehttp 16128 3712 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:52:00,020 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:52:00,020 basehttp 16128 3712 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 193
+WARNING 2025-12-02 16:52:05,602 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/30/update/
+WARNING 2025-12-02 16:52:05,602 basehttp 16128 3712 "PUT /hrm/cham-cong/api/ca-lam-viec/30/update/ HTTP/1.1" 400 178
+WARNING 2025-12-02 16:55:18,687 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:55:18,687 basehttp 16128 3712 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 81
+WARNING 2025-12-02 16:55:23,935 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:55:23,941 basehttp 16128 3712 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 81
+WARNING 2025-12-02 16:58:54,981 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:58:54,981 basehttp 16128 3712 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 180
+WARNING 2025-12-02 16:59:45,287 log 16128 3712 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 16:59:45,289 basehttp 16128 3712 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 184
+WARNING 2025-12-02 17:05:03,295 log 22532 21456 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:05:03,300 basehttp 22532 21456 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 193
+WARNING 2025-12-02 17:05:24,898 log 22532 21456 Bad Request: /hrm/cham-cong/api/ca-lam-viec/34/update/
+WARNING 2025-12-02 17:05:24,898 basehttp 22532 21456 "PUT /hrm/cham-cong/api/ca-lam-viec/34/update/ HTTP/1.1" 400 184
+WARNING 2025-12-02 17:07:12,348 log 22532 13372 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:07:12,348 basehttp 22532 13372 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 17:26:29,759 log 22532 17264 Not Found: /hrm/cham_cong/api/ca-lam-viec/detail/36/
+WARNING 2025-12-02 17:26:29,759 basehttp 22532 17264 "GET /hrm/cham_cong/api/ca-lam-viec/detail/36/ HTTP/1.1" 404 5312
+WARNING 2025-12-02 17:34:24,351 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:34:24,352 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:34:26,492 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:34:26,493 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:34:32,843 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:34:32,844 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:34:48,255 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:34:48,255 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:34:59,506 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:34:59,507 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:01,244 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:01,245 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:13,190 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:13,191 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:16,473 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:35:16,475 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:35:28,920 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:28,921 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:34,602 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:34,603 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:37,614 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:37,615 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:38,551 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:38,552 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:39,358 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:39,358 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:40,037 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:40,038 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:41,045 log 22532 11728 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:41,045 basehttp 22532 11728 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 17:35:47,629 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:35:47,630 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:35:55,869 log 22532 11728 Method Not Allowed (GET): /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:35:56,068 basehttp 22532 11728 "GET /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 405 0
+WARNING 2025-12-02 17:36:34,616 log 22532 11728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 17:36:34,617 basehttp 22532 11728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 17:54:22,250 log 22532 19332 Bad Request: /hrm/cham-cong/api/ca-lam-viec/38/update/
+WARNING 2025-12-02 17:54:22,251 basehttp 22532 19332 "PUT /hrm/cham-cong/api/ca-lam-viec/38/update/ HTTP/1.1" 400 180
+WARNING 2025-12-02 17:56:57,556 log 22532 19332 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:56:57,556 basehttp 22532 19332 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 17:57:04,526 log 22532 19332 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:57:04,528 basehttp 22532 19332 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 17:57:28,313 log 22532 19332 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 17:57:28,313 basehttp 22532 19332 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 18:02:04,945 log 22532 15708 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 18:02:04,946 basehttp 22532 15708 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 18:02:33,715 log 22532 15708 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 18:02:33,716 basehttp 22532 15708 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 20:41:25,411 log 16656 25540 Not Found: /favicon.ico
+WARNING 2025-12-02 20:41:25,411 basehttp 16656 25540 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-02 20:42:25,569 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:42:25,569 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 20:42:33,023 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:42:33,023 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 191
+WARNING 2025-12-02 20:44:50,169 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:44:50,169 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 153
+WARNING 2025-12-02 20:45:09,247 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:09,247 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 155
+WARNING 2025-12-02 20:45:14,863 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:14,863 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 193
+WARNING 2025-12-02 20:45:24,790 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:24,790 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 180
+WARNING 2025-12-02 20:45:39,976 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:39,976 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 155
+WARNING 2025-12-02 20:45:45,187 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:45,187 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 178
+WARNING 2025-12-02 20:45:53,236 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:45:53,242 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 184
+WARNING 2025-12-02 20:47:14,350 log 16656 25540 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 20:47:14,350 basehttp 16656 25540 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+WARNING 2025-12-02 21:07:59,221 log 16656 3724 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:07:59,221 basehttp 16656 3724 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:08:01,692 log 16656 12152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:08:01,692 basehttp 16656 12152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:48:30,571 basehttp 16656 10468 "GET /static/js/utils/base_page_manager.js HTTP/1.1" 404 2014
+WARNING 2025-12-02 21:48:31,175 log 16656 18268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:48:31,176 basehttp 16656 18268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:48:31,636 basehttp 16656 18268 "GET /static/js/utils/base_page_manager.js HTTP/1.1" 404 2014
+WARNING 2025-12-02 21:48:31,862 log 16656 6528 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:48:31,863 basehttp 16656 6528 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:48:35,670 basehttp 16656 22728 "GET /static/js/utils/base_page_manager.js HTTP/1.1" 404 2014
+WARNING 2025-12-02 21:48:35,873 log 16656 6528 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:48:35,874 basehttp 16656 6528 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:48:37,106 basehttp 16656 1860 "GET /static/js/utils/base_page_manager.js HTTP/1.1" 404 2014
+WARNING 2025-12-02 21:48:37,827 log 16656 13120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:48:37,828 basehttp 16656 13120 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 21:50:03,817 log 16656 20700 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 21:50:03,817 basehttp 16656 20700 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:01:37,305 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:01:37,305 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:03:16,529 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:03:16,530 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:03:54,614 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:03:54,615 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:03:57,029 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:03:57,030 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:04:06,027 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:04:06,027 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:04:07,403 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:04:07,403 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:04:07,652 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:04:07,652 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:04:48,245 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:04:48,245 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:07:51,331 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:07:51,331 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:07:52,599 log 16656 22848 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:07:52,605 basehttp 16656 22848 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:07:56,859 log 16656 22868 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:07:56,859 basehttp 16656 22868 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:07:58,542 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:07:58,543 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:12:47,177 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:12:47,177 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2025-12-02 22:13:22,753 log 16656 5728 Internal Server Error: /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 112, in view_lich_lam_viec
+    return render(request, "hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-12-02 22:13:22,770 basehttp 16656 5728 "GET /hrm/cham-cong/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94250
+WARNING 2025-12-02 22:13:23,039 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:13:23,040 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:13:26,977 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:13:26,977 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:13:27,226 log 16656 5728 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:13:27,226 basehttp 16656 5728 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:32:29,407 log 16656 12136 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:32:29,407 basehttp 16656 12136 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:32:37,868 log 16656 12136 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:32:37,868 basehttp 16656 12136 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:32:56,496 log 16656 12136 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:32:56,496 basehttp 16656 12136 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:33:24,595 log 16656 6164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:33:24,595 basehttp 16656 6164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:33:33,557 log 16656 6164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:33:33,557 basehttp 16656 6164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:33:46,785 log 16656 21716 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:33:46,786 basehttp 16656 21716 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:34:18,863 log 16656 21716 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:34:18,863 basehttp 16656 21716 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 22:35:26,370 log 16656 12136 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 22:35:26,371 basehttp 16656 12136 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:10:32,006 log 16656 18380 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:10:32,006 basehttp 16656 18380 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 153
+WARNING 2025-12-02 23:10:37,176 log 16656 18380 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:10:37,176 basehttp 16656 18380 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 153
+WARNING 2025-12-02 23:11:46,213 log 16656 18380 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:11:46,213 basehttp 16656 18380 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 180
+WARNING 2025-12-02 23:12:06,054 log 16656 18380 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:12:06,054 basehttp 16656 18380 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:13:50,642 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:13:50,642 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:14:30,925 log 16656 9796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:14:30,927 basehttp 16656 9796 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:14:42,198 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:14:42,199 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:15:14,139 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:15:14,143 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:18:06,975 log 16656 9796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:18:06,976 basehttp 16656 9796 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:18:09,675 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:18:09,675 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:18:31,544 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:18:31,544 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:18:33,964 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:18:33,964 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:19:14,883 log 16656 9280 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:19:14,883 basehttp 16656 9280 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 202
+WARNING 2025-12-02 23:19:19,271 log 16656 9280 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:19:19,271 basehttp 16656 9280 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 202
+WARNING 2025-12-02 23:19:25,555 log 16656 9280 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:19:25,555 basehttp 16656 9280 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 202
+WARNING 2025-12-02 23:19:39,952 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:19:39,953 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:19:46,649 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:19:46,653 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:20:31,236 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:20:31,236 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:20:33,786 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:20:33,786 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:20:39,065 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:20:39,065 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:20:39,310 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:20:39,310 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:20:41,463 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:20:41,465 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:21:52,054 log 16656 2476 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:21:52,054 basehttp 16656 2476 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 193
+WARNING 2025-12-02 23:21:56,374 log 16656 2476 Bad Request: /hrm/cham-cong/api/ca-lam-viec/create/
+WARNING 2025-12-02 23:21:56,380 basehttp 16656 2476 "POST /hrm/cham-cong/api/ca-lam-viec/create/ HTTP/1.1" 400 193
+WARNING 2025-12-02 23:22:08,360 log 16656 2476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:22:08,365 basehttp 16656 2476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:22:20,745 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:22:20,745 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:22:43,981 log 16656 9796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:22:43,981 basehttp 16656 9796 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:22:47,766 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:22:47,766 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:22:56,971 log 16656 9796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:22:56,971 basehttp 16656 9796 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:24:12,040 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:24:12,040 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:24:15,080 log 16656 9796 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:24:15,081 basehttp 16656 9796 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-02 23:24:16,976 log 16656 9280 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-02 23:24:16,976 basehttp 16656 9280 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
