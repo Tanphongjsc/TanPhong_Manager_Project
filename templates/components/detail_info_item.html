@@ -1,0 +1,38 @@
+{% comment %}
+  Partial: Info Item cho trang Chi tiết nhân viên
+  Path: templates/hrm_manager/quan_ly_nhan_su/partials/detail_info_item.html
+  
+  Usage:
+  {% include "hrm_manager/quan_ly_nhan_su/partials/detail_info_item.html" with label="Họ tên" value=employee.hovaten icon="fa-user" color="blue" %}
+  
+  Params:
+  - label: Nhãn hiển thị
+  - value: Giá trị (nếu rỗng sẽ hiển thị "--")
+  - icon: Class FontAwesome (ví dụ: "fa-user", "fa-phone")
+  - color: Màu (blue, green, purple, orange, red, pink, slate)
+  - full_width: True để chiếm hết chiều ngang (mặc định False)
+{% endcomment %}
+
+{% with display_value=value|default:"--" %}
+<div class="{% if full_width %}col-span-full{% endif %} bg-slate-50 rounded-lg p-4 border border-slate-100 hover:border-slate-200 transition-colors">
+    <div class="flex items-start gap-3">
+        {# Icon #}
+        <div class="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center
+            {% if color == 'blue' %}bg-blue-100 text-blue-600
+            {% elif color == 'green' %}bg-green-100 text-green-600
+            {% elif color == 'purple' %}bg-purple-100 text-purple-600
+            {% elif color == 'orange' %}bg-orange-100 text-orange-600
+            {% elif color == 'red' %}bg-red-100 text-red-600
+            {% elif color == 'pink' %}bg-pink-100 text-pink-600
+            {% else %}bg-slate-200 text-slate-600{% endif %}">
+            <i class="fas {{ icon }} text-sm"></i>
+        </div>
+        
+        {# Content #}
+        <div class="flex-1 min-w-0">
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">{{ label }}</p>
+            <p class="text-sm font-medium text-slate-900 {% if not full_width %}truncate{% endif %}">{{ display_value }}</p>
+        </div>
+    </div>
+</div>
+{% endwith %}

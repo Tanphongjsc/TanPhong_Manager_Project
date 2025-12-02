@@ -1,8 +1,3 @@
-/**
- * QUẢN LÝ CÂY TỔ CHỨC & NHÂN SỰ
- * Optimized with AppUtils: Form, API, Validation, EventManager, UI.
- */
-
 // --- 1. QUẢN LÝ CÂY TỔ CHỨC ---
 class TreeManager {
     constructor() {
@@ -319,11 +314,17 @@ class EmployeeManager extends BaseCRUDManager {
             return;
         }
 
+        // Lấy tên phòng ban được chọn để gửi vào noicongtac
+        const selectEl = document.getElementById('bulk-transfer-select');
+        const selectedOption = selectEl?.options[selectEl.selectedIndex];
+        const phongBanName = selectedOption?.text?.trim() || '';
+
         // 2. Prepare Data
         const selectedIds = this.tableManager.getSelectedItems();
         const payload = {
             nhan_vien_ids: selectedIds,
-            phong_ban_id: formData.phong_ban_id
+            phong_ban_id: formData.phong_ban_id,
+            noicongtac: phongBanName // Gửi tên phòng ban
         };
 
         // 3. Call API with Loading State
@@ -332,10 +333,10 @@ class EmployeeManager extends BaseCRUDManager {
         btn.disabled = true;
 
         try {
-            await this.executeBulkAPI('transfer', payload, false); // false = don't double call logic
+            await this.executeBulkAPI('transfer', payload, false);
             this.toggleModal('modal-bulk-transfer', false);
         } catch (e) {
-            // Error handled in executeBulkAPI or here if specifically needed
+            // Error handled in executeBulkAPI
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -503,13 +504,13 @@ class EmployeeManager extends BaseCRUDManager {
             const res = await AppUtils.API[isEdit ? 'put' : 'post'](url, empPayload);
             const nhanvienId = res.data?.id || res.id;
 
-            // 4. Create History Record (Transaction-like)
+            // 4. Create History Record: luôn gửi noicongtac là tên phòng ban đang chọn
             if (nhanvienId) {
                 await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
                     nhanvien_id: nhanvienId,
                     phongban_id: pbVal,
                     chucvu_id: cvVal,
-                    noicongtac: this.phongbanDropdown.selectedText,
+                    noicongtac: this.phongbanDropdown.selectedText || '', // tên phòng ban
                     trangthai: 'active'
                 });
             }
@@ -520,7 +521,6 @@ class EmployeeManager extends BaseCRUDManager {
             if (saveAndNew) {
                 AppUtils.Form.reset(form);
                 this._resetCustomState();
-                // Ensure ID is cleared
                 const idInput = form.querySelector('input[name="id"]');
                 if(idInput) { idInput.value = ''; idInput.removeAttribute('value'); }
                 form.querySelector('[name="hovaten"]')?.focus();

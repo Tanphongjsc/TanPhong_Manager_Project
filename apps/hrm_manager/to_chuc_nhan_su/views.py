@@ -73,29 +73,18 @@ def view_nhan_vien_index(request, id):
             {'title': nhan_vien.hovaten, 'url': None},
         ],
         'tabs': [
-            {
-                "id": "basic", 
-                "name": "Thông tin cơ bản",   # Dự phòng nếu component dùng {{ tab.name }}
-                "title": "Thông tin cơ bản",  # Dự phòng nếu component dùng {{ tab.title }}
-                "url": "#tab-basic", 
-                "active": True
-            },
-            {
-                "id": "history", 
-                "name": "Lịch sử công tác", 
-                "title": "Lịch sử công tác", 
-                "url": "#tab-history", 
-                "active": False
-            },
-            {
-                "id": "contracts", 
-                "name": "Hợp đồng lao động", 
-                "title": "Hợp đồng lao động", 
-                "url": "#tab-contracts", 
-                "active": False
-            },
+            {'label': 'Thông tin cơ bản', 'url': '#tab-basic', 'url_name': 'tab_basic'},
+            {'label': 'Thông tin nâng cao', 'url': '#tab-advanced', 'url_name': 'tab_advanced'},
+            {'label': 'Lịch sử công tác', 'url': '#tab-history', 'url_name': 'tab_history'}
         ],
-
+        'advanced_menu_items' : [
+            {'label': 'Thông tin bổ sung', 'target': 'subtab-info', 'icon': 'fas fa-info-circle'},
+            {'label': 'Hợp đồng lao động', 'target': 'subtab-contracts', 'icon': 'fas fa-file-contract'},
+            {'label': 'Thuế thu nhập cá nhân', 'target': 'subtab-tax', 'icon': 'fas fa-money-bill-wave'},
+            {'label': 'Bảo hiểm xã hội', 'target': 'subtab-bhxh', 'icon': 'fas fa-shield-alt'},
+            {'label': 'Bảo hiểm y tế', 'target': 'subtab-bhyt', 'icon': 'fas fa-heartbeat'},
+            {'label': 'Phụ cấp', 'target': 'subtab-allowance', 'icon': 'fas fa-coins'},
+        ],
         'employee': nhan_vien,
         'current_job': nhan_vien.lichsucongtac_set.filter(trangthai='active').first(),
     }
@@ -390,14 +379,11 @@ def api_phong_ban_nhan_vien(request):
 
     # Lấy tham số lọc từ query params
     param_query = request.GET.dict()
-    print(param_query.get('phongban_id', None))
     page = param_query.pop('page', 1)
     page_size = param_query.pop('page_size', 10)
     search_param = param_query.pop('search', '').strip()
     congty_id = param_query.pop('congty_id', None)
     phongban_ids = get_all_child_department_ids(param_query.pop('phongban_id', None), isnclude_root=True)
-
-    print("PHÒNG BAN IDS:", phongban_ids)
 
     try:        
         # Build filters từ Lichsucongtac
@@ -734,19 +720,28 @@ def api_lich_su_cong_tac_list(request):
 
     if request.method == "GET":
         # Lấy danh sách lịch sử công tác
-        trang_thai = request.GET.get("trangthai", 'all')
-
+        
         lich_su_qs = Lichsucongtac.objects.all().values()
 
-        if trang_thai != 'all':
-            lich_su_qs = lich_su_qs.filter(trangthai=trang_thai)
+        context = get_list_context(
+            request,
+            lich_su_qs,
+            filter_field=('nhanvien_id'),
+            page_size=int(request.GET.get('page_size', 10)),
+        )
 
-        return JsonResponse({
-            'success': True,
-            'data': list(lich_su_qs),
-            'total': len(lich_su_qs)
-        })
-
+        return json_success(
+            'Lấy danh sách chức vụ thành công',
+            data=list(context['page_obj']),
+            pagination={
+                'page': context['page_obj'].number,
+                'page_size': context['paginator'].per_page,
+                'total': context['paginator'].count,
+                'total_pages': context['paginator'].num_pages,
+                'has_next': context['page_obj'].has_next(),
+                'has_prev': context['page_obj'].has_previous()
+            }
+        )
 
     if request.method == "POST":
         # Tạo mới lịch sử công tác
