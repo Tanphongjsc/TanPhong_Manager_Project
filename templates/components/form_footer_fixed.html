@@ -1,0 +1,21 @@
+{% comment %}
+  Component: Fixed Form Footer (Cancel + Save)
+  Usage:
+    {% include "components/form_footer_fixed.html" with
+        cancel_url=cancel_url
+        submit_id="btn-save"
+        submit_text="Lưu lại"
+    %}
+{% endcomment %}
+
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-4 z-10 shadow-lg md:pl-[270px]">
+    <a href="{{ cancel_url }}"
+       class="px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+        {{ cancel_text|default:"Hủy" }}
+    </a>
+    <button type="button"
+            id="{{ submit_id|default:'btn-save' }}"
+            class="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm transition-colors flex items-center">
+        <i class="fas fa-save mr-2"></i>{{ submit_text|default:"Lưu lại" }}
+    </button>
+</div>

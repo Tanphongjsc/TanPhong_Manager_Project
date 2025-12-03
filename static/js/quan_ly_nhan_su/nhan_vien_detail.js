@@ -1,3 +1,5 @@
+
+
 class DetailManager {
     constructor() {
         this.empId = document.getElementById('config-emp-id')?.value;
@@ -48,6 +50,15 @@ class DetailManager {
         window.DetailManager = this;
     }
 
+    initBasicInfo() {
+        new InlineEditor({
+            containerId: 'tab-basic',
+            formId: 'form-basic-info',
+            triggerBtnId: 'btn-trigger-edit-basic',
+            apiUrl: this.apiUrls.detail
+        });
+    }
+
     init() {
         if (!this.empId) {
             console.error('⛔ Employee ID not found');
@@ -56,6 +67,7 @@ class DetailManager {
         this.initTabs();
         this.initActions();
         this.ensureEmployeeManager();
+        this.initBasicInfo();
         console.log('✅ DetailManager initialized:', this.empId);
     }
 

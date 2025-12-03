@@ -118,34 +118,60 @@
             </div>
 
             <div class="flex-1 tab-content-scroll overflow-y-auto bg-slate-50/50">
-                <div id="tab-basic" class="tab-pane animate-fade-in p-5 sm:p-6">
-                    <div class="mb-8">
-                        <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                            <span class="w-1 h-5 bg-blue-500 rounded-full"></span> Thông tin cá nhân
+                
+                <div id="tab-basic" class="tab-pane animate-fade-in p-5 sm:p-6 pb-24">
+                    
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+                            <span class="w-1 h-5 bg-blue-500 rounded-full"></span> Hồ sơ nhân viên
                         </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {% include "components/detail_info_item.html" with label="Họ và tên" value=employee.hovaten icon="fa-user" color="blue" %}
-                            {% include "components/detail_info_item.html" with label="Giới tính" value=employee.gioitinh icon="fa-venus-mars" color="pink" %}
-                            {% include "components/detail_info_item.html" with label="Ngày sinh" value=employee.ngaysinh|date:"d/m/Y" icon="fa-birthday-cake" color="purple" %}
-                            {% include "components/detail_info_item.html" with label="Số điện thoại" value=employee.sodienthoai icon="fa-phone" color="green" %}
-                            {% include "components/detail_info_item.html" with label="Email" value=employee.email icon="fa-envelope" color="orange" %}
-                            {% include "components/detail_info_item.html" with label="CCCD/CMND" value=employee.socccd icon="fa-id-card" color="slate" %}
-                        </div>
-                        <div class="mt-4">
-                            {% include "components/detail_info_item.html" with label="Địa chỉ" value=employee.diachi icon="fa-map-marker-alt" color="red" full_width=True %}
-                        </div>
+                        <button type="button" id="btn-trigger-edit-basic" 
+                                class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200">
+                            <i class="fas fa-pen mr-1.5"></i> Chỉnh sửa
+                        </button>
                     </div>
 
-                    <div>
-                        <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                            <span class="w-1 h-5 bg-green-500 rounded-full"></span> Thông tin tài chính
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {% include "components/detail_info_item.html" with label="Ngân hàng" value=employee.nganhang.tennganhang icon="fa-university" color="blue" %}
-                            {% include "components/detail_info_item.html" with label="Tên chủ tài khoản" value=employee.tentknganhang icon="fa-user" color="blue" %}
-                            {% include "components/detail_info_item.html" with label="Số tài khoản" value=employee.sotknganhang icon="fa-credit-card" color="green" %}
+                    <form id="form-basic-info" autocomplete="off">
+                        
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 mt-2 border-b border-slate-100 pb-2">
+                            I. Thông tin cá nhân
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            {% include "components/detail_info_item.html" with label="Họ và tên" value=employee.hovaten name="hovaten" icon="fa-user" color="blue" editable=False %}
+                            
+                            {% include "components/detail_info_item.html" with label="Giới tính" value=employee.gioitinh name="gioitinh" icon="fa-venus-mars" color="pink" type="select" options=gender_options %}
+                            
+                            {% include "components/detail_info_item.html" with label="Ngày sinh" value=employee.ngaysinh icon="fa-birthday-cake" color="purple" name="ngaysinh" type="date" %}
+                            
+                            {% include "components/detail_info_item.html" with label="Số điện thoại" value=employee.sodienthoai icon="fa-phone" color="green" name="sodienthoai" %}
+                            
+                            {% include "components/detail_info_item.html" with label="Email" value=employee.email icon="fa-envelope" color="orange" name="email" type="email" %}
+                            
+                            {% include "components/detail_info_item.html" with label="CCCD/CMND" value=employee.cccd icon="fa-id-card" color="slate" name="cccd" %}
+                            
+                            {% include "components/detail_info_item.html" with label="Địa chỉ" value=employee.diachi icon="fa-map-marker-alt" color="red" name="diachi" full_width=True %}
                         </div>
-                    </div>
+
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 mt-6 border-b border-slate-100 pb-2">
+                            II. Thông tin tài chính
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            {% include "components/detail_info_item.html" with label="Ngân hàng" value=employee.nganhang.TenNganHang value_id=employee.nganhang.id name="nganhang" icon="fa-university" color="blue" type="select" options=bank_options %}
+                            
+                            {% include "components/detail_info_item.html" with label="Số tài khoản" value=employee.taikhoannganhang name="taikhoannganhang" icon="fa-credit-card" color="green" %}
+                            
+                            {% include "components/detail_info_item.html" with label="Tên chủ tài khoản" value=employee.tentknganhang name="tentknganhang" icon="fa-user-tag" color="purple" %}
+                        </div>
+
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 mt-6 border-b border-slate-100 pb-2">
+                            III. Thông tin công việc
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% include "components/detail_info_item.html" with label="Phòng ban hiện tại" value=current_job.phongban.tenphongban icon="fa-building" color="slate" editable=False %}
+                            
+                            {% include "components/detail_info_item.html" with label="Chức vụ hiện tại" value=current_job.chucvu.tenvitricongviec icon="fa-briefcase" color="slate" editable=False %}
+                        </div>
+                    </form>
                 </div>
 
                 <div id="tab-history" class="tab-pane hidden animate-fade-in p-5 sm:p-6">
@@ -183,10 +209,16 @@
     </div>
 </div>
 
+<div id="global-edit-footer" 
+     class="fixed bottom-0 left-0 right-0 hidden transition-transform duration-300 transform translate-y-full z-[20]">
+    {% include "components/form_footer_fixed.html" with cancel_url="#" cancel_text="Hủy bỏ" submit_id="btn-global-save" submit_text="Lưu thay đổi" %}
+</div>
+
 {% include "components/crud_sidebar.html" with sidebar_id="employee-sidebar" overlay_id="employee-sidebar-overlay" form_id="employee-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/nhanvien_form.html" title="Cập nhật nhân viên" submit_text="Lưu thay đổi" %}
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'js/components/inline_editor.js' %}"></script>
 <script src="{% static 'js/components/vertical_tab_nav.js' %}"></script>
 <script src="{% static 'js/quan_ly_nhan_su/cay_nhan_su.js' %}"></script>
 <script src="{% static 'js/quan_ly_nhan_su/nhan_vien_detail.js' %}"></script>
