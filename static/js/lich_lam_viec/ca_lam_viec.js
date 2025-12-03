@@ -6,8 +6,8 @@
 class CaLamViecController {
     constructor() {
         this. apiUrls = {
-            list: '/hrm/cham-cong/api/ca-lam-viec/list/',
-            delete: (id) => `/hrm/cham-cong/api/ca-lam-viec/${id}/delete/`,
+            list: '/hrm/lich-lam-viec/api/ca-lam-viec/list/',
+            delete: (id) => `/hrm/lich-lam-viec/api/ca-lam-viec/${id}/delete/`,
         };
         
         this.tableManager = null;
@@ -42,7 +42,7 @@ class CaLamViecController {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition-colors group';
 
-        const editUrl = `/hrm/cham-cong/thiet-ke-lich/ca-lam-viec/${item.id}/update/`;
+        const editUrl = `/hrm/lich-lam-viec/thiet-ke-lich/ca-lam-viec/${item.id}/update/`;
         const isSystemDefault = item.MaCa === 'CAHANHCHINH';
 
         // Tên + Badge

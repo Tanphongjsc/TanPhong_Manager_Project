@@ -18,9 +18,9 @@ class CaFormController extends BaseFormManager {
             formId: 'ca-form',
             submitBtnId: 'btn-save',
             apiUrls: {
-                create: '/hrm/cham-cong/api/ca-lam-viec/create/',
-                update: (id) => `/hrm/cham-cong/api/ca-lam-viec/${id}/update/`,
-                detail: (id) => `/hrm/cham-cong/api/ca-lam-viec/detail/${id}/`,
+                create: '/hrm/lich-lam-viec/api/ca-lam-viec/create/',
+                update: (id) => `/hrm/lich-lam-viec/api/ca-lam-viec/${id}/update/`,
+                detail: (id) => `/hrm/lich-lam-viec/api/ca-lam-viec/detail/${id}/`,
             },
             
             // Callbacks
@@ -28,7 +28,7 @@ class CaFormController extends BaseFormManager {
             validateLogic: (payload) => this.validateData(payload),
             fillFormData: (data) => this.fillData(data),
             onSuccess: () => {
-                setTimeout(() => window.location.href = '/hrm/cham-cong/thiet-ke-lich/ca-lam-viec/', 1000);
+                setTimeout(() => window.location.href = '/hrm/lich-lam-viec/thiet-ke-lich/ca-lam-viec/', 1000);
             }
         });
 
