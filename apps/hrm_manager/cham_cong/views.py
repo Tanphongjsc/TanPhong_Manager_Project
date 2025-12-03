@@ -55,7 +55,6 @@ def view_bang_cham_cong(request):
             {'title': 'Quản lý chấm công', 'url': None},
             {'title': 'Bảng chấm công', 'url': None},
         ],
-        'tabs': get_cham_cong_tabs(),
     }
     return render(request, "hrm_manager/cham_cong/quan_ly/bang_cham_cong.html", context)
 
@@ -68,7 +67,6 @@ def view_tong_hop_cham_cong(request):
             {'title': 'Quản lý chấm công', 'url': None},
             {'title': 'Tổng hợp chấm công', 'url': None},
         ],
-        'tabs': get_cham_cong_tabs(),
     }
     return render(request, "hrm_manager/cham_cong/quan_ly/tong_hop_cham_cong.html", context)
 
