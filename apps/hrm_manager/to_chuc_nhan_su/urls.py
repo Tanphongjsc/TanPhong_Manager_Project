@@ -42,12 +42,14 @@ urlpatterns = [
     #path("danh-muc/hop-dong/", views.view_dmht_hopdong_list, name="dmht_hopdong"),
     path("danh-muc/bao-hiem/", views.view_dmht_baohiem_list, name="dmht_baohiem"),
     path("danh-muc/loai-nhan-vien/", views.view_dmht_loainhanvien_list, name="dmht_loainhanvien"),
+    path("danh-muc/cong-viec/", views.view_dmht_congviec_list, name="dmht_congviec"),
 
     # API URLS - DANH SÁCH VIEWS
     # ========================================================================
     path("api/ngan-hang/list/", views.api_nganhang_list, name="api_nganhang_list"),
     path("api/bao-hiem/list/", views.api_baohiem_list, name="api_baohiem_list"),
     path("api/loai-nhan-vien/list/", views.api_loainhanvien_list, name="api_loainhanvien_list"),
+    path("api/cong-viec/list/", views.api_congviec_list, name="api_congviec_list"),
 
     # ========================================================================
     # API URLS - Ngân hàng
@@ -89,5 +91,11 @@ urlpatterns = [
     path("api/loai-nhan-vien/<int:pk>/toggle-status/", views.api_loainhanvien_toggle_status, name="api_loainhanvien_toggle_status"),
 
     # ========================================================================
-
+    # API URLS - Công Việc
+    # ========================================================================
+    path("api/cong-viec/<int:pk>/detail/", views.api_congviec_detail, name="api_congviec_detail"),
+    path("api/cong-viec/create/", views.api_congviec_create, name="api_congviec_create"),
+    # path("api/cong-viec/<int:pk>/update/", views.api_congviec_update, name="api_congviec_update"),
+    # path("api/cong-viec/<int:pk>/delete/", views.api_congviec_delete, name="api_congviec_delete"),
+    # path("api/cong-viec/<int:pk>/toggle-status/", views.api_congviec_toggle_status, name="api_congviec_toggle_status"),
 ]

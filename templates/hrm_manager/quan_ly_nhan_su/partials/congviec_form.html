@@ -1,0 +1,195 @@
+<input type="hidden" name="id" />
+
+<!-- Thông tin cơ bản -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+            <span class="text-red-500">*</span> Tên công việc
+        </label>
+        <input name="TenCongViec" type="text" required
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+            <span class="text-red-500">*</span> Mã công việc
+        </label>
+        <input name="MaCongViec" type="text" required
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Loại công việc</label>
+        <select name="LoaiCongViec"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">-- Chọn --</option>
+            <option value="nhom">Nhóm</option>
+            <option value="canhan">Cá nhân</option>
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+        <input name="MoTa" type="text"
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
+    <textarea name="GhiChu" rows="2"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+</div>
+
+<hr class="my-5 border-slate-200">
+
+<!-- Toggle công thức -->
+<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg mb-4">
+    <div>
+        <h3 class="text-sm font-semibold text-slate-800">Công thức tính tiền công</h3>
+        <p class="text-xs text-slate-500">Bật để thiết lập tham số và biểu thức tính toán</p>
+    </div>
+    <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" name="TrangThaiCongThuc" id="toggle-congthuc" class="sr-only peer" value="on">
+        <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+    </label>
+</div>
+
+<!-- Khu vực công thức -->
+<div id="formula-section" class="hidden space-y-4 p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
+    
+    <!-- Danh sách tham số -->
+    <div>
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-slate-700">📋 Danh sách tham số</span>
+            <button type="button" id="btn-add-thamso" 
+                    class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Thêm
+            </button>
+        </div>
+        
+        <!-- Header -->
+        <div class="hidden sm:grid grid-cols-12 gap-2 px-2 py-1 text-xs font-medium text-slate-500 uppercase">
+            <div class="col-span-3">Tên hiển thị</div>
+            <div class="col-span-2">Mã</div>
+            <div class="col-span-2">Đơn vị</div>
+            <div class="col-span-2">Kiểu</div>
+            <div class="col-span-2">Mặc định</div>
+            <div class="col-span-1"></div>
+        </div>
+        
+        <div id="thamso-container" class="space-y-2"></div>
+        
+        <p id="thamso-empty" class="text-xs text-slate-400 italic py-3 text-center border border-dashed border-slate-300 rounded-lg">
+            Chưa có tham số. Nhấn "Thêm" để bắt đầu.
+        </p>
+    </div>
+
+    <hr class="border-slate-200">
+
+    <!-- Công thức -->
+    <div>
+        <span class="text-sm font-semibold text-slate-700 block mb-2">🧮 Biểu thức tính toán</span>
+        
+        <!-- Nút chèn nhanh -->
+        <div class="p-3 bg-white rounded-lg border border-slate-200 mb-3 space-y-2">
+            <!-- Tham số -->
+            <div>
+                <span class="text-xs text-slate-500 block mb-1">Tham số:</span>
+                <div id="formula-params" class="flex flex-wrap gap-1">
+                    <span class="text-xs text-slate-400 italic">Thêm tham số ở trên</span>
+                </div>
+            </div>
+            
+            <!-- Phép tính cơ bản -->
+            <div>
+                <span class="text-xs text-slate-500 block mb-1">Phép tính:</span>
+                <div class="flex flex-wrap gap-1">
+                    <button type="button" class="formula-btn px-2 py-1 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100" data-insert=" + ">+</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100" data-insert=" - ">−</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100" data-insert=" * ">×</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100" data-insert=" / ">÷</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-slate-100 text-slate-600 border border-slate-200 rounded hover:bg-slate-200" data-insert="(">(</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-slate-100 text-slate-600 border border-slate-200 rounded hover:bg-slate-200" data-insert=")">)</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-slate-100 text-slate-600 border border-slate-200 rounded hover:bg-slate-200" data-insert=", ">,</button>
+                </div>
+            </div>
+            
+            <!-- Hàm nâng cao -->
+            <div>
+                <span class="text-xs text-slate-500 block mb-1">Hàm:</span>
+                <div class="flex flex-wrap gap-1">
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="IF(" title="IF(điều_kiện, giá_trị_đúng, giá_trị_sai)">IF</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="MIN(" title="MIN(a, b, ...)">MIN</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="MAX(" title="MAX(a, b, ...)">MAX</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="ROUND(" title="ROUND(số, số_chữ_số)">ROUND</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="ABS(" title="ABS(số) - Giá trị tuyệt đối">ABS</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100" data-insert="SUM(" title="SUM(a, b, ...)">SUM</button>
+                </div>
+            </div>
+            
+            <!-- So sánh -->
+            <div>
+                <span class="text-xs text-slate-500 block mb-1">So sánh:</span>
+                <div class="flex flex-wrap gap-1">
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" > ">&gt;</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" < ">&lt;</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" >= ">≥</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" <= ">≤</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" == ">=</button>
+                    <button type="button" class="formula-btn px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100" data-insert=" != ">≠</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input biểu thức (cho phép nhập tay) -->
+        <div class="relative">
+            <textarea name="BieuThucTinhToan" id="formula-input" rows="2"
+                   placeholder="Nhập hoặc nhấn các nút để xây dựng công thức... VD: so_luong * don_gia hoặc IF(gio_lam > 8, gio_lam * 1.5, gio_lam) * don_gia"
+                   class="w-full px-3 py-2 pr-16 font-mono text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+            <div class="absolute right-2 top-2 flex gap-1">
+                <button type="button" id="btn-formula-clear" title="Xóa tất cả"
+                        class="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Preview -->
+        <div id="formula-preview" class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs hidden">
+            <span class="text-green-600">Xem trước: </span>
+            <code id="formula-preview-text" class="font-mono text-green-800"></code>
+        </div>
+        
+        <!-- Hướng dẫn -->
+        <details class="mt-2 text-xs text-slate-500">
+            <summary class="cursor-pointer hover:text-slate-700">💡 Hướng dẫn sử dụng</summary>
+            <div class="mt-2 p-2 bg-slate-50 rounded space-y-1">
+                <p><strong>IF:</strong> IF(điều_kiện, giá_trị_đúng, giá_trị_sai) → VD: IF(gio > 8, gio * 1.5, gio)</p>
+                <p><strong>MIN/MAX:</strong> MIN(a, b) hoặc MAX(a, b, c) → VD: MAX(luong_cb, 5000000)</p>
+                <p><strong>ROUND:</strong> ROUND(số, số_thập_phân) → VD: ROUND(tong / 3, 0)</p>
+                <p><strong>Số:</strong> Nhập trực tiếp số như 1000, 1.5, 0.1</p>
+            </div>
+        </details>
+    </div>
+</div>
+
+<!-- Hidden JSON -->
+<input type="hidden" name="DanhSachThamSo" id="hidden-thamso-json" value="[]">
+
+<!-- Template tham số -->
+<template id="thamso-row-template">
+    <div class="thamso-row grid grid-cols-12 gap-2 p-2 bg-white rounded border border-slate-200 group items-center" data-index="">
+        <input type="text" class="thamso-ten col-span-12 sm:col-span-3 px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-blue-500" placeholder="Tên hiển thị">
+        <input type="text" class="thamso-ma col-span-6 sm:col-span-2 px-2 py-1.5 text-sm font-mono border border-slate-300 rounded bg-slate-50 focus:ring-1 focus:ring-blue-500" placeholder="Mã" readonly>
+        <input type="text" class="thamso-donvi col-span-6 sm:col-span-2 px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-blue-500" placeholder="Đơn vị">
+        <select class="thamso-kieu col-span-6 sm:col-span-2 px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-blue-500">
+            <option value="number">Số</option>
+            <option value="currency">Tiền tệ</option>
+            <option value="percent">%</option>
+            <option value="text">Chữ</option>
+        </select>
+        <input type="text" class="thamso-default col-span-5 sm:col-span-2 px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-blue-500" placeholder="Mặc định">
+        <button type="button" class="btn-remove-thamso col-span-1 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded justify-self-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+</template>

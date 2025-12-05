@@ -817,16 +817,18 @@ def api_chuc_vu_detail(request, id):
 # VIEW URLS - DANH MỤC HỆ THỐNG
 # ============================================================================
 
+@login_required
 def view_danh_muc_index(request):
     """Hiển thị trang danh mục hệ thống"""
     return render(request, "hrm_manager/quan_ly_nhan_su/danhmuchethong.html")
 
 
+@login_required
 def view_bo_thuong_index(request):
     """Hiển thị trang quản lý bồi thường"""
     return render(request, "hrm_manager/quan_ly_nhan_su/quanlythongtin_boithuong.html")
 
-
+@login_required
 def view_tam_ung_index(request):
     """Hiển thị trang quản lý tạm ứng"""
     return render(request, "hrm_manager/quan_ly_nhan_su/quanlythongtin_quanlytamung.html")
@@ -836,6 +838,7 @@ STATUS_LIST = [
     {'value': 'inactive', 'label': 'Ngừng hoạt động'}
 ]
 
+@login_required
 def view_dmht_nganhang_list(request):
     context = {
         'breadcrumbs': [
@@ -847,6 +850,7 @@ def view_dmht_nganhang_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_nganhang.html", context)
 
+@login_required
 def view_dmht_baohiem_list(request):
     context = {
         'breadcrumbs': [
@@ -858,6 +862,7 @@ def view_dmht_baohiem_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_baohiem.html", context)
 
+@login_required
 def view_dmht_loainhanvien_list(request):
     context = {
         'breadcrumbs': [
@@ -869,11 +874,22 @@ def view_dmht_loainhanvien_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_loainhanvien.html", context)
 
-
+@login_required
+def view_dmht_congviec_list(request):
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
+            {'title': 'Danh mục công việc', 'url': None},
+        ],
+        'status_list': STATUS_LIST # <--- Truyền biến này
+    }
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
 # ============================================================================
 # API URLS - DANH MỤC LISTS (JSON)
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_nganhang_list(request):
@@ -918,7 +934,7 @@ def api_nganhang_list(request):
         pagination=pagination_data
     )
 
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_baohiem_list(request):
@@ -962,7 +978,7 @@ def api_baohiem_list(request):
         pagination=pagination_data
     )
 
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_loainhanvien_list(request):
@@ -1007,10 +1023,47 @@ def api_loainhanvien_list(request):
     )
 
 
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_congviec_list(request):
+    """API lấy danh sách công việc (JSON) hỗ trợ search, filter, pagination"""
+    queryset = Congviec.objects.all().values()
+    query_params = request.GET.dict()
+    
+    context = get_list_context(
+        request,
+        queryset,
+        search_fields=['tencongviec', 'macongviec'],
+        filter_field=('trangthaicv', 'status'),
+        page_size=int(query_params.get('page_size', 10)),
+        order_by='-created_at'
+    )
+    
+    page_obj = context['page_obj']
+    paginator = context['paginator']
+
+    pagination_data = {
+        'page': page_obj.number,
+        'page_size': paginator.per_page, 
+        'total': paginator.count,
+        'total_pages': paginator.num_pages,
+        'has_next': page_obj.has_next(),
+        'has_prev': page_obj.has_previous()
+    }
+    
+    return json_success(
+        'Lấy danh sách công việc thành công',
+        data=list(page_obj.object_list),
+        pagination=pagination_data
+    )
+
+
+
 # ============================================================================
 # API URLS - NGÂN HÀNG
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_nganhang_detail(request, pk):
     """API lấy chi tiết ngân hàng"""
@@ -1031,7 +1084,7 @@ def api_nganhang_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_nganhang_create(request):
     """API tạo mới ngân hàng"""
@@ -1068,7 +1121,7 @@ def api_nganhang_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_nganhang_update(request, pk):
     try:
@@ -1098,7 +1151,7 @@ def api_nganhang_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_nganhang_delete(request, pk):
     try:
@@ -1108,7 +1161,7 @@ def api_nganhang_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"]) 
 def api_nganhang_toggle_status(request, pk):
     try:
@@ -1126,6 +1179,7 @@ def api_nganhang_toggle_status(request, pk):
 # API URLS - BẢO HIỂM
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_baohiem_detail(request, pk):
     """API lấy chi tiết bảo hiểm"""
@@ -1145,7 +1199,7 @@ def api_baohiem_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_baohiem_create(request):
     """API tạo mới bảo hiểm"""
@@ -1178,7 +1232,7 @@ def api_baohiem_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_baohiem_update(request, pk):
     try:
@@ -1201,6 +1255,7 @@ def api_baohiem_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_baohiem_delete(request, pk):
     try:
@@ -1210,6 +1265,7 @@ def api_baohiem_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_baohiem_toggle_status(request, pk):
     try:
@@ -1226,6 +1282,7 @@ def api_baohiem_toggle_status(request, pk):
 # API URLS - LOẠI NHÂN VIÊN
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_loainhanvien_detail(request, pk):
     """API lấy chi tiết loại nhân viên"""
@@ -1248,7 +1305,7 @@ def api_loainhanvien_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_loainhanvien_create(request):
     """API tạo mới loại nhân viên"""
@@ -1281,7 +1338,7 @@ def api_loainhanvien_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_loainhanvien_update(request, pk):
     try:
@@ -1304,6 +1361,7 @@ def api_loainhanvien_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_loainhanvien_delete(request, pk):
     try:
@@ -1316,6 +1374,7 @@ def api_loainhanvien_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_loainhanvien_toggle_status(request, pk):
     try:
@@ -1327,3 +1386,59 @@ def api_loainhanvien_toggle_status(request, pk):
         return json_success('Cập nhật trạng thái thành công')
     except Exception as e:
         return json_error(str(e), status=400)
+
+
+# ============================================================================
+# API URLS - CÔNG VIỆC
+# ============================================================================
+
+@login_required
+@require_http_methods(["GET"])
+def api_congviec_detail(request, pk):
+    """API lấy chi tiết công việc"""
+    try:
+        item = get_object_or_404(Congviec, pk=pk)
+        
+        return json_response(
+            success=True,
+            data={
+                'id': item.id,
+                'tencongviec': item.tencongviec,
+                'macongviec': item.macongviec,
+                'mota': item.mota or '',
+                'trangthaicv': item.trangthaicv,
+            }
+        )
+    except Exception as e:
+        return json_error(str(e), status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_congviec_create(request):
+    """ API tạo mới công việc"""
+
+    data = loads(request.body)
+    if not data:
+        return json_error('Dữ liệu không hợp lệ', status=400)
+
+    try:
+        congviec = Congviec.objects.create(
+            tencongviec=data.get('tencongviec'),
+            macongviec=data.get('macongviec'),
+            mota=data.get('mota', ''),
+            trangthaicv='active',
+            created_at=timezone.now(),
+            updated_at=timezone.now()
+        )
+
+        return json_success(
+            'Tạo công việc thành công',
+            data= model_to_dict(congviec)
+        )
+
+    except Exception as e: 
+        return JsonResponse({
+            'success': False,
+            'message': f'Lỗi: {str(e)}'
+        }, status=400)
