@@ -423,3 +423,29 @@ def get_field_value(request, field_name, default=''):
     data = get_request_data(request)
     value = data.get(field_name, default)
     return value.strip() if hasattr(value, 'strip') else value
+
+# ============================================================================
+# TIME HELPERS
+# ============================================================================
+
+def parse_time_to_minutes(time_str):
+    """
+    Parse chuỗi HH:MM thành số phút tính từ 00:00.
+
+    Args:
+        time_str (str): Chuỗi giờ dạng 'HH:MM'
+
+    Returns:
+        int | None: Số phút từ 00:00, hoặc None nếu không hợp lệ
+    """
+    if not time_str or len(time_str) != 5:
+        return None
+    try:
+        h, m = map(int, time_str.split(':'))
+        if 0 <= h <= 23 and 0 <= m <= 59:
+            return h * 60 + m
+        return None
+    except ValueError:
+        return None
+
+

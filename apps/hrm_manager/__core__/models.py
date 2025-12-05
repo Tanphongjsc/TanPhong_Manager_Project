@@ -95,7 +95,7 @@ class Calamviec(models.Model):
     sokhunggiotrongca = models.SmallIntegerField(db_column='SoKhungGioTrongCa', blank=True, null=True)  # Field name made lowercase.
     solanchamcongtrongngay = models.SmallIntegerField(db_column='SoLanChamCongTrongNgay', blank=True, null=True)  # Field name made lowercase.
     conghitrua = models.BooleanField(db_column='CoNghiTrua', blank=True, null=True)  # Field name made lowercase.
-    congcuacalamviec = models.SmallIntegerField(db_column='CongCuaCaLamViec', blank=True, null=True)  # Field name made lowercase.
+    congcuacalamviec = models.FloatField(db_column='CongCuaCaLamViec', blank=True, null=True)  # Field name made lowercase.
     cocancheckout = models.BooleanField(db_column='CoCanCheckout', blank=True, null=True)  # Field name made lowercase.
     tongthoigianlamvieccuaca = models.FloatField(db_column='TongThoiGianLamViecCuaCa', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
@@ -331,7 +331,7 @@ class Khunggiolamviec(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     thoigianbatdau = models.TimeField(db_column='ThoiGianBatDau', blank=True, null=True)  # Field name made lowercase.
     thoigianketthuc = models.TimeField(db_column='ThoiGianKetThuc', blank=True, null=True)  # Field name made lowercase.
-    congcuakhunggio = models.SmallIntegerField(db_column='CongCuaKhungGio', blank=True, null=True)  # Field name made lowercase.
+    congcuakhunggio = models.FloatField(db_column='CongCuaKhungGio', blank=True, null=True)  # Field name made lowercase.
     thoigianchophepdenmuon = models.FloatField(db_column='ThoiGianChoPhepDenMuon', blank=True, null=True)  # Field name made lowercase.
     thoigiandimuonkhongtinhchamcong = models.FloatField(db_column='ThoiGianDiMuonKhongTinhChamCong', blank=True, null=True)  # Field name made lowercase.
     thoigianchophepchamcongsomnhat = models.TimeField(db_column='ThoiGianChoPhepChamCongSomNhat', blank=True, null=True)  # Field name made lowercase.
@@ -342,6 +342,8 @@ class Khunggiolamviec(models.Model):
     thoigianlamviectoithieu = models.FloatField(db_column='ThoiGianLamViecToiThieu', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     calamviec = models.ForeignKey(Calamviec, models.DO_NOTHING, blank=True, null=True)
+    sophutdenmuon = models.FloatField(db_column='SoPhutDenMuon', blank=True, null=True, default=0)
+    sophutdensom = models.FloatField(db_column='SoPhutDenSom', blank=True, null=True, default=0)
 
     class Meta:
         managed = False

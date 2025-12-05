@@ -450,78 +450,29 @@ class BaseCRUDManager {
         }
     }
 
+    /**
+     * Xóa đơn lẻ - Sử dụng AppUtils.DeleteOperations
+     */
     deleteItem(itemId, itemName) {
-        AppUtils.Modal.showConfirm({
-            title: this.config.texts.deleteTitle,
-            message: this.config.texts.deleteMessage(itemName), // Có thể cải tiến lấy name nếu muốn
-            type: 'danger',
-            confirmText: 'Xóa',
-            onConfirm: async () => {
-                try {
-                    const method = this.config.httpMethods.delete;
-                    const url = this.config.apiUrls.delete(itemId);
-                    
-                    let data;
-                    if (method === 'DELETE') data = await AppUtils.API.delete(url);
-                    else data = await AppUtils.API.post(url); // Support POST delete
-
-                    if (data.success === false) throw new Error(data.message || 'Xóa thất bại');
-
-                    AppUtils.Notify.success(data.message || 'Xóa thành công!');
-                    
-                    // ⭐ KEY CHANGE: Refresh bảng
-                    this.config.onRefreshTable();
-
-                } catch (error) {
-                    console.error('⛔ Delete error:', error);
-                    AppUtils.Notify.error(error.message || 'Có lỗi xảy ra');
-                }
-            }
+        AppUtils.DeleteOperations.confirmDelete({
+            id: itemId,
+            name: itemName,
+            url: this.config.apiUrls.delete,
+            method: this.config.httpMethods.delete,
+            onSuccess: () => this.config.onRefreshTable()
         });
     }
 
-    // Hàm xóa nhiều dòng (Sử dụng Promise.all để gọi API xóa từng cái)
+    /**
+     * Xóa nhiều - Sử dụng AppUtils.DeleteOperations
+     */
     deleteMultipleItems(ids) {
-        const count = ids.length;
-        AppUtils.Modal.showConfirm({
-            title: 'Xóa',
-            message: `Bạn có chắc chắn muốn xóa ${count} bản ghi đã chọn không?`,
-            type: 'danger',
-            confirmText: `Xóa ${count} mục`,
-            onConfirm: async () => {
-                try {
-                    // Hiển thị loading
-                    AppUtils.Notify.info('Đang thực hiện xóa...', { duration: 0 });
-                    
-                    const method = this.config.httpMethods.delete;
-                    
-                    // Tạo mảng các promises (gọi API song song)
-                    const deletePromises = ids.map(id => {
-                        const url = this.config.apiUrls.delete(id);
-                        if (method === 'DELETE') return AppUtils.API.delete(url);
-                        else return AppUtils.API.post(url);
-                    });
-
-                    // Chờ tất cả chạy xong
-                    const results = await Promise.all(deletePromises);
-                    
-                    // Kiểm tra xem có cái nào lỗi không
-                    const errors = results.filter(res => res.success === false);
-                    
-                    if (errors.length > 0) {
-                        AppUtils.Notify.warning(`Đã xóa ${count - errors.length} mục. Có ${errors.length} mục không thể xóa.`);
-                    } else {
-                        AppUtils.Notify.success(`Đã xóa thành công ${count} bản ghi!`);
-                    }
-                    
-                    // Xóa xong thì refresh bảng
-                    this.config.onRefreshTable();
-
-                } catch (error) {
-                    console.error('⛔ Bulk delete error:', error);
-                    AppUtils.Notify.error('Có lỗi xảy ra trong quá trình xóa');
-                }
-            }
+        AppUtils. DeleteOperations.confirmBulkDelete({
+            ids: ids,
+            url: this.config. apiUrls.delete,
+            bulkUrl: this.config.apiUrls. bulkDelete || null,
+            method: this.config. httpMethods.delete,
+            onSuccess: () => this. config.onRefreshTable()
         });
     }
 

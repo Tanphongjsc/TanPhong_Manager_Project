@@ -838,7 +838,17 @@ STATUS_LIST = [
     {'value': 'inactive', 'label': 'Ngừng hoạt động'}
 ]
 
-@login_required
+def view_danh_muc_index(request):
+    """View cho trang Dashboard Danh mục hệ thống"""
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': None}, # Trang hiện tại để URL là None
+        ]
+    }
+    # Đảm bảo tên file html bên dưới trùng với file bạn đang sửa
+    return render(request, "hrm_manager/quan_ly_nhan_su/danhmuchethong.html", context)
+
 def view_dmht_nganhang_list(request):
     context = {
         'breadcrumbs': [
