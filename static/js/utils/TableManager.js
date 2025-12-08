@@ -448,7 +448,7 @@ class TableManager {
         const countEl = this.options.bulkActionsContainer.querySelector('.bulk-selected-count');
 
         if (countEl) {
-            countEl.textContent = `${count} đã chọn`;
+            countEl.textContent = `${count}`;
         }
 
         // --- SỬA LỖI TẠI ĐÂY ---

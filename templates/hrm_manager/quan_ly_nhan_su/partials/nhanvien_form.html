@@ -1,0 +1,177 @@
+<div class="space-y-5">
+    <input type="hidden" name="id">
+    
+    <!-- Row 1: Mã NV + Họ tên -->
+    <div class="grid grid-cols-3 gap-4">
+        <div>
+            <label for="manhanvien" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Mã nhân viên:
+            </label>
+            <input type="text" 
+                   id="manhanvien"
+                   name="manhanvien" 
+                   placeholder="Tự động..."
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-sm">
+        </div>
+        <div class="col-span-2">
+            <label for="hovaten" class="block text-sm font-medium text-slate-700 mb-1.5">
+                <span class="text-red-500">*</span> Họ và tên:
+            </label>
+            <input type="text" 
+                   id="hovaten"
+                   name="hovaten" 
+                   required 
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        </div>
+    </div>
+
+    <!-- Row 2: Email + SĐT -->
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Email:
+            </label>
+            <input type="email" 
+                   id="email"
+                   name="email" 
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        </div>
+        <div>
+            <label for="sodienthoai" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Số điện thoại:
+            </label>
+            <input type="text" 
+                   id="sodienthoai"
+                   name="sodienthoai" 
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        </div>
+    </div>
+
+    <!-- Row 3: Giới tính + Ngày vào làm -->
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label for="gioitinh" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Giới tính:
+            </label>
+            <select id="gioitinh"
+                    name="gioitinh" 
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">-- Chọn --</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+            </select>
+        </div>
+        <div>
+            <label for="ngayvaolam" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Ngày vào làm:
+            </label>
+            <input type="date" 
+                   id="ngayvaolam"
+                   name="ngayvaolam" 
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        </div>
+    </div>
+
+    <!-- Row 4: Chức vụ + Trạng thái NV -->
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label for="chucvu" class="block text-sm font-medium text-slate-700 mb-1.5">
+                <span class="text-red-500">*</span> Chức vụ:
+            </label>
+            <select id="chucvu"
+                    name="chucvu" 
+                    required
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">-- Chọn chức vụ --</option>
+            </select>
+        </div>
+        <div>
+            <label for="trangthainv" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Trạng thái NV:
+            </label>
+            <select id="trangthainv"
+                    name="trangthainv" 
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">-- Chọn --</option>
+                <option value="Đang làm việc">Đang làm việc</option>
+                <option value="Thử việc">Thử việc</option>
+                <option value="Đã nghỉ việc">Đã nghỉ việc</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Row 5: Phòng ban (Searchable dropdown - required) -->
+    <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            <span class="text-red-500">*</span> Phòng ban:
+        </label>
+        <div class="relative" id="phongban-dropdown-container">
+            <input type="hidden" name="phongban" id="phongban" required>
+            <button type="button" 
+                    id="phongban-dropdown-btn"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-left text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between">
+                <span id="phongban-selected-text" class="text-slate-500">-- Chọn phòng ban --</span>
+                <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" id="phongban-dropdown-icon"></i>
+            </button>
+            <div id="phongban-dropdown-menu" 
+                 class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-64 overflow-hidden">
+                <div class="p-2 border-b border-slate-100">
+                    <input type="text" 
+                           id="phongban-search-input"
+                           placeholder="Tìm kiếm phòng ban..."
+                           class="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <ul id="phongban-dropdown-list" class="overflow-y-auto max-h-48">
+                    <li class="px-3 py-2 text-sm text-slate-400 text-center">Đang tải...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Section: Thông tin khác -->
+    <div class="border-t border-slate-200 pt-4 mt-2">
+        <h4 class="text-sm font-semibold text-slate-800 mb-3">Thông tin khác</h4>
+        <div class="mb-4">
+            <label for="socccd" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Số CCCD:
+            </label>
+            <input type="text" 
+                   id="socccd"
+                   name="socccd" 
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        </div>
+        <div class="mb-4">
+            <label for="nganhang" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Ngân hàng:
+            </label>
+            <select id="nganhang"
+                    name="nganhang" 
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">-- Chọn ngân hàng --</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label for="tentknganhang" class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Tên TK ngân hàng:
+                </label>
+                <input type="text" 
+                       id="tentknganhang"
+                       name="tentknganhang" 
+                       placeholder="Tên chủ TK" 
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label for="sotknganhang" class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Số tài khoản:
+                </label>
+                <input type="text" 
+                       id="sotknganhang"
+                       name="sotknganhang" 
+                       placeholder="Số tài khoản" 
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+        </div>
+    </div>
+</div>

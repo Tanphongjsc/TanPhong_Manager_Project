@@ -1,0 +1,41 @@
+<div class="space-y-6">
+    <input type="hidden" name="id">
+    <input type="hidden" name="congty_id">
+    <input type="hidden" name="phongbancha_id">
+    
+    <div id="parent-info-display" class="text-sm text-blue-600 font-medium bg-blue-50 p-3 rounded-lg hidden"></div>
+
+    <div>
+        <label for="tenphongban" class="block text-sm font-medium text-slate-700 mb-2">
+            <span class="text-red-500">*</span> Tên đơn vị:
+        </label>
+        <input type="text" 
+               id="tenphongban"
+               name="tenphongban" 
+               required 
+               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+        <p class="text-xs text-slate-500 mt-2">Nhập tên công ty hoặc phòng ban.</p>
+    </div>
+    
+    <div>
+        <label for="maphongban" class="block text-sm font-medium text-slate-700 mb-2">
+            Mã đơn vị:
+        </label>
+        <input type="text" 
+               id="maphongban"
+               name="maphongban" 
+               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+    </div>
+
+    <div>
+        <label for="ghichu" class="block text-sm font-medium text-slate-700 mb-2">
+            Ghi chú:
+        </label>
+        <textarea id="ghichu"
+                  name="ghichu"
+                  rows="3"
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="Nhập ghi chú (nếu có)"></textarea>
+        <p class="text-xs text-slate-500 mt-2">Ghi chú bổ sung cho phòng ban.</p>
+    </div>
+</div>

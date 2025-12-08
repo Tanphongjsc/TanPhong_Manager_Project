@@ -10,6 +10,7 @@ urlpatterns = [
     
     # Trang chính
     path("cay-nhan-su/", views.view_cay_nhan_su_index, name="cay_nhan_su_index"),
+    path("cay-nhan-su/nhan-vien/<int:id>/", views.view_nhan_vien_index, name="cay_nhan_su_nhan_vien_index"),
     path("bao-cao/", views.view_bao_cao_index, name="bao_cao_index"),
     path("chuc-vu/", views.view_chuc_vu_index, name="chuc_vu_index"),
     path("danh-muc/", views.view_danh_muc_index, name="danh_muc_index"),
@@ -36,6 +37,12 @@ urlpatterns = [
     # NHÂN VIÊN
     path('api/v1/nhan-vien/', views.api_nhan_vien_list, name='api_nhan_vien_list'),
     path('api/v1/nhan-vien/<int:id>/', views.api_nhan_vien_detail, name='api_nhan_vien_detail'),
+    path('api/v1/chuc-vu/<int:id>/toggle-status/', views.api_chuc_vu_toggle_status, name='api_chuc_vu_toggle_status'),
+
+    # LỊCH SỬ CÔNG TÁC
+    path("api/v1/lich-su-cong-tac/", views.api_lich_su_cong_tac_list, name="api_lich_su_cong_tac_list"),
+    path("api/v1/lich-su-cong-tac/<int:id>/", views.api_lich_su_cong_tac_detail, name="api_lich_su_cong_tac_detail"),
+    path("api/v1/lich-su-cong-tac/chuyen-cong-tac/", views.api_lich_su_cong_tac_chuyen_cong_tac, name="api_lich_su_cong_tac_chuyen_cong_tac"),
     
     # Danh mục hệ thống - Views
     path("danh-muc/ngan-hang/", views.view_dmht_nganhang_list, name="dmht_nganhang"),

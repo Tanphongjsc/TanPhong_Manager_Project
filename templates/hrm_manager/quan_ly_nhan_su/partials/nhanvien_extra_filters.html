@@ -1,0 +1,14 @@
+{% comment %}
+Extra filters cho trang nhân viên - Giới tính
+Được include qua filter_template trong toolbar
+{% endcomment %}
+
+<select name="gioitinh" 
+        class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer">
+    <option value="">Tất cả giới tính</option>
+    {% for item in gioitinh_list %}
+        <option value="{{ item.value }}" {% if request.GET.gioitinh == item.value %}selected{% endif %}>
+            {{ item.label }}
+        </option>
+    {% endfor %}
+</select>
