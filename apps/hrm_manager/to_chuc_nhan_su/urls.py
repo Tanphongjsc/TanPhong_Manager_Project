@@ -95,7 +95,7 @@ urlpatterns = [
     # ========================================================================
     path("api/cong-viec/<int:pk>/detail/", views.api_congviec_detail, name="api_congviec_detail"),
     path("api/cong-viec/create/", views.api_congviec_create, name="api_congviec_create"),
-    # path("api/cong-viec/<int:pk>/update/", views.api_congviec_update, name="api_congviec_update"),
-    # path("api/cong-viec/<int:pk>/delete/", views.api_congviec_delete, name="api_congviec_delete"),
-    # path("api/cong-viec/<int:pk>/toggle-status/", views.api_congviec_toggle_status, name="api_congviec_toggle_status"),
+    path("api/cong-viec/<int:pk>/update/", views.api_congviec_update, name="api_congviec_update"),
+    path("api/cong-viec/<int:pk>/delete/", views.api_congviec_delete, name="api_congviec_delete"),
+    path("api/cong-viec/<int:pk>/toggle-status/", views.api_congviec_toggle_status, name="api_congviec_toggle_status"),
 ]

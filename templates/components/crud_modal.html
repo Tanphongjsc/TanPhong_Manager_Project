@@ -1,0 +1,26 @@
+<!-- filepath: e:\Django\TanPhong_Manager_Project\templates\components\crud_modal.html -->
+<div id="{{ modal_id }}" class="modal hidden">
+    <div class="modal-overlay" onclick="toggleModal('{{ modal_id }}')"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="text-lg font-semibold">{{ title }}</h2>
+            <button class="close-button" onclick="toggleModal('{{ modal_id }}')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="{{ form_id }}" class="space-y-4">
+                {% include form_fields_template %}
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="toggleModal('{{ modal_id }}')">Hủy</button>
+            <button type="submit" form="{{ form_id }}" class="btn-save">Lưu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.toggle('hidden');
+    }
+</script>

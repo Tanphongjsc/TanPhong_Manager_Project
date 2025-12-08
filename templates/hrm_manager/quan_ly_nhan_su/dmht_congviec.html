@@ -7,14 +7,14 @@
 <div class="flex flex-col h-full space-y-4">
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">Danh mục công việc</h1>
-
+    <div class="bg-white shadow-sm p-2 sm:p-4 h-full flex flex-col rounded-lg">
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+        
         {# Toolbar #}
-        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm..." create_text="Thêm công việc" create_onclick="window.CongViecManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" %}  
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm công việc..." create_text="Thêm mới" create_onclick="window.CongViecManager.openModal('create')" filter_form_id="filter-form" %}  
 
-        {# Table Wrapper #}
-        {% with headers='<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên công việc</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã công việc</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Công thức</th>' %}
+        {# Table #}
+        {% with headers='<th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tên công việc</th><th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Mã</th><th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Loại</th><th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Trạng thái</th><th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Công thức</th>' %}
             {% include "components/table_wrapper.html" with table_id="congviec-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
         {% endwith %}
 
@@ -24,8 +24,35 @@
     </div>
 </div>
 
-{# Sidebar #}
-{% include "components/crud_sidebar.html" with sidebar_id="cv-sidebar" overlay_id="cv-sidebar-overlay" form_id="congviec-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/congviec_form.html" submit_text="Lưu thông tin" %}
+{# Modal - Compact size #}
+<div id="cv-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-150">
+    <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-150">
+        {# Header - Slim #}
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-green-50 to-blue-50">
+            <h2 data-modal-title class="text-base font-semibold text-slate-800">Thêm công việc</h2>
+            <button type="button" data-modal-close class="p-1 text-slate-400 hover:text-slate-600 hover:bg-white/80 rounded-md transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        {# Body #}
+        <div class="px-4 py-3 overflow-y-auto" style="max-height: calc(85vh - 110px);">
+            <form id="congviec-form">
+                {% include "hrm_manager/quan_ly_nhan_su/partials/congviec_form.html" %}
+            </form>
+        </div>
+        
+        {# Footer - Slim #}
+        <div class="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-slate-100 bg-slate-50">
+            <button type="button" data-modal-close class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">
+                Hủy
+            </button>
+            <button type="button" data-modal-submit class="px-4 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors">
+                Lưu
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

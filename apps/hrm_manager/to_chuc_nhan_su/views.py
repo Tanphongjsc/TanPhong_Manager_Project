@@ -1409,13 +1409,16 @@ def api_congviec_detail(request, pk):
     try:
         item = get_object_or_404(Congviec, pk=pk)
         
-        return json_response(
-            success=True,
+        return json_success(
+            "Lấy chi tiết công việc thành công",
             data={
                 'id': item.id,
                 'tencongviec': item.tencongviec,
                 'macongviec': item.macongviec,
-                'mota': item.mota or '',
+                'ghichu': item.ghichu or '',
+                'bieuthuctinhtoan': item.bieuthuctinhtoan,
+                'danhsachthamso': item.danhsachthamso,
+                'trangthaicongthuc': item.trangthaicongthuc,
                 'trangthaicv': item.trangthaicv,
             }
         )
@@ -1434,12 +1437,14 @@ def api_congviec_create(request):
 
     try:
         congviec = Congviec.objects.create(
-            tencongviec=data.get('tencongviec'),
+            tencongviec=data.get('tencongviec').title(),
             macongviec=data.get('macongviec'),
-            mota=data.get('mota', ''),
+            ghichu=data.get('ghichu', ''),
+            bieuthuctinhtoan=data.get('bieuthuctinhtoan', ''),
+            danhsachthamso=data.get('danhsachthamso', ''),
+            trangthaicongthuc=data.get('trangthaicongthuc', ''),
             trangthaicv='active',
             created_at=timezone.now(),
-            updated_at=timezone.now()
         )
 
         return json_success(
@@ -1452,3 +1457,61 @@ def api_congviec_create(request):
             'success': False,
             'message': f'Lỗi: {str(e)}'
         }, status=400)
+    
+
+@login_required
+@require_http_methods(["PUT"])
+def api_congviec_update(request, pk):
+    """API Cập nhật công việc"""
+
+    data = loads(request.body)
+    if not data:
+        return json_error('Dữ liệu không hợp lệ', status=400)
+    
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+
+        for field in Congviec._meta.fields:
+            if field.name in data:
+                setattr(congviec, field.name, data[field.name])
+        congviec.updated_at = timezone.now()
+        congviec.save()
+
+        return json_success(
+            'Cập nhật công việc thành công',
+            data=model_to_dict(congviec)
+        )
+    except Exception as e:
+        return json_error(str(e), status=400)
+    
+@login_required
+@require_http_methods(["DELETE"])
+def api_congviec_delete(request, pk):
+    """API Xóa công việc"""
+
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+        congviec.delete()
+
+        return json_success('Xóa công việc thành công')
+
+    except Exception as e:
+        return json_error(str(e), status=400)
+    
+
+@login_required
+@require_http_methods(["POST"])
+def api_congviec_toggle_status(request, pk):
+    """API Chuyển đổi trạng thái công việc"""
+
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+        data = get_request_data(request)
+        congviec.trangthaicv = 'active' if data.get('is_active') else 'inactive'
+        congviec.updated_at = timezone.now()
+        congviec.save()
+
+        return json_success('Cập nhật trạng thái công việc thành công')
+
+    except Exception as e:
+        return json_error(str(e), status=400)

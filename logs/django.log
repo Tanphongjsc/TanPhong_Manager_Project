@@ -33284,3 +33284,913 @@ WARNING 2025-12-03 21:05:11,154 log 20964 7324 Bad Request: /hrm/lich-lam-viec/a
 WARNING 2025-12-03 21:05:11,154 basehttp 20964 7324 "POST /hrm/lich-lam-viec/api/ca-lam-viec/create/ HTTP/1.1" 400 153
 WARNING 2025-12-03 21:05:18,636 log 20964 7324 Bad Request: /hrm/lich-lam-viec/api/ca-lam-viec/create/
 WARNING 2025-12-03 21:05:18,636 basehttp 20964 7324 "POST /hrm/lich-lam-viec/api/ca-lam-viec/create/ HTTP/1.1" 400 153
+ERROR 2025-12-05 16:48:56,266 log 267624 278740 Internal Server Error: /hrm/cham-cong/lam-them/quy-tac/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 30, in view_quytac_lam_them
+    return render(request, "hrm_manager/cham_cong/lam_them/quytac_lam_them.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lam_them/quytac_lam_them.html
+ERROR 2025-12-05 16:48:56,270 basehttp 267624 278740 "GET /hrm/cham-cong/lam-them/quy-tac/ HTTP/1.1" 500 91882
+WARNING 2025-12-05 16:48:56,700 log 267624 278740 Not Found: /favicon.ico
+WARNING 2025-12-05 16:48:56,702 basehttp 267624 278740 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 16:49:01,006 log 267624 278740 Internal Server Error: /hrm/cham-cong/quan-ly/bang-cham-cong/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 59, in view_bang_cham_cong
+    return render(request, "hrm_manager/cham_cong/quan_ly/bang_cham_cong.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/quan_ly/bang_cham_cong.html
+ERROR 2025-12-05 16:49:01,009 basehttp 267624 278740 "GET /hrm/cham-cong/quan-ly/bang-cham-cong/ HTTP/1.1" 500 90593
+ERROR 2025-12-05 17:47:39,980 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+ERROR 2025-12-05 17:47:39,986 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281575
+WARNING 2025-12-05 17:47:41,148 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:47:41,149 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 17:47:59,719 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+ERROR 2025-12-05 17:47:59,724 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281575
+WARNING 2025-12-05 17:48:00,168 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:48:00,170 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 17:48:20,091 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+ERROR 2025-12-05 17:48:20,096 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281575
+WARNING 2025-12-05 17:48:20,566 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:48:20,567 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 17:48:38,570 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: partials/formula_builder.html
+ERROR 2025-12-05 17:48:38,573 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281575
+WARNING 2025-12-05 17:48:38,982 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:48:38,983 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 17:48:40,307 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: formula_builder.html
+ERROR 2025-12-05 17:48:40,311 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281395
+WARNING 2025-12-05 17:48:40,777 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:48:40,778 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-05 17:48:41,229 log 267624 16684 Internal Server Error: /hrm/to-chuc-nhan-su/danh-muc/cong-viec/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: formula_builder.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\to_chuc_nhan_su\views.py", line 897, in view_dmht_congviec_list
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: formula_builder.html
+ERROR 2025-12-05 17:48:41,232 basehttp 267624 16684 "GET /hrm/to-chuc-nhan-su/danh-muc/cong-viec/ HTTP/1.1" 500 281395
+WARNING 2025-12-05 17:48:41,643 log 267624 16684 Not Found: /favicon.ico
+WARNING 2025-12-05 17:48:41,644 basehttp 267624 16684 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-05 17:49:06,567 log 267624 275516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 17:49:06,571 basehttp 267624 275516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-05 17:49:39,881 log 267624 275516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 17:49:39,883 basehttp 267624 275516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-05 18:30:39,283 log 267624 268984 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 18:30:39,577 log 267624 272924 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 18:37:53,869 log 267624 280792 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-05 18:37:53,871 basehttp 267624 280792 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 94
+WARNING 2025-12-05 18:38:10,507 log 267624 280792 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 18:38:10,508 basehttp 267624 280792 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-05 18:38:19,522 log 267624 280792 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-05 18:38:19,524 basehttp 267624 280792 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 94
+WARNING 2025-12-05 18:40:16,548 log 274760 280324 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-05 18:40:16,549 basehttp 274760 280324 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 297
+WARNING 2025-12-05 21:29:55,879 log 274760 276092 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-05 21:29:55,880 basehttp 274760 276092 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 09:48:50,174 log 274760 273152 Not Found: /favicon.ico
+WARNING 2025-12-08 09:48:50,175 basehttp 274760 273152 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-08 09:59:08,973 log 290672 305912 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-08 09:59:08,974 basehttp 290672 305912 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 85
+WARNING 2025-12-08 09:59:11,790 log 290672 305912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 09:59:11,791 basehttp 290672 305912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 09:59:16,431 log 290672 305912 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-08 09:59:16,434 basehttp 290672 305912 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 85
+WARNING 2025-12-08 09:59:45,738 log 290672 305912 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-08 09:59:45,739 basehttp 290672 305912 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 85
+WARNING 2025-12-08 09:59:48,984 log 290672 305912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 09:59:48,985 basehttp 290672 305912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:00:11,748 log 290672 303580 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-08 10:00:11,750 basehttp 290672 303580 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 85
+WARNING 2025-12-08 10:05:48,217 log 290672 309060 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:05:48,218 basehttp 290672 309060 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:05:49,737 log 290672 309060 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:05:49,738 basehttp 290672 309060 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:05:52,010 log 290672 306964 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:05:52,011 basehttp 290672 306964 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:06:14,994 log 290672 301356 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/create/
+WARNING 2025-12-08 10:06:14,998 basehttp 290672 301356 "POST /hrm/to-chuc-nhan-su/api/cong-viec/create/ HTTP/1.1" 400 85
+WARNING 2025-12-08 10:15:23,355 log 290672 304084 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/
+WARNING 2025-12-08 10:15:23,357 basehttp 290672 304084 "GET /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/ HTTP/1.1" 400 74
+WARNING 2025-12-08 10:15:28,024 log 290672 304084 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:15:28,026 basehttp 290672 304084 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:15:32,035 log 290672 304084 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/
+WARNING 2025-12-08 10:15:32,037 basehttp 290672 304084 "GET /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/ HTTP/1.1" 400 74
+WARNING 2025-12-08 10:27:46,695 log 290672 307076 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:27:46,696 basehttp 290672 307076 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:27:49,923 log 290672 307076 Bad Request: /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/
+WARNING 2025-12-08 10:27:49,924 basehttp 290672 307076 "GET /hrm/to-chuc-nhan-su/api/cong-viec/1/detail/ HTTP/1.1" 400 74
+WARNING 2025-12-08 10:45:07,819 log 301852 302828 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:45:07,821 basehttp 301852 302828 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:45:33,582 log 301852 302828 Not Found: /hrm/to-chuc-nhan-su/api/cong-viec/1/update/
+WARNING 2025-12-08 10:45:33,584 basehttp 301852 302828 "PUT /hrm/to-chuc-nhan-su/api/cong-viec/1/update/ HTTP/1.1" 404 21333
+WARNING 2025-12-08 10:45:36,537 log 301852 302828 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 10:45:36,538 basehttp 301852 302828 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 10:45:43,200 log 301852 302828 Not Found: /hrm/to-chuc-nhan-su/api/cong-viec/1/update/
+WARNING 2025-12-08 10:45:43,203 basehttp 301852 302828 "PUT /hrm/to-chuc-nhan-su/api/cong-viec/1/update/ HTTP/1.1" 404 21333
+WARNING 2025-12-08 11:13:16,384 log 309456 303364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:13:16,385 basehttp 309456 303364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:13:24,784 log 309456 309952 Method Not Allowed (PUT): /hrm/to-chuc-nhan-su/api/cong-viec/1/update/
+WARNING 2025-12-08 11:13:24,965 basehttp 309456 309952 "PUT /hrm/to-chuc-nhan-su/api/cong-viec/1/update/ HTTP/1.1" 405 0
+WARNING 2025-12-08 11:31:46,620 log 310264 304380 Not Found: /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/
+WARNING 2025-12-08 11:31:46,622 basehttp 310264 304380 "POST /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/ HTTP/1.1" 404 21741
+WARNING 2025-12-08 11:31:49,075 log 310264 304380 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:31:49,076 basehttp 310264 304380 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:31:53,848 log 310264 304380 Not Found: /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/
+WARNING 2025-12-08 11:31:53,848 basehttp 310264 304380 "POST /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/ HTTP/1.1" 404 21741
+WARNING 2025-12-08 11:32:43,430 log 289316 303632 Method Not Allowed (POST): /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/
+WARNING 2025-12-08 11:32:43,608 basehttp 289316 303632 "POST /hrm/to-chuc-nhan-su/api/cong-viec/1/delete/ HTTP/1.1" 405 0
+WARNING 2025-12-08 11:37:47,222 log 289316 307772 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:37:47,223 basehttp 289316 307772 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:50:24,765 log 289316 307368 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:50:24,766 basehttp 289316 307368 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:50:39,318 log 289316 307368 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:50:39,320 basehttp 289316 307368 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:51:23,151 log 289316 301516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:51:23,152 basehttp 289316 301516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:51:24,626 log 289316 301516 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:51:24,627 basehttp 289316 301516 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-08 11:52:26,134 log 303772 275896 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-08 11:52:26,135 basehttp 303772 275896 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
