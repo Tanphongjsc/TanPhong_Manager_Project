@@ -1655,6 +1655,7 @@ def api_congviec_detail(request, pk):
                 'id': item.id,
                 'tencongviec': item.tencongviec,
                 'macongviec': item.macongviec,
+                'loaicongviec': item.loaicongviec,
                 'ghichu': item.ghichu or '',
                 'bieuthuctinhtoan': item.bieuthuctinhtoan,
                 'danhsachthamso': item.danhsachthamso,
@@ -1680,6 +1681,7 @@ def api_congviec_create(request):
             tencongviec=data.get('tencongviec').title(),
             macongviec=data.get('macongviec'),
             ghichu=data.get('ghichu', ''),
+            loaicongviec=data.get('loaicongviec', ''),
             bieuthuctinhtoan=data.get('bieuthuctinhtoan', ''),
             danhsachthamso=data.get('danhsachthamso', ''),
             trangthaicongthuc=data.get('trangthaicongthuc', ''),
@@ -1743,13 +1745,17 @@ def api_congviec_delete(request, pk):
 @require_http_methods(["POST"])
 def api_congviec_toggle_status(request, pk):
     """API Chuyển đổi trạng thái công việc"""
-
     try:
         congviec = get_object_or_404(Congviec, pk=pk)
+
         data = get_request_data(request)
-        congviec.trangthaicv = 'active' if data.get('is_active') else 'inactive'
-        congviec.updated_at = timezone.now()
-        congviec.save()
+        new_status = 'active' if data.get('is_active') else 'inactive'
+        
+        # Chỉ cập nhật 2 trường cần thiết, tránh động vào các trường JSON
+        Congviec.objects.filter(pk=pk).update(
+            trangthaicv=new_status,
+            updated_at=timezone.now()
+        )
 
         return json_success('Cập nhật trạng thái công việc thành công')
 
