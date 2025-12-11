@@ -9,6 +9,7 @@ urlpatterns = [
     path('thiet-ke-lich/ca-lam-viec/create/', views.view_ca_lam_viec_create, name='thiet_ke_ca_create'),
     path('thiet-ke-lich/ca-lam-viec/<int:pk>/update/', views.view_ca_lam_viec_update, name='thiet_ke_ca_update'),
     path('thiet-ke-lich/lich-lam-viec/', views.view_lich_lam_viec, name='thiet_ke_lich'),
+    path('thiet-ke-lich/lich-lam-viec/create/', views.view_lich_lam_viec_create, name='thiet_ke_lich_create'),
     path('thiet-ke-lich/tong-hop/', views.view_tong_hop_lich, name='tong_hop_lich'),
 
     # -- Lịch nghỉ
@@ -16,12 +17,15 @@ urlpatterns = [
     path('thiet-ke-nghi/quy-nghi/', views.view_quy_nghi, name='thiet_ke_quy_nghi'),
     path('thiet-ke-nghi/tong-hop/', views.view_tong_hop_nghi, name='tong_hop_nghi'),
 
-    #API URLs 
+    #API CA LAM VIEC 
     path('api/ca-lam-viec/list/', views.api_calamviec_list, name='api_calamviec_list'),
-    path('api/ca-lam-viec/detail/<int:pk>/', views.api_calamviec_detail, name='api_calamviec_detail'), # API lấy data cũ
+    path('api/ca-lam-viec/detail/<int:pk>/', views.api_calamviec_detail, name='api_calamviec_detail'),
     path('api/ca-lam-viec/create/', views.api_calamviec_create, name='api_calamviec_create'),
     path('api/ca-lam-viec/<int:pk>/update/', views.api_calamviec_update, name='api_calamviec_update'),
     path('api/ca-lam-viec/<int:pk>/delete/', views.api_calamviec_delete, name='api_calamviec_delete'),
+
+    #API LICH LAM VIEC
+    path('api/lich-lam-viec/list/', views.api_lichlamviec_list, name='api_lichlamviec_list'),
     
     
 ]

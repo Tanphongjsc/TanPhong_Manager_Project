@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.db.models import Prefetch, Case, When, Value, IntegerField
+from django.db.models import Q, Count, Prefetch, Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
@@ -94,15 +94,34 @@ def view_ca_lam_viec_update(request, pk):
     })
 
 def view_lich_lam_viec(request):
+    
+    # Lấy danh sách loại kịch bản để làm bộ lọc
+    distinct_types = Lichlamviec.objects.values_list('loaikichbanlamviec', flat=True).distinct()
+    filter_options = [{'value': t, 'label': t} for t in distinct_types if t]
+
     context = {
         'breadcrumbs': [
             {'title': 'Chấm công', 'url': '#'},
             {'title': 'Quản lý lịch làm việc', 'url': None},
-            {'title': 'Thiết kế lịch', 'url': None},
+            {'title': 'Thiết kế lịch làm việc', 'url': None},
         ],
         'tabs': get_thiet_ke_lich_tabs(),
+        'filter_options': filter_options,
     }
-    return render(request, "hrm_manager/lich_lam_viec/thiet_ke_lich.html", context)
+    return render(request, "hrm_manager/lich_lam_viec/lich_lam_viec.html", context)
+
+def view_lich_lam_viec_create(request):
+    """Màn hình Thêm mới Ca"""
+    breadcrumbs = [
+        {'title': 'Chấm công', 'url': '#'},
+        {'title': 'Thiết kế lịch làm việc', 'url': reverse('hrm:lich_lam_viec:thiet_ke_lich')},
+        {'title': 'Thêm mới lịch làm việc', 'url': None},
+    ]
+    return render(request, "hrm_manager/lich_lam_viec/lich_form_page.html", {
+        'title': 'Thêm mới lịch làm việc',
+        'breadcrumbs': breadcrumbs,
+        'cancel_url': reverse('hrm:lich_lam_viec:thiet_ke_lich')
+    })
 
 def view_tong_hop_lich(request):
     context = {
@@ -151,7 +170,9 @@ def view_tong_hop_nghi(request):
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/tong_hop_nghi.html", context)
 
 
-# --- API TRẢ VỀ JSON ---
+# ------------------- API TRẢ VỀ JSON -------------------
+#==================== CA LÀM VIỆC =======================
+#========================================================
 
 @require_http_methods(["GET"])
 @handle_exceptions
@@ -342,3 +363,81 @@ def api_calamviec_delete(request, pk):
         return json_success(message)
     else:
         return json_error(message)
+    
+
+#==================== LỊCH LÀM VIỆC =======================
+#==========================================================
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_lichlamviec_list(request):
+    """API trả về danh sách lịch làm việc cho TableManager"""
+    
+    # 1. Prefetch dữ liệu liên quan để tránh N+1 Query
+    # Lấy chi tiết cài đặt cố định -> Ca làm việc -> Khung giờ
+    codinh_prefetch = Prefetch(
+        'lichlamvieccodinh_set',
+        queryset=LichlamviecCodinh.objects.select_related('calamviec').prefetch_related('calamviec__khunggiolamviec_set').order_by('ngaytrongtuan')
+    )
+
+    # 2. Query chính & Annotate đếm nhân viên
+    queryset = Lichlamviec.objects.prefetch_related(codinh_prefetch).annotate(
+        num_employees=Count('lichlamviecnhanvien', filter=Q(lichlamviecnhanvien__trangthai='active'))
+    ).order_by('-created_at')
+
+    # 3. Sử dụng Helper get_list_context (search, filter, pagination)
+    context = get_list_context(
+        request,
+        queryset,
+        search_fields=['tenlichlamviec', 'malichlamviec'],
+        filter_field=('loaikichbanlamviec', 'loaichamcong'), # Param 'loaichamcong' từ dropdown filter
+        page_size=20,
+        order_by=None
+    )
+
+    page_obj = context['page_obj']
+    items_list = []
+
+    # 4. Transform dữ liệu ra JSON
+    for item in page_obj.object_list:
+        
+        # Xử lý chi tiết ca làm việc (Cột giữa trong ảnh)
+        details = []
+        if item.loaikichbanlamviec == 'Cố định': # Hoặc check theo value DB của bạn (VD: CO_DINH)
+            for setup in item.lichlamvieccodinh_set.all():
+                ca = setup.calamviec
+                if ca:
+                    # Lấy khung giờ để hiển thị badge (07:30 - 11:30)
+                    time_slots = []
+                    for kg in ca.khunggiolamviec_set.all():
+                        s = kg.thoigianbatdau.strftime('%H:%M') if kg.thoigianbatdau else ''
+                        e = kg.thoigianketthuc.strftime('%H:%M') if kg.thoigianketthuc else ''
+                        time_slots.append(f"{s} - {e}")
+                    
+                    details.append({
+                        'Ngay': setup.ngaytrongtuan, # 0=Thứ 2, 6=CN (Tùy convention DB của bạn)
+                        'TenCa': ca.tencalamviec,
+                        'KhungGio': time_slots
+                    })
+        
+        items_list.append({
+            'id': item.id,
+            'TenNhom': item.tenlichlamviec,
+            'MaNhom': item.malichlamviec,
+            'LoaiCa': item.loaikichbanlamviec, # Cố định / Lịch trình
+            'ChiTietCa': details, # List dict cho JS render
+            'SoNhanVien': item.num_employees,
+            'IsDefault': item.malichlamviec == 'NHOMMACDINH' # Flag để style màu xanh
+        })
+
+    return json_success(
+        'Thành công',
+        data=items_list,
+        pagination={
+            'page': page_obj.number,
+            'total': context['paginator'].count,
+            'total_pages': context['paginator'].num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous()
+        }
+    )

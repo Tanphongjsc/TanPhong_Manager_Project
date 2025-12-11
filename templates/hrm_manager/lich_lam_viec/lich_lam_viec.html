@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Thiết kế Lịch làm việc{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {# Breadcrumb #}
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-4 rounded-lg h-full flex flex-col">
+        <h1 class="text-2xl font-bold text-slate-900 mb-4">Thiết kế lịch làm việc</h1>
+        
+        {# Tabs Navigation #}
+        {% include "components/tab_nav.html" with tabs=tabs %}
+
+        <div class="flex-1 flex flex-col mt-2 relative overflow-x-auto">
+            
+            {# TOOLBAR: Search, Filter, Add Button #}
+            {% url 'hrm:lich_lam_viec:thiet_ke_lich_create' as create_url_val %}
+            {% include "components/toolbar.html" with search_id="search-lich" search_placeholder="Tìm kiếm theo tên nhóm, mã nhóm" create_text="Thêm lịch làm việc" create_url=create_url_val filter_form_id="filter-lich" filter_options=filter_options filter_field="loaichamcong" filter_label="Loại ca" %}
+
+            {# TABLE #}
+            {# Định nghĩa Header bảng theo yêu cầu: Tên nhóm | Mã nhóm | Loại ca | Ca làm việc | Số NV | Actions #}
+            {% with headers='<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-[15%]">Tên nhóm</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-[10%]">Mã nhóm</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-[10%]">Loại ca</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-[45%]">Ca làm việc</th><th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-[10%]">Số nhân viên</th>' %}
+                
+                {% include "components/table_wrapper.html" with table_id="lich-table" tbody_id="table-body-lich" headers_html=headers show_checkbox=True select_all_id="select-all-lich" %}
+            
+            {% endwith %}
+
+            {# PAGINATION #}
+            {% include "components/pagination.html" %}
+
+            {# BULK ACTIONS #}
+            {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions-lich" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/lich_lam_viec/lich_lam_viec.js' %}"></script>
+{% endblock %}

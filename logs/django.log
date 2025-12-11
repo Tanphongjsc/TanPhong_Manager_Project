@@ -33284,3 +33284,115 @@ WARNING 2025-12-03 21:05:11,154 log 20964 7324 Bad Request: /hrm/lich-lam-viec/a
 WARNING 2025-12-03 21:05:11,154 basehttp 20964 7324 "POST /hrm/lich-lam-viec/api/ca-lam-viec/create/ HTTP/1.1" 400 153
 WARNING 2025-12-03 21:05:18,636 log 20964 7324 Bad Request: /hrm/lich-lam-viec/api/ca-lam-viec/create/
 WARNING 2025-12-03 21:05:18,636 basehttp 20964 7324 "POST /hrm/lich-lam-viec/api/ca-lam-viec/create/ HTTP/1.1" 400 153
+WARNING 2025-12-08 09:29:46,149 log 2916 17552 Not Found: /favicon.ico
+WARNING 2025-12-08 09:29:46,149 basehttp 2916 17552 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-08 09:30:36,722 log 2916 8428 Bad Request: /hrm/lich-lam-viec/api/ca-lam-viec/create/
+WARNING 2025-12-08 09:30:36,722 basehttp 2916 8428 "POST /hrm/lich-lam-viec/api/ca-lam-viec/create/ HTTP/1.1" 400 177
+ERROR 2025-12-08 09:30:50,683 log 2916 8428 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 105, in view_lich_lam_viec
+    return render(request, "hrm_manager/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-12-08 09:30:50,683 basehttp 2916 8428 "GET /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 93858
+ERROR 2025-12-08 09:30:52,320 log 2916 8428 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 129, in view_lich_nghi
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html
+ERROR 2025-12-08 09:30:52,321 basehttp 2916 8428 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 93815
+ERROR 2025-12-08 09:38:07,350 log 18404 7120 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 105, in view_lich_lam_viec
+    return render(request, "hrm_manager/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-12-08 09:38:07,352 basehttp 18404 7120 "GET /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 93837
+WARNING 2025-12-10 15:18:44,922 log 7968 19804 Not Found: /favicon.ico
+WARNING 2025-12-10 15:18:44,925 basehttp 7968 19804 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-10 15:19:00,615 log 7968 21136 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 105, in view_lich_lam_viec
+    return render(request, "hrm_manager/lich_lam_viec/thiet_ke_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/thiet_ke_lich.html
+ERROR 2025-12-10 15:19:00,620 basehttp 7968 21136 "GET /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/ HTTP/1.1" 500 94162
+WARNING 2025-12-10 16:07:14,065 log 19052 20760 Not Found: /favicon.ico
+WARNING 2025-12-10 16:07:14,066 basehttp 19052 20760 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-10 16:07:34,919 log 19052 3048 Internal Server Error: /hrm/lich-lam-viec/api/lich-lam-viec/list/
+ERROR 2025-12-10 16:07:34,920 basehttp 19052 3048 "GET /hrm/lich-lam-viec/api/lich-lam-viec/list/?page=1&page_size=10 HTTP/1.1" 500 56
+WARNING 2025-12-10 16:09:38,035 log 21484 8128 Not Found: /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/1/update/
+WARNING 2025-12-10 16:09:38,035 basehttp 21484 8128 "GET /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/1/update/ HTTP/1.1" 404 11059
+WARNING 2025-12-10 16:09:38,383 log 21484 8128 Not Found: /favicon.ico
+WARNING 2025-12-10 16:09:38,383 basehttp 21484 8128 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-10 16:12:18,598 log 21484 9004 Not Found: /hrm/lich-lam-viec/api/lich-lam-viec/4/delete/
+WARNING 2025-12-10 16:12:18,598 basehttp 21484 9004 "POST /hrm/lich-lam-viec/api/lich-lam-viec/4/delete/ HTTP/1.1" 404 11030
+WARNING 2025-12-10 16:12:24,155 log 21484 9004 Not Found: /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/4/update/
+WARNING 2025-12-10 16:12:24,160 basehttp 21484 9004 "GET /hrm/lich-lam-viec/thiet-ke-lich/lich-lam-viec/4/update/ HTTP/1.1" 404 11059
+WARNING 2025-12-10 16:12:26,936 log 21484 9004 Not Found: /hrm/lich-lam-viec/api/lich-lam-viec/4/delete/
+WARNING 2025-12-10 16:12:26,941 basehttp 21484 9004 "POST /hrm/lich-lam-viec/api/lich-lam-viec/4/delete/ HTTP/1.1" 404 11030
+WARNING 2025-12-10 16:12:52,241 log 21484 9004 Not Found: /hrm/lich-lam-viec/api/lich-lam-viec/2/delete/
+WARNING 2025-12-10 16:12:52,241 basehttp 21484 9004 "POST /hrm/lich-lam-viec/api/lich-lam-viec/2/delete/ HTTP/1.1" 404 11030
+WARNING 2025-12-10 16:41:28,467 log 21484 13908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-10 16:41:28,467 basehttp 21484 13908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-10 16:41:34,442 log 21484 13908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-10 16:41:34,442 basehttp 21484 13908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-11 07:57:59,354 log 12340 14856 Not Found: /favicon.ico
+WARNING 2025-12-11 07:57:59,355 basehttp 12340 14856 "GET /favicon.ico HTTP/1.1" 404 3131
