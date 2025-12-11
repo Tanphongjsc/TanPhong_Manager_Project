@@ -30,6 +30,17 @@ class CongViecManager extends BaseCRUDManager {
                 if (this.el.json) p.danhsachthamso = this.el.json.value;
                 return p;
             },
+
+            // CHẶN LƯU NẾU CÔNG THỨC SAI
+            onBeforeSubmit: () => {
+                if (!this.el.toggle?.checked) return true;
+                const { ok, empty } = this.validateCurrentFormula();
+                
+                if (empty) return AppUtils.Notify.warning('Chưa nhập công thức!'), this.el.input?.focus(), false;
+                if (!ok) return AppUtils.Notify.error('Công thức bị lỗi, vui lòng kiểm tra lại!'), this.el.input?.focus(), false;
+                
+                return true;
+            },
             onBeforeOpen: () => this.resetFormula(),
             onAfterClose: () => this.resetFormula()
         });
@@ -167,16 +178,58 @@ class CongViecManager extends BaseCRUDManager {
         this.updatePreview();
     }
 
+
+    // Tách logic validate ra riêng để tái sử dụng
+    validateCurrentFormula() {
+        const val = this.el.input?.value.trim();
+        if (!val) return { ok: true, empty: true };
+        
+        const validVars = this.params.map(p => p.ma).filter(Boolean);
+        const res = AppUtils.Formula.validate(val, validVars);
+        
+        // Format text hiển thị: thay mã bằng tên
+        let fmt = val;
+        this.params.forEach(p => {
+            if (p.ma && p.ten) fmt = fmt.replace(new RegExp(`\\b${p.ma}\\b`, 'g'), `[${p.ten}]`);
+        });
+
+        return { ok: res.ok, msg: res.msg, fmt, empty: false };
+    }
+
     // Cập nhật xem trước công thức (thay mã tham số thành tên)
     updatePreview() {
-        const { input, preview, previewText } = this.el;
-        if (!input || !preview || !previewText) return;
-        const f = input.value.trim();
-        if (!f) { preview.classList.add('hidden'); return; }
-        let d = f;
-        this.params.forEach(p => { if (p.ma && p.ten) d = d.replace(new RegExp(`\\b${p.ma}\\b`, 'g'), `[${p.ten}]`); });
-        previewText.textContent = d;
+        const { preview, previewText } = this.el;
+        if (!preview) return;
+
+        const { ok, msg, fmt, empty } = this.validateCurrentFormula();
+        
+        if (empty) {
+            preview.classList.add('hidden');
+            return;
+        }
+
+        // Cấu hình giao diện cho 2 trạng thái: Valid (true) & Invalid (false)
+        const UI = {
+            true: {
+                cls: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+                icon: '<svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+                msg: ''
+            },
+            false: {
+                cls: 'bg-red-50 border-red-200 text-red-900',
+                icon: '<svg class="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+                msg: `<div class="mt-1 text-xs font-bold text-red-600 flex items-center gap-1">⚠️ ${msg}</div>`
+            }
+        };
+
+        const state = UI[ok];
+        
+        // Render
         preview.classList.remove('hidden');
+        preview.className = `p-3 border rounded-lg flex items-start gap-3 transition-colors ${state.cls}`;
+        
+        preview.querySelector('div:first-child').innerHTML = state.icon; // Update Icon
+        previewText.innerHTML = fmt + state.msg; // Update Text & Error msg
     }
 
     // Khởi tạo bảng

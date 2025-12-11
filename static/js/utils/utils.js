@@ -997,6 +997,47 @@ const AppUtils = (() => {
             });
         }
     };
+
+
+    // ============================================================
+    // FORMULA VALIDATOR - Kiểm tra cú pháp biểu thức
+    // ============================================================
+    const Formula = (() => {
+        // 1. Định nghĩa Context tĩnh (Chỉ khởi tạo 1 lần)
+        const CTX = {
+            IF: (c, t, f) => c ? t : f,
+            MAX: Math.max, MIN: Math.min, ROUND: Math.round,
+            ABS: Math.abs, POW: Math.pow, CEIL: Math.ceil, FLOOR: Math.floor
+        };
+
+        return {
+            validate(expr, vars = []) {
+                if (!expr?.trim()) return { ok: true, msg: '' };
+                
+                try {
+                    // 2. Tạo Function với các biến đầu vào là tham số
+                    // Gán giá trị 1 cho tất cả biến để test chạy thử
+                    const func = new Function(...Object.keys(CTX), ...vars, `return ${expr};`);
+                    func(...Object.values(CTX), ...vars.map(() => 1));
+                    return { ok: true, msg: '' };
+                } catch (e) {
+                    // 3. Map lỗi ngắn gọn
+                    const map = {
+                        'Invalid left-hand side': 'Sai cú pháp: Không được dùng dấu bằng (=) hoặc phép gán',                        
+                        'is not defined': 'Tham số hoặc hàm không tồn tại',
+                        'Unexpected token': 'Lỗi cú pháp (dư/thiếu dấu câu, dấu phẩy...)',
+                        'Invalid or unexpected': 'Chứa ký tự lạ không hợp lệ',
+                        'Unexpected end of input': 'Công thức chưa hoàn thiện (thiếu dấu ngoặc?)',
+                        'missing )': 'Thiếu dấu ngoặc đóng )',
+                        'Assignment to constant': 'Không được gán giá trị cho hằng số'
+                    };
+                    const key = Object.keys(map).find(k => e.message.includes(k));
+                    return { ok: false, msg: key ? map[key] : e.message };
+                }
+            }
+        };
+    })();
+
     // ============================================================
     // PUBLIC API
     // ============================================================
@@ -1014,6 +1055,7 @@ const AppUtils = (() => {
         Helper,
         DateUtils,
         DeleteOperations,
+        Formula,
         get config() { return { ...config }; },
         get csrfToken() { return csrfToken; }
     };
