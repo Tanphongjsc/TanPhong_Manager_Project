@@ -1,0 +1,124 @@
+<div class="flex flex-col md:flex-row h-full">
+    
+    <div class="w-full md:w-64 flex-none border-b md:border-b-0 md:border-r border-slate-200 bg-white z-10">
+        {% include "components/vertical_tab_nav.html" with items=advanced_menu_items menu_id="advanced-info-sidebar" %}
+    </div>
+
+    <div class="flex-1 min-w-0 bg-white">
+        <div class="p-4 md:p-6 h-full overflow-y-auto">
+            
+            <div id="subtab-info" class="vertical-tab-pane animate-fade-in">
+                <h3 class="text-base md:text-lg font-semibold text-slate-800 mb-4">Thông tin bổ sung</h3>
+                <div class="p-8 border-2 border-dashed border-slate-200 rounded-lg text-center">
+                    <p class="text-slate-500">Form cập nhật thông tin bổ sung sẽ hiển thị ở đây.</p>
+                </div>
+            </div>
+
+            <div id="subtab-contracts" class="vertical-tab-pane hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base md:text-lg font-semibold text-slate-800">Hợp đồng lao động</h3>
+                    <button class="btn-primary text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-plus mr-1"></i> Tạo mới
+                    </button>
+                </div>
+                <div class="flex flex-col items-center justify-center py-10 bg-slate-50 rounded-lg border border-slate-100">
+                    <i class="fas fa-file-signature text-4xl text-slate-300 mb-3"></i>
+                    <p class="text-slate-500 text-sm">Chưa có hợp đồng nào.</p>
+                </div>
+            </div>
+
+            <div id="subtab-tax" class="vertical-tab-pane hidden animate-fade-in">
+                <h3 class="text-base md:text-lg font-semibold text-slate-800 mb-4">Thuế thu nhập cá nhân</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded border border-slate-200">
+                        <span class="text-xs text-slate-500 uppercase font-semibold">Mã số thuế</span>
+                        <div class="text-lg font-medium text-slate-900 mt-1">--</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded border border-slate-200">
+                        <span class="text-xs text-slate-500 uppercase font-semibold">Người phụ thuộc</span>
+                        <div class="text-lg font-medium text-slate-900 mt-1">0 người</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subtab-bhxh" class="vertical-tab-pane hidden animate-fade-in">
+                <h3 class="text-base md:text-lg font-semibold text-slate-800 mb-4">Bảo hiểm xã hội</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-900">Số sổ BHXH</p>
+                                <p class="text-sm text-slate-500">Chưa cập nhật</p>
+                            </div>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Cập nhật</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subtab-bhyt" class="vertical-tab-pane hidden animate-fade-in">
+                <h3 class="text-base md:text-lg font-semibold text-slate-800 mb-4">Bảo hiểm y tế</h3>
+                <div class="space-y-4">
+                     <div class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <i class="fas fa-medkit"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-900">Số thẻ BHYT</p>
+                                <p class="text-sm text-slate-500">Chưa cập nhật</p>
+                            </div>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Cập nhật</button>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded text-sm text-slate-600">
+                        <i class="fas fa-hospital-alt mr-2 text-slate-400"></i> Nơi đăng ký KCB ban đầu: <strong>--</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subtab-allowance" class="vertical-tab-pane hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base md:text-lg font-semibold text-slate-800">Các khoản phụ cấp</h3>
+                    <button class="text-sm px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 transition">
+                        <i class="fas fa-pen mr-1"></i> Chỉnh sửa
+                    </button>
+                </div>
+                <div class="overflow-hidden border border-slate-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Khoản phụ cấp</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Số tiền (VNĐ)</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tính chất</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white">
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-slate-800">Phụ cấp ăn trưa</td>
+                                <td class="px-4 py-3 text-sm text-right text-slate-600">730,000</td>
+                                <td class="px-4 py-3 text-sm text-slate-500">Hàng tháng</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-slate-800">Xăng xe / Đi lại</td>
+                                <td class="px-4 py-3 text-sm text-right text-slate-600">500,000</td>
+                                <td class="px-4 py-3 text-sm text-slate-500">Hàng tháng</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50">
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-bold text-slate-700">Tổng cộng</td>
+                                <td class="px-4 py-3 text-sm font-bold text-right text-blue-600">1,230,000</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

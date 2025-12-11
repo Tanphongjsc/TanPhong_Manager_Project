@@ -1,0 +1,62 @@
+{% comment %}
+  Component: CRUD Modal (Generic)
+  Usage:
+    {% include "components/crud_modal.html" with 
+       modal_id="cv-modal" 
+       form_id="congviec-form" 
+       title="Thông tin công việc" 
+       content_template="hrm_manager/quan_ly_nhan_su/partials/congviec_form.html"
+       modal_size="4xl" 
+    %}
+  
+  Params:
+    - modal_id: ID của modal wrapper (bắt buộc cho JS)
+    - form_id: ID của form (bắt buộc cho JS)
+    - title: Tiêu đề mặc định
+    - content_template: Đường dẫn file template nội dung form
+    - modal_size: Kích thước (sm, md, lg, xl, 2xl, 3xl, 4xl, 5xl, full). Mặc định: md.
+    - submit_label: Chữ nút lưu (Mặc định: Lưu)
+    - cancel_label: Chữ nút hủy (Mặc định: Hủy)
+{% endcomment %}
+
+<div id="{{ modal_id }}" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-150" aria-hidden="true">
+    <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-h-[90vh] overflow-hidden transform scale-95 transition-transform duration-150 flex flex-col
+        {% if modal_size == 'sm' %}max-w-sm
+        {% elif modal_size == 'lg' %}max-w-lg
+        {% elif modal_size == 'xl' %}max-w-xl
+        {% elif modal_size == '2xl' %}max-w-2xl
+        {% elif modal_size == '3xl' %}max-w-3xl
+        {% elif modal_size == '4xl' %}max-w-4xl
+        {% elif modal_size == '5xl' %}max-w-5xl
+        {% elif modal_size == 'full' %}max-w-full m-4
+        {% else %}max-w-md{% endif %}"> <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 shrink-0">
+            <h3 data-modal-title class="text-base font-semibold text-slate-800">
+                {{ title|default:"Thông tin chi tiết" }}
+            </h3>
+            <button type="button" data-modal-close class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors" title="Đóng">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="px-5 py-4 overflow-y-auto custom-scrollbar flex-1">
+            <form id="{{ form_id }}" method="POST" enctype="multipart/form-data" novalidate>
+                {% if content_template %}
+                    {% include content_template %}
+                {% else %}
+                    <p class="text-red-500 italic">Error: No content_template provided.</p>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+            <button type="button" data-modal-close class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-slate-200">
+                {{ cancel_label|default:"Hủy" }}
+            </button>
+            <button type="button" data-modal-submit form="{{ form_id }}" class="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                {{ submit_label|default:"Lưu" }}
+            </button>
+        </div>
+    </div>
+</div>

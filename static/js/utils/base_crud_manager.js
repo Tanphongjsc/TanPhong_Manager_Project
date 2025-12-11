@@ -1,11 +1,6 @@
 /**
  * BaseCRUDManager - Quản lý THAO TÁC FORM & API
- * @class BaseCRUDManager
- * @role:
- * 1. Mở form (Add/Edit)
- * 2. Validate form
- * 3. Gọi API (Create/Update/Delete)
- * 4. Thông báo cho TableManager load lại dữ liệu khi thao tác xong
+ * Hỗ trợ 2 chế độ UI: 'sidebar' (mặc định) và 'modal'
  */
 class BaseCRUDManager {
     constructor(config) {
@@ -14,15 +9,19 @@ class BaseCRUDManager {
         }
 
         this.config = {
-            // Cấu hình UI
+            // ===== CHẾ ĐỘ UI: 'sidebar' (mặc định) hoặc 'modal' =====
+            uiMode: config.uiMode || 'sidebar',
+            
+            // Cấu hình Sidebar (giữ nguyên)
             sidebarId: config.sidebarId,
             overlayId: config.overlayId,
-            formId: config.formId,
             
-            // Selector để lắng nghe sự kiện click (Edit/Delete) từ bảng
-            tbodySelector: config.tbodySelector || 'tbody', 
-
-            // Cấu hình Field
+            // Cấu hình Modal (mới)
+            modalId: config.modalId,
+            
+            // Cấu hình chung
+            formId: config.formId,
+            tbodySelector: config.tbodySelector || 'tbody',
             codeField: config.codeField,
             
             // Cấu hình API
@@ -31,8 +30,8 @@ class BaseCRUDManager {
             // HTTP Methods
             httpMethods: {
                 create: 'POST',
-                update: 'PUT', 
-                delete: 'DELETE', // Hoặc 'DELETE' tùy backend
+                update: 'PUT',
+                delete: 'DELETE',
                 toggleStatus: 'POST',
                 ...config.httpMethods
             },
@@ -41,9 +40,9 @@ class BaseCRUDManager {
             onAfterInit: config.onAfterInit || (() => {}),
             onBeforeSubmit: config.onBeforeSubmit || (() => true),
             onAfterSubmit: config.onAfterSubmit || (() => {}),
-            
-            // ⭐ QUAN TRỌNG: Callback để gọi TableManager refresh
             onRefreshTable: config.onRefreshTable || (() => {}),
+            onBeforeOpen: config.onBeforeOpen || (() => {}),
+            onAfterClose: config.onAfterClose || (() => {}),
 
             fillFormData: config.fillFormData,
             getFormData: config.getFormData,
@@ -71,17 +70,19 @@ class BaseCRUDManager {
             currentItemId: null,
             isSubmitting: false,
             loadController: null,
-            isCodeManuallyEdited: false // Trạng thái đã sửa thủ công
+            isCodeManuallyEdited: false
         };
 
         this.elements = {};
         this.eventManager = AppUtils.EventManager.create();
-        this.sidebar = null;
+        
+        // UI Handler (sidebar hoặc modal)
+        this.uiHandler = null;
     }
 
     init() {
         this.cacheElements();
-        this.initSidebar();
+        this.initUIHandler();
         this.initEventListeners();
         this.initValidation();
         this.setupAutoCode();
@@ -90,10 +91,8 @@ class BaseCRUDManager {
 
     cacheElements() {
         this.elements = {
-            // Chỉ lấy tbody để gắn sự kiện click, KHÔNG dùng để render
             tbody: document.querySelector(this.config.tbodySelector),
             form: document.getElementById(this.config.formId),
-            submitBtn: document.querySelector(`[data-sidebar-submit][form="${this.config.formId}"]`) || document.querySelector('[data-sidebar-submit]'),
         };
 
         if (!this.elements.form) {
@@ -101,21 +100,82 @@ class BaseCRUDManager {
         }
     }
 
+    // ===== UI HANDLER INITIALIZATION (TỐI ƯU) =====
+    initUIHandler() {
+        if (this.config.uiMode === 'modal') {
+            this.initModal();
+        } else {
+            this.initSidebar();
+        }
+    }
+
+    // ===== MODAL METHODS (TỐI ƯU - TÁI SỬ DỤNG AppUtils.Modal) =====
+    initModal() {
+        const modal = document.getElementById(this.config.modalId);
+        if (!modal) {
+            console.error(`⛔ Modal with id "${this.config.modalId}" not found`);
+            return;
+        }
+
+        this.elements.modal = modal;
+        this.elements.submitBtn = modal.querySelector('[data-modal-submit]');
+
+        // 🔧 TỐI ƯU: Sử dụng AppUtils.Modal.close thay vì tự viết
+        this.eventManager.addMultiple(
+            modal.querySelectorAll('[data-modal-close]'),
+            'click',
+            () => this.closeModal()
+        );
+
+        // Click outside to close
+        this.eventManager.add(modal, 'click', (e) => {
+            if (e.target === modal) this.closeModal();
+        });
+
+        // ESC key to close
+        this.eventManager.add(document, 'keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                this.closeModal();
+            }
+        });
+
+        // Submit button
+        if (this.elements.submitBtn) {
+            this.eventManager.add(this.elements.submitBtn, 'click', (e) => {
+                e.preventDefault();
+                this.submitForm();
+            });
+        }
+
+        // 🔧 TỐI ƯU: Wrapper functions sử dụng AppUtils.Modal
+        this.uiHandler = {
+            open: () => AppUtils.Modal.open(modal),
+            close: () => AppUtils.Modal.close(modal),
+            setTitle: (title) => {
+                const titleEl = modal.querySelector('[data-modal-title]');
+                if (titleEl) titleEl.textContent = title;
+            },
+            setMode: (mode) => {
+                modal.dataset.mode = mode;
+            }
+        };
+    }
+
+    // 🔧 LOẠI BỎ: isModalOpen() - không cần thiết nữa vì AppUtils.Modal đã handle
+    openModal(mode, itemId = null) {
+        this.openUI(mode, itemId);
+    }
+
+    closeModal() {
+        this.closeUI();
+    }
+
+    // ===== SIDEBAR METHODS (GIỮ NGUYÊN) =====
     initSidebar() {
         this.sidebar = AppUtils.Sidebar.init(this.config.sidebarId, this.config.overlayId, {
             codeFieldId: this.config.codeField,
             onClose: () => {
-                // Abort load data nếu đang tải dở mà đóng
-                if (this.state.loadController) {
-                    this.state.loadController.abort();
-                    this.state.loadController = null;
-                }
-                
-                this.state.currentMode = 'create';
-                this.state.currentItemId = null;
-                this.state.isSubmitting = false;
-                AppUtils.Validation.clearError(this.config.codeField);
-                this.enableAllInputs();
+                this.handleUIClose();
             }
         });
 
@@ -123,6 +183,9 @@ class BaseCRUDManager {
             AppUtils.Notify.error('Không thể khởi tạo sidebar');
             return;
         }
+
+        this.elements.submitBtn = document.querySelector(`[data-sidebar-submit][form="${this.config.formId}"]`) || 
+                                   document.querySelector('[data-sidebar-submit]');
 
         // Close buttons
         this.eventManager.addMultiple(
@@ -144,119 +207,40 @@ class BaseCRUDManager {
                 this.submitForm();
             });
         }
-    }
 
-    initEventListeners() {
-        const { tbody } = this.elements;
-        if (!tbody) return;
-
-        // Event delegation: Lắng nghe click vào nút Edit/Delete trong bảng
-        this.eventManager.add(tbody, 'click', (e) => {
-            const target = e.target.closest('button, a');
-            if (!target) return;
-
-            const itemId = target.dataset.id;
-            if (!itemId) return; // Nút không có ID thì bỏ qua
-
-            const itemName = target.dataset.name || 'bản ghi này';
-
-            // Xử lý Edit
-            if (target.classList.contains('view-link') ||
-                target.classList.contains('view-btn') ||
-                target.classList.contains('edit-btn')) {
-                e.preventDefault();
-                this.openSidebar('edit', itemId);
-            } 
-            // Xử lý Delete
-            else if (target.classList.contains('delete-btn')) {
-                e.preventDefault();
-                this.deleteItem(itemId, itemName);
-            }
-        });
-
-        // Xử lý Toggle Status
-        this.eventManager.add(tbody, 'change', (e) => {
-            if (e.target.classList.contains('status-toggle')) {
-                this.handleStatusToggle(e.target);
-            }
-        });
-    }
-
-    initValidation() {
-        // Validate field Mã khi nhập liệu
-        const codeField = document.getElementById(this.config.codeField);
-        if (codeField) {
-            this.eventManager.add(codeField, 'input', () => {
-                AppUtils.Validation.validate(this.config.codeField, 'code');
-            });
-        }
-
-        // Validate các field khác được cấu hình thêm
-        this.config.additionalValidations.forEach(validation => {
-            const field = document.getElementById(validation.fieldId);
-            if (field) {
-                this.eventManager.add(field, 'input', () => {
-                    AppUtils.Validation.validate(
-                        validation.fieldId,
-                        validation.type,
-                        validation.message
-                    );
-                });
-            }
-        });
-    }
-
-
-    /**
-     * Logic sinh mã tự động tối ưu
-     */
-    setupAutoCode() {
-        if (!this.config.autoCode || !this.config.autoCode.sourceField) return;
-
-        const { sourceField, targetField } = this.config.autoCode;
-        // Nếu không cấu hình targetField, lấy mặc định codeField của Manager
-        const targetName = targetField || this.config.codeField;
-
-        const sourceInput = this.elements.form.querySelector(`[name="${sourceField}"]`);
-        const targetInput = this.elements.form.querySelector(`[name="${targetName}"]`);
-
-        if (!sourceInput || !targetInput) return;
-
-        // 1. Hàm sinh mã (Debounce 300ms)
-        const handleGenerateCode = AppUtils.Helper.debounce(() => {
-            // Chỉ chạy khi: Đang ở mode Create VÀ Người dùng chưa can thiệp vào ô Mã
-            if (this.state.currentMode === 'create' && !this.state.isCodeManuallyEdited) {
-                const sourceValue = sourceInput.value.trim();
-                
-                // Gán giá trị trực tiếp (Việc này KHÔNG kích hoạt sự kiện 'input' của DOM)
-                targetInput.value = sourceValue ? AppUtils.Helper.generateCode(sourceValue) : '';
-                
-                // (Tùy chọn) Gọi validate thủ công để xóa báo lỗi đỏ (nếu có) mà không bật cờ sửa tay
-                AppUtils.Validation.clearError(targetName);
-            }
-        }, 300);
-
-        // 2. Lắng nghe ô TÊN (Nguồn)
-        this.eventManager.add(sourceInput, 'input', handleGenerateCode);
-
-        // 3. Lắng nghe ô MÃ (Đích) - Để phát hiện người dùng sửa tay
-        this.eventManager.add(targetInput, 'input', (e) => {
-            const val = e.target.value.trim();
-
-            if (val === '') {
-                // Nếu người dùng xóa trắng ô Mã -> Reset cờ, cho phép Auto lại
-                this.state.isCodeManuallyEdited = false;
-                
-                // Tự động sinh lại mã ngay lập tức theo tên hiện tại (nếu muốn UX mượt hơn)
-                handleGenerateCode(); 
-            } else {
-                // Người dùng gõ nội dung -> Bật cờ, chặn Auto
-                this.state.isCodeManuallyEdited = true;
-            }
-        });
+        this.uiHandler = {
+            open: () => this.sidebar.open(),
+            close: () => this.sidebar.close(),
+            setTitle: (title) => this.sidebar.setTitle(title),
+            setMode: (mode) => this.sidebar.setMode(mode)
+        };
     }
 
     openSidebar(mode, itemId = null) {
+        this.openUI(mode, itemId);
+    }
+
+    closeSidebar() {
+        this.closeUI();
+    }
+
+    // 🔧 TỐI ƯU: Tách logic cleanup chung
+    handleUIClose() {
+        if (this.state.loadController) {
+            this.state.loadController.abort();
+            this.state.loadController = null;
+        }
+        
+        this.state.currentMode = 'create';
+        this.state.currentItemId = null;
+        this.state.isSubmitting = false;
+        AppUtils.Validation.clearError(this.config.codeField);
+        this.enableAllInputs();
+        this.config.onAfterClose();
+    }
+
+    // ===== UNIFIED UI METHODS =====
+    openUI(mode, itemId = null) {
         this.state.currentMode = mode;
         this.state.currentItemId = itemId;
         this.state.isCodeManuallyEdited = false;
@@ -264,6 +248,8 @@ class BaseCRUDManager {
         AppUtils.Validation.clearError(this.config.codeField);
         
         if (this.elements.form) this.elements.form.reset();
+
+        this.config.onBeforeOpen(mode);
 
         const configs = {
             create: {
@@ -280,24 +266,120 @@ class BaseCRUDManager {
             }
         };
 
-        const config = configs[mode] || configs.create;
+        const uiConfig = configs[mode] || configs.create;
 
-        this.sidebar.setTitle(config.title);
+        this.uiHandler.setTitle(uiConfig.title);
 
         if (this.elements.submitBtn) {
-            this.elements.submitBtn.textContent = config.btnText;
-            // Reset class cũ và thêm class mới (để tránh trùng lặp class màu)
-            this.elements.submitBtn.className = `px-6 py-2 text-white rounded-lg transition-colors ${config.btnColor}`;
+            this.elements.submitBtn.textContent = uiConfig.btnText;
+            
+            if (this.config.uiMode === 'sidebar') {
+                this.elements.submitBtn.className = `px-6 py-2 text-white rounded-lg transition-colors ${uiConfig.btnColor}`;
+            }
         }
 
         this.enableAllInputs();
-        this.sidebar.setMode(mode);
+        this.uiHandler.setMode(mode);
 
-        if (config.loadData && itemId) {
+        if (uiConfig.loadData && itemId) {
             this.loadItemData(itemId);
         }
 
-        this.sidebar.open();
+        this.uiHandler.open();
+    }
+
+    closeUI() {
+        this.handleUIClose();
+        this.uiHandler.close();
+    }
+
+    // ===== EXISTING METHODS (GIỮ NGUYÊN LOGIC) =====
+    initEventListeners() {
+        const { tbody } = this.elements;
+        if (!tbody) return;
+
+        // Event delegation cho Edit/Delete
+        this.eventManager.add(tbody, 'click', (e) => {
+            const target = e.target.closest('button, a');
+            if (!target) return;
+
+            const itemId = target.dataset.id;
+            if (!itemId) return;
+
+            const itemName = target.dataset.name || 'bản ghi này';
+
+            if (target.classList.contains('view-link') ||
+                target.classList.contains('view-btn') ||
+                target.classList.contains('edit-btn')) {
+                e.preventDefault();
+                this.openUI('edit', itemId);
+            } 
+            else if (target.classList.contains('delete-btn')) {
+                e.preventDefault();
+                this.deleteItem(itemId, itemName);
+            }
+        });
+
+        // Toggle Status
+        this.eventManager.add(tbody, 'change', (e) => {
+            if (e.target.classList.contains('status-toggle')) {
+                this.handleStatusToggle(e.target);
+            }
+        });
+    }
+
+    initValidation() {
+        const codeField = document.getElementById(this.config.codeField);
+        if (codeField) {
+            this.eventManager.add(codeField, 'input', () => {
+                AppUtils.Validation.validate(this.config.codeField, 'code');
+            });
+        }
+
+        this.config.additionalValidations.forEach(validation => {
+            const field = document.getElementById(validation.fieldId);
+            if (field) {
+                this.eventManager.add(field, 'input', () => {
+                    AppUtils.Validation.validate(
+                        validation.fieldId,
+                        validation.type,
+                        validation.message
+                    );
+                });
+            }
+        });
+    }
+
+    setupAutoCode() {
+        if (!this.config.autoCode || !this.config.autoCode.sourceField) return;
+
+        const { sourceField, targetField } = this.config.autoCode;
+        const targetName = targetField || this.config.codeField;
+
+        const sourceInput = this.elements.form?.querySelector(`[name="${sourceField}"]`);
+        const targetInput = this.elements.form?.querySelector(`[name="${targetName}"]`);
+
+        if (!sourceInput || !targetInput) return;
+
+        const handleGenerateCode = AppUtils.Helper.debounce(() => {
+            if (this.state.currentMode === 'create' && !this.state.isCodeManuallyEdited) {
+                const sourceValue = sourceInput.value.trim();
+                targetInput.value = sourceValue ? AppUtils.Helper.generateCode(sourceValue) : '';
+                AppUtils.Validation.clearError(targetName);
+            }
+        }, 300);
+
+        this.eventManager.add(sourceInput, 'input', handleGenerateCode);
+
+        this.eventManager.add(targetInput, 'input', (e) => {
+            const val = e.target.value.trim();
+            if (val === '') {
+                this.state.isCodeManuallyEdited = false;
+                handleGenerateCode();
+            } else {
+                this.state.isCodeManuallyEdited = true;
+            }
+        });
     }
 
     async loadItemData(itemId) {
@@ -316,7 +398,6 @@ class BaseCRUDManager {
 
             this.enableAllInputs();
 
-            // Điền dữ liệu vào form
             if (this.config.fillFormData) {
                 this.config.fillFormData(data);
             } else {
@@ -341,8 +422,8 @@ class BaseCRUDManager {
     }
 
     enableAllInputs() {
-        const inputs = this.elements.form.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
+        const inputs = this.elements.form?.querySelectorAll('input, textarea, select');
+        inputs?.forEach(input => {
             input.disabled = false;
             input.classList.remove('bg-slate-100', 'cursor-not-allowed');
             input.style.opacity = '1';
@@ -356,17 +437,17 @@ class BaseCRUDManager {
     async submitForm() {
         if (this.state.isSubmitting) return;
 
-        // Validate cơ bản
-        if (!AppUtils.Validation.validate(this.config.codeField, 'code')) {
+        // Validate
+        if (this.config.codeField && !AppUtils.Validation.validate(this.config.codeField, 'code')) {
             AppUtils.Notify.warning(`Vui lòng kiểm tra lại ${this.config.codeField}`);
             return;
         }
 
-        // Custom validation hook
         if (!this.config.onBeforeSubmit()) return;
 
-        // HTML5 Validity check
-        const { form, submitBtn } = this.elements;
+        const { form } = this.elements;
+        const { submitBtn } = this.elements;
+        
         if (!form?.checkValidity()) {
             form?.reportValidity();
             return;
@@ -381,23 +462,19 @@ class BaseCRUDManager {
         }
 
         try {
-            // ✅ THAY ĐỔI: Chuyển FormData sang JSON Object
             let payload;
             
             if (this.config.getFormData) {
-                // Nếu có custom getFormData thì dùng
                 payload = this.config.getFormData(form);
             } else {
-                // Mặc định: Convert FormData -> JSON
                 const formData = new FormData(form);
                 payload = {};
-                
                 for (let [key, value] of formData.entries()) {
                     payload[key] = value;
                 }
             }
 
-            // ✅ Xử lý field Mã bị disabled (Edit mode)
+            // Xử lý field Mã bị disabled
             if (this.state.currentMode === 'edit' && this.config.codeField) {
                 const codeField = document.getElementById(this.config.codeField);
                 if (codeField && codeField.disabled && codeField.value) {
@@ -414,7 +491,6 @@ class BaseCRUDManager {
                 ? this.config.httpMethods.update 
                 : this.config.httpMethods.create;
 
-            // ✅ THAY ĐỔI: Gửi JSON thay vì FormData
             let data;
             if (method === 'PUT') {
                 data = await AppUtils.API.put(url, payload);
@@ -430,13 +506,10 @@ class BaseCRUDManager {
 
             AppUtils.Notify.success(data.message || 'Thành công!');
 
-            // Callback
             this.config.onAfterSubmit(data);
-            
-            // ⭐ Gọi TableManager refresh
             this.config.onRefreshTable();
 
-            this.sidebar.close();
+            this.closeUI();
 
         } catch (error) {
             console.error('⛔ Submit error:', error);
@@ -450,9 +523,6 @@ class BaseCRUDManager {
         }
     }
 
-    /**
-     * Xóa đơn lẻ - Sử dụng AppUtils.DeleteOperations
-     */
     deleteItem(itemId, itemName) {
         AppUtils.DeleteOperations.confirmDelete({
             id: itemId,
@@ -463,16 +533,13 @@ class BaseCRUDManager {
         });
     }
 
-    /**
-     * Xóa nhiều - Sử dụng AppUtils.DeleteOperations
-     */
     deleteMultipleItems(ids) {
-        AppUtils. DeleteOperations.confirmBulkDelete({
+        AppUtils.DeleteOperations.confirmBulkDelete({
             ids: ids,
-            url: this.config. apiUrls.delete,
-            bulkUrl: this.config.apiUrls. bulkDelete || null,
-            method: this.config. httpMethods.delete,
-            onSuccess: () => this. config.onRefreshTable()
+            url: this.config.apiUrls.delete,
+            bulkUrl: this.config.apiUrls.bulkDelete || null,
+            method: this.config.httpMethods.delete,
+            onSuccess: () => this.config.onRefreshTable()
         });
     }
 
@@ -482,26 +549,22 @@ class BaseCRUDManager {
 
         try {
             const url = this.config.apiUrls.toggleStatus(itemId);
-            const payload = { is_active: isActive };
-            
-            // Thử PUT trước, fallback các method khác tùy config
-            // (Mặc định toggleStatus trong constructor là POST, nhưng logic ở đây linh động)
             const method = this.config.httpMethods.toggleStatus;
             
             let data;
-            if (method === 'PUT') data = await AppUtils.API.put(url, payload);
-            else data = await AppUtils.API.post(url, payload);
+            if (method === 'PUT') {
+                data = await AppUtils.API.put(url, { is_active: isActive });
+            } else {
+                data = await AppUtils.API.post(url, { is_active: isActive });
+            }
 
             if (data.success === false) throw new Error(data.message || 'Cập nhật thất bại');
 
-            AppUtils.Notify.success('Cập nhật trạng thái thành công!');
-            
-            // Không nhất thiết phải refresh bảng khi toggle, nhưng nếu cần thì uncomment:
-            // this.config.onRefreshTable();
+            AppUtils.Notify.success(data.message || 'Cập nhật trạng thái thành công!');
 
         } catch (error) {
             console.error('⛔ Toggle status error:', error);
-            toggle.checked = !isActive; // Revert lại UI nếu lỗi
+            toggle.checked = !isActive;
             AppUtils.Notify.error(error.message || 'Có lỗi xảy ra');
         }
     }

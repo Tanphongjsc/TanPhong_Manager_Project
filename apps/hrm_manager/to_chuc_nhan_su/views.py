@@ -9,9 +9,11 @@ from django.db.models import OuterRef, Subquery, Q, Prefetch
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
+
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from json import loads
+from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import *
 
@@ -35,7 +37,61 @@ from apps.hrm_manager.utils.view_helpers import (
 
 def view_cay_nhan_su_index(request):
     """Hiển thị trang cây nhân sự"""
-    return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html")
+
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Cây nhân sự', 'url': None},
+        ],
+        
+        # Dữ liệu filter cho trạng thái nhân viên
+        'status_list_nv': [
+            {'value': 'Đang làm việc', 'label': 'Đang làm việc'},
+            {'value': 'Thử việc', 'label': 'Thử việc'},
+            {'value': 'Đã nghỉ việc', 'label': 'Đã nghỉ việc'},
+        ],
+        
+        # Dữ liệu filter cho giới tính
+        'gioitinh_list' : [
+            {'value': 'Nam', 'label': 'Nam'},
+            {'value': 'Nữ', 'label': 'Nữ'},
+            {'value': 'Khác', 'label': 'Khác'},
+        ]
+    }
+
+    return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html", context=context)
+
+def view_nhan_vien_index(request, id):
+    """Hiển thị trang chi tiết nhân viên từ cây nhân sự"""
+
+    nhan_vien = get_object_or_404(Nhanvien, id=id)
+
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Cây nhân sự', 'url': reverse('hrm:to_chuc_nhan_su:cay_nhan_su_index')},
+            {'title': nhan_vien.hovaten, 'url': None},
+        ],
+        'tabs': [
+            {'label': 'Thông tin cơ bản', 'url': '#tab-basic', 'url_name': 'tab_basic'},
+            {'label': 'Thông tin nâng cao', 'url': '#tab-advanced', 'url_name': 'tab_advanced'},
+            {'label': 'Lịch sử công tác', 'url': '#tab-history', 'url_name': 'tab_history'}
+        ],
+        'advanced_menu_items' : [
+            {'label': 'Thông tin bổ sung', 'target': 'subtab-info', 'icon': 'fas fa-info-circle'},
+            {'label': 'Hợp đồng lao động', 'target': 'subtab-contracts', 'icon': 'fas fa-file-contract'},
+            {'label': 'Thuế thu nhập cá nhân', 'target': 'subtab-tax', 'icon': 'fas fa-money-bill-wave'},
+            {'label': 'Bảo hiểm xã hội', 'target': 'subtab-bhxh', 'icon': 'fas fa-shield-alt'},
+            {'label': 'Bảo hiểm y tế', 'target': 'subtab-bhyt', 'icon': 'fas fa-heartbeat'},
+            {'label': 'Phụ cấp', 'target': 'subtab-allowance', 'icon': 'fas fa-coins'},
+        ],
+        'employee': nhan_vien,
+        'current_job': nhan_vien.lichsucongtac_set.filter(trangthai='active').first(),
+        'bank_options': list(Nganhang.objects.values_list('id', 'tennganhang')),
+        'gender_options': [('Nam', 'Nam'), ('Nữ', 'Nữ'), ('Khác', 'Khác')]
+    }
+
+    return render(request, "hrm_manager/quan_ly_nhan_su/nhanvien_detail.html", context=context)
 
 
 # ===============================================================
@@ -184,7 +240,7 @@ def api_phong_ban_list(request):
     
     if request.method == "GET":
         # Lấy danh sách phòng ban
-        phong_ban_list = Phongban.objects.all().values()
+        phong_ban_list = Phongban.objects.all().values().order_by('tenphongban')
 
         return JsonResponse({
             'success': True,
@@ -196,7 +252,8 @@ def api_phong_ban_list(request):
         # Tạo mới phòng ban
         try:
             data = loads(request.body)
-            phong_ban_cha = Phongban.objects.filter(id=data.get('phongbancha_id', "")).first()
+            phongbancha_id = data.get('phongbancha_id', "") if data.get('phongbancha_id') else None
+            phong_ban_cha = Phongban.objects.filter(id=phongbancha_id).first()
 
             phong_ban = Phongban.objects.create(
                 maphongban=data.get('maphongban'),
@@ -204,7 +261,7 @@ def api_phong_ban_list(request):
                 level=phong_ban_cha.level + 1 if phong_ban_cha else 1,
                 ghichu=data.get('ghichu'),
                 trangthai=data.get('trangthai', 'active'),
-                congty_id=data.get('congty'),
+                congty_id=data.get('congty_id'),
                 phongbancha_id=phong_ban_cha.id if phong_ban_cha else None,
                 created_at=datetime.now()
             )
@@ -260,10 +317,17 @@ def api_phong_ban_detail(request, id):
 
             for field in phong_ban._meta.fields:
                 if field.name in data:
-                    if field.name == 'tenphongban':
-                        setattr(phong_ban, field.name, data[field.name].title())
-                    else:
-                        setattr(phong_ban, field.name, data[field.name])
+                    value = data[field.name]
+                    
+                    # Xử lý ForeignKey: chuyển '' thành None
+                    if field.name in ['phongbancha_id', 'congty_id']:
+                        value = value if value else None
+                    
+                    # Title case cho tên
+                    if field.name == 'tenphongban' and value:
+                        value = value.title()
+                    
+                    setattr(phong_ban, field.name, value)
 
             phong_ban.updated_at = datetime.now()
             phong_ban.save()
@@ -294,11 +358,12 @@ def api_phong_ban_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Phòng Ban
         try:
-            phong_ban_con = Phongban.objects.filter(phongbancha_id=phong_ban.id)
-            phong_ban_con.delete()
+            phong_ban_cons_ids = get_all_child_department_ids(phong_ban.id)
+            phong_ban_con_list = Phongban.objects.filter(id__in=phong_ban_cons_ids)
+            phong_ban_con_list.delete() # Xóa các phòng ban con trước
 
-            # Xóa phòng ban hiện tại
-            phong_ban.delete()
+            phong_ban.delete() # Xóa phòng ban hiện tại
+
             return JsonResponse({
                 'success': True,
                 'message': 'Xóa phòng ban thành công'
@@ -318,17 +383,15 @@ def api_phong_ban_nhan_vien(request):
     param_query = request.GET.dict()
     page = param_query.pop('page', 1)
     page_size = param_query.pop('page_size', 10)
+    search_param = param_query.pop('search', '').strip()
     congty_id = param_query.pop('congty_id', None)
-    phongban_id = param_query.pop('phongban_id', None)
-    chucvu = param_query.pop('chucvu', None)
+    phongban_ids = get_all_child_department_ids(param_query.pop('phongban_id', None), isnclude_root=True)
 
     try:        
         # Build filters từ Lichsucongtac
         filters = Q(trangthai='active')  # Bắt buộc active từ Lichsu
-        if chucvu:
-            filters &= Q(chucvu_id=chucvu)  # Giả sử chucvu là ID
-        if phongban_id:
-            filters &= Q(phongban_id=phongban_id)
+        if phongban_ids:
+            filters &= Q(phongban__id__in=phongban_ids)
         elif congty_id:
             filters &= Q(phongban__congty_id=congty_id)
         
@@ -339,6 +402,10 @@ def api_phong_ban_nhan_vien(request):
             value = param_query.get(raw_key)
             if value:
                 filters &= Q(**{key: value})
+        
+        # Thêm query param tìm kiếm & nhân viên còn active
+        filters &= Q(nhanvien__hovaten__icontains=search_param) | Q(nhanvien__manhanvien__icontains=search_param) if search_param else Q()
+        filters &= Q(nhanvien__isnull=False)
 
         # Query từ Lichsucongtac với join (select_related)
         qs = Lichsucongtac.objects.filter(filters).select_related(
@@ -364,7 +431,14 @@ def api_phong_ban_nhan_vien(request):
                 'phong_ban': lichsu.phongban.tenphongban if lichsu.phongban else None,
                 'chuc_vu': lichsu.chucvu.tenvitricongviec if lichsu.chucvu else None,
             }
-            nv_data = model_to_dict(nv)
+            nv_data = {
+                'id': nv.id,
+                'manhanvien': nv.manhanvien,
+                'hovaten': nv.hovaten,
+                'email': nv.email,
+                'trangthainv': nv.trangthainv,
+                'ngayvaolam': nv.ngayvaolam,
+            }
             nv_data['cong_tac'] = cong_tac
 
             result.append(nv_data)
@@ -396,12 +470,12 @@ def api_phong_ban_tree(request):
 
     try:
         # 1. Lấy tất cả công ty
-        cong_ty_qs = Congty.objects.values('id', 'tencongty_vi', 'macongty').order_by('id')  # chỉ lấy field cần thiết
+        cong_ty_qs = Congty.objects.values('id', 'tencongty_vi', 'macongty').order_by('id')
 
         # 2. Lấy tất cả phòng ban + prefetch công ty để tránh N+1
         phong_ban_qs = Phongban.objects.select_related('congty').values(
             'id', 'tenphongban', 'phongbancha_id', 'congty_id', 'level', 'maphongban'
-        ).order_by('id')
+        ).order_by('tenphongban')
 
         # Chuyển thành dict để tra cứu nhanh
         phong_ban_dict = {pb['id']: {**pb, 'children': []} for pb in phong_ban_qs} # Thêm trường 'children' để xây dựng cây
@@ -423,7 +497,7 @@ def api_phong_ban_tree(request):
                 if congty_id not in root_by_company:
                     root_by_company[congty_id] = []
                 root_by_company[congty_id].append(pb)
-        
+
         # Kết hợp công ty với cây phòng ban
         for cong_ty in cong_ty_qs:
             cong_ty_id = cong_ty['id']
@@ -440,6 +514,42 @@ def api_phong_ban_tree(request):
             'message': f'Lỗi: {str(e)}'
         }, status=400)
 
+# ------ PHONG BAN HELPER FUNCTIONS ------
+def get_all_child_department_ids(root_id, isnclude_root=False):
+    """
+    Trả về list tất cả ID con, cháu, chắt... của một phòng ban.
+    Tối ưu: Chỉ tốn đúng 1 câu lệnh truy vấn Database.
+    """
+    if not root_id:
+        return []
+    
+    # Lấy dữ liệu thô (Chỉ lấy cột cần thiết để tối ưu bộ nhớ)
+    all_nodes = Phongban.objects.values_list('id', 'phongbancha_id')
+
+    # Xây dựng bản đồ Cha-Con
+    parent_map = defaultdict(list)
+    for ID, parent_ID in all_nodes:
+        if parent_ID: # Nếu có cha
+            parent_map[parent_ID].append(ID)
+    
+    # Thu thập kết quả
+    results = []
+    stack = [int(root_id)]  # Bắt đầu từ node gốc
+    
+    while stack:
+        current_id = stack.pop()
+        
+        # Tìm các con trực tiếp của node đang xét
+        direct_children = parent_map.get(current_id, [])
+        
+        if direct_children:
+            results.extend(direct_children) # Thêm vào kết quả
+            stack.extend(direct_children)   # Thêm vào stack để tiếp tục tìm con của chúng
+
+    if isnclude_root:
+        results.append(int(root_id))
+
+    return results
 
 # ==================== API NHÂN VIÊN ====================
 
@@ -485,75 +595,34 @@ def api_nhan_vien_list(request):
                 gioitinh=data.get('gioitinh'),
                 ngaysinh=data.get('ngaysinh'),
                 socccd=data.get('socccd'),
-                ngayvaolam=data.get('ngayvaolam'),
-                loainv=data.get('loainv'),
-                trangthainv=data.get('trangthainv'),
-                nganhang=data.get('nganhang'),
+                ngayvaolam=data.get('ngayvaolam') if data.get('ngayvaolam') else None,
+                loainv_id=data.get('loainv'),
+                trangthainv=data.get('trangthainv') if data.get('trangthainv') else 'Đang làm việc',
+                nganhang_id=data.get('nganhang'),
                 sotknganhang=data.get('sotknganhang'),
                 tentknganhang=data.get('tentknganhang'),
                 masothue=data.get('masothue'),
                 trangthai=data.get('trangthai', 'active'),
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             
+            lich_su_new = Lichsucongtac.objects.create(
+                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
+                ketthuc=None,
+                noicongtac=data.get('noicongtac'),
+                trangthai=data.get('trangthai', 'active'),
+                nhanvien_id = nhan_vien.id,
+                phongban_id=data.get('phongban'),
+                chucvu_id=data.get('chucvu'),
+                created_at=datetime.now(),
+            )
+
             return JsonResponse({
                 'success': True,
                 'message': 'Tạo công ty thành công',
-                'data': {
-                    'id': nhan_vien.id,
-                    'manhanvien': nhan_vien.manhanvien,
-                    'hovaten': nhan_vien.hovaten,
-                    'email': nhan_vien.email,
-                    'sodienthoai': nhan_vien.sodienthoai,
-                    'diachi': nhan_vien.diachi,
-                    'gioitinh': nhan_vien.gioitinh,
-                    'ngaysinh': nhan_vien.ngaysinh,
-                    'socccd': nhan_vien.socccd,
-                    'ngayvaolam': nhan_vien.ngayvaolam,
-                    'loainv': nhan_vien.loainv,
-                    'trangthainv': nhan_vien.trangthainv,
-                    'nganhang': nhan_vien.nganhang,
-                    'sotknganhang': nhan_vien.sotknganhang,
-                    'tentknganhang': nhan_vien.tentknganhang,
-                    'masothue': nhan_vien.masothue,
-                    'trangthai': nhan_vien.trangthai,
-                    'created_at': nhan_vien.created_at,
-                }
+                'data': model_to_dict(nhan_vien)
             }, status=201)
             
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'Lỗi: {str(e)}'
-            }, status=400)
-    
-    elif request.method == "PUT":
-        # Cập nhập phòng ban nhiều nhân viên cùng lúc
-
-        try:
-            nhan_vien_ids = request.GET.get('nhan_vien_ids', [])
-            phong_ban_id = request.GET.get('phong_ban_id')
-
-            if not nhan_vien_ids or not phong_ban_id:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
-                }, status=400)
-
-            # Cập nhật phòng ban cho các nhân viên
-            Lichsucongtac.objects.filter(
-                nhanvien_id__in=nhan_vien_ids,
-                trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
-            ).update(
-                phongban_id=phong_ban_id,
-                updated_at=datetime.now()
-            )
-
-            return JsonResponse({
-                'success': True,
-                'message': 'Cập nhật phòng ban cho nhân viên thành công'
-            })
-
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -581,6 +650,7 @@ def api_nhan_vien_list(request):
 
 
 @login_required
+@transaction.atomic
 @require_http_methods(["GET", "PUT", "DELETE"])
 def api_nhan_vien_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa Nhân Viên"""
@@ -607,7 +677,10 @@ def api_nhan_vien_detail(request, id):
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
-                    setattr(nhan_vien, field.name, data[field.name])
+                    if field.name in ['loainv', 'nganhang']:
+                        setattr(nhan_vien, f"{field.name}_id", data[field.name] if data[field.name] else None)
+                    else:
+                        setattr(nhan_vien, field.name, data.get(field.name) if data.get(field.name) else None)
 
             nhan_vien.updated_at = datetime.now()
             nhan_vien.save()
@@ -615,26 +688,7 @@ def api_nhan_vien_detail(request, id):
             return JsonResponse({
                 'success': True,
                 'message': 'Cập nhật nhân viên thành công',
-                'data': {
-                    'id': nhan_vien.id,
-                    'manhanvien': nhan_vien.manhanvien,
-                    'hovaten': nhan_vien.hovaten,
-                    'email': nhan_vien.email,
-                    'sodienthoai': nhan_vien.sodienthoai,
-                    'diachi': nhan_vien.diachi,
-                    'gioitinh': nhan_vien.gioitinh,
-                    'ngaysinh': nhan_vien.ngaysinh,
-                    'socccd': nhan_vien.socccd,
-                    'ngayvaolam': nhan_vien.ngayvaolam,
-                    'loainv': nhan_vien.loainv,
-                    'trangthainv': nhan_vien.trangthainv,
-                    'nganhang': nhan_vien.nganhang,
-                    'sotknganhang': nhan_vien.sotknganhang,
-                    'tentknganhang': nhan_vien.tentknganhang,
-                    'masothue': nhan_vien.masothue,
-                    'trangthai': nhan_vien.trangthai,
-                    'created_at': nhan_vien.created_at,
-                }
+                'data': model_to_dict(nhan_vien)
             })
             
         except Exception as e:
@@ -650,6 +704,168 @@ def api_nhan_vien_detail(request, id):
             return JsonResponse({
                 'success': True,
                 'message': 'Xóa nhân viên thành công'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
+
+
+# ==================== API LỊCH SỬ CÔNG TÁC ====================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+@transaction.atomic
+def api_lich_su_cong_tac_list(request):
+    """API lấy danh sách lịch sử, thêm mới công tác"""
+
+    if request.method == "GET":
+        # Lấy danh sách lịch sử công tác
+        
+        lich_su_qs = Lichsucongtac.objects.all().values()
+
+        context = get_list_context(
+            request,
+            lich_su_qs,
+            filter_field=('nhanvien_id'),
+            page_size=int(request.GET.get('page_size', 10)),
+        )
+
+        return json_success(
+            'Lấy danh sách chức vụ thành công',
+            data=list(context['page_obj']),
+            pagination={
+                'page': context['page_obj'].number,
+                'page_size': context['paginator'].per_page,
+                'total': context['paginator'].count,
+                'total_pages': context['paginator'].num_pages,
+                'has_next': context['page_obj'].has_next(),
+                'has_prev': context['page_obj'].has_previous()
+            }
+        )
+
+    if request.method == "POST":
+        # Tạo mới lịch sử công tác
+        try:
+            data = loads(request.body)
+            nhanvien_id = data.get('nhanvien_id')
+
+            lich_su_old = get_object_or_404(Lichsucongtac, nhanvien_id=nhanvien_id, trangthai='active')
+            if lich_su_old:
+                lich_su_old.ketthuc = data.get('batdau')
+                lich_su_old.trangthai = 'inactive'
+                lich_su_old.updated_at = datetime.now()
+                lich_su_old.save()
+
+            lich_su_new = Lichsucongtac.objects.create(
+                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
+                ketthuc=None,
+                noicongtac=data.get('noicongtac'),
+                trangthai=data.get('trangthai', 'active'),
+                nhanvien_id = data.get('nhanvien_id'),
+                phongban_id=data.get('phongban_id'),
+                chucvu_id=data.get('chucvu_id'),
+                created_at=datetime.now() + timedelta(days=1),
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Tạo lịch sử công tác thành công',
+                'data': model_to_dict(lich_su_new)
+            }, status=201)
+        
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Lỗi: {str(e)}'
+            }, status=400)
+    
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def api_lich_su_cong_tac_chuyen_cong_tac(request): 
+    # Cập nhập phòng ban nhiều nhân viên cùng lúc
+
+    try:
+        nhan_vien_ids = loads(request.body).get('nhan_vien_ids', [])
+        phong_ban_id = loads(request.body).get('phong_ban_id')
+
+        if not nhan_vien_ids or not phong_ban_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
+            }, status=400)
+
+        # Cập nhật phòng ban cho các nhân viên
+        Lichsucongtac.objects.filter(
+            nhanvien_id__in=nhan_vien_ids,
+            trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
+        ).update(
+            phongban_id=phong_ban_id,
+            updated_at=datetime.now()
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Cập nhật phòng ban cho nhân viên thành công'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Lỗi: {str(e)}'
+        }, status=400)
+
+
+@login_required
+@require_http_methods(["GET", "PUT", "DELETE"])
+@transaction.atomic
+def api_lich_su_cong_tac_detail(request, id):
+    """API lấy chi tiết, cập nhật và xóa lịch sử công tác"""
+
+    trang_thai = request.GET.get("trangthai", 'all')
+    lich_su = Lichsucongtac.objects.filter(nhanvien_id=id, trangthai = trang_thai).select_related('phongban', 'chucvu').first()
+
+    if request.method == "GET":
+        # Lấy chi tiết lịch sử công tác
+        return JsonResponse({
+            'success': True,
+            'data': model_to_dict(lich_su) if lich_su else {}
+        })
+
+    elif request.method == "PUT":
+        # Cập nhật lịch sử công tác
+        try:
+            data = loads(request.body)
+
+            for field in lich_su._meta.fields:
+                if field.name in data:
+                    setattr(lich_su, field.name, data[field.name])
+            
+            lich_su.updated_at = datetime.now()
+            lich_su.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Cập nhật lịch sử công tác thành công',
+                'data': model_to_dict(lich_su)
+            }, status=200)
+        
+        except Exception as e:
+            return JsonResponse({
+                "success": False,
+                "message": f"Lỗi: {str(e)}"
+            }, status=400)
+
+    elif request.method == "DELETE":
+        # Xóa lịch sử công tác
+        try:
+            lich_su.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Xóa lịch sử công tác thành công'
             })
         except Exception as e:
             return JsonResponse({
@@ -675,7 +891,12 @@ def view_chuc_vu_index(request):
         'breadcrumbs': [
             {'title': 'Quản lý nhân sự', 'url': '#'},
             {'title': 'Chức vụ', 'url': None},
+        ],
+        'status_list': [
+            {'value': 'active', 'label': 'Đang hoạt động'},
+            {'value': 'inactive', 'label': 'Ngừng hoạt động'}
         ]
+        
     }
 
     return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html", context=context)
@@ -688,24 +909,30 @@ def view_chuc_vu_index(request):
 def api_chuc_vu_list(request):
     """API lấy danh sách và tạo mới chức vụ"""
     
+    queryset = Chucvu.objects.all().values()
+
+
     if request.method == "GET":
-        # Lấy danh sách chức vụ
-        chuc_vu_list = Chucvu.objects.all().order_by('id').values()
-        
-        page_obj, paginator = paginate_queryset(request, chuc_vu_list)
-     
-        return JsonResponse({
-            'success': True,
-            'data': list(page_obj),
-            'pagination': {
-                'page': page_obj.number,
-                'page_size': paginator.per_page,
-                'total': paginator.count,
-                'total_pages': paginator.num_pages,
-                'has_next': page_obj.has_next(),
-                'has_prev': page_obj.has_previous()
+        context = get_list_context(
+            request,
+            queryset,
+            search_fields=['tenvitricongviec', 'machucvu'],
+            filter_field=('trangthai', 'status'),
+            page_size=int(request.GET.get('page_size', 10)),
+        )
+
+        return json_success(
+            'Lấy danh sách chức vụ thành công',
+            data=list(context['page_obj']),
+            pagination={
+                'page': context['page_obj'].number,
+                'page_size': context['paginator'].per_page,
+                'total': context['paginator'].count,
+                'total_pages': context['paginator'].num_pages,
+                'has_next': context['page_obj'].has_next(),
+                'has_prev': context['page_obj'].has_previous()
             }
-        })
+        )
     
     elif request.method == "POST":
         # Tạo mới chức vụ
@@ -812,21 +1039,36 @@ def api_chuc_vu_detail(request, id):
                 'message': f'Lỗi: {str(e)}'
             }, status=400)
 
+@login_required
+@require_http_methods(["POST", "PUT"]) 
+def api_chuc_vu_toggle_status(request, id):
+    try:
+        item = get_object_or_404(Chucvu, pk=id)
+        data = get_request_data(request)
+        item.trangthai = 'active' if data.get('is_active') else 'inactive'
+        item.updated_at = timezone.now()
+        item.save()
+        return json_success('Cập nhật trạng thái thành công')
+    except Exception as e:
+        return json_error(str(e), status=400)
+
 
 # ============================================================================
 # VIEW URLS - DANH MỤC HỆ THỐNG
 # ============================================================================
 
+@login_required
 def view_danh_muc_index(request):
     """Hiển thị trang danh mục hệ thống"""
     return render(request, "hrm_manager/quan_ly_nhan_su/danhmuchethong.html")
 
 
+@login_required
 def view_bo_thuong_index(request):
     """Hiển thị trang quản lý bồi thường"""
     return render(request, "hrm_manager/quan_ly_nhan_su/quanlythongtin_boithuong.html")
 
-
+@login_required
 def view_tam_ung_index(request):
     """Hiển thị trang quản lý tạm ứng"""
     return render(request, "hrm_manager/quan_ly_nhan_su/quanlythongtin_quanlytamung.html")
@@ -858,6 +1100,7 @@ def view_dmht_nganhang_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_nganhang.html", context)
 
+@login_required
 def view_dmht_baohiem_list(request):
     context = {
         'breadcrumbs': [
@@ -869,6 +1112,7 @@ def view_dmht_baohiem_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_baohiem.html", context)
 
+@login_required
 def view_dmht_loainhanvien_list(request):
     context = {
         'breadcrumbs': [
@@ -880,11 +1124,22 @@ def view_dmht_loainhanvien_list(request):
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_loainhanvien.html", context)
 
-
+@login_required
+def view_dmht_congviec_list(request):
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
+            {'title': 'Danh mục công việc', 'url': None},
+        ],
+        'status_list': STATUS_LIST # <--- Truyền biến này
+    }
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
 # ============================================================================
 # API URLS - DANH MỤC LISTS (JSON)
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_nganhang_list(request):
@@ -929,7 +1184,7 @@ def api_nganhang_list(request):
         pagination=pagination_data
     )
 
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_baohiem_list(request):
@@ -973,7 +1228,7 @@ def api_baohiem_list(request):
         pagination=pagination_data
     )
 
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_loainhanvien_list(request):
@@ -1018,10 +1273,47 @@ def api_loainhanvien_list(request):
     )
 
 
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_congviec_list(request):
+    """API lấy danh sách công việc (JSON) hỗ trợ search, filter, pagination"""
+    queryset = Congviec.objects.all().values()
+    query_params = request.GET.dict()
+    
+    context = get_list_context(
+        request,
+        queryset,
+        search_fields=['tencongviec', 'macongviec'],
+        filter_field=('trangthaicv', 'status'),
+        page_size=int(query_params.get('page_size', 10)),
+        order_by='-created_at'
+    )
+    
+    page_obj = context['page_obj']
+    paginator = context['paginator']
+
+    pagination_data = {
+        'page': page_obj.number,
+        'page_size': paginator.per_page, 
+        'total': paginator.count,
+        'total_pages': paginator.num_pages,
+        'has_next': page_obj.has_next(),
+        'has_prev': page_obj.has_previous()
+    }
+    
+    return json_success(
+        'Lấy danh sách công việc thành công',
+        data=list(page_obj.object_list),
+        pagination=pagination_data
+    )
+
+
+
 # ============================================================================
 # API URLS - NGÂN HÀNG
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_nganhang_detail(request, pk):
     """API lấy chi tiết ngân hàng"""
@@ -1042,7 +1334,7 @@ def api_nganhang_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_nganhang_create(request):
     """API tạo mới ngân hàng"""
@@ -1079,7 +1371,7 @@ def api_nganhang_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_nganhang_update(request, pk):
     try:
@@ -1109,7 +1401,7 @@ def api_nganhang_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_nganhang_delete(request, pk):
     try:
@@ -1119,7 +1411,7 @@ def api_nganhang_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"]) 
 def api_nganhang_toggle_status(request, pk):
     try:
@@ -1137,6 +1429,7 @@ def api_nganhang_toggle_status(request, pk):
 # API URLS - BẢO HIỂM
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_baohiem_detail(request, pk):
     """API lấy chi tiết bảo hiểm"""
@@ -1156,7 +1449,7 @@ def api_baohiem_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_baohiem_create(request):
     """API tạo mới bảo hiểm"""
@@ -1189,7 +1482,7 @@ def api_baohiem_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_baohiem_update(request, pk):
     try:
@@ -1212,6 +1505,7 @@ def api_baohiem_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_baohiem_delete(request, pk):
     try:
@@ -1221,6 +1515,7 @@ def api_baohiem_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_baohiem_toggle_status(request, pk):
     try:
@@ -1237,6 +1532,7 @@ def api_baohiem_toggle_status(request, pk):
 # API URLS - LOẠI NHÂN VIÊN
 # ============================================================================
 
+@login_required
 @require_http_methods(["GET"])
 def api_loainhanvien_detail(request, pk):
     """API lấy chi tiết loại nhân viên"""
@@ -1259,7 +1555,7 @@ def api_loainhanvien_detail(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST"])
 def api_loainhanvien_create(request):
     """API tạo mới loại nhân viên"""
@@ -1292,7 +1588,7 @@ def api_loainhanvien_create(request):
     except Exception as e:
         return json_error(str(e), status=400)
 
-
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_loainhanvien_update(request, pk):
     try:
@@ -1315,6 +1611,7 @@ def api_loainhanvien_update(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "DELETE"])
 def api_loainhanvien_delete(request, pk):
     try:
@@ -1327,6 +1624,7 @@ def api_loainhanvien_delete(request, pk):
     except Exception as e:
         return json_error(str(e), status=400)
 
+@login_required
 @require_http_methods(["POST", "PUT"])
 def api_loainhanvien_toggle_status(request, pk):
     try:
@@ -1336,5 +1634,130 @@ def api_loainhanvien_toggle_status(request, pk):
         item.updated_at = timezone.now()
         item.save()
         return json_success('Cập nhật trạng thái thành công')
+    except Exception as e:
+        return json_error(str(e), status=400)
+
+
+# ============================================================================
+# API URLS - CÔNG VIỆC
+# ============================================================================
+
+@login_required
+@require_http_methods(["GET"])
+def api_congviec_detail(request, pk):
+    """API lấy chi tiết công việc"""
+    try:
+        item = get_object_or_404(Congviec, pk=pk)
+        
+        return json_success(
+            "Lấy chi tiết công việc thành công",
+            data={
+                'id': item.id,
+                'tencongviec': item.tencongviec,
+                'macongviec': item.macongviec,
+                'loaicongviec': item.loaicongviec,
+                'ghichu': item.ghichu or '',
+                'bieuthuctinhtoan': item.bieuthuctinhtoan,
+                'danhsachthamso': item.danhsachthamso,
+                'trangthaicongthuc': item.trangthaicongthuc,
+                'trangthaicv': item.trangthaicv,
+            }
+        )
+    except Exception as e:
+        return json_error(str(e), status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_congviec_create(request):
+    """ API tạo mới công việc"""
+
+    data = loads(request.body)
+    if not data:
+        return json_error('Dữ liệu không hợp lệ', status=400)
+
+    try:
+        congviec = Congviec.objects.create(
+            tencongviec=data.get('tencongviec').title(),
+            macongviec=data.get('macongviec'),
+            ghichu=data.get('ghichu', ''),
+            loaicongviec=data.get('loaicongviec', ''),
+            bieuthuctinhtoan=data.get('bieuthuctinhtoan', ''),
+            danhsachthamso=data.get('danhsachthamso', ''),
+            trangthaicongthuc=data.get('trangthaicongthuc', ''),
+            trangthaicv='active',
+            created_at=timezone.now(),
+        )
+
+        return json_success(
+            'Tạo công việc thành công',
+            data= model_to_dict(congviec)
+        )
+
+    except Exception as e: 
+        return JsonResponse({
+            'success': False,
+            'message': f'Lỗi: {str(e)}'
+        }, status=400)
+    
+
+@login_required
+@require_http_methods(["PUT"])
+def api_congviec_update(request, pk):
+    """API Cập nhật công việc"""
+
+    data = loads(request.body)
+    if not data:
+        return json_error('Dữ liệu không hợp lệ', status=400)
+    
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+
+        for field in Congviec._meta.fields:
+            if field.name in data:
+                setattr(congviec, field.name, data[field.name])
+        congviec.updated_at = timezone.now()
+        congviec.save()
+
+        return json_success(
+            'Cập nhật công việc thành công',
+            data=model_to_dict(congviec)
+        )
+    except Exception as e:
+        return json_error(str(e), status=400)
+    
+@login_required
+@require_http_methods(["DELETE"])
+def api_congviec_delete(request, pk):
+    """API Xóa công việc"""
+
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+        congviec.delete()
+
+        return json_success('Xóa công việc thành công')
+
+    except Exception as e:
+        return json_error(str(e), status=400)
+    
+
+@login_required
+@require_http_methods(["POST"])
+def api_congviec_toggle_status(request, pk):
+    """API Chuyển đổi trạng thái công việc"""
+    try:
+        congviec = get_object_or_404(Congviec, pk=pk)
+
+        data = get_request_data(request)
+        new_status = 'active' if data.get('is_active') else 'inactive'
+        
+        # Chỉ cập nhật 2 trường cần thiết, tránh động vào các trường JSON
+        Congviec.objects.filter(pk=pk).update(
+            trangthaicv=new_status,
+            updated_at=timezone.now()
+        )
+
+        return json_success('Cập nhật trạng thái công việc thành công')
+
     except Exception as e:
         return json_error(str(e), status=400)
