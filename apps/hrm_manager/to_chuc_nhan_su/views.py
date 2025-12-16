@@ -438,6 +438,7 @@ def api_phong_ban_nhan_vien(request):
                 'email': nv.email,
                 'trangthainv': nv.trangthainv,
                 'ngayvaolam': nv.ngayvaolam,
+                'loainv': nv.loainv.id if nv.loainv else None,
             }
             nv_data['cong_tac'] = cong_tac
 

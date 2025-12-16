@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.urls import reverse
 
+from apps.hrm_manager.__core__.models import Phongban 
 
 # ============================================================
 # HELPERS: CẤU HÌNH TABS
@@ -52,11 +53,15 @@ def view_bang_cham_cong(request):
     context = {
         'breadcrumbs': [
             {'title': 'Chấm công', 'url': '#'},
-            {'title': 'Quản lý chấm công', 'url': None},
             {'title': 'Bảng chấm công', 'url': None},
         ],
+        'tabs': [
+            {'label': 'Văn Phòng', 'url': '#tab-vp', 'url_name': 'tab_vp'},
+            {'label': 'Sản Xuất', 'url': '#tab-sx', 'url_name': 'tab_sx'},
+        ],
+        'dept_options': Phongban.objects.filter(trangthai=True).values().order_by('tenphongban'),
     }
-    return render(request, "hrm_manager/cham_cong/quan_ly/bang_cham_cong.html", context)
+    return render(request, "hrm_manager/cham_cong/bang_cham_cong.html", context)
 
 
 def view_tong_hop_cham_cong(request):

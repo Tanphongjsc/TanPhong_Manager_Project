@@ -13,8 +13,8 @@ urlpatterns = [
     # ============================================================
     # QUẢN LÝ CHẤM CÔNG
     # ============================================================
-    path('quan-ly/bang-cham-cong/', views. view_bang_cham_cong, name='bang_cham_cong'),
-    path('quan-ly/tong-hop/', views.view_tong_hop_cham_cong, name='tong_hop_cham_cong'),
+    path('bang-cham-cong/', views.view_bang_cham_cong, name='bang_cham_cong'),
+    path('bang-cham-cong/tong-hop/', views.view_tong_hop_cham_cong, name='tong_hop_cham_cong'),
 
     # ============================================================
     # ĐƠN BÁO & BÁO CÁO

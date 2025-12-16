@@ -1,0 +1,18 @@
+<div class="flex items-center gap-1.5 shrink-0">
+    <button id="btn-quick-action" onclick="window.ChamCongManager.quickAction()"
+        class="hidden sm:flex items-center gap-1 px-2 py-1 text-xs border rounded transition-colors">
+        <i id="icon-quick-action" class="fa-solid fa-wand-magic-sparkles"></i>
+        <span id="text-quick-action" class="hidden md:inline">Điền chuẩn</span>
+    </button>
+
+    <button onclick="window.ChamCongManager.loadResources()" 
+        class="p-1.5 text-xs text-slate-500 bg-white border border-slate-300 rounded hover:bg-slate-50" title="Làm mới">
+        <i class="fa-solid fa-rotate"></i>
+    </button>
+
+    <button onclick="window.ChamCongManager.saveData()" 
+        class="px-2.5 py-1 text-xs font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 flex items-center gap-1">
+        <i class="fa-solid fa-save"></i>
+        <span class="hidden sm:inline">Lưu</span>
+    </button>
+</div>

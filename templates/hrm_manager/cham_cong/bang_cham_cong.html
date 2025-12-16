@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chấm Công{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm border border-slate-200 rounded-lg h-full flex flex-col overflow-hidden">
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+        <!-- TOOLBAR COMPACT - 1 dòng duy nhất -->
+        <div class="px-3 py-2 border-b border-slate-200 bg-slate-50/80">
+            <div class="flex items-center gap-2 flex-wrap">
+                
+                <!-- TABS - Ưu tiên đầu tiên -->
+                <div class="flex bg-slate-200/60 p-0.5 rounded border-slate-300 shrink-0">
+                    <button onclick="window.ChamCongManager.switchTab('vp')" id="btn-tab-vp" 
+                        class="tab-btn px-2.5 py-1 text-[11px] font-semibold rounded transition-all">
+                        <span class="hidden xs:inline">Văn Phòng</span>
+                        <span class="xs:hidden">VP</span>
+                    </button>
+                    <button onclick="window.ChamCongManager.switchTab('sx')" id="btn-tab-sx" 
+                        class="tab-btn px-2.5 py-1 text-[11px] font-medium rounded transition-all">
+                        <span class="hidden xs:inline">Sản Xuất</span>
+                        <span class="xs:hidden">SX</span>
+                    </button>
+                </div>
+
+                <!-- DATE PICKER - Compact -->
+                <div class="flex items-center bg-white border border-slate-300 rounded px-2 py-1 shrink-0">
+                    <i class="fa-regular fa-calendar-days text-slate-400 text-xs mr-1.5"></i>
+                    <input type="date" id="work-date" 
+                        class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-24 cursor-pointer">
+                </div>
+
+                <!-- DIVIDER -->
+                <div class="hidden sm:block w-px h-5 bg-slate-300"></div>
+
+                <!-- SEARCH - Responsive width, đồng bộ với toolbar.html -->
+                <div class="flex-1 w-full max-w-xs">
+                    <div class="relative">
+                        <input type="text" id="search-input" placeholder="Tìm kiếm..."
+                            class="w-full pl-8 pr-3 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- DEPT FILTER - đồng bộ với toolbar.html -->
+                <select id="dept-filter" name="dept"
+                    class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer max-w-[140px]">
+                    <option value="all">Tất cả PB</option>
+                </select>
+
+                <!-- SPACER -->
+                <div class="flex-1"></div>
+
+                <!-- ACTIONS GROUP -->
+                {% include "hrm_manager/cham_cong/partials/chamcong_extra_actions.html" %}
+            </div>
+
+            <!-- MASTER CONTROLS FOR SX - Collapsible row -->
+            <div id="master-sx-row" class="hidden mt-2 pt-2 border-t border-slate-200">
+                <div class="flex items-center gap-2 flex-wrap text-xs">
+                    <span class="text-slate-500 font-medium shrink-0">Áp dụng:</span>
+                    <input type="time" id="m-in" value="07:30" 
+                        class="bg-white border border-orange-200 rounded px-2 py-1 w-20 text-center font-medium focus:ring-1 focus:ring-orange-400">
+                    <span class="text-slate-400">→</span>
+                    <input type="time" id="m-out" value="16:30" 
+                        class="bg-white border border-orange-200 rounded px-2 py-1 w-20 text-center font-medium focus:ring-1 focus:ring-orange-400">
+                    <select id="m-job" 
+                        class="bg-white border border-orange-200 rounded px-2 py-1 max-w-[160px] font-medium focus:ring-1 focus:ring-orange-400" 
+                        onchange="window.ChamCongManager.renderMasterParams()">
+                        <option value="">-- Công việc --</option>
+                    </select>
+                    <div id="m-params" class="flex items-center gap-1 flex-wrap"></div>
+                    <button onclick="window.ChamCongManager.applyMaster()" 
+                        class="ml-auto px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold transition-colors">
+                        Áp dụng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE AREA - Full remaining height -->
+        <div class="flex-1 overflow-hidden relative">
+            <!-- VP TABLE -->
+            <div id="tab-vp" class="h-full flex flex-col overflow-hidden relative">
+                {% with headers='<th class="p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30"><input type="checkbox" id="check-all-vp" class="accent-blue-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[180px] sticky left-8 top-0 bg-slate-50 z-30 text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Vào</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Ra</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-28 sticky top-0 bg-slate-50 z-20">Phân tích</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">Ăn</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">OT</th><th class="px-2 py-1.5 border-b border-slate-200 sticky top-0 bg-slate-50 min-w-[100px] z-20">Ghi chú</th>' %}
+                    {% include "components/table_wrapper.html" with table_id="vp-table" tbody_id="vp-body" headers_html=headers show_checkbox=False %}
+                {% endwith %}
+            </div>
+
+            <!-- SX TABLE -->
+            <div id="tab-sx" class="h-full flex flex-col overflow-hidden relative hidden">
+                {% with headers='<th class="p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30"><input type="checkbox" id="check-all-sx" class="accent-orange-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[180px] sticky left-8 top-0 bg-slate-50 z-30 text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Vào</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Ra</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-36 sticky top-0 bg-slate-50 z-20">Công việc</th><th class="px-2 py-1.5 border-b border-r border-slate-200 sticky top-0 bg-slate-50 min-w-[150px] z-20">Tham số</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">Ăn</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">OT</th>' %}
+                    {% include "components/table_wrapper.html" with table_id="sx-table" tbody_id="sx-body" headers_html=headers show_checkbox=False %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom breakpoint for extra small screens */
+    @media (min-width: 480px) { .xs\:inline { display: inline; } .xs\:hidden { display: none; } }
+    
+    /* Tab styles */
+    .tab-btn { background: transparent; color: #64748b; }
+    .tab-btn.active-vp { background: #2563eb; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .tab-btn.active-sx { background: #ea580c; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    
+    /* Quick action button states */
+    #btn-quick-action.vp-mode { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+    #btn-quick-action.vp-mode:hover { background: #dbeafe; }
+    #btn-quick-action.sx-mode { background: #fff7ed; border-color: #fed7aa; color: #ea580c; }
+    #btn-quick-action.sx-mode:hover { background: #ffedd5; }
+    
+    /* Table inputs */
+    .cell-input { 
+        width: 100%; border: 1px solid transparent; background: transparent; 
+        text-align: center; font-family: 'Roboto Mono', monospace; font-weight: 500; 
+        color: #334155; border-radius: 4px; transition: all 0.15s; font-size: 11px; padding: 2px 4px;
+    }
+    .cell-input:focus { border-color: #3b82f6; background: #fff; }
+    .cell-input:hover:not(:focus):not(:disabled) { background: #f8fafc; }
+    
+    /* Param inputs */
+    .param-group { 
+        display: inline-flex; align-items: center; background: #fff; 
+        border: 1px solid #e2e8f0; border-radius: 3px; padding: 1px 4px; font-size: 10px; 
+    }
+    .param-label { color: #64748b; font-weight: 700; margin-right: 3px; text-transform: uppercase; }
+    .param-val { width: 36px; border: none; outline: none; text-align: right; font-weight: 600; color: #0f172a; background: transparent; font-size: 11px; }
+    
+    /* Inactive row */
+    tr.inactive { opacity: 0.4; background: #f8fafc; }
+    
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+        .cell-input { font-size: 12px; padding: 4px; }
+        #master-sx-row { font-size: 11px; }
+        #master-sx-row input, #master-sx-row select { font-size: 11px; }
+    }
+
+    /* Scrollbar styles */
+    #tab-vp, #tab-sx { scrollbar-width: thin; }
+    #tab-vp::-webkit-scrollbar, #tab-sx::-webkit-scrollbar { height: 8px; width: 8px; }
+    #tab-vp::-webkit-scrollbar-thumb, #tab-sx::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    #tab-vp table, #tab-sx table { min-width: 960px; }
+    #tab-vp > div, #tab-sx > div { 
+        height: 100%; 
+        overflow: auto; 
+        scrollbar-width: thin;
+    }
+    
+    #tab-vp > div::-webkit-scrollbar, #tab-sx > div::-webkit-scrollbar { height: 8px; width: 8px; }
+    #tab-vp > div::-webkit-scrollbar-thumb, #tab-sx > div::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    
+    /* Đảm bảo bảng đủ rộng để kích hoạt scroll ngang */
+    #tab-vp table, #tab-sx table { min-width: 960px; }
+</style>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/cham_cong/bang_cham_cong.js' %}"></script>
+<script src="{% static 'js/cham_cong/cham_cong_context_menu.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const manager = new ChamCongManager({
+            apiUrls: {
+                employees: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/employee/',
+                jobs: '/hrm/to-chuc-nhan-su/api/cong-viec/list/',
+                employeeTypes: '/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/'
+            },
+            csrfToken: "{{ csrf_token }}"
+        });
+        manager.init();
+        window.ChamCongManager = manager;
+    });
+</script>
+{% endblock scripts %}
