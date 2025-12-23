@@ -35819,3 +35819,42 @@ WARNING 2025-12-10 22:20:44,726 log 329144 315292 Not Found: /.well-known/appspe
 WARNING 2025-12-10 22:20:44,728 basehttp 329144 315292 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-12-11 09:03:41,821 log 329144 341204 Not Found: /favicon.ico
 WARNING 2025-12-11 09:03:42,541 basehttp 329144 341204 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2025-12-16 15:07:15,119 log 43496 41952 Internal Server Error: /hrm/cham-cong/don-bao/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 84, in view_don_bao
+    return render(request, "hrm_manager/cham_cong/don_bao.html", {})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/don_bao.html
+ERROR 2025-12-16 15:07:15,132 basehttp 43496 41952 "GET /hrm/cham-cong/don-bao/ HTTP/1.1" 500 87843
+WARNING 2025-12-16 15:07:16,866 log 43496 41952 Not Found: /favicon.ico
+WARNING 2025-12-16 15:07:16,867 basehttp 43496 41952 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-16 16:48:01,893 log 43496 43032 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-16 16:48:01,897 basehttp 43496 43032 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-16 16:48:10,997 log 43496 43032 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-16 16:48:10,999 basehttp 43496 43032 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-16 16:48:15,239 log 43496 43032 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-16 16:48:15,240 basehttp 43496 43032 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-16 16:48:18,701 log 43496 43032 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-16 16:48:18,702 basehttp 43496 43032 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-16 16:48:22,227 log 43496 43032 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-16 16:48:22,228 basehttp 43496 43032 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2025-12-23 12:07:11,875 log 43496 98932 Not Found: /favicon.ico
+WARNING 2025-12-23 12:07:11,878 basehttp 43496 98932 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-23 15:01:54,739 log 43496 98744 Not Found: /favicon.ico
+WARNING 2025-12-23 15:01:54,740 basehttp 43496 98744 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2025-12-23 15:08:12,968 log 43496 86720 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-12-23 15:08:12,969 basehttp 43496 86720 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242

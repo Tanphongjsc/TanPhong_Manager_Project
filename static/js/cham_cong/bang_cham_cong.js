@@ -17,8 +17,10 @@ class ChamCongManager {
         this.cacheElements();
         if (this.elements.dateInput) this.elements.dateInput.value = this.currentDate;
         this.setupEventListeners();
+        
+        // Tab mặc định là VP, false để không render ngay (chờ loadResources)
+        this.switchTab('vp', false); 
         this.loadResources();
-        this.switchTab('vp');
 
         if (typeof ChamCongContextMenu !== 'undefined') {
             this.contextMenu = new ChamCongContextMenu(this);
@@ -31,8 +33,8 @@ class ChamCongManager {
             vpBody: $('vp-body'), sxBody: $('sx-body'), masterJobSelect: $('m-job'),
             dateInput: $('work-date'), deptSelect: $('dept-filter'), searchInput: $('search-input'),
             tabVpBtn: $('btn-tab-vp'), tabSxBtn: $('btn-tab-sx'),
-            tabVpView: $('tab-vp'), tabSxView: $('tab-sx'), masterSxRow: $('master-sx-row'),
-            btnQuickAction: $('btn-quick-action'), iconQuickAction: $('icon-quick-action'), textQuickAction: $('text-quick-action')
+            tabVpView: $('tab-vp'), tabSxView: $('tab-sx'),
+            masterSxEls: Array.from(document.querySelectorAll('.master-sx-el'))
         };
     }
 
@@ -48,6 +50,34 @@ class ChamCongManager {
                 this.render();
             });
         }
+
+        const handleDataChange = (e) => {
+            const input = e.target;
+            const tr = input.closest('tr');
+            if (!tr || !tr.dataset.id) return;
+
+            const empId = parseInt(tr.dataset.id);
+            const emp = this.employees.find(x => x.id === empId);
+            if (!emp) return;
+
+            if (!emp.uiState) emp.uiState = { params: {} };
+
+            if (input.classList.contains('inp-in')) emp.uiState.in = input.value;
+            else if (input.classList.contains('inp-out')) emp.uiState.out = input.value;
+            else if (input.classList.contains('chk-lunch')) emp.uiState.lunch = input.checked;
+            else if (input.classList.contains('chk-ot')) emp.uiState.ot = input.checked;
+            else if (input.classList.contains('job-select')) {
+                emp.uiState.jobId = input.value;
+                emp.uiState.params = {}; 
+            } 
+            else if (input.classList.contains('param-val')) {
+                const key = input.dataset.key;
+                if (key) emp.uiState.params[key] = input.value;
+            }
+        };
+
+        this.elements.vpBody.addEventListener('change', handleDataChange);
+        this.elements.sxBody.addEventListener('change', handleDataChange);
     }
 
     async loadResources() {
@@ -61,13 +91,10 @@ class ChamCongManager {
             this.employees = empRes.data || [];
             this.jobs = jobRes.data || [];
             
-            // Xử lý logic lấy ID loại nhân viên SX
             if (typeRes.data && typeRes.data.length > 0) {
-                // Lấy phần tử đầu tiên tìm được (hoặc find chính xác theo tên nếu cần chắc chắn)
                 const factoryType = typeRes.data.find(t => t.TenLoaiNV.toLowerCase() === 'công nhân');
                 this.productionTypeId = factoryType ? factoryType.id : null;
             } else {
-                console.warn("Không tìm thấy loại nhân viên 'Công nhân'");
                 this.productionTypeId = null;
             }
             
@@ -105,22 +132,16 @@ class ChamCongManager {
     getFilteredEmployees(type) {
         const { search, dept } = this.state.filters;
         return this.employees.filter(e => {
-            // 1. Filter theo Search (Tên hoặc Mã NV)
             const nameMatch = !search || 
                 (e.hovaten && e.hovaten.toLowerCase().includes(search)) || 
                 (e.manhanvien && e.manhanvien.toLowerCase().includes(search));
             
-            // 2. Filter theo Phòng ban
             const deptMatch = dept === 'all' || e.cong_tac?.phong_ban === dept;
             
-            // 3. Phân loại VP/SX dựa trên ID loại nhân viên
             let isFactory = false;
-            
             if (this.productionTypeId !== null) {
-                // Nếu lấy được ID từ API thì so sánh chính xác
                 isFactory = (e.loainv === this.productionTypeId);
             } else {
-                // Fallback (Dự phòng): Nếu API lỗi hoặc chưa cấu hình, dùng logic cũ theo tên phòng ban
                 const deptName = (e.cong_tac?.phong_ban || '').toLowerCase();
                 isFactory = deptName.includes('xưởng') || deptName.includes('sản xuất');
             }
@@ -153,7 +174,9 @@ class ChamCongManager {
         tr.className = 'group hover:bg-blue-50/30 transition-colors border-b border-slate-100';
         Object.assign(tr.dataset, { id: emp.id, scheduleIn: '08:00', scheduleOut: '17:00' });
 
+        const s = emp.uiState || {}; 
         const accent = type === 'vp' ? 'blue' : 'orange';
+        
         const empInfo = `
             <td class="p-1 border-r border-slate-200 text-center sticky left-0 bg-inherit z-[2]">
                 <input type="checkbox" checked class="row-cb accent-${accent}-600 w-3.5 h-3.5 cursor-pointer" onchange="window.ChamCongManager.toggleRow(this)">
@@ -165,31 +188,48 @@ class ChamCongManager {
                     <span class="ml-1">${emp.cong_tac?.phong_ban || ''}</span>
                 </div>
             </td>
-            <td class="p-0.5 border-r border-slate-200"><input type="time" class="cell-input inp-in" onchange="window.ChamCongManager.analyzeTime(this)"></td>
-            <td class="p-0.5 border-r border-slate-200"><input type="time" class="cell-input inp-out" onchange="window.ChamCongManager.analyzeTime(this)"></td>`;
+            <td class="p-0.5 border-r border-slate-200"><input type="time" value="${s.in || ''}" class="cell-input inp-in" onchange="window.ChamCongManager.analyzeTime(this)"></td>
+            <td class="p-0.5 border-r border-slate-200"><input type="time" value="${s.out || ''}" class="cell-input inp-out" onchange="window.ChamCongManager.analyzeTime(this)"></td>`;
 
-        tr.innerHTML = empInfo + (type === 'vp' ? this.getVPCells() : this.getSXCells(jobOptions));
+        tr.innerHTML = empInfo + (type === 'vp' ? this.getVPCells(s) : this.getSXCells(jobOptions, s));
+        
+        // Thực thi ngay lập tức, không cần setTimeout
+        if(s.in || s.out) this.analyzeTime(tr.querySelector('.inp-in'));
+        if(type === 'sx' && s.jobId) this.renderRowParams(tr.querySelector('.job-select'), s.params);
+
         return tr;
     }
 
-    getVPCells() {
+    getVPCells(s) {
+        const chkLunch = s.lunch !== false ? 'checked' : '';
+        const chkOt = s.ot ? 'checked' : '';
+
         return `
             <td class="px-2 py-1 border-r border-slate-200"><div class="analysis-result flex flex-wrap gap-0.5 min-h-[14px]"><span class="text-[9px] text-slate-300">-</span></div></td>
-            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" checked></td>
-            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer"></td>
+            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${chkLunch}></td>
+            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${chkOt}></td>
             <td class="px-2 py-1"><input type="text" class="w-full text-[11px] border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300" placeholder="..."></td>`;
     }
 
-    getSXCells(jobOptions) {
+    getSXCells(jobOptions, s) {
+        const chkLunch = s.lunch !== false ? 'checked' : '';
+        const chkOt = s.ot ? 'checked' : '';
+        
+        let finalOpts = jobOptions;
+        if (s.jobId) {
+            finalOpts = jobOptions.replace(`value="${s.jobId}"`, `value="${s.jobId}" selected`);
+        }
+
         return `
-            <td class="px-1 py-1 border-r border-slate-200"><select class="job-select w-full text-[11px] border border-slate-200 rounded py-0.5 px-1 focus:border-orange-400 outline-none bg-white" onchange="window.ChamCongManager.renderRowParams(this)"><option value="">--</option>${jobOptions}</select></td>
+            <td class="px-1 py-1 border-r border-slate-200"><select class="job-select w-full text-[11px] border border-slate-200 rounded py-0.5 px-1 focus:border-orange-400 outline-none bg-white" onchange="window.ChamCongManager.renderRowParams(this)"><option value="">--</option>${finalOpts}</select></td>
             <td class="px-1 py-1 border-r border-slate-200"><div class="params-container flex flex-wrap items-center gap-0.5 min-h-[18px]"></div></td>
-            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" checked></td>
-            <td class="p-0.5 text-center"><input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer"></td>`;
+            <td class="p-0.5 border-r border-slate-200 text-center"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${chkLunch}></td>
+            <td class="p-0.5 text-center"><input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${chkOt}></td>`;
     }
 
     analyzeTime(input) {
         const tr = input.closest('tr');
+        // Check kỹ hơn vì input có thể chưa gắn vào DOM khi gọi trực tiếp
         const inVal = tr.querySelector('.inp-in').value;
         const outVal = tr.querySelector('.inp-out').value;
         const { scheduleIn: schedIn, scheduleOut: schedOut } = tr.dataset;
@@ -215,23 +255,7 @@ class ChamCongManager {
         resultDiv.innerHTML = html || (inVal && outVal ? badge('✓ OK', true) : '');
     }
 
-    quickAction() {
-        this.state.activeTab === 'vp' ? this.autoFillVP() : (this.elements.masterSxRow?.classList.remove('hidden'), document.getElementById('m-in')?.focus());
-    }
-
-    autoFillVP() {
-        this.elements.vpBody.querySelectorAll('tr').forEach(tr => {
-            const cb = tr.querySelector('.row-cb');
-            if (!cb?.checked) return;
-            const inp = tr.querySelector('.inp-in'), out = tr.querySelector('.inp-out');
-            if (inp && !inp.value) inp.value = tr.dataset.scheduleIn;
-            if (out && !out.value) out.value = tr.dataset.scheduleOut;
-            if (inp) this.analyzeTime(inp);
-        });
-        AppUtils.Notify.success('Đã điền giờ chuẩn!');
-    }
-
-    renderRowParams(select) {
+    renderRowParams(select, savedParams = null) {
         const container = select.closest('tr').querySelector('.params-container');
         if (!container) return;
         container.innerHTML = '';
@@ -240,9 +264,10 @@ class ChamCongManager {
         
         const params = this.parseParams(job.danhsachthamso);
         params.forEach(p => {
+            const val = savedParams && savedParams[p.ma] !== undefined ? savedParams[p.ma] : (p.giatri_macdinh || '');
             const div = document.createElement('div');
             div.className = 'param-group';
-            div.innerHTML = `<label class="param-label">${p.ma}</label><input type="text" class="param-val" data-key="${p.ma}" value="${p.giatri_macdinh || ''}">`;
+            div.innerHTML = `<label class="param-label">${p.ma}</label><input type="text" class="param-val" data-key="${p.ma}" value="${val}">`;
             container.appendChild(div);
         });
     }
@@ -267,22 +292,34 @@ class ChamCongManager {
     }
 
     applyMaster() {
-        const timeIn = document.getElementById('m-in')?.value, timeOut = document.getElementById('m-out')?.value, jobId = document.getElementById('m-job')?.value;
-        const mParams = {};
-        document.querySelectorAll('.m-p-val').forEach(i => mParams[i.dataset.key] = i.value);
+        const type = this.state.activeTab;
+        const timeIn = document.getElementById('m-in')?.value;
+        const timeOut = document.getElementById('m-out')?.value;
 
+        let jobId = null;
+        const mParams = {};
+        if (type === 'sx') {
+            jobId = document.getElementById('m-job')?.value;
+            document.querySelectorAll('.m-p-val').forEach(i => mParams[i.dataset.key] = i.value);
+        }
+
+        const visibleEmployees = this.getFilteredEmployees(type);
         let count = 0;
-        this.elements.sxBody.querySelectorAll('tr').forEach(tr => {
-            if (!tr.querySelector('.row-cb')?.checked) return;
-            if (timeIn) tr.querySelector('.inp-in').value = timeIn;
-            if (timeOut) tr.querySelector('.inp-out').value = timeOut;
-            if (jobId) {
-                const jobSelect = tr.querySelector('.job-select');
-                if (jobSelect && jobSelect.value !== jobId) { jobSelect.value = jobId; this.renderRowParams(jobSelect); }
-                tr.querySelectorAll('.param-val').forEach(rp => { if (mParams[rp.dataset.key] !== undefined) rp.value = mParams[rp.dataset.key]; });
+
+        visibleEmployees.forEach(emp => {     
+            if (!emp.uiState) emp.uiState = { params: {} };
+            
+            if (timeIn) emp.uiState.in = timeIn;
+            if (timeOut) emp.uiState.out = timeOut;
+            if (type === 'sx' && jobId) {
+                emp.uiState.jobId = jobId;
+                if (!emp.uiState.params) emp.uiState.params = {};
+                Object.assign(emp.uiState.params, mParams);
             }
             count++;
         });
+
+        this.render();
         AppUtils.Notify.success(`Đã áp dụng cho ${count} nhân viên!`);
     }
 
@@ -302,26 +339,53 @@ class ChamCongManager {
 
     async saveData() { AppUtils.Notify.success('Đã lưu dữ liệu chấm công!'); }
 
-    switchTab(tab) {
+    switchTab(tab, shouldRender = true) {
         this.state.activeTab = tab;
         const isVP = tab === 'vp';
         
+        // 1. Toggle Tab Button Style
         this.elements.tabVpBtn.className = `tab-btn px-2.5 py-1 text-[11px] font-semibold rounded transition-all ${isVP ? 'active-vp' : ''}`;
         this.elements.tabSxBtn.className = `tab-btn px-2.5 py-1 text-[11px] font-semibold rounded transition-all ${!isVP ? 'active-sx' : ''}`;
+        
+        // 2. Toggle View Visibility
         this.elements.tabVpView.classList.toggle('hidden', !isVP);
         this.elements.tabSxView.classList.toggle('hidden', isVP);
-        this.elements.masterSxRow?.classList.toggle('hidden', isVP);
         
-        if (this.elements.btnQuickAction) {
-            this.elements.btnQuickAction.className = `hidden sm:flex items-center gap-1 px-2 py-1 text-xs border rounded transition-colors ${tab}-mode`;
-            if (this.elements.iconQuickAction) this.elements.iconQuickAction.className = isVP ? 'fa-solid fa-wand-magic-sparkles' : 'fa-solid fa-copy';
-            if (this.elements.textQuickAction) this.elements.textQuickAction.textContent = isVP ? 'Điền chuẩn' : 'Master';
+        // 3. Update Master Controls Visibility
+        this.updateMasterControls(tab);
+
+        // 4. Update Master Bar Colors (Xanh vs Cam)
+        const mIn = document.getElementById('m-in');
+        const mOut = document.getElementById('m-out');
+        const btnApply = document.getElementById('btn-apply-master');
+
+        // Class cơ bản giữ nguyên, chỉ thay đổi phần màu
+        const inputBase = "bg-white border rounded px-3 py-1.5 w-28 text-center font-medium focus:ring-1";
+        const btnBase = "ml-auto px-3 py-1.5 text-white rounded font-semibold transition-colors";
+
+        if (isVP) {
+            // Theme Văn Phòng (Blue)
+            if(mIn) mIn.className = `${inputBase} border-blue-200 focus:ring-blue-400`;
+            if(mOut) mOut.className = `${inputBase} border-blue-200 focus:ring-blue-400`;
+            if(btnApply) btnApply.className = `${btnBase} bg-blue-600 hover:bg-blue-700`;
+        } else {
+            // Theme Sản Xuất (Orange)
+            if(mIn) mIn.className = `${inputBase} border-orange-200 focus:ring-orange-400`;
+            if(mOut) mOut.className = `${inputBase} border-orange-200 focus:ring-orange-400`;
+            if(btnApply) btnApply.className = `${btnBase} bg-orange-500 hover:bg-orange-600`;
         }
-        this.render();
+
+        if (shouldRender) this.render();
+    }
+
+    updateMasterControls(tab) {
+        const isVP = tab === 'vp';
+        (this.elements.masterSxEls || []).forEach(el => el.classList.toggle('hidden', isVP));
     }
 
     destroy() {
         this.eventManager.removeAll();
+        if (this.contextMenu) this.contextMenu.destroy();
         this.employees = [];
         this.jobs = [];
     }
