@@ -1,5 +1,5 @@
 from django.urls import path
-from .  import views
+from . import views
 
 app_name = "cham_cong"
 
@@ -15,6 +15,9 @@ urlpatterns = [
     # ============================================================
     path('bang-cham-cong/', views.view_bang_cham_cong, name='bang_cham_cong'),
     path('bang-cham-cong/tong-hop/', views.view_tong_hop_cham_cong, name='tong_hop_cham_cong'),
+
+    # API URL CHO CHẤM CÔNG
+    path('api/bang-cham-cong/list/', views.api_bang_cham_cong_list , name='api_bang_cham_cong_list'),
 
     # ============================================================
     # ĐƠN BÁO & BÁO CÁO
