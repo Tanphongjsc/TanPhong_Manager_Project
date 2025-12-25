@@ -1,13 +1,9 @@
-/**
- * Class quản lý Context Menu và tính năng Fill Data
- */
 class ChamCongContextMenu {
     constructor(manager) {
         this.manager = manager; 
         this.menu = null;
         this.activeRow = null; 
         this.overlay = null;
-        
         this.init();
     }
 
@@ -153,82 +149,60 @@ class ChamCongContextMenu {
     }
 
     extractRowData(tr) {
-        const isSX = !!tr.querySelector('.job-select');
-        
-        const data = {
-            in: tr.querySelector('.inp-in')?.value,
-            out: tr.querySelector('.inp-out')?.value,
-            lunch: tr.querySelector('.chk-lunch')?.checked,
-            ot: tr.querySelector('.chk-ot')?.checked,
-            isSX: isSX
-        };
+        const empId = parseInt(tr.dataset.id);
+        const emp = this.manager.employees.find(e => e.id === empId);
+        if (!emp || !emp.uiState) return null;
 
-        if (isSX) {
-            data.jobId = tr.querySelector('.job-select')?.value;
-            data.params = {};
-            tr.querySelectorAll('.param-val').forEach(inp => {
-                data.params[inp.dataset.key] = inp.value;
-            });
-        }
+        const ui = emp.uiState;
         
-        return data;
+        // Deep clone data state
+        return {
+            in: ui.in,
+            out: ui.out,
+            lunch: ui.lunch,
+            ot: ui.ot,
+            jobs: ui.jobs ? JSON.parse(JSON.stringify(ui.jobs)) : []
+        };
     }
 
     applyDataToRow(tr, data) {
-        const inpIn = tr.querySelector('.inp-in');
-        const inpOut = tr.querySelector('.inp-out');
-        
-        if (inpIn) inpIn.value = data.in;
-        if (inpOut) inpOut.value = data.out;
-
-        const chkLunch = tr.querySelector('.chk-lunch');
-        const chkOt = tr.querySelector('.chk-ot');
-        if (chkLunch) chkLunch.checked = !!data.lunch;
-        if (chkOt) chkOt.checked = !!data.ot;
-
-        if (data.isSX) {
-            const jobSelect = tr.querySelector('.job-select');
-            if (jobSelect && jobSelect.value !== data.jobId) {
-                jobSelect.value = data.jobId;
-                this.manager.renderRowParams(jobSelect); 
-            }
-
-            const paramInputs = tr.querySelectorAll('.param-val');
-            paramInputs.forEach(inp => {
-                if (data.params[inp.dataset.key] !== undefined) {
-                    inp.value = data.params[inp.dataset.key];
-                }
-            });
-        }
-
-        if (!data.isSX && inpIn) {
-            this.manager.analyzeTime(inpIn); 
-        }
-
-        tr.classList.add('bg-green-50');
-        setTimeout(() => tr.classList.remove('bg-green-50'), 500);
+        if (!data) return;
 
         const empId = parseInt(tr.dataset.id);
         const emp = this.manager.employees.find(e => e.id === empId);
+        
         if (emp) {
-            if (!emp.uiState) emp.uiState = { params: {} };
+            // Update State
+            if (!emp.uiState) emp.uiState = {};
             emp.uiState.in = data.in;
             emp.uiState.out = data.out;
             emp.uiState.lunch = data.lunch;
             emp.uiState.ot = data.ot;
-            if (data.isSX) {
-                emp.uiState.jobId = data.jobId;
-                emp.uiState.params = { ...data.params };
+            
+            if (data.jobs && data.jobs.length > 0) {
+                 // Deep copy jobs array to avoid shared references
+                 emp.uiState.jobs = JSON.parse(JSON.stringify(data.jobs));
+            } else {
+                // Nếu copy từ VP sang SX hoặc ngược lại, cần handle
+                // Tạm thời logic này áp dụng đúng tab vì menu chỉ fill trong cùng table
+            }
+            
+            // Trigger UI update using manager's logic (Create new HTML for row)
+            const type = tr.closest('#vp-body') ? 'vp' : 'sx';
+            this.manager.refreshRow(tr, emp, type);
+            
+            // Highlight effect on the new row (cần lấy lại reference vì tr đã bị thay thế trong refreshRow)
+            const newTr = document.querySelector(`tr[data-id="${empId}"]`);
+            if (newTr) {
+                newTr.classList.add('bg-green-50');
+                setTimeout(() => newTr.classList.remove('bg-green-50'), 500);
             }
         }
     }
 
     destroy() {
-        // Dọn dẹp DOM elements
         if (this.menu) this.menu.remove();
         if (this.overlay) this.overlay.remove();
-        
-        // Remove event listeners
         document.removeEventListener('contextmenu', this._handleContextMenu);
         document.removeEventListener('scroll', this._handleScroll, true);
     }
