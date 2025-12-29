@@ -819,6 +819,29 @@ const AppUtils = (() => {
     };
 
     // ============================================================
+    // TIME UTILITIES
+    // ============================================================
+    const TimeUtils = {
+        /**
+         * Chuyển đổi "HH:mm" thành số phút từ đầu ngày
+         */
+        toMinutes(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return (h * 60) + m;
+        },
+
+        /**
+         * Tính chênh lệch phút giữa 2 mốc thời gian
+         * @returns {number} > 0 nếu time1 > time2 (Muộn/Dư), < 0 nếu time1 < time2 (Sớm/Thiếu)
+         */
+        diffMinutes(time1, time2) {
+            if (!time1 || !time2) return 0;
+            return this.toMinutes(time1) - this.toMinutes(time2);
+        }
+    };
+
+    // ============================================================
     // HELPER UTILITIES
     // ============================================================
     const Helper = {
@@ -1054,6 +1077,7 @@ const AppUtils = (() => {
         UI,
         Helper,
         DateUtils,
+        TimeUtils,
         DeleteOperations,
         Formula,
         get config() { return { ...config }; },
@@ -1084,3 +1108,4 @@ window.HelperUtils = AppUtils.Helper;
 window.APIUtils = AppUtils.API;
 window.Toast = AppUtils.Notify;
 window.DateUtils = AppUtils.DateUtils;
+window.TimeUtils = AppUtils.TimeUtils;

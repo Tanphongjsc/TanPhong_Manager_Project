@@ -506,7 +506,186 @@ class ChamCongManager {
     }
 
     async saveData() {
-        AppUtils.Notify.info('Chức năng đang được phát triển...');
+        // 1. Lấy dữ liệu đã qua xử lý
+        const payload = this.prepareSavePayload();
+
+        if (!payload.length) {
+            AppUtils.Notify.warning('Không có dữ liệu hợp lệ để lưu (Vui lòng kiểm tra nhân viên được chọn).');
+            return;
+        }
+
+        // 2. Confirm trước khi lưu (Optional nhưng UX tốt hơn)
+        AppUtils.Modal.showConfirm({
+            title: 'Lưu bảng chấm công',
+            message: `Bạn có chắc muốn lưu dữ liệu chấm công cho ${payload.length} bản ghi?`,
+            confirmText: 'Lưu dữ liệu',
+            onConfirm: async () => {
+                this.executeSave(payload);
+            }
+        });
+    }
+
+    async executeSave(payload) {
+        this.state.isLoading = true;
+        // Hiển thị loading overlay nếu cần (hoặc dựa vào UI framework của bạn)
+        
+        try {
+            // Gọi API POST
+            const response = await AppUtils.API.post(this.apiUrls.saveChamCong, payload);
+
+            if (response.success || response.id || Array.isArray(response)) {
+                AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
+                // Reset dirty state hoặc reload lại data nếu cần
+                // this.loadResources(); 
+            } else {
+                throw new Error(response.message || 'Lỗi không xác định từ server');
+            }
+        } catch (error) {
+            console.error('Save Error:', error);
+            AppUtils.Notify.error('Lưu thất bại: ' + error.message);
+        } finally {
+            this.state.isLoading = false;
+        }
+    }
+
+    prepareSavePayload() {
+        const type = this.state.activeTab; // 'vp' hoặc 'sx'
+        const tbody = type === 'vp' ? this.elements.vpBody : this.elements.sxBody;
+        
+        // Chỉ lấy những dòng có checkbox được chọn
+        const checkedRows = Array.from(tbody.querySelectorAll('.row-cb:checked')).map(cb => cb.closest('tr'));
+        
+        const payload = [];
+        const workDate = this.elements.dateInput.value; // YYYY-MM-DD
+        
+        // Giờ chuẩn (Có thể cấu hình động sau này, hiện tại hardcode theo UI cũ)
+        const STANDARD_IN = '08:00';
+        const STANDARD_OUT = '17:00';
+
+        checkedRows.forEach(tr => {
+            const empId = tr.dataset.id;
+            const emp = this.getEmpById(empId);
+            if (!emp || !emp.uiState) return;
+
+            const s = emp.uiState;
+            
+            // --- LOGIC TÍNH TOÁN THỜI GIAN ---
+            // timeIn - standardIn: > 0 là muộn, < 0 là sớm
+            const diffIn = AppUtils.TimeUtils.diffMinutes(s.in, STANDARD_IN);
+            // standardOut - timeOut: > 0 là sớm, < 0 là muộn
+            const diffOut = AppUtils.TimeUtils.diffMinutes(STANDARD_OUT, s.out);
+
+            const timeData = {
+                thoigiandimuon: diffIn > 0 ? diffIn : 0,
+                thoigiandisom: diffIn < 0 ? Math.abs(diffIn) : 0,
+                thoigianvesom: diffOut > 0 ? diffOut : 0,
+                thoigianvemuon: diffOut < 0 ? Math.abs(diffOut) : 0
+            };
+
+            // Dữ liệu cơ bản
+            const baseObj = {
+                nhanvien_id: emp.id,
+                ngaylamviec: workDate,
+                thoigianchamcongvao: s.in || null,
+                thoigianchamcongra: s.out || null,
+                cotinhlamthem: s.ot || false,
+                coantrua: s.lunch || false,
+                loaichamcong: type.toUpperCase(), // "VP" hoặc "SX"
+                id: null, // Luôn null để tạo mới theo yêu cầu
+                ...timeData
+            };
+
+            if (type === 'vp') {
+                // --- VĂN PHÒNG ---
+                // Lấy ghi chú từ input cuối cùng
+                const noteInput = tr.querySelector('input[type="text"]:not(.cell-input)');
+                
+                payload.push({
+                    ...baseObj,
+                    congviec_id: null,
+                    tencongviec: noteInput ? noteInput.value : 'Hành chính', // Default text
+                    thamsotinhluong: {}, // Object rỗng
+                    ghichu: noteInput ? noteInput.value : ''
+                });
+
+            } else {
+                // --- SẢN XUẤT ---
+                // Duyệt qua danh sách jobs trong UI State
+                s.jobs.forEach(jobItem => {
+                    // Chỉ xử lý nếu đã chọn công việc
+                    if (jobItem.jobId) {
+                        const jobDef = this.jobs.find(j => j.id == jobItem.jobId);
+                        
+                        if (jobDef) {
+                            // Xử lý tham số lương (Quan trọng: ép kiểu dữ liệu)
+                            const formattedParams = this.formatJobParams(jobItem.params, jobDef.danhsachthamso);
+
+                            const salaryParams = {
+                                tham_so: formattedParams,
+                                bieu_thuc: jobDef.bieuthuctinhtoan,
+                                loaicv: jobDef.loaicongviec
+                            };
+
+                            payload.push({
+                                ...baseObj,
+                                congviec_id: parseInt(jobItem.jobId),
+                                tencongviec: jobDef.tencongviec,
+                                thamsotinhluong: salaryParams, // Backend tự xử lý JSON field này hoặc gửi object tùy framework (Django REST thường nhận JSON object nếu field là JSONField)
+                                ghichu: ''
+                            });
+                        }
+                    } else if (s.jobs.length === 1 && !s.jobs[0].jobId) {
+                        // Case: SX nhưng chưa chọn việc (chỉ chấm giờ)
+                         payload.push({
+                            ...baseObj,
+                            congviec_id: null,
+                            tencongviec: 'Chấm công giờ',
+                            thamsotinhluong: {},
+                            ghichu: ''
+                        });
+                    }
+                });
+            }
+        });
+
+        return payload;
+    }
+
+    // Hàm format tham số dựa trên kiểu dữ liệu định nghĩa trong Job
+    formatJobParams(userParams, paramsDef) {
+        let definitions = [];
+        try {
+            // Parse định nghĩa nếu nó là chuỗi JSON
+            definitions = typeof paramsDef === 'string' ? JSON.parse(paramsDef) : paramsDef;
+        } catch (e) {
+            definitions = [];
+        }
+        if (!Array.isArray(definitions)) definitions = [];
+
+        const result = {};
+
+        definitions.forEach(def => {
+            const key = def.ma;
+            const rawValue = userParams[key];
+            const type = def.kieu; // 'number', 'currency', 'percent', 'text'...
+
+            // Lấy giá trị mặc định nếu user không nhập
+            let val = (rawValue !== undefined && rawValue !== null && rawValue !== '') 
+                ? rawValue 
+                : (def.giatri_macdinh || '');
+
+            // --- LOGIC ÉP KIỂU QUAN TRỌNG ---
+            if (['number', 'currency', 'percent'].includes(type)) {
+                // Ép sang số
+                const num = Number(val);
+                result[key] = isNaN(num) ? 0 : num;
+            } else {
+                // Giữ nguyên chuỗi
+                result[key] = String(val);
+            }
+        });
+
+        return result;
     }
 
     switchTab(tab, shouldRender = true) {
@@ -546,7 +725,8 @@ document.addEventListener('DOMContentLoaded', () => {
         apiUrls: {
             employees: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/employee/',
             jobs: '/hrm/to-chuc-nhan-su/api/cong-viec/list/',
-            employeeTypes: '/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/'
+            employeeTypes: '/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/',
+            saveChamCong: '/hrm/cham-cong/api/bang-cham-cong/list/'
         }
     });
     window.ChamCongManager.init();

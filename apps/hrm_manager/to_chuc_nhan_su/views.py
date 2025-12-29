@@ -729,7 +729,7 @@ def api_lich_su_cong_tac_list(request):
         context = get_list_context(
             request,
             lich_su_qs,
-            filter_field=('nhanvien_id'),
+            filter_field=("trangthai"),
             page_size=int(request.GET.get('page_size', 10)),
         )
 

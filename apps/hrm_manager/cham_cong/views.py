@@ -4,10 +4,15 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.db.models import CharField, F, Value, Func, Count
+from django.db.models.functions import Cast
+from django.contrib.postgres.aggregates import JSONBAgg
 
 from json import loads
+import datetime as dt
 
-from apps.hrm_manager.__core__.models import Phongban 
+from apps.hrm_manager.__core__.models import Bangchamcong, Phongban, Lichlamviecthucte, Calamviec, Khunggiolamviec, Nhanvien
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
 
 # ============================================================
@@ -83,9 +88,8 @@ def view_tong_hop_cham_cong(request):
 
 
 # ================ API CHO BẢNG CHẤM CÔNG ================
-# @login_required
-# @require_http_methods(["GET", "POST"])
-@csrf_exempt
+@login_required
+@require_http_methods(["GET", "POST"])
 def api_bang_cham_cong_list(request):
     """API cung cấp dữ liệu bảng chấm công dưới dạng JSON"""
 
@@ -99,7 +103,7 @@ def api_bang_cham_cong_list(request):
             data_list = loads(request.body)
 
             # Xử lý dữ liệu
-            groups = {}
+            groups_data = {}
             for item in data_list:
                 # 1. Parse JSON
                 if isinstance(item['thamsotinhluong'], str):
@@ -118,24 +122,20 @@ def api_bang_cham_cong_list(request):
                     key = f"TEAM_{item.get('congviec_id')}" 
                 else:
                     # Mỗi cá nhân là 1 nhóm riêng biệt
-                    key = f"INDIVIDUAL_{item['id']}"
+                    key = f"INDIVIDUAL_{item['nhanvien_id']}"
                     
-                if key not in groups:
-                    groups[key] = []
-                groups[key].append(item)
+                if key not in groups_data:
+                    groups_data[key] = []
+                groups_data[key].append(item)
         
             # Tính lương
-            payroll_calculator = PayrollCalculator()
-            ket_qua = payroll_calculator.calculate_all()
-
-            # Gán kết quả trở lại data
-            for item in data_list:
-                item['thanhtien'] = ket_qua.get(item['id'], 0)
+            payroll_calculator = PayrollCalculator(groups_data)
+            ket_qua = payroll_calculator.calculate_all(field_formula='bieu_thuc', field_params='tham_so', field_id='nhanvien_id')
 
             return JsonResponse({
                 'success':True,
                 'message': 'Chấm công thành công',
-                'data': data_list,
+                'data': ket_qua,
             }, status = 201)
 
         except Exception as e:
@@ -144,6 +144,77 @@ def api_bang_cham_cong_list(request):
                 'message': f'Lỗi: {str(e)}'
             }, status = 400)
 
+# @login_required
+@require_http_methods(["GET"])
+@csrf_exempt
+def api_bang_cham_cong_nhan_vien_list(request):
+
+    # load 
+    day_input = request.GET.dict()
+    
+    # Query lịch làm việc Thực Tế
+    lichlamviec_qs = Lichlamviecthucte.objects.filter(
+        ngaylamviec=dt.date.fromisoformat(day_input.get("ngaylamviec"))
+    ).values(
+        "nhanvien_id", "calamviec_id"
+    ).annotate(
+        hovaten=F('nhanvien__hovaten'),
+        manhanvien=F('nhanvien__manhanvien'),
+        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
+        khunggiolamviec=JSONBAgg(
+            Func(
+                Value('thoigianbatdau'), Cast('calamviec__khunggiolamviec__thoigianbatdau', CharField()),
+                Value('thoigianketthuc'), Cast('calamviec__khunggiolamviec__thoigianketthuc', CharField()),
+                Value('thoigianchophepchamcongsomnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepchamcongsomnhat', CharField()),
+                Value('thoigianchophepvemuonnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepvemuonnhat', CharField()),
+                Value('thoigianchophepdenmuon'), F('calamviec__khunggiolamviec__thoigianchophepdenmuon'),
+                Value('thoigiandimuonkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigiandimuonkhongtinhchamcong'),
+                Value('thoigianchophepvesomnhat'), F('calamviec__khunggiolamviec__thoigianchophepvesomnhat'),
+                Value('thoigianvesomkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigianvesomkhongtinhchamcong'),
+                function='jsonb_build_object'
+            ),
+            # Sắp xếp khung giờ tăng dần để lấy đúng thứ tự
+            ordering='calamviec__khunggiolamviec__created_at' 
+        )
+    )
+
+    # Query tổng số lần đã chấm công của từng nhân viên trong ngày
+    data_cham_cong = Bangchamcong.objects.filter(
+        ngaylamviec=dt.date.fromisoformat(day_input.get("ngaylamviec"))
+    ).values('nhanvien_id').annotate(total=Count('id'))
+
+    # Map dữ liệu để tra cứu
+    map_cham_cong = {item['nhanvien_id']: item['total'] for item in data_cham_cong}
+
+    # Lọc danh sách nhân viên dựa trên số lần đã chấm công và quy định trong lịch làm việc
+    final_result = []
+    ds_lich = list(lichlamviec_qs) 
+
+    for item in ds_lich:
+        nhanvien_id = item['nhanvien_id']
+        total_cham_cong = map_cham_cong.get(nhanvien_id, 0)
+        max_limit = item.get("solanchamcongtrongngay", 0)
+        
+        # Nếu đã chấm đủ hoặc thừa số lần quy định -> Bỏ qua nhân viên này (không thêm vào kết quả)
+        if total_cham_cong >= max_limit:
+            continue
+
+        list_khung_gio = item.get('khunggiolamviec', [])
+        
+        # Chỉ lấy khung giờ nếu index tồn tại
+        if total_cham_cong < len(list_khung_gio):
+            # Gán đè list bằng 1 object khung giờ duy nhất tương ứng
+            item['khunggiolamviec'] = list_khung_gio[total_cham_cong]
+            
+            # Chỉ append khi logic hợp lệ
+            final_result.append(item)
+        else:
+            continue
+
+    return JsonResponse({
+        'success': True, 
+        'data': final_result,
+    }, status=200)
 
 # ============================================================
 # VIEWS: ĐƠN BÁO & BÁO CÁO

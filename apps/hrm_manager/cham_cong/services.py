@@ -116,7 +116,7 @@ class PayrollCalculator:
             # logging.error(f"Error calulating group {group_id}: {e}")
             return 0 
 
-    def calculate_all(self, field_formula='bieu_thuc', field_params='tham_so'):
+    def calculate_all(self, field_formula='bieu_thuc', field_params='tham_so', field_id='id'):
         """
         Duyệt qua toàn bộ map và tính toán.
         Trả về dict {item_id: result}
@@ -137,7 +137,6 @@ class PayrollCalculator:
                 params = mem.get(field_params, {})
                 
                 # Logic: Nếu cá nhân có công thức riêng thì dùng, không thì dùng của nhóm
-                # Điều này giúp linh hoạt hơn nữa
                 formula = mem.get(field_formula) or group_formula
                 
                 # Tính toán
@@ -145,6 +144,6 @@ class PayrollCalculator:
                 
                 # Cập nhật kết quả
                 mem['thanhtien_calculated'] = thanhtien # Nên dùng field khác để tránh ghi đè dữ liệu gốc nếu không muốn
-                results[mem['id']] = thanhtien
+                results[mem[field_id]] = thanhtien
                 
         return results
