@@ -1,0 +1,42 @@
+<div class="space-y-6" id="shift-detail-content">
+    <div class="text-center py-10 text-slate-500">
+        <i class="fas fa-spinner fa-spin mr-2"></i>Đang tải thông tin...
+    </div>
+</div>
+
+<template id="tpl-shift-detail">
+    {# Tăng grid layout column 1 lên 180px để label không bị xuống dòng #}
+    <div class="grid grid-cols-[180px_1fr] gap-y-5 text-sm mb-6 items-start">
+        
+        <div class="text-slate-500 text-right pr-6 pt-0.5">Tên ca làm việc</div>
+        <div class="font-medium text-slate-900 text-base" data-field="tencalamviec"></div>
+        
+        <div class="text-slate-500 text-right pr-6 pt-0.5">Mã ca</div>
+        <div class="font-medium text-slate-900" data-field="macalamviec"></div>
+        
+        <div class="text-slate-500 text-right pr-6 pt-0.5">Thời gian chấm công</div>
+        <div class="font-medium text-slate-900" data-field="loaichamcong_label"></div>
+        
+        <div class="text-slate-500 text-right pr-6 pt-0.5">Số lần chấm công của ca</div>
+        <div class="font-medium text-slate-900"><span data-field="solanchamcong"></span> lần</div>
+        
+        {# KHUNG GIỜ #}
+        <div class="text-slate-500 text-right pr-6 pt-0.5">Khung giờ</div>
+        <div class="space-y-4 w-full" id="detail-frames-container">
+            {# JS injects frames here #}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-[180px_1fr] gap-y-4 text-sm mt-6 border-t border-slate-100 pt-4 items-center">
+        <div class="text-slate-500 text-right pr-6">Công của ca</div>
+        <div class="font-bold text-slate-900 text-base" data-field="tongcong"></div>
+        
+        <div class="text-slate-500 text-right pr-6">Không cần checkout</div>
+        <div>
+            {# Toggle Read-only #}
+            <div class="w-9 h-5 rounded-full relative transition-colors duration-200 ease-in-out pointer-events-none" data-field="checkout-toggle">
+                <div class="w-4 h-4 bg-white rounded-full shadow absolute top-0.5 left-0.5 transition-transform duration-200 ease-in-out"></div>
+            </div>
+        </div>
+    </div>
+</template>

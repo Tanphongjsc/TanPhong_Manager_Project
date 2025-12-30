@@ -22,6 +22,11 @@ class CaFormController extends BaseFormManager {
                 update: (id) => `/hrm/lich-lam-viec/api/ca-lam-viec/${id}/update/`,
                 detail: (id) => `/hrm/lich-lam-viec/api/ca-lam-viec/detail/${id}/`,
             },
+
+             autoCode: { 
+                sourceField: 'tencalamviec', 
+                targetField: 'macalamviec' 
+            },
             
             // Callbacks
             buildPayload: () => this.buildPayload(),
@@ -39,13 +44,11 @@ class CaFormController extends BaseFormManager {
         // ✅ Sử dụng CustomTimePicker Component
         this.timePicker = new CustomTimePicker();
 
-        this.isCodeManuallyEdited = false;
-
         // Store total minutes for payload
         this.totalMinutes = 0;
 
         // Config cho toggle blocks - THÊM MỚI (thay vì để trong super config)
-        this. shiftTypeBlocks = {
+        this.shiftTypeBlocks = {
             'CO_DINH': 'block-co-dinh',
             'LINH_DONG': 'block-linh-dong',
             'TU_DO': 'block-tu-do'
@@ -65,7 +68,6 @@ class CaFormController extends BaseFormManager {
         this.updateHeaderTitle();
         this.bindCaSpecificEvents();
         this.bindShiftTypeToggle();  
-        this.bindAutoGenerateCode();
 
         if (!this.state.isUpdateMode) {
             this.renderFixedSegments(1);
@@ -137,49 +139,10 @@ class CaFormController extends BaseFormManager {
     bindShiftTypeToggle() {
         const radios = document.querySelectorAll('input[name="loaichamcong"]');
         
-        radios. forEach(radio => {
+        radios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.handleShiftTypeSwitch(e.target.value);
             });
-        });
-    }
-
-
-    /**
-     * Auto-generate mã ca từ tên ca
-     * - Chỉ hoạt động khi tạo mới (không phải update)
-     * - Ngừng auto khi user sửa mã thủ công
-     * - Tiếp tục auto nếu user xóa trắng ô mã
-     */
-    bindAutoGenerateCode() {
-        const tenInput = this.form.querySelector('[name="tencalamviec"]');
-        const maInput = this.form.querySelector('[name="macalamviec"]');
-        
-        if (! tenInput || !maInput) return;
-        
-        // Chỉ auto-generate khi tạo mới
-        if (this.state.isUpdateMode) return;
-
-        // Khi nhập tên → Tự động sinh mã
-        tenInput.addEventListener('input', () => {
-            if (! this.isCodeManuallyEdited) {
-                maInput.value = AppUtils.Helper.generateCode(tenInput.value);
-            }
-        });
-
-        // Khi user sửa mã thủ công
-        maInput.addEventListener('input', (e) => {
-            // Auto uppercase và remove ký tự đặc biệt
-            e.target.value = e.target.value.toUpperCase(). replace(/[^A-Z0-9_]/g, '');
-            
-            if (e.target.value === '') {
-                // User xóa trắng → Cho phép auto-generate lại
-                this.isCodeManuallyEdited = false;
-                maInput.value = AppUtils.Helper.generateCode(tenInput.value);
-            } else {
-                // User đã nhập/sửa → Ngừng auto
-                this.isCodeManuallyEdited = true;
-            }
         });
     }
 
@@ -309,7 +272,7 @@ class CaFormController extends BaseFormManager {
     // TOGGLE HANDLERS 
     // ============================================================
     handleShiftTypeSwitch(type) {
-        // 1. Ẩn/hiện description
+        // 1.Ẩn/hiện description
         Object.entries(this.shiftTypeDescs).forEach(([key, descId]) => {
             const el = document.getElementById(descId);
             if (el) {
@@ -317,12 +280,12 @@ class CaFormController extends BaseFormManager {
             }
         });
 
-        // 2.  Ẩn/hiện block nhập liệu (sử dụng helper từ base)
-        Object.entries(this. shiftTypeBlocks).forEach(([key, blockId]) => {
+        // 2. Ẩn/hiện block nhập liệu (sử dụng helper từ base)
+        Object.entries(this.shiftTypeBlocks).forEach(([key, blockId]) => {
             this.toggleBlock(blockId, key === type, true);
         });
 
-        // 3.  Logic riêng cho từng loại - GIỮ NGUYÊN PHẦN NÀY
+        // 3. Logic riêng cho từng loại - GIỮ NGUYÊN PHẦN NÀY
         if (type === 'CO_DINH') {
             if (! this.segmentsContainer.innerHTML) {
                 this.renderFixedSegments(1);
@@ -333,13 +296,13 @@ class CaFormController extends BaseFormManager {
                     this.totalWorkdayInput.readOnly = true;
                     this.totalWorkdayInput.classList.add('bg-slate-100', 'cursor-not-allowed');
                 } else {
-                    this.totalWorkdayInput. readOnly = false;
-                    this.totalWorkdayInput. classList.remove('bg-slate-100', 'cursor-not-allowed');
+                    this.totalWorkdayInput.readOnly = false;
+                    this.totalWorkdayInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
                 }
             }
         } else {
-            this.totalWorkdayInput. readOnly = false;
-            this.totalWorkdayInput. classList.remove('bg-slate-100', 'cursor-not-allowed');
+            this.totalWorkdayInput.readOnly = false;
+            this.totalWorkdayInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
             this.timePicker.attachAll();
             
             if (type === 'TU_DO') {
@@ -459,83 +422,105 @@ class CaFormController extends BaseFormManager {
         const type = document.querySelector('input[name="loaichamcong"]:checked').value;
         const getMin = CaFormController.parseTimeToMinutes;
 
-        // ✅ Helper: Hiển thị/Ẩn badge (Đã FIX lỗi vị trí)
-        const toggleBadge = (inputName, text = '') => {
+        // Helper: Hiển thị/Ẩn badge
+        const toggleBadge = (inputName, text = '', isError = false) => {
             const input = document.querySelector(`input[name="${inputName}"]`);
             if (!input) return;
             
             const wrapper = input.parentElement;
-
-            // 🔧 FIX 1: Bắt buộc thêm relative vào wrapper để badge nằm đúng trong ô input
-            if (!wrapper.classList.contains('relative')) {
-                wrapper.classList.add('relative');
-            }
+            if (!wrapper.classList.contains('relative')) wrapper.classList.add('relative');
 
             let badge = wrapper.querySelector('.next-day-badge');
             
             if (text) {
-                // 🔧 FIX 2: Tăng padding-right cho input để text giờ không bị badge che mất
-                // (Giả lập class pr-16 của Tailwind nếu chưa có)
-                if (!input.classList.contains('pr-16') && !input.classList.contains('pr-20')) {
-                    input.classList.add('pr-16'); 
-                }
+                if (!input.classList.contains('pr-16')) input.classList.add('pr-16');
 
                 if (!badge) {
                     badge = document.createElement('span');
-                    // Style chuẩn: nằm tuyệt đối bên phải, căn giữa theo chiều dọc
+                    // Style mặc định (Xanh)
                     badge.className = 'next-day-badge absolute top-1/2 -translate-y-1/2 right-2 bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-tight pointer-events-none z-10';
                     wrapper.appendChild(badge);
                 }
+                
+                // Cập nhật style nếu là lỗi (Đỏ)
+                if (isError) {
+                    badge.classList.remove('bg-green-100', 'text-green-700', 'border-green-200');
+                    badge.classList.add('bg-red-100', 'text-red-700', 'border-red-200');
+                } else {
+                    badge.classList.remove('bg-red-100', 'text-red-700', 'border-red-200');
+                    badge.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+                }
+                
                 badge.innerText = text;
             } else {
                 if (badge) badge.remove();
-                // (Tùy chọn) Có thể remove class pr-16 nếu muốn, nhưng giữ lại cũng không sao
             }
         };
 
-        // Helper: So sánh logic
-        const checkNextDay = (timeVal, rootTimeVal) => {
-            if (timeVal === null || rootTimeVal === null) return '';
-            return timeVal < rootTimeVal ? 'Hôm sau' : '';
-        };
-
-        // --- Logic tính toán ---
+        // --- LOGIC HIỂN THỊ BADGE ---
         if (type === 'CO_DINH') {
             const count = parseInt(document.querySelector('input[name="sokhunggio"]:checked').value);
-            let previousStepMinutes = -1; 
-            let dayOffset = 0;
+            let previousEndRaw = -1; 
+            let dayOffset = 0; // 0: Ngày 1, 1: Ngày 2 (Hôm sau), 2+: Lỗi
 
             for (let i = 1; i <= count; i++) {
                 const startVal = getMin(document.querySelector(`input[name="segment_${i}_start"]`)?.value);
                 const endVal = getMin(document.querySelector(`input[name="segment_${i}_end"]`)?.value);
 
+                // Check START Time
                 if (startVal !== null) {
-                    if (previousStepMinutes !== -1 && startVal < previousStepMinutes) dayOffset++;
-                    previousStepMinutes = startVal;
-                    toggleBadge(`segment_${i}_start`, dayOffset > 0 ? (dayOffset === 1 ? 'Hôm sau' : `Ngày +${dayOffset}`) : '');
+                    // Logic xác định ngày: Nếu Start < Previous End -> Tăng ngày
+                    if (previousEndRaw !== -1 && startVal < previousEndRaw) {
+                        dayOffset++;
+                    }
+                    
+                    let text = '';
+                    let isErr = false;
+                    if (dayOffset === 1) text = 'Hôm sau';
+                    else if (dayOffset >= 2) { text = 'Quá 48h!'; isErr = true; }
+                    
+                    toggleBadge(`segment_${i}_start`, text, isErr);
                 }
 
+                // Check END Time
                 if (endVal !== null) {
-                    const compareBase = (startVal !== null) ? startVal : previousStepMinutes;
-                    let localOffset = dayOffset;
-                    if (compareBase !== -1 && endVal <= compareBase) localOffset++;
+                    let localEndOffset = dayOffset;
                     
-                    previousStepMinutes = endVal;
-                    toggleBadge(`segment_${i}_end`, localOffset > 0 ? (localOffset === 1 ? 'Hôm sau' : `Ngày +${localOffset}`) : '');
+                    // Logic xác định ngày End: Nếu End <= Start -> Qua đêm nội bộ -> Tăng ngày tạm thời
+                    if (startVal !== null && endVal <= startVal) {
+                        localEndOffset++;
+                    }
+                    
+                    let text = '';
+                    let isErr = false;
+                    if (localEndOffset === 1) text = 'Hôm sau';
+                    else if (localEndOffset >= 2) { text = 'Quá 48h!'; isErr = true; }
+
+                    toggleBadge(`segment_${i}_end`, text, isErr);
+                    
+                    // Cập nhật previousEndRaw cho vòng lặp kế tiếp
+                    // Lưu ý: Luôn dùng endVal gốc (0-1440) để so sánh bước nhảy
+                    previousEndRaw = endVal;
                 }
             }
 
-            // Xử lý nghỉ trưa (Cố định)
+            // Xử lý badge cho nghỉ trưa (chỉ áp dụng nếu 1 khung giờ)
             if (count === 1 && document.getElementById('has-lunch-break')?.checked) {
                 const shiftStart = getMin(document.querySelector('input[name="segment_1_start"]')?.value);
                 const lStart = getMin(document.querySelector('input[name="batdaunghigiuaca"]')?.value);
                 const lEnd = getMin(document.querySelector('input[name="ketthucnghigiuaca"]')?.value);
+                
+                const checkNextDay = (val, root) => (val !== null && root !== null && val < root) ? 'Hôm sau' : '';
 
                 if (shiftStart !== null) {
                     if (lStart !== null) toggleBadge('batdaunghigiuaca', checkNextDay(lStart, shiftStart));
+                    
                     if (lEnd !== null) {
-                         let isNextDay = (lStart !== null && lEnd < lStart) || (lEnd < shiftStart);
-                         if (lStart !== null && lStart < shiftStart) isNextDay = true;
+                         let isNextDay = false;
+                         // Logic check hôm sau cho giờ kết thúc nghỉ trưa
+                         if (lStart !== null && lEnd < lStart) isNextDay = true;
+                         else if (lEnd < shiftStart) isNextDay = true;
+                         
                          toggleBadge('ketthucnghigiuaca', isNextDay ? 'Hôm sau' : '');
                     }
                 }
@@ -545,22 +530,20 @@ class CaFormController extends BaseFormManager {
             const start = getMin(document.querySelector('input[name="ld_batdau"]')?.value);
             const end = getMin(document.querySelector('input[name="ld_ketthuc"]')?.value);
             
-            // Badge Linh động
+            const checkNextDay = (val, root) => (val !== null && root !== null && val < root) ? 'Hôm sau' : '';
             if (start !== null && end !== null) toggleBadge('ld_ketthuc', checkNextDay(end, start));
             else toggleBadge('ld_ketthuc', '');
 
-            // Badge Nghỉ trưa (Linh động)
+            // Badge Nghỉ trưa Linh động
             if (document.getElementById('ld-has-lunch-break')?.checked) {
                 const lStart = getMin(document.querySelector('input[name="ld_batdaunghi"]')?.value);
                 const lEnd = getMin(document.querySelector('input[name="ld_ketthucnghi"]')?.value);
                 
                 if (start !== null) {
                     if (lStart !== null) toggleBadge('ld_batdaunghi', checkNextDay(lStart, start));
-                    
                     if (lEnd !== null) {
-                        let isNextDay = (lStart !== null && lEnd < lStart) || (lEnd < start);
-                        if (lStart !== null && lStart < start) isNextDay = true;
-                        toggleBadge('ld_ketthucnghi', isNextDay ? 'Hôm sau' : '');
+                        let isNext = (lStart !== null && lEnd < lStart) || (lEnd < start);
+                        toggleBadge('ld_ketthucnghi', isNext ? 'Hôm sau' : '');
                     }
                 }
             }
@@ -568,6 +551,7 @@ class CaFormController extends BaseFormManager {
         else if (type === 'TU_DO') {
             const start = getMin(document.querySelector('input[name="td_batdau"]')?.value);
             const end = getMin(document.querySelector('input[name="td_ketthuc"]')?.value);
+            const checkNextDay = (val, root) => (val !== null && root !== null && val < root) ? 'Hôm sau' : '';
             
             if (start !== null && end !== null) toggleBadge('td_ketthuc', checkNextDay(end, start));
             else toggleBadge('td_ketthuc', '');
@@ -675,35 +659,72 @@ class CaFormController extends BaseFormManager {
         if (!payload.TenCa.trim()) return "Tên ca không được để trống";
         if (!payload.MaCa.trim()) return "Mã ca không được để trống";
         
-        // --- CASE 2: Validate Công thành phần (Cố định nhiều khung) ---
-        if (payload.LoaiCa === 'CO_DINH' && payload.SoKhungGio > 1) {
-            let totalCongSegments = 0;
-            for (let i = 0; i < payload.SoKhungGio; i++) {
-                const kg = payload.ChiTietKhungGio[i];
-                if (!kg.Cong || parseFloat(kg.Cong) <= 0) {
-                    return `Khung giờ ${i+1}: Vui lòng nhập Công (bắt buộc)`;
-                }
-                totalCongSegments += parseFloat(kg.Cong);
-            }
+        // --- CASE: Validate Ca Cố Định (Nghiệp vụ Mới) ---
+        if (payload.LoaiCa === 'CO_DINH' && payload.ChiTietKhungGio.length > 0) {
             
-        }
+            let currentDayBase = 0; // 0: Ngày 1, 1440: Ngày 2
+            let previousEndRaw = -1; // Theo dõi giờ kết thúc của khung trước (0-1440)
+            const MAX_ALLOWED_MINUTES = 2880; // Giới hạn 2 ngày (48h)
 
-        // --- Validate giờ cơ bản ---
-        for (let i = 0; i < payload.ChiTietKhungGio.length; i++) {
-            const kg = payload.ChiTietKhungGio[i];
-            if (!kg.GioBatDau || !kg.GioKetThuc) return `Khung giờ ${i+1}: Vui lòng nhập giờ bắt đầu và kết thúc`;
-            
-            // --- CASE 3: Validate Linh Động (Flex limits) ---
-            if (payload.LoaiCa === 'LINH_DONG') {
+            for (let i = 0; i < payload.ChiTietKhungGio.length; i++) {
+                const kg = payload.ChiTietKhungGio[i];
+                
+                // Check required
+                if (!kg.GioBatDau || !kg.GioKetThuc) {
+                    return `Khung giờ ${i+1}: Vui lòng nhập giờ bắt đầu và kết thúc`;
+                }
+
                 const start = CaFormController.parseTimeToMinutes(kg.GioBatDau);
                 const end = CaFormController.parseTimeToMinutes(kg.GioKetThuc);
                 
-                // Tính tổng phút làm việc thực tế
+                // Logic xác định sang ngày mới: Start < Previous End
+                if (previousEndRaw !== -1 && start < previousEndRaw) {
+                    currentDayBase += 1440;
+                }
+
+                // Tính thời gian tuyệt đối
+                const startAbs = currentDayBase + start;
+                let endAbs = currentDayBase + end;
+                
+                // Xử lý qua đêm nội bộ (ví dụ 22:00 - 02:00)
+                if (end <= start) {
+                    endAbs += 1440;
+                }
+
+                // --- KIỂM TRA GIỚI HẠN 48H ---
+                if (startAbs >= MAX_ALLOWED_MINUTES || endAbs > MAX_ALLOWED_MINUTES) {
+                    return `Khung giờ ${i+1}: Thời gian không được vượt quá phạm vi 2 ngày (48 giờ). Vui lòng điều chỉnh lại khung giờ.`;
+                }
+                
+                // Cập nhật cho vòng lặp sau (Lấy phần dư 1440 để về giờ trong ngày)
+                previousEndRaw = endAbs % 1440;
+            }
+
+            // Validate Công thành phần (khi có nhiều khung)
+            if (payload.SoKhungGio > 1) {
+                for (let i = 0; i < payload.SoKhungGio; i++) {
+                    const kg = payload.ChiTietKhungGio[i];
+                    if (!kg.Cong || parseFloat(kg.Cong) <= 0) {
+                        return `Khung giờ ${i+1}: Vui lòng nhập Công (bắt buộc)`;
+                    }
+                }
+            }
+        }
+
+        // --- CASE: Validate Linh Động ---
+        if (payload.LoaiCa === 'LINH_DONG') {
+            for (let i = 0; i < payload.ChiTietKhungGio.length; i++) {
+                const kg = payload.ChiTietKhungGio[i];
+                if (!kg.GioBatDau || !kg.GioKetThuc) 
+                    return `Khung giờ ${i+1}: Vui lòng nhập giờ bắt đầu và kết thúc`;
+
+                const start = CaFormController.parseTimeToMinutes(kg.GioBatDau);
+                const end = CaFormController.parseTimeToMinutes(kg.GioKetThuc);
+                
                 let totalWorkMinutes = 0;
                 if (end > start) totalWorkMinutes = end - start;
-                else totalWorkMinutes = 1440 - start + end; // Qua đêm
+                else totalWorkMinutes = 1440 - start + end;
 
-                // Kiểm tra Flex
                 const flexLate = parseInt(kg.LinhDongDenMuon || 0);
                 const flexEarly = parseInt(kg.LinhDongVeSom || 0);
                 
@@ -712,6 +733,7 @@ class CaFormController extends BaseFormManager {
                 }
             }
         }
+        
         return null;
     }
 
@@ -719,7 +741,7 @@ class CaFormController extends BaseFormManager {
     // Fill Data
     // ============================================================
     fillData(data) {
-        this.isCodeManuallyEdited = true;  // Khi edit, không auto-generate
+        
         // Helper: Set giá trị và trigger sự kiện input để tính toán lại
         const setVal = (name, val) => {
             const el = this.form.querySelector(`[name="${name}"]`);
@@ -729,28 +751,24 @@ class CaFormController extends BaseFormManager {
             }
         };
 
-        // 1. Điền thông tin cơ bản
+        // 1.Điền thông tin cơ bản
         setVal('tencalamviec', data.TenCa);
         setVal('macalamviec', data.MaCa);
         setVal('congcuaca', data.TongCong); // Tổng công hiển thị ban đầu
         
         // Khóa mã ca khi update
-        const codeInput = this.form.querySelector('input[name="macalamviec"]');
-        if (codeInput) {
-            codeInput.readOnly = true;
-            codeInput.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
-        }
+        this.disableCodeField();
 
         const chkCheckout = this.form.querySelector('[name="khongcancheckout"]');
         if (chkCheckout) chkCheckout.checked = data.KhongCanCheckout;
 
-        // 2. Chọn loại chấm công & Hiển thị Block/Mô tả tương ứng
+        // 2.Chọn loại chấm công & Hiển thị Block/Mô tả tương ứng
         const typeRadio = this.form.querySelector(`input[name="loaichamcong"][value="${data.LoaiCa}"]`);
         if (typeRadio) { 
             typeRadio.checked = true;
             this.handleShiftTypeSwitch(data.LoaiCa); // Hàm này của BaseFormManager sẽ handle ẩn hiện block nhập liệu
         }
-        // 3. Điền chi tiết theo từng loại ca
+        // 3.Điền chi tiết theo từng loại ca
         if (data.LoaiCa === 'CO_DINH') {
             const count = (data.ChiTietKhungGio && data.ChiTietKhungGio.length > 0) ? data.ChiTietKhungGio.length : 1;
             
@@ -841,7 +859,7 @@ class CaFormController extends BaseFormManager {
             }
         }
 
-        // 4. Finalize UI
+        // 4.Finalize UI
         this.timePicker.attachAll();      // Gắn lại time picker cho các input mới sinh ra
         this.calculateTotalWorkTime();    // Tính tổng giờ làm việc (xx giờ xx phút)
         this.updateNextDayBadges();       // ✅ FIX: Hiển thị badge "Hôm sau"

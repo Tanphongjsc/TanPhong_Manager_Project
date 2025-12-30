@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="w-full pb-20">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm rounded-lg mt-4 mx-4">
+        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+            <h1 id="page-title" class="text-xl font-bold text-slate-900">{{ title }}</h1>
+        </div>
+
+        <form id="lich-form" class="p-6 space-y-8">
+            {% csrf_token %}
+            <input type="hidden" name="selected_dept_ids" id="hidden-dept-ids" value="[]">
+            <input type="hidden" name="selected_emp_ids" id="hidden-emp-ids" value="[]">
+
+            {# 1. CƠ BẢN #}
+            <div class="space-y-4">
+                {% include "components/section_header.html" with title="Thiết lập cơ bản" icon_class="fas fa-info-circle" %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field_text.html" with label="Tên nhóm" name="tenlichlamviec" id="ten-nhom" required=True placeholder="VD: Khối Văn Phòng" value=item.tenlichlamviec %}
+                    {% include "components/form_field_text.html" with label="Mã nhóm" name="malichlamviec" id="ma-nhom" required=True placeholder="VD: KVP01" value=item.malichlamviec %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nhân viên áp dụng <span class="text-red-500"></span></label>
+                    <div id="btn-open-selector" class="w-full min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 cursor-pointer bg-white flex items-center flex-wrap gap-2 hover:border-slate-400 transition-colors group">
+                        <span class="text-slate-400 select-none text-sm group-hover:text-slate-500 transition-colors" id="emp-placeholder">
+                            <i class="fas fa-plus-circle mr-1"></i>Bộ phận và Nhân viên...
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {# 2. LỊCH LÀM VIỆC #}
+            <div class="space-y-4">
+                {% include "components/section_header.html" with title="Thiết lập lịch làm việc" icon_class="fas fa-calendar-alt" %}
+                
+                {# Layout Grid chuẩn để căn thẳng hàng (Label width 220px) #}
+                <div class="grid grid-cols-[220px_1fr] gap-y-6 items-start">
+                    
+                    {# Row 1: Kịch bản #}
+                    <label class="text-sm font-bold text-slate-700 text-right pt-2 pr-6">
+                        Kịch bản lịch làm việc <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex gap-6 items-center h-9">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="loaikichban" value="CO_DINH" checked class="text-green-600 focus:ring-green-500 w-4 h-4">
+                                <span class="ml-2 text-sm text-slate-700 font-medium">Cố định</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="loaikichban" value="LICH_TRINH" class="text-green-600 focus:ring-green-500 w-4 h-4">
+                                <span class="ml-2 text-sm text-slate-700 font-medium">Lịch trình</span>
+                            </label>
+                        </div>
+                        {# Chú thích chữ mờ nằm ngay dưới radio #}
+                        <p class="text-xs text-slate-400 italic">CBNV có lịch trình làm việc cố định và lặp lại từng tuần</p>
+                    </div>
+
+                    {# Container Dynamic #}
+                    <div class="col-span-2 w-full">
+                        {# BLOCK CỐ ĐỊNH #}
+                        <div id="block-co-dinh" class="animate-fade-in grid grid-cols-[220px_1fr] gap-y-6 items-start w-full">
+                            
+                            {# Row 2: Cài đặt ca #}
+                            <label class="text-sm font-bold text-slate-700 text-right pt-2 pr-6">Cài đặt ca</label>
+                            
+                            {# Container hiển thị master shift (Logic JS sẽ render vào đây) #}
+                            <div id="master-shift-display" class="flex items-start gap-3 w-full max-w-4xl">
+                                <div class="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 w-full text-slate-500 italic h-[42px]">
+                                    Chưa chọn ca
+                                </div>
+                                <button type="button" id="btn-master-edit" class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors shrink-0 mt-0.5" title="Chọn ca">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                            </div>
+
+                            {# Row 3: Bảng Lịch Tuần (Offset cột 2) #}
+                            <div class="col-start-2 border border-slate-200 rounded-lg overflow-hidden w-full max-w-4xl shadow-sm">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th class="w-12 py-3 px-4 text-center">
+                                                <input type="checkbox" id="check-all-days" class="rounded text-green-600 focus:ring-green-500 cursor-pointer w-4 h-4 shadow-sm border-slate-300">
+                                            </th>
+                                            <th class="py-3 px-4 text-sm font-bold text-slate-700 w-40">Ngày làm việc</th>
+                                            <th class="py-3 px-4 text-sm font-bold text-slate-700">Ca làm việc</th>
+                                            <th class="py-3 px-4 w-20"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="weekly-schedule-body" class="divide-y divide-slate-100 bg-white text-sm"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {# BLOCK LỊCH TRÌNH #}
+                        <div id="block-lich-trinh" class="hidden p-8 bg-slate-50 rounded border border-slate-200 text-center text-slate-500 italic mt-2 ml-[220px] max-w-4xl">
+                            <i class="fas fa-hammer mr-2"></i>Chức năng thiết kế lịch trình đang được phát triển...
+                        </div>
+                    </div>
+
+                    {# Row 4: Lịch nghỉ (Căn thẳng hàng & Giữa Toggle) #}
+                    <div class="col-span-2 border-t border-slate-100 pt-6 mt-2 grid grid-cols-[220px_1fr] items-center">
+                        <label class="text-sm font-bold text-slate-700 text-right pr-6">Áp dụng lịch nghỉ lễ</label>
+                        <div class="flex items-center h-6">
+                            {% include "components/form_toggle.html" with id="toggle-lichnghi" name="colichnghi" label="" description="Nhân viên sẽ được nghỉ vào các ngày lễ theo quy định" %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% include "components/form_footer_fixed.html" with cancel_url=cancel_url submit_id="btn-save" submit_text="Lưu lại" %}
+        </form>
+    </div>
+</div>
+
+
+{% include "components/crud_modal.html" with modal_id="shift-selector-modal" form_id="shift-selector-form" title="Thay đổi ca" content_template="hrm_manager/lich_lam_viec/partials/shift_selector.html" modal_size="3xl" submit_label="Chọn" %}
+{% include "components/crud_modal.html" with modal_id="shift-detail-modal" form_id="shift-detail-form" title="Chi tiết ca làm việc" content_template="hrm_manager/lich_lam_viec/partials/shift_detail_viewer.html" modal_size="3xl" submit_label="Chỉnh sửa" cancel_label="Đóng" %}
+{% include "components/crud_modal.html" with modal_id="employee-selector-modal" form_id="employee-selector-form" title="Chọn nhân viên, bộ phận" content_template="components/employee_selector.html" modal_size="5xl" submit_label="Chọn" %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/utils/base_form_manager.js' %}"></script>
+<script src="{% static 'js/components/employee_selector.js' %}"></script>
+<script src="{% static 'js/lich_lam_viec/lich_form.js' %}"></script>
+{% endblock %}

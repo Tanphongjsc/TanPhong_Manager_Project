@@ -1,0 +1,26 @@
+{% load static %}
+<div class="flex flex-col h-[600px] -mx-5 -my-4">
+    {# Header #}
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
+        <div class="relative w-72">
+            <input type="text" id="shift-search-input" class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-1 focus:ring-green-500 transition-shadow" placeholder="Tìm kiếm ca làm việc...">
+            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400"></i>
+        </div>
+        <a href="{% url 'hrm:lich_lam_viec:thiet_ke_ca_create' %}" target="_blank" class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-white border border-green-600 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+            <i class="fas fa-plus mr-1.5"></i> Thêm ca mới
+        </a>
+    </div>
+
+    {# Body #}
+    <div class="flex-1 overflow-hidden flex flex-col bg-white">
+        {# Table Wrapper: Xóa chữ 'Chọn' trong headers #}
+        {% with headers='<th class="w-12 py-3 px-4 text-center"></th><th class="py-3 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider w-1/3">Tên ca làm việc</th><th class="py-3 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider">Khung giờ</th>' %}
+            {% include "components/table_wrapper.html" with table_id="shift-selector-table" tbody_id="shift-list-body" headers_html=headers show_checkbox=False %}
+        {% endwith %}
+        
+        {# Pagination #}
+        <div class="border-t border-slate-200 bg-slate-50 shrink-0">
+            {% include "components/pagination.html" %}
+        </div>
+    </div>
+</div>

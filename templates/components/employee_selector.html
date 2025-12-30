@@ -1,0 +1,77 @@
+{% load static %}
+<div class="flex flex-col h-[550px] -mx-5 -my-4">
+    <div class="flex flex-1 overflow-hidden">
+        
+        <div class="w-7/12 flex flex-col border-r border-slate-200 bg-white">
+            <div class="flex border-b border-slate-200 px-4 pt-3 gap-6 bg-slate-50/50">
+                <button type="button" data-tab="dept" class="selector-tab active pb-2 text-sm font-bold text-green-600 border-b-2 border-green-600 transition-colors">
+                    Bộ phận
+                </button>
+                <button type="button" data-tab="emp" class="selector-tab pb-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 transition-colors">
+                    Nhân viên
+                </button>
+            </div>
+
+            <div id="tab-content-dept" class="flex-1 flex flex-col overflow-hidden p-3 tab-content">
+                <div id="dept-tree-container" class="flex-1 overflow-y-auto custom-scrollbar pr-1 select-none pt-2">
+                    <div class="text-center py-4 text-xs text-slate-500"><i class="fas fa-spinner fa-spin mr-1"></i>Đang tải dữ liệu...</div>
+                </div>
+            </div>
+
+            <div id="tab-content-emp" class="flex-1 flex flex-col overflow-hidden p-3 tab-content hidden">
+                
+                <div class="flex gap-2 mb-2 items-center">
+                    <div class="relative w-1/2 group" id="emp-dept-dropdown-wrapper">
+                        <button type="button" id="emp-dept-dropdown-btn" class="w-full pl-3 pr-8 py-1.5 text-xs text-left border border-slate-300 rounded-lg focus:ring-1 focus:ring-green-500 bg-white flex items-center justify-between truncate">
+                            <span id="emp-dept-selected-text">Tất cả bộ phận</span>
+                            <i class="fas fa-chevron-down text-slate-400 text-[10px]"></i>
+                        </button>
+                        
+                        <div id="emp-dept-dropdown-content" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-20 max-h-[300px] overflow-y-auto custom-scrollbar p-2">
+                            <div class="text-xs text-slate-400 p-2">Đang tải...</div>
+                        </div>
+                    </div>
+
+                    <div class="relative w-1/2">
+                        <input type="text" id="search-emp-input" class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-green-500" placeholder="Tìm tên nhân viên...">
+                        <i class="fas fa-search absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+                
+                <div class="flex-1 border border-slate-200 rounded-t-lg overflow-hidden flex flex-col">
+                    <div class="flex-1 overflow-auto custom-scrollbar bg-white">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
+                                <tr>
+                                    <th class="w-10 text-center py-2 px-2">
+                                        <input type="checkbox" id="check-all-emp-page" class="rounded text-green-600 focus:ring-green-500 cursor-pointer w-3.5 h-3.5">
+                                    </th>
+                                    <th class="py-2 px-2 text-xs font-bold text-slate-600 uppercase">Tên nhân viên</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emp-list-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {% include "components/pagination.html" %}
+            </div>
+        </div>
+
+        <div class="w-5/12 flex flex-col bg-slate-50 border-l border-slate-200">
+            <div class="p-3 border-b border-slate-200 flex justify-between items-center bg-white h-[45px]">
+                <span class="text-sm font-bold text-slate-700">
+                    <span id="selected-count" class="text-green-600 font-extrabold">0</span> Lựa chọn
+                </span>
+                <button type="button" id="btn-clear-all" class="text-sm font-medium text-red-500 hover:text-red-700 hover:underline hidden">
+                    Bỏ chọn tất cả
+                </button>
+            </div>
+            
+            <div id="selected-items-container" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div class="text-center text-slate-400 text-xs mt-10 italic">Chưa có lựa chọn nào</div>
+            </div>
+        </div>
+    </div>
+</div>

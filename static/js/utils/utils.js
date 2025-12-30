@@ -867,7 +867,8 @@ const AppUtils = (() => {
             normalized = normalized.replace(/\s+/g, '_');
             normalized = normalized.replace(/[^a-zA-Z0-9_]/g, '');
             return normalized.toUpperCase();
-        }
+        },
+
     };
     // ============================================================
     // DELETE OPERATIONS - Tái sử dụng cho mọi loại CRUD
@@ -998,6 +999,61 @@ const AppUtils = (() => {
         }
     };
 
+    // ============================================================
+    // TIME UTILITIES (NEW)
+    // ============================================================
+    const Time = {
+        parse(timeStr) {
+            if (!timeStr || timeStr.length < 5) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return null;
+            return h * 60 + m;
+        },
+        
+        formatDuration(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${h.toString().padStart(2, '0')} giờ ${m.toString().padStart(2, '0')} phút`;
+        },
+
+        // Logic tính toán khoảng thời gian tuyệt đối (xử lý qua đêm)
+        getAbsoluteIntervals(shift) {
+            if (!shift.KhungGio || shift.KhungGio.length === 0) return [];
+            const intervals = [];
+            let currentDayOffset = 0; 
+            let previousEndMinute = -1;
+
+            shift.KhungGio.forEach(rangeStr => {
+                const parts = rangeStr.split(' - ');
+                if (parts.length !== 2) return;
+                
+                const start = this.parse(parts[0].trim());
+                const end = this.parse(parts[1].trim());
+
+                if (start === null || end === null) return;
+
+                if (previousEndMinute !== -1 && start < previousEndMinute) {
+                    currentDayOffset += 1440;
+                }
+
+                const absStart = currentDayOffset + start;
+                let absEnd = currentDayOffset + end;
+
+                if (end <= start) {
+                    absEnd += 1440;
+                }
+
+                intervals.push({
+                    start: absStart,
+                    end: absEnd,
+                    rawText: rangeStr,
+                    shiftName: shift.TenCa
+                });
+                previousEndMinute = absEnd % 1440;
+            });
+            return intervals;
+        }
+    };
 
     // ============================================================
     // FORMULA VALIDATOR - Kiểm tra cú pháp biểu thức
@@ -1054,6 +1110,7 @@ const AppUtils = (() => {
         UI,
         Helper,
         DateUtils,
+        Time,
         DeleteOperations,
         Formula,
         get config() { return { ...config }; },

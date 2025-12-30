@@ -10,6 +10,7 @@ urlpatterns = [
     path('thiet-ke-lich/ca-lam-viec/<int:pk>/update/', views.view_ca_lam_viec_update, name='thiet_ke_ca_update'),
     path('thiet-ke-lich/lich-lam-viec/', views.view_lich_lam_viec, name='thiet_ke_lich'),
     path('thiet-ke-lich/lich-lam-viec/create/', views.view_lich_lam_viec_create, name='thiet_ke_lich_create'),
+    path('thiet-ke-lich/lich-lam-viec/<int:pk>/update/', views.view_lich_lam_viec_update, name='thiet_ke_lich_update'),
     path('thiet-ke-lich/tong-hop/', views.view_tong_hop_lich, name='tong_hop_lich'),
 
     # -- Lịch nghỉ
@@ -26,6 +27,11 @@ urlpatterns = [
 
     #API LICH LAM VIEC
     path('api/lich-lam-viec/list/', views.api_lichlamviec_list, name='api_lichlamviec_list'),
-    
+    path('api/check-conflicts/', views.api_check_schedule_conflicts, name='api_check_schedule_conflicts'),
+    path('api/lich-lam-viec/create/', views.api_lichlamviec_create, name='api_lichlamviec_create'),
+    path('api/lich-lam-viec/<int:pk>/update/', views.api_lichlamviec_update, name='api_lichlamviec_update'),
+    path('api/lich-lam-viec/<int:pk>/delete/', views.api_lichlamviec_delete, name='api_lichlamviec_delete'),
+    path('api/lich-lam-viec/<int:pk>/detail/', views.api_lichlamviec_detail, name='api_lichlamviec_detail'),
+    path('api/validate-employee-selection/', views.api_validate_employee_selection, name='api_validate_employee_selection'),
     
 ]
