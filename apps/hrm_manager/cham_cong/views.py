@@ -5,14 +5,14 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import CharField, F, Value, Func, Count
-from django.db.models.functions import Cast
+from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Cast, Coalesce
 from django.contrib.postgres.aggregates import JSONBAgg
 
 from json import loads
 import datetime as dt
 
-from apps.hrm_manager.__core__.models import Bangchamcong, Phongban, Lichlamviecthucte, Calamviec, Khunggiolamviec, Nhanvien
+from apps.hrm_manager.__core__.models import Bangchamcong, Khunggionghitrua, Phongban, Lichlamviecthucte, Calamviec, Lichsucongtac
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
 
 # ============================================================
@@ -144,24 +144,45 @@ def api_bang_cham_cong_list(request):
                 'message': f'Lỗi: {str(e)}'
             }, status = 400)
 
+
 # @login_required
 @require_http_methods(["GET"])
 @csrf_exempt
 def api_bang_cham_cong_nhan_vien_list(request):
+    try:
+        ngay_lam_viec = dt.date.fromisoformat(request.GET.get("ngaylamviec"))
+    except (ValueError, TypeError):
+        return JsonResponse({'success': False, 'message': 'Ngày không hợp lệ'}, status=400)
 
-    # load 
-    day_input = request.GET.dict()
-    
-    # Query lịch làm việc Thực Tế
+    # Subquery đếm số lần chấm công của nhân viên trong ngày
+    sq_count_chamcong = Bangchamcong.objects.filter(
+        ngaylamviec=ngay_lam_viec,
+        nhanvien=OuterRef('nhanvien_id')
+    ).values('nhanvien').annotate(
+        cnt=Count('id')
+    ).values('cnt')
+
+    # Main Query: Lấy lịch làm việc thực tế cùng các thông tin liên quan
     lichlamviec_qs = Lichlamviecthucte.objects.filter(
-        ngaylamviec=dt.date.fromisoformat(day_input.get("ngaylamviec"))
+        ngaylamviec=ngay_lam_viec
+    ).annotate(
+        # Đếm số lần chấm công ngay trong SQL
+        total_cham_cong=Coalesce(Subquery(sq_count_chamcong, output_field=IntegerField()), 0),
+        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
+        sokhunggiotrongca=F('calamviec__sokhunggiotrongca')
+    ).filter(
+        # Chỉ lấy những người CHƯA chấm đủ công, Logic: total_cham_cong < solanchamcongtrongngay
+        total_cham_cong__lt=F('solanchamcongtrongngay')
     ).values(
-        "nhanvien_id", "calamviec_id"
+        "nhanvien_id", "calamviec_id", 
+        "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca"
     ).annotate(
         hovaten=F('nhanvien__hovaten'),
         manhanvien=F('nhanvien__manhanvien'),
-        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
-        khunggiolamviec=JSONBAgg(
+        loainv=F('nhanvien__loainv__id'),
+        
+        # Build JSON Khung giờ làm việc
+        khunggiolamviec_list=JSONBAgg(
             Func(
                 Value('thoigianbatdau'), Cast('calamviec__khunggiolamviec__thoigianbatdau', CharField()),
                 Value('thoigianketthuc'), Cast('calamviec__khunggiolamviec__thoigianketthuc', CharField()),
@@ -173,48 +194,73 @@ def api_bang_cham_cong_nhan_vien_list(request):
                 Value('thoigianvesomkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigianvesomkhongtinhchamcong'),
                 function='jsonb_build_object'
             ),
-            # Sắp xếp khung giờ tăng dần để lấy đúng thứ tự
-            ordering='calamviec__khunggiolamviec__created_at' 
+            ordering='calamviec__khunggiolamviec__created_at'
         )
     )
 
-    # Query tổng số lần đã chấm công của từng nhân viên trong ngày
-    data_cham_cong = Bangchamcong.objects.filter(
-        ngaylamviec=dt.date.fromisoformat(day_input.get("ngaylamviec"))
-    ).values('nhanvien_id').annotate(total=Count('id'))
+    ds_lich = list(lichlamviec_qs)
+    
+    if not ds_lich:
+        return JsonResponse({'success': True, 'data': []}, status=200)
 
-    # Map dữ liệu để tra cứu
-    map_cham_cong = {item['nhanvien_id']: item['total'] for item in data_cham_cong}
+    # Lấy danh sách ID để dùng cho các query map
+    nhanvien_ids = [item['nhanvien_id'] for item in ds_lich]
+    calamviec_ids = set(item['calamviec_id'] for item in ds_lich)
 
-    # Lọc danh sách nhân viên dựa trên số lần đã chấm công và quy định trong lịch làm việc
+    # Query lần lấy tất cả phòng ban của các nhân viên có trong list
+    pb_qs = Lichsucongtac.objects.filter(
+        nhanvien_id__in=nhanvien_ids,
+        trangthai="active"
+    ).values('nhanvien_id', 'phongban_id')
+    
+    # Tạo map: { nhanvien_id: phongban_id }
+    map_phongban = {p['nhanvien_id']: p['phongban_id'] for p in pb_qs}
+
+    # Query lấy tất cả nghỉ trưa của các ca làm việc có trong list
+    nghitrua_qs = Calamviec.objects.filter(id__in=calamviec_ids).values('id').annotate(
+        list_nghitrua=JSONBAgg(
+            Func(
+                Value('giobatdau'), Cast('khunggionghitrua__giobatdau', CharField()),
+                Value('gioketthuc'), Cast('khunggionghitrua__gioketthuc', CharField()),
+                function='jsonb_build_object'
+            )
+        )
+    )
+    map_nghitrua = {item['id']: item['list_nghitrua'] for item in nghitrua_qs}
+
+    # --- GỘP dữ liệu ---
     final_result = []
-    ds_lich = list(lichlamviec_qs) 
-
+    
     for item in ds_lich:
-        nhanvien_id = item['nhanvien_id']
-        total_cham_cong = map_cham_cong.get(nhanvien_id, 0)
-        max_limit = item.get("solanchamcongtrongngay", 0)
+        item['phongban_id'] = map_phongban.get(item['nhanvien_id'])  # Gán phòng ban từ Map (Nhanh hơn subquery)
+        item['khunggionghitrua'] = map_nghitrua.get(item['calamviec_id'], [])  # Gán nghỉ trưa
         
-        # Nếu đã chấm đủ hoặc thừa số lần quy định -> Bỏ qua nhân viên này (không thêm vào kết quả)
-        if total_cham_cong >= max_limit:
-            continue
+        # Logic chọn khung giờ (Merge Shift)
+        list_khung_gio = item.pop('khunggiolamviec_list', []) # Đổi tên field tạm để xử lý
+        idx = item['total_cham_cong'] # Đã tính ở DB
 
-        list_khung_gio = item.get('khunggiolamviec', [])
-        
-        # Chỉ lấy khung giờ nếu index tồn tại
-        if total_cham_cong < len(list_khung_gio):
-            # Gán đè list bằng 1 object khung giờ duy nhất tương ứng
-            item['khunggiolamviec'] = list_khung_gio[total_cham_cong]
+        # Safety check: Đảm bảo index nằm trong range (dù DB đã filter nhưng vẫn nên check)
+        if idx < len(list_khung_gio):
+            # Logic gộp ca: Nhiều khung giờ nhưng chỉ yêu cầu chấm 1 lần
+            if item['sokhunggiotrongca'] > 1 and item['solanchamcongtrongngay'] == 1:
+                target_kg = list_khung_gio[0]
+                last_kg = list_khung_gio[-1]
+                
+                # Merge thông tin ra về
+                target_kg.update({
+                    'thoigianketthuc': last_kg['thoigianketthuc'],
+                    'thoigianchophepvesomnhat': last_kg['thoigianchophepvesomnhat'],
+                    'thoigianchophepvemuonnhat': last_kg['thoigianchophepvemuonnhat'],
+                    'thoigianvesomkhongtinhchamcong': last_kg['thoigianvesomkhongtinhchamcong']
+                })
+                item['khunggiolamviec'] = target_kg
+            else:
+                # Lấy đúng khung giờ theo thứ tự lần chấm
+                item['khunggiolamviec'] = list_khung_gio[idx]
             
-            # Chỉ append khi logic hợp lệ
             final_result.append(item)
-        else:
-            continue
 
-    return JsonResponse({
-        'success': True, 
-        'data': final_result,
-    }, status=200)
+    return JsonResponse({'success': True, 'data': final_result}, status=200)
 
 # ============================================================
 # VIEWS: ĐƠN BÁO & BÁO CÁO

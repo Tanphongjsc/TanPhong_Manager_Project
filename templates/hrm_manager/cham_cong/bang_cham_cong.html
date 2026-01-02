@@ -27,7 +27,6 @@
                 </div>
 
                 <div class="flex items-center bg-white border border-slate-300 rounded px-2 py-1 shrink-0">
-                    <i class="fa-regular fa-calendar-days text-slate-400 text-xs mr-1.5"></i>
                     <input type="date" id="work-date" 
                         class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-24 cursor-pointer">
                 </div>
@@ -191,9 +190,14 @@
     }
     
 </style>
+
+{% include "hrm_manager/cham_cong/partials/violations_modal.html" %}
+
 {% endblock content %}
 
 {% block scripts %}
+<script src="{% static 'js/cham_cong/cham_cong_time_validator.js' %}"></script>
+<script src="{% static 'js/cham_cong/cham_cong_render_helper.js' %}"></script>
 <script src="{% static 'js/cham_cong/bang_cham_cong.js' %}"></script>
 <script src="{% static 'js/cham_cong/cham_cong_context_menu.js' %}"></script>
 {% endblock scripts %}
