@@ -35868,3 +35868,243 @@ WARNING 2025-12-24 16:14:23,426 log 12864 106776 Not Found: /.well-known/appspec
 WARNING 2025-12-24 16:14:23,427 basehttp 12864 106776 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2025-12-25 08:52:53,672 log 12864 129332 Not Found: /favicon.ico
 WARNING 2025-12-25 08:52:53,673 basehttp 12864 129332 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-03 09:43:20,822 log 25736 25076 Not Found: /favicon.ico
+WARNING 2026-01-03 09:43:20,824 basehttp 25736 25076 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-03 12:04:44,975 log 25736 25828 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 12:04:44,976 basehttp 25736 25828 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 12:04:53,150 log 25736 28084 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-01-03 12:04:53,151 basehttp 25736 28084 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=20252-12-26&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-01-03 12:04:53,393 log 25736 28084 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-01-03 12:04:53,396 basehttp 25736 28084 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=202520-12-26&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-01-03 12:04:53,687 log 25736 28084 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-01-03 12:04:53,689 basehttp 25736 28084 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=25202-12-26&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-01-03 12:04:54,682 log 25736 28084 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-01-03 12:04:54,684 basehttp 25736 28084 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=252025-12-26&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-01-03 12:04:55,147 log 25736 28084 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-01-03 12:04:55,149 basehttp 25736 28084 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-01-03 12:07:04,924 log 25736 1432 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 12:07:04,925 basehttp 25736 1432 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 12:07:08,828 log 25736 1432 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 12:07:08,829 basehttp 25736 1432 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 12:08:05,305 log 25736 17720 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 12:08:05,306 basehttp 25736 17720 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 12:22:46,517 log 31596 26124 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 12:22:46,523 basehttp 31596 26124 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 20:16:11,113 log 30232 30732 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 20:16:11,114 basehttp 30232 30732 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 20:16:16,438 log 30232 35496 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 20:16:16,440 basehttp 30232 35496 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 20:16:17,701 log 30232 35496 Not Found: /favicon.ico
+WARNING 2026-01-03 20:16:17,702 basehttp 30232 35496 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-03 20:16:20,166 log 30232 35496 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 20:16:20,167 basehttp 30232 35496 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 20:16:25,787 log 30232 35496 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 20:16:25,788 basehttp 30232 35496 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-03 20:16:58,005 log 30232 30732 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-03 20:16:58,006 basehttp 30232 30732 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 10:03:36,037 log 30232 12736 Not Found: /favicon.ico
+WARNING 2026-01-05 10:03:36,038 basehttp 30232 12736 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-05 11:32:30,323 log 30232 30676 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 11:32:30,325 basehttp 30232 30676 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 11:51:32,901 log 30232 46684 Not Found: /favicon.ico
+WARNING 2026-01-05 11:51:32,902 basehttp 30232 46684 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-05 15:14:40,543 log 30232 45144 Not Found: /favicon.ico
+WARNING 2026-01-05 15:14:40,545 basehttp 30232 45144 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-05 15:38:34,755 log 30232 43372 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 15:38:34,758 basehttp 30232 43372 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 16:11:30,893 log 37912 41960 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:11:30,895 basehttp 37912 41960 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2026-01-05 16:23:14,225 log 37912 16708 Internal Server Error: /hrm/cham-cong/bang-cham-cong/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/partials/chamcong_extra_actions.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 76, in view_bang_cham_cong
+    return render(request, "hrm_manager/cham_cong/bang_cham_cong.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/partials/chamcong_extra_actions.html
+ERROR 2026-01-05 16:23:14,231 basehttp 37912 16708 "GET /hrm/cham-cong/bang-cham-cong/ HTTP/1.1" 500 218258
+WARNING 2026-01-05 16:23:14,537 log 37912 16708 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:23:14,538 basehttp 37912 16708 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 16:23:15,535 log 37912 16708 Not Found: /favicon.ico
+WARNING 2026-01-05 16:23:15,536 basehttp 37912 16708 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2026-01-05 16:23:32,499 log 37912 16708 Internal Server Error: /hrm/cham-cong/bang-cham-cong/
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/partials/violations_modal.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 76, in view_bang_cham_cong
+    return render(request, "hrm_manager/cham_cong/bang_cham_cong.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "E:\Django\TanPhong_Manager_Project\.venv\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/partials/violations_modal.html
+ERROR 2026-01-05 16:23:32,501 basehttp 37912 16708 "GET /hrm/cham-cong/bang-cham-cong/ HTTP/1.1" 500 216762
+WARNING 2026-01-05 16:23:32,798 log 37912 16708 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:23:32,799 basehttp 37912 16708 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 16:23:33,743 log 37912 16708 Not Found: /favicon.ico
+WARNING 2026-01-05 16:23:33,744 basehttp 37912 16708 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-05 16:23:53,817 log 37912 16708 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:23:53,818 basehttp 37912 16708 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 16:49:22,884 log 37912 16084 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:49:22,887 basehttp 37912 16084 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-05 16:52:17,634 log 37912 16084 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-05 16:52:17,635 basehttp 37912 16084 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242

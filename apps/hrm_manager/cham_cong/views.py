@@ -145,9 +145,8 @@ def api_bang_cham_cong_list(request):
             }, status = 400)
 
 
-# @login_required
+@login_required
 @require_http_methods(["GET"])
-@csrf_exempt
 def api_bang_cham_cong_nhan_vien_list(request):
     try:
         ngay_lam_viec = dt.date.fromisoformat(request.GET.get("ngaylamviec"))

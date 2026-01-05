@@ -245,7 +245,7 @@ class ChamCongManager {
 
         const scheduleIn = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianbatdau) || '08:00';
         const scheduleOut = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianketthuc) || '17:00';
-        Object.assign(tr.dataset, { id: emp.id, scheduleIn, scheduleOut });
+        Object.assign(tr.dataset, { id: emp.id });
 
         const accent = type === 'vp' ? 'blue' : 'orange';
         tr.innerHTML = this.render$.renderCommonCells(emp, scheduleIn, scheduleOut, accent) 
@@ -382,38 +382,46 @@ class ChamCongManager {
         const res = tr.querySelector('.analysis-result');
         if (!res) return;
 
-        const { scheduleIn, scheduleOut } = tr.dataset;
+        const emp = this.getEmpById(tr.dataset.id);
+        if (!emp) return;
+
         const inVal = inpIn?.value;
         const outVal = inpOut?.value;
 
-        if (!inVal && !outVal) {
+        // Lấy chi tiết phân tích từ validator
+        const schedule = this.validator?.normalizeSchedule(emp.khunggiolamviec);
+        const analysis = this.validator?.getAnalysisDetails({
+            checkIn: inVal,
+            checkOut: outVal,
+            schedule,
+            employee: emp
+        });
+
+        if (!analysis) {
             res.innerHTML = '<span class="text-[10px] text-slate-300">-</span>';
             return;
         }
 
-        let html = '';
-        
-        if (inVal && scheduleIn) {
-            const late = AppUtils.TimeUtils.diffMinutes(inVal, scheduleIn);
-            if (late > 0) {
-                html += this.render$.renderAnalysisBadge(`Muộn ${late}p`, false);
-                inpIn.classList.add('text-red-600');
-            } else {
-                inpIn.classList.remove('text-red-600');
-            }
+        // Render compact cho tab VP, detailed cho tab SX
+        const type = this.state.activeTab;
+        res.innerHTML = type === 'vp' 
+            ? this.render$.renderCompactAnalysis(analysis)
+            : this.render$.renderDetailedAnalysis(analysis);
+
+        // Cập nhật style input dựa trên violations
+        const hasViolations = analysis.violations.length > 0;
+        const hasWarnings = analysis.warnings.length > 0;
+
+        if (hasViolations) {
+            inpIn?.classList.add('text-red-600');
+            inpOut?.classList.add('text-red-600');
+        } else if (hasWarnings) {
+            inpIn?.classList.add('text-amber-600');
+            inpOut?.classList.add('text-amber-600');
+        } else {
+            inpIn?.classList.remove('text-red-600', 'text-amber-600');
+            inpOut?.classList.remove('text-red-600', 'text-amber-600');
         }
-        
-        if (outVal && scheduleOut) {
-            const early = AppUtils.TimeUtils.diffMinutes(scheduleOut, outVal);
-            if (early > 0) {
-                html += this.render$.renderAnalysisBadge(`Sớm ${early}p`, false);
-                inpOut.classList.add('text-red-600');
-            } else {
-                inpOut.classList.remove('text-red-600');
-            }
-        }
-        
-        res.innerHTML = html || this.render$.renderAnalysisBadge('✓ OK', true);
     }
 
     // ===== MASTER ACTIONS =====
@@ -667,6 +675,7 @@ class ChamCongManager {
             }
         });
 
+        // validateAll sẽ kiểm tra cả missing times và time constraints
         return this.validator.validateAll(records);
     }
 

@@ -36,6 +36,65 @@ const ChamCongRenderHelper = (() => {
         return `<span class="text-[10.5px] ${cls} px-1.5 py-0.5 rounded border font-medium">${text}</span>`;
     };
 
+    /**
+     * Render phân tích gọn gàng (compact) - chỉ hiển thị thông tin quan trọng
+     */
+    const renderCompactAnalysis = (analysis) => {
+        if (!analysis) return '<span class="text-[10px] text-slate-300">-</span>';
+
+        const { violations, warnings } = analysis;
+        const items = [];
+
+        // Violations (lỗi nghiêm trọng) - đỏ
+        violations.forEach(v => {
+            const icon = v.type === 'missing_in' || v.type === 'missing_out' ? '✗' : '⚠';
+            items.push(`<span class="inline-flex items-center gap-0.5 text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 font-medium">${icon} ${v.label}</span>`);
+        });
+
+        // Warnings (cảnh báo nhẹ) - vàng, chỉ hiện label ngắn gọn
+        warnings.forEach(w => {
+            items.push(`<span class="inline-flex items-center gap-0.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">${w.label}</span>`);
+        });
+
+        // OK - xanh
+        if (items.length === 0) {
+            return '<span class="inline-flex items-center gap-0.5 text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 font-medium">✓ Đúng giờ</span>';
+        }
+
+        return `<div class="flex flex-wrap gap-1">${items.join('')}</div>`;
+    };
+
+    /**
+     * Render chi tiết phân tích đầy đủ (cho SX hoặc khi cần detail)
+     */
+    const renderDetailedAnalysis = (analysis) => {
+        if (!analysis) return '<span class="text-[10px] text-slate-300">-</span>';
+
+        const { violations, warnings, info } = analysis;
+        const parts = [];
+
+        // Violations
+        violations.forEach(v => parts.push(
+            `<div class="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 font-medium mb-0.5">
+                <i class="fa-solid fa-circle-exclamation mr-0.5"></i>${v.label}
+            </div>`
+        ));
+
+        // Warnings với info
+        warnings.forEach(w => parts.push(
+            `<div class="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 mb-0.5">
+                ${w.label}${w.info ? `<span class="text-[9px] text-amber-500 ml-1">${w.info}</span>` : ''}
+            </div>`
+        ));
+
+        // Info - chỉ hiện 1 dòng tóm tắt quan trọng nhất
+        if (parts.length === 0 && info.length > 0) {
+            parts.push(`<div class="text-[9px] text-slate-500">${info[0].label}</div>`);
+        }
+
+        return parts.length > 0 ? parts.join('') : '<span class="text-[10px] text-slate-300">-</span>';
+    };
+
     // ===== ROW RENDERING =====
 
     /**
@@ -52,10 +111,10 @@ const ChamCongRenderHelper = (() => {
         `;
 
         return `
-            <td class="p-1 border-r border-slate-200 text-center sticky left-0 bg-inherit z-[2]">
+            <td class="p-1 border-r border-slate-200 text-center sticky left-0 bg-white z-20 shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
                 <input type="checkbox" ${isChecked} class="row-cb accent-${accent}-600 w-3.5 h-3.5 cursor-pointer mt-1.5">
             </td>
-            <td class="px-2 py-1.5 border-r border-slate-200 sticky left-8 bg-inherit z-[2]">
+            <td class="px-2 py-1.5 border-r border-slate-200">
                 <div class="font-bold text-slate-700 text-[13px] truncate max-w-[160px]">${emp.hovaten}</div>
                 <div class="text-[11px] truncate flex items-center mt-0.5">${subInfoHtml}</div>
             </td>
@@ -175,6 +234,8 @@ const ChamCongRenderHelper = (() => {
         formatTimeDisplay,
         parseParams,
         renderAnalysisBadge,
+        renderCompactAnalysis,
+        renderDetailedAnalysis,
         renderCommonCells,
         renderVPCells,
         renderSXCells,

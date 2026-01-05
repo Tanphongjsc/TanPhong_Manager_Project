@@ -28,8 +28,7 @@ class ChamCongTimeValidator {
         };
     }
 
-
-    // Chuyển chuỗi giờ (HH:mm) thành số phút
+    // Chuyển chuỗi giờ (HH:mm hoặc HH:mm:ss+00) thành số phút
     toMinutes(timeStr) {
         if (!timeStr || typeof timeStr !== 'string') return null;
         return AppUtils.TimeUtils.toMinutes(timeStr.substring(0, 5));
@@ -42,30 +41,86 @@ class ChamCongTimeValidator {
         return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
     }
 
-    // Parse số phút từ API (có thể null)
-    _parseMinutes(value) {
-        if (value === null || value === undefined) return null;
+    // Parse giá trị số phút (dùng cho các trường như thoigianchophepdenmuon: 0, 15, 30...)
+    _parseMinutesValue(value) {
+        if (value === null || value === undefined || value === '') return null;
         const num = parseInt(value, 10);
         return isNaN(num) ? null : num;
     }
 
-    // Chuẩn hóa khung giờ làm việc từ API
+    /**
+     * Chuẩn hóa khung giờ làm việc từ API
+     * @param {Object} kglv - Dữ liệu khung giờ làm việc từ API
+     * @returns {Object|null} - Schedule object đã chuẩn hóa
+     */
     normalizeSchedule(kglv) {
         if (!kglv) return null;
+        
+        // === THỜI GIAN CƠ BẢN ===
+        const startTime = this.toMinutes(kglv.thoigianbatdau);           // 13:00 = 780
+        const endTime = this.toMinutes(kglv.thoigianketthuc);             // 17:00 = 1020
+        
+        // === RÀNG BUỘC GIỜ VÀO ===
+        // Giờ chấm công sớm nhất (dạng thời gian "12:00:00+00")
+        const earliestCheckIn = this.toMinutes(kglv.thoigianchophepchamcongsomnhat); // 12:00 = 720
+        // Grace period cho phép đến muộn (số phút: 0, 15, 20...)
+        const lateGraceMinutes = this._parseMinutesValue(kglv.thoigianchophepdenmuon); // 20
+        // Ngưỡng đi muộn không tính công (số phút)
+        const invalidLateInMinutes = this._parseMinutesValue(kglv.thoigiandimuonkhongtinhchamcong); // 60
+        
+        // === RÀNG BUỘC GIỜ RA ===
+        // Giờ về muộn nhất cho phép (dạng thời gian "18:00:00+00")
+        const latestCheckOut = this.toMinutes(kglv.thoigianchophepvemuonnhat); // 18:00 = 1080
+        // Grace period cho phép về sớm (số phút)
+        const earlyGraceMinutes = this._parseMinutesValue(kglv.thoigianchophepvesomnhat); // 45
+        // Ngưỡng về sớm không tính công (số phút)
+        const invalidEarlyOutMinutes = this._parseMinutesValue(kglv.thoigianvesomkhongtinhchamcong); // 120
+        
+        // Tính số phút được phép về muộn so với giờ kết thúc ca
+        let allowedLateOutMinutes = null;
+        if (latestCheckOut !== null && endTime !== null) {
+            allowedLateOutMinutes = latestCheckOut - endTime; // 1080 - 1020 = 60
+            if (allowedLateOutMinutes < 0) allowedLateOutMinutes = 0;
+        }
+        
         return {
-            startTime: this.toMinutes(kglv.thoigianbatdau),
-            endTime: this.toMinutes(kglv.thoigianketthuc),
-            allowedLateMinutes: this._parseMinutes(kglv.thoigianchophepdenmuon),
-            allowedEarlyOutMinutes: this._parseMinutes(kglv.thoigianchophepvesomnhat),
-            allowedLateOutMinutes: this._parseMinutes(kglv.thoigianchophepvemuonnhat),
-            earliestCheckIn: this.toMinutes(kglv.thoigianchophepchamcongsomnhat),
-            invalidEarlyOutMinutes: this._parseMinutes(kglv.thoigianvesomkhongtinhchamcong),
-            invalidLateInMinutes: this._parseMinutes(kglv.thoigiandimuonkhongtinhchamcong),
+            // Thời gian cơ bản
+            startTime,                    // Giờ bắt đầu ca (phút trong ngày)
+            endTime,                      // Giờ kết thúc ca (phút trong ngày)
+            
+            // Ràng buộc giờ vào
+            earliestCheckIn,              // Giờ chấm công sớm nhất (phút trong ngày)
+            lateGraceMinutes,             // Grace period đi muộn (số phút) - TRONG KHOẢNG NÀY = OK
+            invalidLateInMinutes,         // Đi muộn quá mức này = không tính công
+            
+            // Ràng buộc giờ ra
+            latestCheckOut,               // Giờ về muộn nhất (phút trong ngày)
+            earlyGraceMinutes,            // Grace period về sớm (số phút) - TRONG KHOẢNG NÀY = OK
+            invalidEarlyOutMinutes,       // Về sớm quá mức này = không tính công
+            allowedLateOutMinutes,        // Số phút được về muộn hơn giờ kết thúc
+            
             raw: kglv
         };
     }
 
-    // Kiểm tra giờ vào/ra của 1 nhân viên, trả về danh sách vi phạm
+    // Kiểm tra giờ vào/ra bắt buộc (missing check-in/out)
+    validateMissingCheckTimes({ checkIn, checkOut, employee }) {
+        const violations = [];
+        
+        if (!checkIn) {
+            violations.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_IN, employee, {}));
+        }
+        if (!checkOut) {
+            violations.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_OUT, employee, {}));
+        }
+        
+        return violations;
+    }
+
+    /**
+     * Kiểm tra giờ vào/ra của 1 nhân viên, trả về danh sách vi phạm
+     * Logic mới: Tính toán dựa trên grace period
+     */
     validate({ checkIn, checkOut, schedule, employee }) {
         const violations = [];
         if (!schedule) return { isValid: true, violations: [] };
@@ -73,69 +128,86 @@ class ChamCongTimeValidator {
         const inMin = this.toMinutes(checkIn);
         const outMin = this.toMinutes(checkOut);
 
-        // Kiểm tra giờ vào
+        // === KIỂM TRA GIỜ VÀO ===
         if (checkIn) {
             if (inMin === null) {
                 violations.push(this._createViolation(this.VIOLATION_TYPES.INVALID_TIME_FORMAT, employee, { field: 'checkIn', value: checkIn }));
             } else {
-                // Vào ca quá sớm
+                // 1. Vào quá sớm (trước giờ cho phép chấm công)
                 if (schedule.earliestCheckIn !== null && inMin < schedule.earliestCheckIn) {
+                    const early = schedule.earliestCheckIn - inMin;
                     violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_IN_TOO_EARLY, employee, {
                         value: checkIn,
                         limit: this.toTimeString(schedule.earliestCheckIn),
-                        diff: schedule.earliestCheckIn - inMin,
+                        diff: early,
                         suggestion: this.toTimeString(schedule.earliestCheckIn)
                     }));
                 }
-                // Đi muộn vượt quá cho phép
+                
+                // 2. Đi muộn quá ngưỡng không tính công
                 if (schedule.startTime !== null && schedule.invalidLateInMinutes !== null) {
-                    const late = inMin - schedule.startTime;
-                    if (late > schedule.invalidLateInMinutes) {
+                    const lateFromStart = inMin - schedule.startTime;
+                    // Chỉ vi phạm nếu muộn vượt quá ngưỡng invalidLateInMinutes
+                    if (lateFromStart > schedule.invalidLateInMinutes) {
+                        // Tính số phút muộn thực tế (đã trừ grace period nếu có)
+                        const effectiveLate = schedule.lateGraceMinutes !== null 
+                            ? lateFromStart - schedule.lateGraceMinutes 
+                            : lateFromStart;
+                        
                         violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_IN_TOO_LATE, employee, {
                             value: checkIn,
                             scheduleStart: this.toTimeString(schedule.startTime),
                             limit: schedule.invalidLateInMinutes,
-                            diff: late,
+                            diff: effectiveLate > 0 ? effectiveLate : lateFromStart,
+                            rawLate: lateFromStart,
+                            graceMinutes: schedule.lateGraceMinutes,
                             suggestion: this.toTimeString(schedule.startTime + schedule.invalidLateInMinutes),
-                            note: `Đi muộn ${late} phút (vượt quá ${schedule.invalidLateInMinutes} phút)`
+                            note: `Đi muộn ${effectiveLate > 0 ? effectiveLate : lateFromStart}p (vượt ngưỡng ${schedule.invalidLateInMinutes}p)`
                         }));
                     }
                 }
             }
         }
 
-        // Kiểm tra giờ ra
+        // === KIỂM TRA GIỜ RA ===
         if (checkOut) {
             if (outMin === null) {
                 violations.push(this._createViolation(this.VIOLATION_TYPES.INVALID_TIME_FORMAT, employee, { field: 'checkOut', value: checkOut }));
             } else {
-                // Ra ca quá sớm
+                // 1. Về sớm quá ngưỡng không tính công
                 if (schedule.endTime !== null && schedule.invalidEarlyOutMinutes !== null) {
-                    const early = schedule.endTime - outMin;
-                    if (early > schedule.invalidEarlyOutMinutes) {
+                    const earlyFromEnd = schedule.endTime - outMin;
+                    // Chỉ vi phạm nếu về sớm vượt quá ngưỡng invalidEarlyOutMinutes
+                    if (earlyFromEnd > schedule.invalidEarlyOutMinutes) {
+                        // Tính số phút về sớm thực tế (đã trừ grace period nếu có)
+                        const effectiveEarly = schedule.earlyGraceMinutes !== null 
+                            ? earlyFromEnd - schedule.earlyGraceMinutes 
+                            : earlyFromEnd;
+                        
                         violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_EARLY, employee, {
                             value: checkOut,
                             scheduleEnd: this.toTimeString(schedule.endTime),
                             limit: schedule.invalidEarlyOutMinutes,
-                            diff: early,
+                            diff: effectiveEarly > 0 ? effectiveEarly : earlyFromEnd,
+                            rawEarly: earlyFromEnd,
+                            graceMinutes: schedule.earlyGraceMinutes,
                             suggestion: this.toTimeString(schedule.endTime - schedule.invalidEarlyOutMinutes),
-                            note: `Về sớm ${early} phút (vượt quá ${schedule.invalidEarlyOutMinutes} phút)`
+                            note: `Về sớm ${effectiveEarly > 0 ? effectiveEarly : earlyFromEnd}p (vượt ngưỡng ${schedule.invalidEarlyOutMinutes}p)`
                         }));
                     }
                 }
-                // Ra ca quá muộn
-                if (schedule.endTime !== null && schedule.allowedLateOutMinutes !== null) {
-                    const lateOut = outMin - schedule.endTime;
-                    if (lateOut > schedule.allowedLateOutMinutes) {
-                        violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_LATE, employee, {
-                            value: checkOut,
-                            scheduleEnd: this.toTimeString(schedule.endTime),
-                            limit: schedule.allowedLateOutMinutes,
-                            diff: lateOut,
-                            suggestion: this.toTimeString(schedule.endTime + schedule.allowedLateOutMinutes),
-                            note: `Về muộn ${lateOut} phút (vượt quá ${schedule.allowedLateOutMinutes} phút)`
-                        }));
-                    }
+                
+                // 2. Về quá muộn (sau giờ về muộn nhất cho phép)
+                if (schedule.latestCheckOut !== null && outMin > schedule.latestCheckOut) {
+                    const exceed = outMin - schedule.latestCheckOut;
+                    violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_LATE, employee, {
+                        value: checkOut,
+                        scheduleEnd: this.toTimeString(schedule.endTime),
+                        latestAllowed: this.toTimeString(schedule.latestCheckOut),
+                        diff: exceed,
+                        suggestion: this.toTimeString(schedule.latestCheckOut),
+                        note: `Về muộn ${exceed}p (sau ${this.toTimeString(schedule.latestCheckOut)})`
+                    }));
                 }
             }
         }
@@ -149,13 +221,23 @@ class ChamCongTimeValidator {
         const allViolations = [];
         records.forEach((record, index) => {
             const schedule = this.normalizeSchedule(record.employee?.khunggiolamviec);
+            
+            // Kiểm tra missing check-in/out trước
+            const missingViolations = this.validateMissingCheckTimes({
+                checkIn: record.checkIn,
+                checkOut: record.checkOut,
+                employee: { ...record.employee, rowIndex: index }
+            });
+            allViolations.push(...missingViolations);
+            
+            // Kiểm tra time constraints nếu có dữ liệu
             const result = this.validate({
                 checkIn: record.checkIn,
                 checkOut: record.checkOut,
                 schedule,
                 employee: { ...record.employee, rowIndex: index }
             });
-            result.isValid ? validCount++ : invalidCount++;
+            result.isValid && missingViolations.length === 0 ? validCount++ : invalidCount++;
             allViolations.push(...result.violations);
         });
         return {
@@ -167,7 +249,109 @@ class ChamCongTimeValidator {
         };
     }
 
-    // Tạo object mô tả 1 vi phạm
+    /**
+     * Lấy chi tiết phân tích giờ cho 1 nhân viên (tái sử dụng cho cột phân tích)
+     * Logic mới: Hiển thị đúng số phút muộn/sớm sau khi trừ grace period
+     */
+    getAnalysisDetails({ checkIn, checkOut, schedule, employee }) {
+        const analysis = { violations: [], warnings: [], info: [], isValid: true };
+        if (!schedule) return analysis;
+
+        const addViolation = (type, label) => {
+            analysis.violations.push({ type, label });
+            analysis.isValid = false;
+        };
+        const addWarning = (label, info) => analysis.warnings.push({ label, info });
+        const addInfo = (label) => analysis.info.push({ label });
+
+        // Missing times
+        if (!checkIn) addViolation('missing_in', 'Thiếu giờ vào');
+        if (!checkOut) addViolation('missing_out', 'Thiếu giờ ra');
+        if (!checkIn || !checkOut) return analysis;
+
+        const inMin = this.toMinutes(checkIn);
+        const outMin = this.toMinutes(checkOut);
+
+        // === CHECK GIỜ VÀO ===
+        if (inMin !== null && schedule.startTime !== null) {
+            // 1. Vào sớm hơn giờ cho phép chấm công (violation)
+            if (schedule.earliestCheckIn !== null && inMin < schedule.earliestCheckIn) {
+                const early = schedule.earliestCheckIn - inMin;
+                addViolation('check_in_too_early', `Vào sớm ${early}p (trước ${this.toTimeString(schedule.earliestCheckIn)})`);
+            }
+            // 2. Kiểm tra đi muộn
+            else {
+                const lateFromStart = inMin - schedule.startTime;
+                
+                if (lateFromStart > 0) {
+                    const graceMinutes = schedule.lateGraceMinutes || 0;
+                    const invalidThreshold = schedule.invalidLateInMinutes;
+                    
+                    // Tính số phút muộn thực tế (sau khi trừ grace period)
+                    const effectiveLate = Math.max(0, lateFromStart - graceMinutes);
+                    
+                    // Vi phạm: Muộn vượt ngưỡng không tính công
+                    if (invalidThreshold !== null && lateFromStart > invalidThreshold) {
+                        addViolation('check_in_too_late', `Muộn ${effectiveLate}p (vượt ${invalidThreshold}p)`);
+                    }
+                    // Warning: Muộn vượt grace period nhưng chưa vượt ngưỡng vi phạm
+                    else if (effectiveLate > 0) {
+                        addWarning(`Muộn ${effectiveLate}p`, graceMinutes > 0 ? `Cho phép: ${graceMinutes}p` : null);
+                    }
+                    // Info: Muộn trong grace period (không bị phạt)
+                    else if (lateFromStart > 0 && lateFromStart <= graceMinutes) {
+                        // Không hiển thị gì - trong grace period = OK
+                    }
+                }
+            }
+        }
+
+        // === CHECK GIỜ RA ===
+        if (outMin !== null && schedule.endTime !== null) {
+            const earlyFromEnd = schedule.endTime - outMin;
+            const lateFromEnd = outMin - schedule.endTime;
+            
+            // 1. Về sớm
+            if (earlyFromEnd > 0) {
+                const graceMinutes = schedule.earlyGraceMinutes || 0;
+                const invalidThreshold = schedule.invalidEarlyOutMinutes;
+                
+                // Tính số phút về sớm thực tế (sau khi trừ grace period)
+                const effectiveEarly = Math.max(0, earlyFromEnd - graceMinutes);
+                
+                // Vi phạm: Về sớm vượt ngưỡng không tính công
+                if (invalidThreshold !== null && earlyFromEnd > invalidThreshold) {
+                    addViolation('check_out_too_early', `Về sớm ${effectiveEarly}p (vượt ${invalidThreshold}p)`);
+                }
+                // Warning: Về sớm vượt grace period nhưng chưa vượt ngưỡng vi phạm
+                else if (effectiveEarly > 0) {
+                    addWarning(`Về sớm ${effectiveEarly}p`, graceMinutes > 0 ? `Cho phép: ${graceMinutes}p` : null);
+                }
+                // Trong grace period = OK, không hiển thị
+            }
+            
+            // 2. Về muộn
+            if (lateFromEnd > 0) {
+                // Vi phạm: Về quá giờ muộn nhất cho phép
+                if (schedule.latestCheckOut !== null && outMin > schedule.latestCheckOut) {
+                    const exceed = outMin - schedule.latestCheckOut;
+                    addViolation('check_out_too_late', `Về muộn ${exceed}p (sau ${this.toTimeString(schedule.latestCheckOut)})`);
+                }
+                // Info: Về muộn trong khung cho phép
+                else if (schedule.allowedLateOutMinutes !== null && lateFromEnd <= schedule.allowedLateOutMinutes) {
+                    addInfo(`Về muộn ${lateFromEnd}p (OK)`);
+                }
+            }
+        }
+
+        // Status OK - chỉ hiển thị nếu không có vi phạm và warning
+        if (analysis.violations.length === 0 && analysis.warnings.length === 0 && analysis.info.length === 0) {
+            addInfo('✓ Đúng giờ');
+        }
+
+        return analysis;
+    }
+
     _createViolation(type, employee, details) {
         return {
             type,
@@ -192,23 +376,54 @@ class ChamCongTimeValidator {
         }, {});
     }
 
-    // Gợi ý khung giờ vào/ra hợp lệ dựa trên ca làm việc
+    /**
+     * Gợi ý khung giờ vào/ra hợp lệ dựa trên ca làm việc
+     * Cập nhật: Tính toán chính xác dựa trên grace period và thresholds
+     */
     getSuggestedTimes(schedule) {
         if (!schedule) return { checkIn: null, checkOut: null };
         const s = schedule;
+        
+        // Giờ vào: từ earliestCheckIn đến (startTime + invalidLateInMinutes)
+        const checkInEarliest = s.earliestCheckIn !== null 
+            ? this.toTimeString(s.earliestCheckIn) 
+            : this.toTimeString(s.startTime);
+        
+        const checkInLatest = s.invalidLateInMinutes !== null && s.startTime !== null
+            ? this.toTimeString(s.startTime + s.invalidLateInMinutes)
+            : (s.lateGraceMinutes !== null && s.startTime !== null 
+                ? this.toTimeString(s.startTime + s.lateGraceMinutes) 
+                : null);
+        
+        // Giờ ra: từ (endTime - invalidEarlyOutMinutes) đến latestCheckOut
+        const checkOutEarliest = s.invalidEarlyOutMinutes !== null && s.endTime !== null
+            ? this.toTimeString(s.endTime - s.invalidEarlyOutMinutes)
+            : (s.earlyGraceMinutes !== null && s.endTime !== null
+                ? this.toTimeString(s.endTime - s.earlyGraceMinutes)
+                : this.toTimeString(s.endTime));
+        
+        const checkOutLatest = s.latestCheckOut !== null
+            ? this.toTimeString(s.latestCheckOut)
+            : (s.allowedLateOutMinutes !== null && s.endTime !== null
+                ? this.toTimeString(s.endTime + s.allowedLateOutMinutes)
+                : null);
+        
         return {
             checkIn: {
-                earliest: s.earliestCheckIn !== null ? this.toTimeString(s.earliestCheckIn) : this.toTimeString(s.startTime),
-                latest: s.invalidLateInMinutes !== null && s.startTime !== null
-                    ? this.toTimeString(s.startTime + s.invalidLateInMinutes) : null,
-                recommended: this.toTimeString(s.startTime)
+                earliest: checkInEarliest,
+                latest: checkInLatest,
+                recommended: this.toTimeString(s.startTime),
+                graceEnd: s.lateGraceMinutes !== null && s.startTime !== null 
+                    ? this.toTimeString(s.startTime + s.lateGraceMinutes) 
+                    : null
             },
             checkOut: {
-                earliest: s.invalidEarlyOutMinutes !== null && s.endTime !== null
-                    ? this.toTimeString(s.endTime - s.invalidEarlyOutMinutes) : this.toTimeString(s.endTime),
-                latest: s.allowedLateOutMinutes !== null && s.endTime !== null
-                    ? this.toTimeString(s.endTime + s.allowedLateOutMinutes) : null,
-                recommended: this.toTimeString(s.endTime)
+                earliest: checkOutEarliest,
+                latest: checkOutLatest,
+                recommended: this.toTimeString(s.endTime),
+                graceStart: s.earlyGraceMinutes !== null && s.endTime !== null
+                    ? this.toTimeString(s.endTime - s.earlyGraceMinutes)
+                    : null
             }
         };
     }
@@ -233,23 +448,31 @@ class ChamCongTimeValidator {
                 };
             }
             byEmployee[key].violations.push(v);
-            if (v.type.includes('check_in')) byEmployee[key].checkInValue = v.details.value;
-            else if (v.type.includes('check_out')) byEmployee[key].checkOutValue = v.details.value;
+            if (v.type.includes('check_in') || v.type === 'missing_check_in') {
+                byEmployee[key].checkInValue = v.details?.value || null;
+            }
+            if (v.type.includes('check_out') || v.type === 'missing_check_out') {
+                byEmployee[key].checkOutValue = v.details?.value || null;
+            }
         });
 
         const rowsHtml = Object.values(byEmployee).map((g, idx) => {
             const { employee, suggested, violations: empVio, checkInValue, checkOutValue } = g;
-            const hasInErr = empVio.some(v => v.type.includes('check_in'));
-            const hasOutErr = empVio.some(v => v.type.includes('check_out'));
-            // Thông báo lỗi ngắn gọn
+            const hasInErr = empVio.some(v => v.type.includes('check_in') || v.type === 'missing_check_in');
+            const hasOutErr = empVio.some(v => v.type.includes('check_out') || v.type === 'missing_check_out');
+            
+            // Thông báo lỗi ngắn gọn - hiển thị số phút đã trừ grace
             const errMsgs = empVio.map(v => {
-                const d = v.details.diff || 0;
+                const d = v.details?.diff || 0;
                 if (v.type === 'check_in_too_early') return `Vào sớm ${d}p`;
-                if (v.type === 'check_in_too_late') return `Vào muộn ${d}p`;
-                if (v.type === 'check_out_too_early') return `Ra sớm ${d}p`;
-                if (v.type === 'check_out_too_late') return `Ra muộn ${d}p`;
+                if (v.type === 'check_in_too_late') return `Muộn ${d}p`;
+                if (v.type === 'check_out_too_early') return `Về sớm ${d}p`;
+                if (v.type === 'check_out_too_late') return `Về muộn ${d}p`;
+                if (v.type === 'missing_check_in') return 'Thiếu vào';
+                if (v.type === 'missing_check_out') return 'Thiếu ra';
                 return v.label;
             });
+            
             // Hiển thị khung giờ cho phép
             const inRange = suggested?.checkIn 
                 ? `${suggested.checkIn.earliest || '--:--'} → ${suggested.checkIn.latest || suggested.checkIn.recommended || '--:--'}` 
@@ -257,6 +480,7 @@ class ChamCongTimeValidator {
             const outRange = suggested?.checkOut
                 ? `${suggested.checkOut.earliest || suggested.checkOut.recommended || '--:--'} → ${suggested.checkOut.latest || '--:--'}`
                 : '--:--';
+            
             return `
                 <tr class="border-b border-slate-100 hover:bg-slate-50/50">
                     <td class="py-2.5 px-3">
@@ -270,11 +494,11 @@ class ChamCongTimeValidator {
                     </td>
                     <td class="py-2.5 px-2 text-center">
                         <div class="font-mono text-sm ${hasInErr ? 'text-red-600 font-bold' : 'text-slate-600'}">${checkInValue || '--:--'}</div>
-                        ${hasInErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Vào')).join(', ')}</div>` : ''}
+                        ${hasInErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Vào') || m.includes('Muộn') || m.includes('vào')).join(', ')}</div>` : ''}
                     </td>
                     <td class="py-2.5 px-2 text-center">
                         <div class="font-mono text-sm ${hasOutErr ? 'text-red-600 font-bold' : 'text-slate-600'}">${checkOutValue || '--:--'}</div>
-                        ${hasOutErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Ra')).join(', ')}</div>` : ''}
+                        ${hasOutErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Về') || m.includes('ra')).join(', ')}</div>` : ''}
                     </td>
                     <td class="py-2.5 px-2 text-center">
                         <div class="text-[11px] text-slate-500 font-mono">${suggested?.checkIn?.recommended || '--:--'}</div>
@@ -299,7 +523,7 @@ class ChamCongTimeValidator {
                     </div>
                     <div class="flex-1">
                         <div class="font-semibold text-amber-800">Phát hiện ${violations.length} lỗi từ ${invalidCount} nhân viên</div>
-                        <div class="text-xs text-amber-600 mt-0.5">Vui lòng kiểm tra và điều chỉnh giờ chấm công theo khung giờ cho phép</div>
+                        <div class="text-xs text-amber-600 mt-0.5">Vui lòng kiểm tra giờ chấm công</div>
                     </div>
                 </div>
                 <div class="flex items-center gap-4 mb-3 text-[11px] text-slate-500">
@@ -323,7 +547,7 @@ class ChamCongTimeValidator {
                 </div>
                 <div class="mt-3 text-[11px] text-slate-400 flex items-start gap-1.5">
                     <i class="fa-solid fa-info-circle mt-0.5"></i>
-                    <span>Giờ cho phép được tính dựa trên khung giờ làm việc của từng nhân viên.</span>
+                    <span>Giờ cho phép được tính dựa trên khung giờ làm việc của từng nhân viên. Thời gian muộn/sớm đã trừ thời gian grace period.</span>
                 </div>
             </div>`;
     }
