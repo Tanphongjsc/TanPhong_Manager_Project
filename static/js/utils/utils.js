@@ -832,12 +832,61 @@ const AppUtils = (() => {
         },
 
         /**
+         * Chuẩn hóa chuỗi giờ, hỗ trợ "HH:mm" hoặc dạng có giây/múi giờ
+         * Trả về chuỗi HH:mm hợp lệ hoặc placeholder (null mặc định)
+         */
+        normalize(timeStr, placeholder = null) {
+            if (!timeStr || typeof timeStr !== 'string') return placeholder;
+            const normalized = timeStr.substring(0, 5);
+            return /^\d{2}:\d{2}$/.test(normalized) ? normalized : placeholder;
+        },
+
+        /**
+         * Chuyển đổi "HH:mm" (hoặc "HH:mm:ss+00") thành phút, trả về null nếu không hợp lệ
+         */
+        toMinutesSafe(timeStr) {
+            const normalized = this.normalize(timeStr, null);
+            if (normalized === null) return null;
+            const [h, m] = normalized.split(':').map(Number);
+            return (h * 60) + m;
+        },
+
+        /**
+         * Chuyển phút về chuỗi HH:mm, tự động wrap trong 0-1439 phút
+         */
+        toTimeString(minutes, placeholder = '--:--') {
+            if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return placeholder;
+            const normalized = ((minutes % 1440) + 1440) % 1440;
+            const hh = String(Math.floor(normalized / 60)).padStart(2, '0');
+            const mm = String(normalized % 60).padStart(2, '0');
+            return `${hh}:${mm}`;
+        },
+
+        /**
+         * Format hiển thị giờ ngắn gọn, fallback placeholder nếu không hợp lệ
+         */
+        formatDisplay(timeStr, placeholder = '--:--') {
+            const normalized = this.normalize(timeStr, null);
+            return normalized ?? placeholder;
+        },
+
+        /**
          * Tính chênh lệch phút giữa 2 mốc thời gian
          * @returns {number} > 0 nếu time1 > time2 (Muộn/Dư), < 0 nếu time1 < time2 (Sớm/Thiếu)
          */
         diffMinutes(time1, time2) {
             if (!time1 || !time2) return 0;
             return this.toMinutes(time1) - this.toMinutes(time2);
+        },
+
+        /**
+         * diff với kiểm tra hợp lệ, trả về null nếu 1 trong 2 giá trị không hợp lệ
+         */
+        diffMinutesSafe(time1, time2) {
+            const t1 = this.toMinutesSafe(time1);
+            const t2 = this.toMinutesSafe(time2);
+            if (t1 === null || t2 === null) return null;
+            return t1 - t2;
         }
     };
 

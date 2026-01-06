@@ -30,15 +30,12 @@ class ChamCongTimeValidator {
 
     // Chuyển chuỗi giờ (HH:mm hoặc HH:mm:ss+00) thành số phút
     toMinutes(timeStr) {
-        if (!timeStr || typeof timeStr !== 'string') return null;
-        return AppUtils.TimeUtils.toMinutes(timeStr.substring(0, 5));
+        return AppUtils.TimeUtils.toMinutesSafe(timeStr);
     }
 
     // Chuyển số phút thành chuỗi HH:mm
     toTimeString(minutes) {
-        if (minutes === null || minutes === undefined) return '--:--';
-        const normalized = ((minutes % 1440) + 1440) % 1440;
-        return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+        return AppUtils.TimeUtils.toTimeString(minutes);
     }
 
     // Parse giá trị số phút (dùng cho các trường như thoigianchophepdenmuon: 0, 15, 30...)

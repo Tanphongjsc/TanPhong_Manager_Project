@@ -9,8 +9,7 @@ const ChamCongRenderHelper = (() => {
      * Format chuỗi giờ từ API (07:30:00+00 -> 07:30)
      */
     const formatTimeDisplay = (timeStr) => {
-        if (!timeStr) return '--:--';
-        return timeStr.substring(0, 5);
+        return AppUtils.TimeUtils.formatDisplay(timeStr);
     };
 
     /**
