@@ -428,6 +428,31 @@ def get_field_value(request, field_name, default=''):
 # TIME HELPERS
 # ============================================================================
 
+def format_time(time_str):
+    """
+    Định dạng chuyển chuỗi thời gian HH:mm:ssXXX về thành chuỗi giờ HH:MM, bỏ qua phần giây và timezone.
+
+    Args:
+        time_str (str): Chuỗi thời gian dạng 'HH:mm:ssXXX'
+
+    Returns:
+        str: Chuỗi thời gian dạng 'HH:MM'
+    """
+
+    if not time_str or len(time_str) < 5:
+        return None
+    try:
+        h, m, *_ = time_str.split(':')
+        h = int(h)
+        m = int(m)
+        if 0 <= h <= 23 and 0 <= m <= 59:
+            return f'{h:02}:{m:02}'
+        return None
+    except ValueError:
+        return None
+
+
+
 def parse_time_to_minutes(time_str):
     """
     Parse chuỗi HH:MM thành số phút tính từ 00:00.
@@ -449,3 +474,36 @@ def parse_time_to_minutes(time_str):
         return None
 
 
+def parse_minutes_to_time(minutes):
+    """
+    Chuyển số phút thành chuỗi giờ dạng 'HH:MM'.
+
+    Args:
+        minutes (int): Số phút từ 00:00
+
+    Returns:
+        str | None: Chuỗi giờ dạng 'HH:MM', hoặc None nếu không hợp lệ
+    """
+    if not isinstance(minutes, int) or minutes < 0 or minutes >= 1440:
+        return None
+    h = minutes // 60
+    m = minutes % 60
+    return f'{h:02}:{m:02}'
+
+
+def diff_minutes(time1, time2):
+    """
+    Tính hiệu số phút giữa hai thời gian dạng 'HH:MM'.
+
+    Args:
+        time1 (str): Thời gian đầu dạng 'HH:MM'
+        time2 (str): Thời gian sau dạng 'HH:MM'
+
+    Returns:
+        int | None: Hiệu số phút (time2 - time1), hoặc None nếu không hợp lệ
+    """
+    minutes1 = parse_time_to_minutes(format_time(time1))
+    minutes2 = parse_time_to_minutes(format_time(time2))
+    if minutes1 is None or minutes2 is None:
+        return 0
+    return minutes2 - minutes1
