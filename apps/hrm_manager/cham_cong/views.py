@@ -10,8 +10,9 @@ from django.db.models.functions import Cast, Coalesce
 from django.db import transaction
 from django.contrib.postgres.aggregates import JSONBAgg
 
-from json import loads
+from json import loads, dumps
 import datetime as dt
+from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import Bangchamcong, Khunggionghitrua, Phongban, Lichlamviecthucte, Calamviec, Lichsucongtac
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
@@ -124,30 +125,7 @@ def view_tong_hop_cham_cong(request):
             {'title': 'Chấm công', 'url': '#'},
             {'title': 'Quản lý chấm công', 'url': None},
             {'title': 'Tổng hợp chấm công', 'url': None},
-        ],
-        'current_month': '2026-01', # Tháng hiện tại đang xem
-        'today': '2026-01-10',      # Ngày thực tế hôm nay
-        'stats': {
-            'total_work_days': 26,  # Tổng ngày làm việc quy định trong tháng
-            'logged_days': 20,      # Số ngày đã có dữ liệu chấm công
-            'missing_days': 1,      # Số ngày quá khứ chưa chấm
-            'today_logged': False,  # Hôm nay đã chấm chưa?
-        },
-        'calendar_days': [
-            # List các ngày trong tháng (bao gồm cả padding đầu/cuối tháng để fill lịch)
-            {
-                'date': timezone.now().date(),          # Object date
-                'day_num': 1,
-                'is_today': False,
-                'is_weekend': False,
-                'in_month': True,          # Có thuộc tháng hiện tại không
-                'status': 'logged',        # 'logged', 'missing', 'future', 'weekend'
-                'employee_count': 45,      # Số nhân viên đã chấm (nếu đã chấm)
-                'url_param': '2026-01-10'  # String format YYYY-MM-DD
-            },
-            # ...
-        ],
-        'weekday_names': ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+        ]
     }
     return render(request, "hrm_manager/cham_cong/bang_cham_cong_tong_hop.html", context)
 
@@ -173,6 +151,7 @@ def api_bang_cham_cong_list(request):
                 tg_vao = item.get("thoigianchamcongvao")
                 tg_ra = item.get("thoigianchamcongra")
                 loai_calamviec = item.get("loaicalamviec", "CO_DINH")
+                codilam = item.get("codilam", False)
 
                 # Khởi tạo mặc định
                 thoigiandimuon = 0
@@ -182,127 +161,128 @@ def api_bang_cham_cong_list(request):
                 tg_lam_viec = 0
                 tg_lam_them = 0
 
-                # diff(Chuẩn, Thực): Dương = Đến Muộn | Âm = Đến Sớm
-                khoang_tg_cham_cong_vao = diff_minutes(khung_gio.get("thoigianbatdau"), tg_vao)
+                if codilam == True:
+                    # diff(Chuẩn, Thực): Dương = Đến Muộn | Âm = Đến Sớm
+                    khoang_tg_cham_cong_vao = diff_minutes(khung_gio.get("thoigianbatdau"), tg_vao)
 
-                # Xử lý Checkout (Auto-fill nếu quên)
-                if item.get("cocancheckout", True) and not tg_ra:
-                    tg_ra = khung_gio.get("thoigianketthuc")
-                    item['thoigianchamcongra'] = tg_ra 
+                    # Xử lý Checkout (Auto-fill nếu quên)
+                    if item.get("cocancheckout", True) and not tg_ra:
+                        tg_ra = khung_gio.get("thoigianketthuc")
+                        item['thoigianchamcongra'] = tg_ra 
 
-                # --- CASE 1: CỐ ĐỊNH ---
-                if loai_calamviec == "CO_DINH":
-                    limit_di_muon = khung_gio.get("thoigianchophepdenmuon", 0)
-                    
-                    # Đi muộn
-                    if khoang_tg_cham_cong_vao > limit_di_muon:
-                        thoigiandimuon = khoang_tg_cham_cong_vao - limit_di_muon
-                    elif khoang_tg_cham_cong_vao < 0:
-                        thoigiandisom = abs(khoang_tg_cham_cong_vao)
-
-                    # Về sớm/muộn
-                    # diff(Thực, Chuẩn): Dương = Về Sớm | Âm = Về Muộn (OT)
-                    khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
-                    limit_ve_som = khung_gio.get("thoigianchophepvesomnhat", 0)
-
-                    if khoang_tg_cham_cong_ra > limit_ve_som: 
-                        thoigianvesom = khoang_tg_cham_cong_ra - limit_ve_som
-                    elif khoang_tg_cham_cong_ra < 0: 
-                        thoigianvemuon = abs(khoang_tg_cham_cong_ra)
-
-                    # Tổng hợp thời gian (Trừ đi muộn/về sớm)
-                    tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
-
-                # --- CASE 2: LINH ĐỘNG ---
-                elif loai_calamviec == "LINH_DONG":
-                    phut_den_muon_cho_phep = khung_gio.get("sophutdenmuon", 0) 
-                    phut_den_som_cho_phep = khung_gio.get("sophutdensom", 0) 
-                    
-                    # Logic điều chỉnh giờ
-                    # Nếu nằm trong khoảng linh động -> Dời giờ kết thúc
-                    is_linh_dong_hop_le = False
-                    
-                    if khoang_tg_cham_cong_vao > 0 and khoang_tg_cham_cong_vao <= phut_den_muon_cho_phep:
-                        is_linh_dong_hop_le = True
-                    elif khoang_tg_cham_cong_vao < 0 and abs(khoang_tg_cham_cong_vao) <= phut_den_som_cho_phep:
-                        is_linh_dong_hop_le = True
-                    
-                    if is_linh_dong_hop_le:
-                        # Dời giờ kết thúc theo thực tế vào
-                        khung_gio['thoigianketthuc'] = parse_minutes_to_time(
-                            parse_time_to_minutes(khung_gio.get("thoigianketthuc")) + khoang_tg_cham_cong_vao
-                        )
-                    else:
-                        # Quá hạn mức linh động -> Tính phạt như Ca cố định
-                        if khoang_tg_cham_cong_vao > phut_den_muon_cho_phep:
-                            thoigiandimuon = khoang_tg_cham_cong_vao - phut_den_muon_cho_phep
+                    # --- CASE 1: CỐ ĐỊNH ---
+                    if loai_calamviec == "CO_DINH":
+                        limit_di_muon = khung_gio.get("thoigianchophepdenmuon", 0)
+                        
+                        # Đi muộn
+                        if khoang_tg_cham_cong_vao > limit_di_muon:
+                            thoigiandimuon = khoang_tg_cham_cong_vao - limit_di_muon
                         elif khoang_tg_cham_cong_vao < 0:
                             thoigiandisom = abs(khoang_tg_cham_cong_vao)
 
-                    # Tính VỀ dựa trên giờ kết thúc (có thể đã dời hoặc chưa)
-                    khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
+                        # Về sớm/muộn
+                        # diff(Thực, Chuẩn): Dương = Về Sớm | Âm = Về Muộn (OT)
+                        khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
+                        limit_ve_som = khung_gio.get("thoigianchophepvesomnhat", 0)
+
+                        if khoang_tg_cham_cong_ra > limit_ve_som: 
+                            thoigianvesom = khoang_tg_cham_cong_ra - limit_ve_som
+                        elif khoang_tg_cham_cong_ra < 0: 
+                            thoigianvemuon = abs(khoang_tg_cham_cong_ra)
+
+                        # Tổng hợp thời gian (Trừ đi muộn/về sớm)
+                        tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
+
+                    # --- CASE 2: LINH ĐỘNG ---
+                    elif loai_calamviec == "LINH_DONG":
+                        phut_den_muon_cho_phep = khung_gio.get("sophutdenmuon", 0) 
+                        phut_den_som_cho_phep = khung_gio.get("sophutdensom", 0) 
+                        
+                        # Logic điều chỉnh giờ
+                        # Nếu nằm trong khoảng linh động -> Dời giờ kết thúc
+                        is_linh_dong_hop_le = False
+                        
+                        if khoang_tg_cham_cong_vao > 0 and khoang_tg_cham_cong_vao <= phut_den_muon_cho_phep:
+                            is_linh_dong_hop_le = True
+                        elif khoang_tg_cham_cong_vao < 0 and abs(khoang_tg_cham_cong_vao) <= phut_den_som_cho_phep:
+                            is_linh_dong_hop_le = True
+                        
+                        if is_linh_dong_hop_le:
+                            # Dời giờ kết thúc theo thực tế vào
+                            khung_gio['thoigianketthuc'] = parse_minutes_to_time(
+                                parse_time_to_minutes(khung_gio.get("thoigianketthuc")) + khoang_tg_cham_cong_vao
+                            )
+                        else:
+                            # Quá hạn mức linh động -> Tính phạt như Ca cố định
+                            if khoang_tg_cham_cong_vao > phut_den_muon_cho_phep:
+                                thoigiandimuon = khoang_tg_cham_cong_vao - phut_den_muon_cho_phep
+                            elif khoang_tg_cham_cong_vao < 0:
+                                thoigiandisom = abs(khoang_tg_cham_cong_vao)
+
+                        # Tính VỀ dựa trên giờ kết thúc (có thể đã dời hoặc chưa)
+                        khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
+                        
+                        if khoang_tg_cham_cong_ra > 0: # Về sớm
+                            thoigianvesom = khoang_tg_cham_cong_ra
+                        elif khoang_tg_cham_cong_ra < 0: # Về muộn
+                            thoigianvemuon = abs(khoang_tg_cham_cong_ra)
+
+                        # Tổng hợp thời gian
+                        tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
+
+                    # --- CASE 3: TỰ DO ---
+                    elif loai_calamviec == "TU_DO":
+                        if khoang_tg_cham_cong_vao < 0:
+                            thoigiandisom = abs(khoang_tg_cham_cong_vao) # [FIX] Thêm abs()
+
+                        # Tính giờ ra
+                        khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
+                        if khoang_tg_cham_cong_ra < 0:
+                            thoigianvemuon = abs(khoang_tg_cham_cong_ra)
+                        
+                        # Ca tự do tính theo thực tế (Ra - Vào)
+                        tg_thuc_te_lam = diff_minutes(tg_vao, tg_ra)
+                        tg_lam_viec = max(0, tg_thuc_te_lam)
+
+                    # --- LOGIC CHUNG ---
                     
-                    if khoang_tg_cham_cong_ra > 0: # Về sớm
-                        thoigianvesom = khoang_tg_cham_cong_ra
-                    elif khoang_tg_cham_cong_ra < 0: # Về muộn
-                        thoigianvemuon = abs(khoang_tg_cham_cong_ra)
+                    # Tính OT
+                    if item.get('cotinhlamthem', False) and thoigianvemuon > 0:
+                        tg_lam_them = item.get("sophutot", 0)
 
-                    # Tổng hợp thời gian
-                    tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
+                    # Ràng buộc không tính công (Chỉ áp dụng cho Cố định/Linh động nếu cần)
+                    limit_vesom_0_cong = khung_gio.get("thoigianvesomkhongtinhchamcong", 0)
+                    limit_dimuon_0_cong = khung_gio.get("thoigiandimuonkhongtinhchamcong", 0)
 
-                # --- CASE 3: TỰ DO ---
-                elif loai_calamviec == "TU_DO":
-                    if khoang_tg_cham_cong_vao < 0:
-                        thoigiandisom = abs(khoang_tg_cham_cong_vao) # [FIX] Thêm abs()
-
-                    # Tính giờ ra
-                    khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
-                    if khoang_tg_cham_cong_ra < 0:
-                        thoigianvemuon = abs(khoang_tg_cham_cong_ra)
+                    if (limit_vesom_0_cong > 0 and thoigianvesom > limit_vesom_0_cong) or \
+                    (limit_dimuon_0_cong > 0 and thoigiandimuon > limit_dimuon_0_cong):
+                        tg_lam_viec = 0
                     
-                    # Ca tự do tính theo thực tế (Ra - Vào)
-                    tg_thuc_te_lam = diff_minutes(tg_vao, tg_ra)
-                    tg_lam_viec = max(0, tg_thuc_te_lam)
+                    # Thời gian tối thiểu
+                    if tg_lam_viec < khung_gio.get("thoigianlamviectoithieu", 0):
+                        tg_lam_viec = 0
+                    
+                    # --- TÍNH TOÁN TIỀN LƯƠNG & OT ---
+                    # Lấy lương gốc từ Calculator
+                    luong_goc = ket_qua_thanh_tien.get(item['nhanvien_id'], 0)
+                    
+                    # Lấy thời gian chuẩn của ca để tính đơn giá
+                    thoi_gian_chuan_ca = item.get("tongthoigianlamvieccuaca")
+                    if thoi_gian_chuan_ca is None or thoi_gian_chuan_ca == 0:
+                        thoi_gian_chuan_ca = 480 # Fallback 8 tiếng nếu dữ liệu lỗi
+                    
+                    # Tính tiền OT
+                    tien_ot = 0
+                    if tg_lam_them > 0:
+                        don_gia_phut = luong_goc / thoi_gian_chuan_ca
+                        tien_ot = don_gia_phut * tg_lam_them * 1.5
 
-                # --- LOGIC CHUNG ---
-                
-                # Tính OT
-                if item.get('cotinhlamthem', False) and thoigianvemuon > 0:
-                    tg_lam_them = item.get("sophutot", 0)
-
-                # Ràng buộc không tính công (Chỉ áp dụng cho Cố định/Linh động nếu cần)
-                limit_vesom_0_cong = khung_gio.get("thoigianvesomkhongtinhchamcong", 0)
-                limit_dimuon_0_cong = khung_gio.get("thoigiandimuonkhongtinhchamcong", 0)
-
-                if (limit_vesom_0_cong > 0 and thoigianvesom > limit_vesom_0_cong) or \
-                (limit_dimuon_0_cong > 0 and thoigiandimuon > limit_dimuon_0_cong):
-                    tg_lam_viec = 0
-                
-                # Thời gian tối thiểu
-                if tg_lam_viec < khung_gio.get("thoigianlamviectoithieu", 0):
-                    tg_lam_viec = 0
-                
-                # --- TÍNH TOÁN TIỀN LƯƠNG & OT ---
-                # Lấy lương gốc từ Calculator
-                luong_goc = ket_qua_thanh_tien.get(item['nhanvien_id'], 0)
-                
-                # Lấy thời gian chuẩn của ca để tính đơn giá
-                thoi_gian_chuan_ca = item.get("tongthoigianlamvieccuaca")
-                if thoi_gian_chuan_ca is None or thoi_gian_chuan_ca == 0:
-                    thoi_gian_chuan_ca = 480 # Fallback 8 tiếng nếu dữ liệu lỗi
-                
-                # Tính tiền OT
-                tien_ot = 0
-                if tg_lam_them > 0:
-                    don_gia_phut = luong_goc / thoi_gian_chuan_ca
-                    tien_ot = don_gia_phut * tg_lam_them * 1.5
-
-                # Tính tổng tiền cho dòng chấm công này
-                tong_tien_cuoi_cung = luong_goc + tien_ot
-                
-                # Không làm phút nào (tg_lam_viec=0) thì không có lương
-                if tg_lam_viec == 0 and tg_lam_them == 0:
-                    tong_tien_cuoi_cung = 0
+                    # Tính tổng tiền cho dòng chấm công này
+                    tong_tien_cuoi_cung = luong_goc + tien_ot
+                    
+                    # Không làm phút nào (tg_lam_viec=0) thì không có lương
+                    if tg_lam_viec == 0 and tg_lam_them == 0:
+                        tong_tien_cuoi_cung = 0
 
                 # Tạo Object
                 objs_bang_cham_cong.append(Bangchamcong(
@@ -314,18 +294,20 @@ def api_bang_cham_cong_list(request):
                     thoigianlamthem = tg_lam_them,
                     cotinhlamthem = item.get('cotinhlamthem', False),
                     coantrua = item.get('cocantrua', False),
+                    codilam = codilam,
                     thoigiandimuon = thoigiandimuon,
                     thoigianvesom = thoigianvesom,
                     thoigiandisom = thoigiandisom,
                     thoigianvemuon = thoigianvemuon,
                     loaichamcong = item.get('loaichamcong', ''),
                     tencongviec = item.get('tencongviec', ''),
-                    cophaingaynghi = item.get('cophaingaynghi', False),
-                    thamsotinhluong = item.get('thamsotinhluong', ''),
-                    thanhtien = tong_tien_cuoi_cung,
+                    cophaingaynghi = item.get('cophaingaynghi', {}),
+                    thamsotinhluong = dumps(item.get('thamsotinhluong')) if isinstance(item.get('thamsotinhluong', {}), dict) else item.get('thamsotinhluong', {}),
+                    thanhtien = tong_tien_cuoi_cung if codilam == True else 0,
                     ghichu = item.get('ghichu', ''),
                     congviec_id = item.get('congviec_id'),
                     nhanvien_id = item['nhanvien_id'],
+                    calamviec_id = item.get('calamviec_id', None)
                 ))
             
             Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
@@ -340,9 +322,8 @@ def api_bang_cham_cong_list(request):
             return JsonResponse({'success': False, 'message': f'Lỗi: {str(e)}'}, status=400)
 
 
-# @login_required
+@login_required
 @require_http_methods(["GET"])
-@csrf_exempt
 def api_bang_cham_cong_nhan_vien_list(request):
     # Xử lý đầu vào
     try:
@@ -488,7 +469,79 @@ def api_bang_cham_cong_nhan_vien_list(request):
         val.pop('_temp_diff', None) # Xoá biến tạm dùng để so sánh
         final_data_list.append(val)
 
-    return JsonResponse({'success': True, 'data': final_data_list, "data_test": ds_lich_raw}, status=200)
+    return JsonResponse({'success': True, 'data': final_data_list}, status=200)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_tong_hop_cham_cong_thang(request):
+    """API Tổng hợp chấm công tháng cho nhân viên"""
+    
+    try:
+        thoi_gian = dt.datetime.strptime(request.GET.get('thoigian', dt.datetime.now().strftime("%Y-%m")), "%Y-%m")
+        year = thoi_gian.year
+        month = thoi_gian.month
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Thời gian không hợp lệ'})
+    
+    # Lấy danh sách nhân viên (Dùng values để lấy dict ngay lập tức)
+    ds_nhan_vien = list(Lichsucongtac.objects.filter(
+        trangthai='active'
+    ).annotate(
+        ten_nv=F('nhanvien__hovaten'),
+        ma_nv=F('nhanvien__manhanvien'),
+        ten_cv=F("chucvu__tenvitricongviec")
+    ).values('nhanvien_id', 'ten_nv', 'ma_nv', 'phongban_id', 'ten_cv').order_by('nhanvien_id'))
+    
+    # Lấy dữ liệu chấm công (Dùng .values() để TỐI ƯU TỐC ĐỘ, tránh overhead của Model Object)
+    ds_cham_cong = Bangchamcong.objects.filter(
+        ngaylamviec__year=year, 
+        ngaylamviec__month=month
+    ).values()
+
+    # Xử lý gom nhóm dữ liệu chấm công theo nhân viên
+    map_cc = defaultdict(lambda: {'tong_gio': 0, 'logs': defaultdict(list)}) # {nhanvien_id: {'tong_gio': int, 'logs': {ngay: [log_entries]}}}
+
+    for cc in ds_cham_cong:
+        nv_id = cc['nhanvien_id']
+        tg_lam = round(float(cc['thoigianlamviec']/60 or 0),1)
+        ngay_str = f"{cc['ngaylamviec'].day:02d}"
+        
+        # Cộng dồn tổng giờ
+        map_cc[nv_id]['tong_gio'] += tg_lam
+
+        # Format dữ liệu từng dòng log
+        tg_vao = cc['thoigianchamcongvao']
+        tg_ra = cc['thoigianchamcongra']
+        
+        log_entry = {
+            'tg_vao': tg_vao.strftime("%H:%M") if tg_vao else '',
+            'tg_ra': tg_ra.strftime("%H:%M") if tg_ra else '',
+            'tg_lamviec': tg_lam,
+            'codimuon': (cc['thoigiandimuon'] or 0) > 0,
+            'thoigiandimuon': cc['thoigiandimuon'],
+            'covesom': (cc['thoigianvesom'] or 0) > 0,
+            'thoigianvesom': cc['thoigianvesom'],
+            'codilam': cc['codilam'],
+            'tencalamviec': cc['tencongviec'],
+            'ghichu': cc['ghichu'],
+        }
+        
+        map_cc[nv_id]['logs'][ngay_str].append(log_entry)
+
+    # Merge dữ liệu vào danh sách nhân viên
+    for nv in ds_nhan_vien:
+        data_cc = map_cc.get(nv['nhanvien_id'])
+        
+        if data_cc:
+            nv['logs'] = data_cc['logs']
+            nv['tongthoigianlamviec'] = data_cc['tong_gio']
+        else:
+            nv['logs'] = {}
+            nv['tongthoigianlamviec'] = 0
+
+    return JsonResponse({'success': True, 'data': ds_nhan_vien}, status=200)
+
 
 # ============================================================
 # VIEWS: ĐƠN BÁO & BÁO CÁO

@@ -86,7 +86,7 @@
             </div>
 
             <div id="tab-sx" class="h-full flex flex-col overflow-hidden relative hidden">
-                {% with headers='<th class="p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-sx" class="accent-orange-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[180px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Vào</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc & Tham số)</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">Ăn</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">OT</th>' %}
+                {% with headers='<th class="p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-sx" class="accent-orange-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[180px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Vào</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-20 text-center sticky top-0 bg-slate-50 z-20">Ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc & Tham số)</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">Ăn</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-10 text-center sticky top-0 bg-slate-50 z-20">OT</th><th class="px-2 py-1.5 border-b border-slate-200 sticky top-0 bg-slate-50 min-w-[100px] z-20">Ghi chú</th>' %}
                     {% include "components/table_wrapper.html" with table_id="sx-table" tbody_id="sx-body" headers_html=headers show_checkbox=False %}
                 {% endwith %}
             </div>
@@ -116,7 +116,9 @@
     .param-label { color: #64748b; font-weight: 700; margin-right: 3px; text-transform: uppercase; }
     .param-val { width: 36px; border: none; outline: none; text-align: right; font-weight: 600; color: #0f172a; background: transparent; font-size: 11px; }
     
-    tr.inactive { opacity: 0.4; background: #f8fafc; }
+    tr.inactive { background: #f8fafc; }
+    tr.inactive > td:not(.note-cell) { opacity: 0.4; }
+    tr.inactive .note-cell { opacity: 1; background: #fff; }
     
     @media (max-width: 640px) {
         .cell-input { font-size: 12px; padding: 4px; }

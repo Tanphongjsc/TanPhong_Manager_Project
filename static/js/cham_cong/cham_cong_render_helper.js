@@ -60,7 +60,7 @@ const ChamCongRenderHelper = (() => {
                 <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${s.ot ? 'checked' : ''}>
                 <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-orange-400 focus:ring-1 focus:ring-orange-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
             </div></td>
-        <td class="px-2 py-1"><input type="text" class="w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..."></td>`;
+        <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
 
     const renderJobParams = (jobItem, index, jobs) => {
         if (!jobItem.jobId) return '<span class="text-[11px] text-slate-300 italic pl-1 select-none font-light">Chọn công việc...</span>';
@@ -94,11 +94,12 @@ const ChamCongRenderHelper = (() => {
                 <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs text-slate-400 hover:text-orange-500 font-medium transition-colors" title="Thêm">+ Thêm</button></div></div></td>
             <td class="p-0.5 border-r border-slate-200 text-center align-middle">
                 <div class="inline-flex items-center justify-center w-full h-full py-1"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}></div></td>
-            <td class="p-0.5 text-center align-middle">
+            <td class="p-0.5 border-r border-slate-200 text-center align-middle">
                 <div class="inline-flex items-center justify-center gap-1 w-full h-full py-1">
                     <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${s.ot ? 'checked' : ''}>
                     <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-orange-400 focus:ring-1 focus:ring-orange-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
-                </div></td>`;
+                </div></td>
+            <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-orange-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
     };
 
     const renderMasterParams = (job) => parseParams(job.danhsachthamso).map(p => `

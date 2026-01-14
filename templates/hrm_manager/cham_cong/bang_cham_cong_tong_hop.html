@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tổng Hợp Chấm Công{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-slate-50/50">
+    
+    {# --- Header & Tabs --- #}
+    <div class="bg-white border-b border-slate-200 px-4 pt-4 shrink-0">
+        <div class="flex items-center justify-between mb-4">
+            {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+        </div>
+        
+        <div class="flex space-x-6">
+            <button onclick="summaryManager.switchTab('all')" id="tab-all" class="tab-link pb-3 border-b-2 font-medium text-sm transition-colors border-emerald-500 text-emerald-600">
+                Tổng hợp tháng
+            </button>
+            <button onclick="summaryManager.switchTab('logged')" id="tab-logged" class="tab-link pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-slate-500 hover:text-slate-700">
+                Đã chấm công
+            </button>
+            <button onclick="summaryManager.switchTab('missing')" id="tab-missing" class="tab-link pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-slate-500 hover:text-slate-700">
+                Chưa chấm công
+            </button>
+        </div>
+    </div>
+
+    {# --- Filters --- #}
+    <div class="p-4 flex flex-col sm:flex-row gap-3 bg-white border-b border-slate-200 shadow-sm shrink-0">
+        {# Kỳ công / Tháng - Giới hạn max là tháng hiện tại bằng JS #}
+        <div class="relative min-w-[200px]">
+            <input type="month" id="filter-month" 
+                   class="w-full pl-3 pr-10 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 cursor-pointer text-slate-700 font-medium">
+        </div>
+
+        <select id="filter-type" class="px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 min-w-[140px] text-slate-600 bg-white">
+            <option value="all">Tất cả Loại hình</option>
+            <option value="VP">Văn Phòng</option>
+            <option value="SX">Sản Xuất</option>
+        </select>
+
+        {# Bộ phận #}
+        <select id="filter-dept" class="px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 min-w-[160px] text-slate-600">
+            <option value="all">Tất cả Bộ phận</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+        </select>
+
+        {# Tìm kiếm #}
+        <div class="flex-1 relative">
+            <input type="text" id="filter-search" placeholder="Tìm tên hoặc mã nhân viên..." 
+                   class="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        </div>
+
+        {# Export #}
+        <button onclick="summaryManager.exportReport()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-download"></i>
+            <span class="hidden sm:inline">Xuất báo cáo</span>
+        </button>
+    </div>
+
+    {# --- Main Grid Table --- #}
+    <div class="flex-1 overflow-hidden relative bg-white">
+        {# Loading Overlay #}
+        <div id="loading-overlay" class="absolute inset-0 z-50 bg-white/80 flex items-center justify-center hidden">
+            <div class="flex flex-col items-center gap-2">
+                <i class="fa-solid fa-circle-notch fa-spin text-emerald-600 text-2xl"></i>
+                <span class="text-sm text-slate-500 font-medium">Đang tải dữ liệu...</span>
+            </div>
+        </div>
+
+        <div class="absolute inset-0 overflow-auto custom-scrollbar" id="table-container">
+            <table class="w-full border-collapse text-sm min-w-max">
+                <thead class="bg-slate-50 sticky top-0 z-20 shadow-sm">
+                    <tr id="summary-header">
+                        {# Header sẽ được render bằng JS #}
+                    </tr>
+                </thead>
+                <tbody id="summary-body" class="divide-y divide-slate-100">
+                    {# Body sẽ được render bằng JS #}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# --- Footer / Pagination / Legend --- #}
+    <div class="bg-white border-t border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-4 shrink-0">
+        
+        {# 1. Phần Chú thích (Legend) - Mới bổ sung #}
+        <div class="flex items-center gap-4 text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+            <span class="font-bold text-slate-700 mr-1">Chú thích:</span>
+            
+            <div class="flex items-center gap-1.5" title="Ngày làm việc bình thường">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span>Ngày công</span>
+            </div>
+
+            <div class="flex items-center gap-1.5" title="Có vi phạm giờ giấc">
+                <div class="relative w-3 h-3 flex items-center justify-center bg-slate-100 border border-slate-200 rounded">
+                    <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
+                </div>
+                <span>Đi muộn/Về sớm</span>
+            </div>
+
+            <div class="flex items-center gap-1.5" title="Nghỉ có phép">
+                <span class="text-[10px] font-bold text-orange-600 bg-orange-100 px-1 rounded border border-orange-200">P</span>
+                <span>Nghỉ phép</span>
+            </div>
+
+            <div class="flex items-center gap-1.5" title="Nghỉ không phép">
+                <span class="text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded border border-red-200">KP</span>
+                <span>Không phép</span>
+            </div>
+        </div>
+
+        {# 2. Phần Pagination (Giữ nguyên hoặc cập nhật ID để JS bind vào) #}
+        <div class="flex items-center gap-2 ml-auto">
+            <span class="text-xs text-slate-500" id="record-count">Hiển thị 0 nhân viên</span>
+            </div>
+    </div>
+</div>
+
+<style>
+    /* CSS hỗ trợ Sticky Column */
+    .sticky-col-left {
+        position: sticky; left: 0; z-index: 10;
+        background-color: white;
+        border-right: 1px solid #e2e8f0;
+    }
+    .sticky-col-right {
+        position: sticky; right: 0; z-index: 10;
+        background-color: white;
+        border-left: 1px solid #e2e8f0;
+    }
+    /* Hover row effect cho sticky columns */
+    tr:hover .sticky-col-left, tr:hover .sticky-col-right {
+        background-color: #f8fafc; /* slate-50 */
+    }
+    /* Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; border: 2px solid #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cham_cong/cham_cong_summary.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Khởi tạo Manager với Endpoint API thực tế
+        window.summaryManager = new ChamCongSummaryManager({
+            apiEndpoint: '/hrm/cham-cong/api/bang-cham-cong/tong-hop-thang/', 
+        });
+    });
+</script>
+{% endblock %}
