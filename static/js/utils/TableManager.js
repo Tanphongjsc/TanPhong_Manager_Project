@@ -304,7 +304,12 @@ class TableManager {
         if (this.options.enableBulkActions) {
             const checkbox = row.querySelector('.row-checkbox');
             if (checkbox) {
-                checkbox.dataset.id = item.id;
+                if (!checkbox.dataset.id) {
+                    const fallbackId = item?.id ?? item?.nhanvien_id ?? item?.pk;
+                    if (fallbackId !== undefined && fallbackId !== null) {
+                        checkbox.dataset.id = String(fallbackId);
+                    }
+                }
                 this.eventManager.add(checkbox, 'change', () => {
                     this.handleItemCheckbox(checkbox);
                 });
@@ -421,7 +426,7 @@ class TableManager {
         const checkboxes = this.options.tableBody.querySelectorAll('.row-checkbox');
         checkboxes.forEach(cb => {
             cb.checked = checked;
-            if (checked) {
+            if (checked && cb.dataset.id) {
                 this.state.selectedItems.add(cb.dataset.id);
             }
         });
@@ -431,6 +436,10 @@ class TableManager {
 
     handleItemCheckbox(checkbox) {
         const id = checkbox.dataset.id;
+        if (!id) {
+            this.updateBulkActions();
+            return;
+        }
 
         if (checkbox.checked) {
             this.state.selectedItems.add(id);

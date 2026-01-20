@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/bang-cham-cong/list/', views.api_bang_cham_cong_list , name='api_bang_cham_cong_list'),
     path('api/bang-cham-cong/nhan-vien-list/', views.api_bang_cham_cong_nhan_vien_list , name='api_bang_cham_cong_nhan_vien_list'),
     path('api/bang-cham-cong/tong-hop-thang/', views.api_tong_hop_cham_cong_thang , name='api_tong_hop_cham_cong_thang'),
+    path('api/bang-cham-cong/check-cham-cong/', views.api_check_cham_cong , name='api_check_cham_cong'),
 
     # ============================================================
     # ĐƠN BÁO & BÁO CÁO

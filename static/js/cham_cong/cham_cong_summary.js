@@ -1,390 +1,513 @@
 /**
- * ChamCongSummaryManager - Quản lý bảng tổng hợp chấm công
- * Phiên bản: Integration (Kết nối API thực tế)
+ * TimekeepingSummaryManager
+ * Quản lý logic bảng chấm công tổng hợp, xử lý render động và bulk actions
  */
-class ChamCongSummaryManager {
-    constructor(config) {
-        this.config = config;
-        this.state = {
-            currentMonth: new Date(),
-            deptFilter: 'all',
-            searchFilter: '',
-            activeTab: 'all', // all | logged | missing
-            data: [], // Dữ liệu đã chuẩn hóa
-            daysInMonth: [],
-            isLoading: false
+class TimekeepingSummaryManager {
+    constructor() {
+        this.apiUrls = {
+            dept: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/',
+            summary: '/hrm/cham-cong/api/bang-cham-cong/tong-hop-thang/',
+            checkLog: '/hrm/cham-cong/api/bang-cham-cong/check-cham-cong/'
         };
 
-        this.elements = {
-            monthInput: document.getElementById('filter-month'),
-            deptSelect: document.getElementById('filter-dept'),
-            searchInput: document.getElementById('filter-search'),
-            tableHeader: document.getElementById('summary-header'),
-            tableBody: document.getElementById('summary-body'),
-            loading: document.getElementById('loading-overlay'),
-            countLabel: document.getElementById('record-count'),
-            tabs: document.querySelectorAll('.tab-link')
+        this.els = {
+            filterForm: document.getElementById('filter-form'),
+            filterMonth: document.getElementById('filter-month'),
+            filterDept: document.getElementById('filter-dept'),
+            searchInput: document.getElementById('search-input'),
+            tabNav: document.querySelector('#tab-container nav'),
+            employeeCount: document.getElementById('employee-count'),
+            panes: {
+                '#tab-tong-hop': document.getElementById('tab-tong-hop'),
+                '#tab-da-cham': document.getElementById('tab-da-cham'),
+                '#tab-chua-cham': document.getElementById('tab-chua-cham')
+            }
         };
 
-        this.init();
+        this.currentTabId = '#tab-tong-hop';
+        this.managers = { summary: null, checked: null, unchecked: null };
+        this.eventManager = AppUtils.EventManager.create();
     }
 
     init() {
-        // 1. Setup Input Month
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const currentMonthStr = `${yyyy}-${mm}`;
-        
-        if (this.elements.monthInput) {
-            this.elements.monthInput.value = currentMonthStr;
-            this.elements.monthInput.max = currentMonthStr; // Chặn tương lai
-            this.elements.monthInput.addEventListener('change', (e) => this.handleDateChange(e.target.value));
-        }
-
-        // 2. Event Listeners Filters
-        if (this.elements.deptSelect) {
-            this.elements.deptSelect.addEventListener('change', (e) => {
-                this.state.deptFilter = e.target.value;
-                this.renderBody();
-            });
-        }
-        
-        if (this.elements.searchInput) {
-            let timeout;
-            this.elements.searchInput.addEventListener('input', (e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    this.state.searchFilter = e.target.value.toLowerCase();
-                    this.renderBody();
-                }, 300);
-            });
-        }
-
-        // 3. Load dữ liệu lần đầu
-        this.handleDateChange(currentMonthStr);
+        this.initDefaultFilters();
+        this.loadDepartments();
+        this.initTabs();
+        this.initManagers();
+        this.initEventListeners();
+        this.handleTabChange(this.currentTabId);
     }
 
-    handleDateChange(dateStr) {
-        if (!dateStr) return;
-        const [year, month] = dateStr.split('-').map(Number);
-        this.state.currentMonth = new Date(year, month - 1, 1);
-        
-        this.calculateDaysInMonth(year, month);
-        this.renderHeader();
-        this.fetchData(dateStr); // Gọi API với chuỗi YYYY-MM
-    }
-
-    calculateDaysInMonth(year, month) {
-        this.state.daysInMonth = [];
-        const daysCount = new Date(year, month, 0).getDate();
+    initDefaultFilters() {
         const today = new Date();
-        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month - 1;
+        const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        if (this.els.filterMonth) this.els.filterMonth.value = monthStr;
+    }
 
-        for (let d = 1; d <= daysCount; d++) {
-            const date = new Date(year, month - 1, d);
-            const dayOfWeek = date.getDay();
-            const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    async loadDepartments() {
+        try {
+            const res = await AppUtils.API.get(this.apiUrls.dept, { page_size: 100 });
+            if (this.els.filterDept) {
+                const firstOpt = this.els.filterDept.firstElementChild;
+                this.els.filterDept.innerHTML = '';
+                this.els.filterDept.appendChild(firstOpt);
+                (res.data || []).forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = d.tenphongban;
+                    this.els.filterDept.appendChild(opt);
+                });
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    initTabs() {
+        this.els.tabNav.querySelectorAll('a').forEach(link => {
+            this.eventManager.add(link, 'click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                this.activateTabUI(link, targetId);
+                this.handleTabChange(targetId);
+            });
+        });
+        const defaultLink = Array.from(this.els.tabNav.querySelectorAll('a'))
+            .find(a => a.getAttribute('href') === this.currentTabId);
+        if (defaultLink) this.activateTabUI(defaultLink, this.currentTabId);
+    }
+
+    activateTabUI(activeLink, targetId) {
+        this.els.tabNav.querySelectorAll('a').forEach(l => {
+            l.classList.remove('border-blue-600', 'text-blue-600');
+            l.classList.add('border-transparent', 'text-slate-500', 'hover:border-slate-300');
+        });
+        activeLink.classList.remove('border-transparent', 'text-slate-500', 'hover:border-slate-300');
+        activeLink.classList.add('border-blue-600', 'text-blue-600');
+        Object.keys(this.els.panes).forEach(k => 
+            this.els.panes[k].classList.toggle('hidden', k !== targetId));
+    }
+
+    getFilterParams() {
+        const params = {};
+        // 1. Get data from Filter Form
+        if (this.els.filterForm) {
+            const formData = new FormData(this.els.filterForm);
+            for (const [key, value] of formData.entries()) {
+                if (value) params[key] = value;
+            }
+        }
+        // 2. Get data from Search Input (manually since we removed it from TableManager config)
+        if (this.els.searchInput && this.els.searchInput.value) {
+            params['search'] = this.els.searchInput.value.trim();
+        }
+        return params;
+    }
+
+    handleTabChange(tabId) {
+        this.currentTabId = tabId;
+        const currentParams = this.getFilterParams();
+
+        if (tabId === '#tab-tong-hop' && this.managers.summary) {
+            // Render lại header trước khi load data
+            this.renderSummaryHeader();
+            // QUAN TRỌNG: Bind lại checkbox select-all sau khi render header
+            this.rebindSummarySelectAll();
             
-            this.state.daysInMonth.push({
-                dateStr: `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-                dayNum: String(d).padStart(2, '0'), // Key để map với logs (01, 02...)
-                weekday: dayNames[dayOfWeek],
-                isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-                isToday: isCurrentMonth && d === today.getDate()
+            // Update params cho manager hiện tại
+            this.managers.summary.options.apiParams = { ...currentParams };
+            this.managers.summary.refresh();
+
+        } else if (tabId === '#tab-da-cham' && this.managers.checked) {
+            this.managers.checked.options.apiParams = {
+                ...currentParams,
+                dachamcong: 'True'
+            };
+            this.managers.checked.refresh();
+
+        } else if (tabId === '#tab-chua-cham' && this.managers.unchecked) {
+            this.managers.unchecked.options.apiParams = {
+                ...currentParams,
+                dachamcong: 'False'
+            };
+            this.managers.unchecked.refresh();
+        }
+    }
+
+    // --- KHẮC PHỤC LỖI 1 & 2: RE-BIND SELECT ALL ---
+    // Hàm này cập nhật tham chiếu checkbox cho TableManager khi Header được vẽ lại
+    rebindSummarySelectAll() {
+        const checkbox = document.getElementById('select-all-summary');
+        if (checkbox && this.managers.summary) {
+            // Update reference trong options của TableManager
+            this.managers.summary.options.selectAllCheckbox = checkbox;
+            
+            // Re-attach event listener
+            // (Lưu ý: TableManager cũ có thể vẫn giữ listener trên element cũ đã bị xóa khỏi DOM)
+            checkbox.addEventListener('change', (e) => {
+                this.managers.summary.handleSelectAll(e.target.checked);
             });
         }
     }
 
-    switchTab(tabName) {
-        this.state.activeTab = tabName;
-        // Update UI Tabs
-        document.querySelectorAll('.tab-link').forEach(btn => {
-            if(btn.id === `tab-${tabName}`) {
-                btn.className = "tab-link pb-3 border-b-2 font-medium text-sm transition-colors border-emerald-500 text-emerald-600";
-            } else {
-                btn.className = "tab-link pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-slate-500 hover:text-slate-700";
-            }
-        });
-        this.renderBody();
-    }
-
-    // --- CORE: GỌI API ---
-    async fetchData(dateStr) {
-        this.setLoading(true);
+    async updateEmployeeCount() {
+        if (!this.els.employeeCount) return;
         
         try {
-            // Construct URL: /api/.../?thoigian=2026-01
-            const url = `${this.config.apiEndpoint}?thoigian=${dateStr}`;
-            
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const result = await response.json();
-
-            if (result.success) {
-                // ADAPTER: Chuyển đổi dữ liệu API sang format UI cần
-                this.state.data = this.processApiData(result.data);
-                this.renderBody();
-            } else {
-                this.showError(result.message || 'Lỗi lấy dữ liệu từ server');
-            }
-
-        } catch (error) {
-            console.error("Fetch Error:", error);
-            this.showError('Không thể kết nối đến máy chủ.');
-        } finally {
-            this.setLoading(false);
+            const params = this.getFilterParams();
+            const response = await AppUtils.API.get(this.apiUrls.summary, { ...params, page_size: 1 });
+            const total = response.total || 0;
+            this.els.employeeCount.textContent = total;
+        } catch (e) {
+            console.error('Error fetching employee count:', e);
+            this.els.employeeCount.textContent = '0';
         }
     }
 
-    // --- ADAPTER: Chuyển đổi cấu trúc dữ liệu ---
-    processApiData(apiData) {
-        if (!Array.isArray(apiData)) return [];
+    initManagers() {
+        const commonConfig = {
+            // OPTIMIZATION: Không truyền searchInput và filtersForm vào commonConfig
+            // Điều này ngăn TableManager tự động bind events trên cả 3 tabs
+            // Việc xử lý events sẽ do TimekeepingSummaryManager quản lý tập trung
+            // searchInput: this.els.searchInput,
+            // filtersForm: this.els.filterForm,
+            enableBulkActions: true,
+            onBulkExport: (ids) => AppUtils.Notify.info(`Exporting ${ids.length} items...`)
+        };
 
-        return apiData.map(item => {
-            // Map Logs: Chuyển key tiếng Việt API sang key chuẩn UI
-            const processedLogs = {};
-            
-            // item.logs là object: { "09": [array ca], "10": [array ca] }
-            for (const [dayKey, shiftList] of Object.entries(item.logs || {})) {
-                if (Array.isArray(shiftList)) {
-                    processedLogs[dayKey] = shiftList.map(shift => ({
-                        // Mapping fields
-                        timeIn: shift.tg_vao,
-                        timeOut: shift.tg_ra,
-                        value: shift.tg_lamviec, // API trả về phút hoặc công
-                        
-                        status: shift.codilam, // true/false
-                        shiftName: shift.tencalamviec,
-                        note: shift.ghichu,
-                        
-                        // Logic vi phạm
-                        isLate: shift.codimuon,
-                        lateMin: shift.thoigiandimuon,
-                        isEarly: shift.covesom,
-                        earlyMin: shift.thoigianvesom
-                    }));
-                }
-            }
+        // Manager Tab 1: Tổng hợp
+        this.managers.summary = new TableManager({
+            ...commonConfig,
+            tableBody: document.getElementById('summary-table-body'),
+            paginationContainer: document.getElementById('pagination-summary'),
+            bulkActionsContainer: document.getElementById('bulk-actions-summary'),
+            // SelectAllCheckbox ban đầu chưa có, sẽ được update bởi rebindSummarySelectAll
+            apiEndpoint: this.apiUrls.summary,
+            pageSize: 20,
+            onRenderRow: (item, index) => this.renderSummaryRow(item, index),
+            // Khi data load xong, cần update trạng thái checkbox header (tránh trường hợp header reset mất state)
+            onDataLoaded: () => {
+                this.managers.summary.updateBulkActions();
+                this.updateEmployeeCount();
+            } 
+        });
 
-            return {
-                id: item.nhanvien_id,
-                name: item.ten_nv,
-                code: item.ma_nv,
-                jobTitle: item.ten_cv,
-                deptId: item.phongban_id,
-                totalWork: item.tongthoigianlamviec,
-                logs: processedLogs
-            };
+        // Manager Tab 2
+        this.managers.checked = new TableManager({
+            ...commonConfig,
+            tableBody: document.getElementById('checked-table-body'),
+            paginationContainer: document.getElementById('pagination-checked'),
+            bulkActionsContainer: document.getElementById('bulk-actions-checked'),
+            selectAllCheckbox: document.getElementById('select-all-checked'),
+            apiEndpoint: this.apiUrls.checkLog,
+            apiParams: { dachamcong: 'True' },
+            onRenderRow: (item) => this.renderCheckedRow(item)
+        });
+
+        // Manager Tab 3
+        this.managers.unchecked = new TableManager({
+            ...commonConfig,
+            tableBody: document.getElementById('unchecked-table-body'),
+            paginationContainer: document.getElementById('pagination-unchecked'),
+            bulkActionsContainer: document.getElementById('bulk-actions-unchecked'),
+            selectAllCheckbox: document.getElementById('select-all-unchecked'),
+            apiEndpoint: this.apiUrls.checkLog,
+            apiParams: { dachamcong: 'False' },
+            onRenderRow: (item) => this.renderUncheckedRow(item)
         });
     }
 
-    renderHeader() {
-        // Sticky Left Column
+    getDateContext() {
+        const val = this.els.filterMonth.value;
+        if (!val) {
+            const now = new Date();
+            return { year: now.getFullYear(), month: now.getMonth() + 1 };
+        }
+        const [y, m] = val.split('-');
+        return { year: parseInt(y), month: parseInt(m) };
+    }
+
+    getDaysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    renderSummaryHeader() {
+        const { year, month } = this.getDateContext();
+        const days = this.getDaysInMonth(year, month);
+        const thead = document.querySelector('#summary-table thead');
+        
+        // KHẮC PHỤC LỖI 1: Thêm Checkbox vào Header
         let html = `
-            <th class="sticky-col-left w-[260px] min-w-[260px] p-0 text-left bg-slate-50 border-b border-r border-slate-200 z-30 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                <div class="px-4 py-3 h-full flex items-center font-bold text-slate-600 uppercase text-xs tracking-wider">
-                    Nhân viên
-                </div>
-            </th>
+            <tr>
+                <th class="sticky-col-left px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[250px] shadow-sm flex items-center gap-3">
+                    <div class="flex items-center h-full">
+                        <input type="checkbox" id="select-all-summary" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                    </div>
+                    <span>NHÂN VIÊN</span>
+                </th>
         `;
 
-        // Days Columns
-        this.state.daysInMonth.forEach(day => {
-            const bgClass = day.isToday ? 'bg-blue-100' : (day.isWeekend ? 'bg-orange-50' : '');
-            const textClass = day.isToday ? 'text-blue-700' : (day.isWeekend ? 'text-red-500' : 'text-slate-500');
-            
+        const daysOfWeek = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        for (let i = 1; i <= days; i++) {
+            const date = new Date(year, month - 1, i);
+            const dow = daysOfWeek[date.getDay()];
+            const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+            const colorClass = isWeekend ? 'text-red-500 bg-red-50/50' : 'text-slate-600';
+            const isToday = new Date().toDateString() === date.toDateString();
+            const todayClass = isToday ? 'bg-blue-100 ring-2 ring-inset ring-blue-400' : '';
+
             html += `
-                <th class="border-b border-r border-slate-200 min-w-[48px] w-12 p-0 text-center ${bgClass}">
-                    <div class="py-2 flex flex-col items-center justify-center h-full">
-                        <span class="text-[10px] font-bold ${textClass} uppercase mb-0.5">${day.weekday}</span>
-                        <span class="text-sm font-bold ${day.isToday ? 'text-blue-700' : 'text-slate-700'}">${day.dayNum}</span>
+                <th class="px-1 py-2 text-center text-xs font-semibold border-l border-slate-100 min-w-[45px] ${colorClass} ${todayClass}">
+                    <div class="flex flex-col">
+                        <span class="opacity-75 text-[10px]">${dow}</span>
+                        <span>${String(i).padStart(2,'0')}</span>
                     </div>
                 </th>
             `;
-        });
+        }
 
-        // Sticky Right Column
         html += `
-            <th class="sticky-col-right w-20 min-w-[80px] p-0 text-center bg-slate-50 border-b border-l border-slate-200 z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                <div class="px-2 py-3 h-full flex items-center justify-center font-bold text-slate-700 uppercase text-xs tracking-wider">
-                    Tổng
+                <th class="px-3 py-3 text-center text-xs font-bold text-slate-700 uppercase border-l border-slate-200 min-w-[80px] bg-slate-50 sticky right-0">
+                    TỔNG
+                </th>
+            </tr>
+        `;
+        thead.innerHTML = html;
+        this.currentDaysInMonth = days;
+    }
+
+    renderSummaryRow(item, index) {
+        // Fallback: Tìm index nếu không được truyền vào (do TableManager chưa support)
+        if (typeof index !== 'number' && this.managers.summary && this.managers.summary.state && this.managers.summary.state.data) {
+            index = this.managers.summary.state.data.indexOf(item);
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors group/row';
+        const { year, month } = this.getDateContext();
+        
+        // Sticky Left Column
+        let leftColHtml = `
+            <td class="sticky-col-left px-4 py-3 bg-white border-b border-slate-100 z-20">
+                <div class="flex items-start gap-3">
+                    <div class="pt-1">
+                        <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.nhanvien_id}">
+                    </div>
+                    <div>
+                        <div class="font-medium text-slate-900 text-sm">${item.ten_nv}</div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">${item.ma_nv}</span>
+                            <span class="text-xs text-slate-500 truncate max-w-[120px]" title="${item.ten_cv}">${item.ten_cv || '--'}</span>
+                        </div>
+                    </div>
                 </div>
-            </th>
+            </td>
         `;
 
-        if (this.elements.tableHeader) this.elements.tableHeader.innerHTML = html;
-    }
+        // Render Days
+        let daysHtml = '';
+        const logs = item.logs || {};
+        const days = this.currentDaysInMonth || 31;
 
-    renderBody() {
-        const { data, deptFilter, searchFilter, activeTab, daysInMonth } = this.state;
-        
-        // 1. Client-side Filtering
-        const filteredData = data.filter(emp => {
-            if (deptFilter !== 'all' && String(emp.deptId) !== String(deptFilter)) return false;
-            if (searchFilter && !emp.name.toLowerCase().includes(searchFilter) && !emp.code.toLowerCase().includes(searchFilter)) return false;
-            if (activeTab === 'logged' && (!emp.totalWork || emp.totalWork <= 0)) return false;
-            if (activeTab === 'missing' && emp.totalWork > 0) return false;
-            return true;
-        });
+        // Tooltip position logic
+        const isTopRows = (typeof index === 'number') && index < 3;
+        const tooltipPosClass = isTopRows ? 'top-full mt-2' : 'bottom-full mb-2';
+        const arrowPosClass = isTopRows ? '-top-1' : '-bottom-1';
 
-        if (this.elements.countLabel) this.elements.countLabel.textContent = `Hiển thị ${filteredData.length} nhân viên`;
+        for (let i = 1; i <= days; i++) {
+            const dayKey = String(i).padStart(2, '0');
+            const dayLogs = logs[dayKey] || [];
+            
+            const date = new Date(year, month - 1, i);
+            const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+            
+            // Cell Background
+            let cellBg = isWeekend ? 'bg-orange-50/40' : '';
+            const isToday = new Date().toDateString() === date.toDateString();
+            if (isToday) cellBg = 'bg-blue-50/30';
 
-        if (filteredData.length === 0) {
-            this.elements.tableBody.innerHTML = `<tr><td colspan="100" class="text-center py-12 text-slate-400 italic">Không tìm thấy dữ liệu nhân viên</td></tr>`;
-            return;
-        }
+            let cellContent = `<span class="text-slate-200 text-xs select-none">-</span>`;
 
-        // 2. Render Rows
-        const html = filteredData.map((emp, index) => {
-            // Logic Smart Tooltip Direction (Tránh bị che khuất)
-            const isTopRows = index < 2; 
-            const tooltipPosClass = isTopRows ? 'top-full mt-2' : 'bottom-full mb-2';
-            const arrowPosClass = isTopRows ? '-top-1' : '-bottom-1';
+            if (dayLogs.length > 0) {
+                let totalWork = 0;
+                let hasLate = false;
+                let hasEarly = false;
+                let hasOff = false;
+                let hasWork = false;
 
-            // Render Cells for each Day
-            const dailyCells = daysInMonth.map(day => {
-                const dailyRecords = emp.logs[day.dayNum] || [];
-                
-                let cellContent = '<span class="text-slate-200 text-xs select-none">-</span>';
-                let cellBg = '';
-                
-                if (day.isWeekend) cellBg = 'bg-orange-50/40';
-                if (day.isToday) cellBg = 'bg-blue-50/30';
+                // Tính toán tổng hợp từ các log trong ngày
+                dayLogs.forEach(log => {
+                    if (log.tg_lamviec) totalWork += log.tg_lamviec;
+                    if (log.codimuon) hasLate = true;
+                    if (log.covesom) hasEarly = true;
+                    // Logic xác định nghỉ: log có codilam=False
+                    if (log.codilam === false) hasOff = true;
+                    // Nếu log có tg_lamviec > 0 hoặc không phải record nghỉ explicitly -> coi là có đi làm
+                    if (log.tg_lamviec > 0) hasWork = true;
+                });
 
-                // --- AGGREGATION LOGIC ---
-                if (dailyRecords.length > 0) {
-                    let totalValue = 0;
-                    let hasLate = false, hasEarly = false;
-                    let isAbsent = true; 
-                    let absenceNote = '';
-
-                    dailyRecords.forEach(record => {
-                        if (record.status) { // codilam = true
-                            totalValue += (record.value || 0);
-                            if (record.isLate) hasLate = true;
-                            if (record.isEarly) hasEarly = true;
-                            isAbsent = false;
-                        } else {
-                            absenceNote = record.note || 'Nghỉ';
-                        }
-                    });
-
-                    // --- DISPLAY CONTENT IN CELL ---
-                    let displayHtml = '';
-                    if (!isAbsent) {
-                        // Hiển thị công. Nếu là phút (VD: 455), có thể format lại nếu cần.
-                        // Ở đây giữ nguyên giá trị API trả về để chính xác.
-                        // Nếu muốn hiển thị giờ: (totalValue / 60).toFixed(1)
-                        displayHtml = `<span class="font-bold text-slate-700 text-sm">${Number(totalValue)}</span>`; 
-                        
-                        if (hasLate || hasEarly) {
-                            displayHtml += `<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>`;
-                        }
-                    } else {
-                        const isKP = absenceNote.toLowerCase().includes('không phép');
-                        const badgeClass = isKP ? 'text-red-600 bg-red-100 border-red-200' : 'text-orange-600 bg-orange-100 border-orange-200';
-                        displayHtml = `<span class="text-[10px] font-bold ${badgeClass} border px-1.5 py-0.5 rounded shadow-sm">${isKP ? 'KP' : 'P'}</span>`;
+                // --- 1. Main Display Logic ---
+                if (hasOff && !hasWork) {
+                    const isKP = dayLogs.some(l => l.ghichu && l.ghichu.toLowerCase().includes('không phép'));
+                    cellContent = `<span class="text-[10px] font-bold ${isKP ? 'text-red-600 bg-red-100 border-red-200' : 'text-orange-600 bg-orange-100 border-orange-200'} px-1 rounded border shadow-sm select-none">${isKP ? 'KP' : 'P'}</span>`;
+                } else if (totalWork > 0) {
+                    cellContent = `<strong>${Number(totalWork).toFixed(1).replace('.0','')}</strong>`;
+                    if (hasLate || hasEarly) {
+                        cellContent += `<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>`;
                     }
-                    cellContent = displayHtml;
-
-                    // --- TOOLTIP CONTENT ---
-                    const tooltipItemsHtml = dailyRecords.map((rec, idx) => {
-                        const timeStr = (rec.timeIn && rec.timeOut) ? `${rec.timeIn} - ${rec.timeOut}` : 'Chưa chấm đủ';
-                        const statusIcon = rec.status ? '✅' : '⛔';
-                        const warningText = [];
-                        if (rec.isLate) warningText.push(`Muộn ${rec.lateMin}p`);
-                        if (rec.isEarly) warningText.push(`Sớm ${rec.earlyMin}p`);
-                        
-                        const borderClass = idx > 0 ? 'border-t border-slate-600 mt-2 pt-2' : '';
-                        
-                        return `
-                            <div class="${borderClass}">
-                                <div class="font-bold text-emerald-400 mb-0.5 text-[11px]">${statusIcon} ${rec.shiftName || 'Ca làm việc'}</div>
-                                ${rec.status 
-                                    ? `<div>🕒 ${timeStr} <span class="text-slate-400">(${rec.value})</span></div>` 
-                                    : `<div class="text-orange-300">📝 ${rec.note || 'Nghỉ'}</div>`
-                                }
-                                ${warningText.length > 0 ? `<div class="text-orange-400 text-[10px] mt-0.5">⚠️ ${warningText.join(', ')}</div>` : ''}
-                            </div>
-                        `;
-                    }).join('');
-
-                    cellContent += `
-                        <div class="absolute z-[60] ${tooltipPosClass} left-1/2 -translate-x-1/2 w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none">
-                            <div class="bg-slate-800 text-white text-xs rounded-lg shadow-xl p-2.5 text-left leading-relaxed relative border border-slate-600">
-                                <div class="absolute ${arrowPosClass} left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600 rotate-45"></div>
-                                <div class="font-bold text-white mb-2 border-b border-slate-600 pb-1">📅 ${day.dateStr}</div>
-                                ${tooltipItemsHtml}
-                            </div>
-                        </div>
-                    `;
+                    cellContent = `<span class="text-slate-900">${cellContent}</span>`;
+                } else {
+                    cellContent = `<span class="text-orange-500 font-medium">0</span>`;
                 }
 
-                return `
-                    <td class="border-r border-slate-100 p-0 text-center group relative cursor-pointer hover:bg-blue-50 transition-colors ${cellBg}">
-                        <div class="h-12 flex items-center justify-center w-full relative">
-                            ${cellContent}
+                // --- 2. Tooltip Logic ---
+                const dateStr = `${String(i).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}`;
+                
+                const tooltipItemsHtml = dayLogs.map((rec, idx) => {
+                    // Time string
+                    const timeStr = (rec.tg_vao && rec.tg_ra)
+                        ? `${AppUtils.TimeUtils.formatDisplay(rec.tg_vao)} - ${AppUtils.TimeUtils.formatDisplay(rec.tg_ra)}`
+                        : (rec.codilam !== false ? 'Chưa chấm đủ' : '');
+
+                    // Warnings
+                    const warnings = [];
+                    if (rec.thoigiandimuon) warnings.push(`Muộn ${rec.thoigiandimuon}`);
+                    if (rec.thoigianvesom) warnings.push(`Sớm ${rec.thoigianvesom}`);
+
+                    // Status Line
+                    let statusHtml = '';
+                    if (rec.codilam === false) {
+                        statusHtml = `<div class="text-orange-300">📝 ${rec.ghichu || 'Nghỉ'}</div>`;
+                    } else {
+                        statusHtml = `<div>🕒 ${timeStr} <span class="text-slate-400">(${Number(rec.tg_lamviec||0).toFixed(1)}h)</span></div>`;
+                    }
+
+                    return `
+                        <div class="${idx > 0 ? 'border-t border-slate-600 mt-2 pt-2' : ''}">
+                            <div class="font-bold text-emerald-400 mb-0.5 text-[11px]">
+                                ${rec.codilam !== false ? '✅' : '⛔'} ${rec.tencalamviec || 'Ca làm việc'}
+                            </div>
+                            ${statusHtml}
+                            ${warnings.length
+                                ? `<div class="text-orange-400 text-[10px] mt-0.5">⚠️ ${warnings.join(', ')}</div>`
+                                : ''
+                            }
                         </div>
-                    </td>
+                    `;
+                }).join('');
+
+                cellContent += `
+                    <div class="absolute z-[60] ${tooltipPosClass} left-1/2 -translate-x-1/2
+                    w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100
+                    transition-all duration-200 pointer-events-none select-none">
+                        <div class="bg-slate-800 text-white text-xs rounded-lg shadow-xl
+                        p-2.5 text-left leading-relaxed relative border border-slate-600">
+                            
+                            <div class="absolute ${arrowPosClass} left-1/2 -translate-x-1/2
+                                w-2 h-2 bg-slate-800 border-l border-t border-slate-600 rotate-45">
+                            </div>
+
+                            <div class="font-bold text-white mb-2 border-b border-slate-600 pb-1">
+                                📅 ${dateStr}
+                            </div>
+
+                            ${tooltipItemsHtml}
+                        </div>
+                    </div>
                 `;
-            }).join('');
+            }
 
-            // Return Row HTML
-            return `
-                <tr class="hover:bg-slate-50 transition-colors group/row">
-                    <td class="sticky-col-left p-0 z-20">
-                        <div class="px-4 py-2 flex items-center gap-3 h-12 bg-white group-hover/row:bg-slate-50 transition-colors border-r border-slate-200">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0 border border-white shadow-sm">
-                                ${this.getInitials(emp.name)}
-                            </div>
-                            <div class="min-w-0 text-left">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-semibold text-slate-700 truncate" title="${emp.name}">${emp.name}</span>
-                                    <span class="text-[10px] bg-slate-100 text-slate-500 px-1 rounded border border-slate-200">${emp.code}</span>
-                                </div>
-                                <div class="text-[10px] text-slate-400 truncate">${emp.jobTitle}</div>
-                            </div>
-                        </div>
-                    </td>
-                    ${dailyCells}
-                    <td class="sticky-col-right p-0 text-center z-20">
-                        <div class="h-12 flex items-center justify-center bg-white group-hover/row:bg-slate-50 transition-colors font-bold text-emerald-600 border-l border-slate-200">
-                            ${Number(emp.totalWork)}
-                        </div>
-                    </td>
-                </tr>`;
-        }).join('');
-
-        this.elements.tableBody.innerHTML = html;
-    }
-
-    // --- Helpers ---
-    setLoading(state) {
-        if (this.elements.loading) {
-            this.elements.loading.classList.toggle('hidden', !state);
+            daysHtml += `
+                <td class="border-l border-slate-100 border-b p-0 text-center text-sm group relative cursor-pointer hover:bg-slate-50 transition-colors ${cellBg}">
+                    <div class="h-12 flex items-center justify-center w-full relative">
+                        ${cellContent}
+                    </div>
+                </td>
+            `;
         }
-        this.state.isLoading = state;
+
+        const totalHtml = `
+            <td class="px-2 py-3 text-center text-sm font-bold text-blue-600 border-l border-slate-200 border-b bg-slate-50 sticky right-0 z-20">
+                ${item.tongthoigianlamviec ? Number(item.tongthoigianlamviec).toFixed(1).replace('.0','') : '0'}
+            </td>
+        `;
+
+        tr.innerHTML = leftColHtml + daysHtml + totalHtml;
+        return tr;
     }
 
-    showError(msg) {
-        this.elements.tableBody.innerHTML = `<tr><td colspan="100" class="text-center py-12 text-red-500 font-medium">${msg}</td></tr>`;
+    renderCheckedRow(item) {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 border-b border-slate-200';
+        const timeIn = item.tg_vao ? AppUtils.TimeUtils.formatDisplay(item.tg_vao) : '--:--';
+        const timeOut = item.tg_ra ? AppUtils.TimeUtils.formatDisplay(item.tg_ra) : '--:--';
+        
+        tr.innerHTML = `
+            <td class="px-4 py-4 text-center">
+                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.id}">
+            </td>
+            <td class="px-4 py-4">
+                <div class="font-medium text-slate-900">${item.ten_nv}</div>
+                <div class="text-xs text-slate-500">${item.ma_nv}</div>
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-700">
+                <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-100">${item.tencalamviec || 'Ca mặc định'}</span>
+            </td>
+            <td class="px-4 py-4">
+                <div class="flex items-center gap-3 text-sm">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-slate-500 mb-0.5">Vào</span>
+                        <span class="font-mono font-medium ${item.codimuon ? 'text-red-600' : 'text-green-600'}">${timeIn}</span>
+                    </div>
+                    <i class="fas fa-arrow-right text-slate-300 text-xs"></i>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-slate-500 mb-0.5">Ra</span>
+                        <span class="font-mono font-medium ${item.covesom ? 'text-orange-600' : 'text-slate-700'}">${timeOut}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-4 py-4"><button class="text-slate-400 hover:text-blue-600"><i class="fas fa-ellipsis-h"></i></button></td>
+        `;
+        return tr;
     }
 
-    getInitials(name) {
-        if (!name) return '--';
-        const parts = name.split(' ');
-        if (parts.length === 1) return parts[0][0].toUpperCase();
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    renderUncheckedRow(item) {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 border-b border-slate-200';
+        tr.innerHTML = `
+            <td class="px-4 py-4 text-center">
+                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.nhanvien_id || item.id}">
+            </td>
+            <td class="px-4 py-4">
+                <div class="font-medium text-slate-900">${item.ten_nv}</div>
+                <div class="text-xs text-slate-500">${item.ma_nv}</div>
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-500">${item.tencalamviec || '--'}</td>
+            <td class="px-4 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Chưa chấm công</span>
+            </td>
+        `;
+        return tr;
     }
-    
-    exportReport() {
-        // Logic export: Redirect đến URL export của Django
-        const params = new URLSearchParams({
-            thoigian: this.elements.monthInput.value,
-            dept: this.state.deptFilter
+
+    initEventListeners() {
+        // 1. Filter Form Changes
+        this.els.filterForm.querySelectorAll('input, select').forEach(input => {
+            this.eventManager.add(input, 'change', () => this.handleTabChange(this.currentTabId));
         });
-        window.location.href = `/hrm/cham-cong/export-bao-cao/?${params.toString()}`;
+
+        // 2. Search Input Changes (Debounced)
+        if (this.els.searchInput) {
+            let timeout;
+            this.eventManager.add(this.els.searchInput, 'input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    this.handleTabChange(this.currentTabId);
+                }, 400); // 400ms debounce
+            });
+        }
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.TimekeepingSummary = new TimekeepingSummaryManager();
+    window.TimekeepingSummary.init();
+});

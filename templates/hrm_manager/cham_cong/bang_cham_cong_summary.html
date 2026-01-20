@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bảng Chấm Công Tổng Hợp{% endblock %}
+
+{% block styles %}
+<style>
+    /* Custom scrollbar */
+    .table-scroll-x::-webkit-scrollbar { height: 8px; }
+    .table-scroll-x::-webkit-scrollbar-track { background: #f1f5f9; }
+    .table-scroll-x::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .table-scroll-x::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Sticky Column */
+    .sticky-col-left {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background-color: white;
+        border-right: 2px solid #e2e8f0;
+    }
+    th.sticky-col-left { z-index: 20; background-color: #f8fafc; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg">
+        
+        <div id="tab-container" class="mb-4 border-b border-slate-200">
+            {% include "components/tab_nav.html" with tabs=tabs %}
+        </div>
+
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm tên hoặc mã NV..." show_add_btn=False filter_form_id="filter-form" filter_template="hrm_manager/cham_cong/partials/bang_cham_cong_summary_extral_filter.html" %}
+
+        <div class="flex-1 relative overflow-hidden">
+            
+            <div id="tab-tong-hop" class="tab-pane h-full flex flex-col">
+                <div class="overflow-auto table-scroll-x relative h-full border border-slate-200 rounded-lg">
+                    <table id="summary-table" class="min-w-full divide-y divide-slate-200 border-separate border-spacing-0">
+                        <thead class="bg-slate-50 sticky top-0 z-20">
+                            </thead>
+                        <tbody id="summary-table-body" class="divide-y divide-slate-200 bg-white">
+                            </tbody>
+                    </table>
+                </div>
+                
+                {# Footer: Chú thích & Tổng số nhân viên #}
+                <div class="mt-2">
+                    <div class="flex items-center justify-between gap-4 text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        {# Left side: Chú thích #}
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold text-slate-700 mr-1">Chú thích:</span>
+                            
+                            <div class="flex items-center gap-1.5" title="Ngày làm việc bình thường">
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                <span>Ngày công</span>
+                            </div>
+
+                            <div class="flex items-center gap-1.5" title="Có vi phạm giờ giấc">
+                                <div class="relative w-3 h-3 flex items-center justify-center bg-slate-100 border border-slate-200 rounded">
+                                    <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
+                                </div>
+                                <span>Đi muộn/Về sớm</span>
+                            </div>
+
+                            <div class="flex items-center gap-1.5" title="Nghỉ có phép">
+                                <span class="text-[10px] font-bold text-orange-600 bg-orange-100 px-1 rounded border border-orange-200">P</span>
+                                <span>Nghỉ phép</span>
+                            </div>
+
+                            <div class="flex items-center gap-1.5" title="Nghỉ không phép">
+                                <span class="text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded border border-red-200">KP</span>
+                                <span>Không phép</span>
+                            </div>
+                        </div>
+                        
+                        {# Right side: Tổng số nhân viên #}
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded">
+                            <span class="text-slate-600">Tổng:</span>
+                            <span id="employee-count" class="font-semibold text-slate-900">0</span>
+                            <span class="text-slate-500">NV</span>
+                        </div>
+                    </div>
+                </div>
+                
+                {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-summary" %}
+            </div>
+
+            <div id="tab-da-cham" class="tab-pane hidden h-full flex flex-col">
+                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-checked" class="rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Thời gian</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Chi tiết</th>' %}
+                    {% include "components/table_wrapper.html" with table_id="checked-table" tbody_id="checked-table-body" headers_html=headers show_checkbox=False %}
+                {% endwith %}
+                <div id="pagination-checked" class="mt-2">{% include "components/pagination.html" %}</div>
+                {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-checked" %}
+            </div>
+
+            <div id="tab-chua-cham" class="tab-pane hidden h-full flex flex-col">
+                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-unchecked" class="rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Trạng thái</th>' %}
+                    {% include "components/table_wrapper.html" with table_id="unchecked-table" tbody_id="unchecked-table-body" headers_html=headers show_checkbox=False %}
+                {% endwith %}
+                <div id="pagination-unchecked" class="mt-2">{% include "components/pagination.html" %}</div>
+                {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-unchecked" %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/cham_cong/cham_cong_summary.js' %}"></script>
+{% endblock scripts %}

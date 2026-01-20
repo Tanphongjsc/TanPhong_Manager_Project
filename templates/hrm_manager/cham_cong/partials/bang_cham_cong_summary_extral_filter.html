@@ -1,0 +1,23 @@
+{% comment %}
+    Filter: Chọn tháng
+    QUAN TRỌNG: Đã thêm name="thang" để API nhận diện
+{% endcomment %}
+<div class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <i class="fa-regular fa-calendar text-slate-500 mr-2 text-[10px]"></i>
+    <input type="month" id="filter-month" name="thang"
+           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+</div>
+
+{% comment %} Filter: Loại hình (VP/SX) {% endcomment %}
+<select id="filter-type" name="loai_chamcong"
+    class="px-2 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer text-slate-600 h-[26px]">
+    <option value="">Tất cả Loại</option>
+    <option value="VP">Khối Văn phòng</option>
+    <option value="SX">Khối Sản xuất</option>
+</select>
+
+{% comment %} Filter: Phòng ban (Load AJAX) {% endcomment %}
+<select id="filter-dept" name="phongban_id"
+    class="px-2 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer text-slate-600 max-w-[150px] truncate h-[26px]">
+    <option value="">Tất cả Phòng ban</option>
+</select>

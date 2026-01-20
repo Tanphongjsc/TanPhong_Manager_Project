@@ -463,10 +463,11 @@ def parse_time_to_minutes(time_str):
     Returns:
         int | None: Số phút từ 00:00, hoặc None nếu không hợp lệ
     """
-    if not time_str or len(time_str) != 5:
+    time_str_formatted = format_time(time_str)
+    if not time_str_formatted or len(time_str_formatted) != 5:
         return None
     try:
-        h, m = map(int, time_str.split(':'))
+        h, m = map(int, time_str_formatted.split(':'))
         if 0 <= h <= 23 and 0 <= m <= 59:
             return h * 60 + m
         return None
@@ -507,3 +508,26 @@ def diff_minutes(time1, time2):
     if minutes1 is None or minutes2 is None:
         return 0
     return minutes2 - minutes1
+
+def is_overnight_shift(start_minutes, end_minutes):
+    """Kiểm tra ca làm việc có qua đêm không"""
+    return start_minutes is not None and end_minutes is not None and end_minutes < start_minutes
+
+def calculate_work_minutes_with_overnight(in_minutes, out_minutes, start_minutes, end_minutes):
+    """Tính số phút làm việc, xử lý ca qua đêm"""
+    if in_minutes is None or out_minutes is None:
+        return 0
+    
+    # Kiểm tra ca qua đêm
+    is_overnight = is_overnight_shift(start_minutes, end_minutes)
+    
+    if is_overnight:
+        # Normalize giờ ra nếu nó nhỏ hơn hoặc bằng giờ kết thúc (qua ngày mới)
+        if out_minutes <= end_minutes:
+            out_minutes += 1440  # Cộng thêm 24h (1440 phút)
+        # Normalize giờ vào nếu cần
+        if in_minutes <= end_minutes:
+            in_minutes += 1440
+    
+    work_minutes = out_minutes - in_minutes
+    return max(0, work_minutes)

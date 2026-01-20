@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField
+from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q
 from django.db.models.functions import Cast, Coalesce
 from django.db import transaction
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -16,7 +16,8 @@ from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import Bangchamcong, Khunggionghitrua, Phongban, Lichlamviecthucte, Calamviec, Lichsucongtac
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
-from apps.hrm_manager.utils.view_helpers import diff_minutes, parse_time_to_minutes, parse_minutes_to_time
+from apps.hrm_manager.utils.view_helpers import diff_minutes, parse_time_to_minutes, parse_minutes_to_time, calculate_work_minutes_with_overnight
+from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 
 # ============================================================
 # HELPERS
@@ -103,6 +104,7 @@ def view_tong_hop_lam_them(request):
 # VIEWS: QUẢN LÝ CHẤM CÔNG
 # ============================================================
 
+@login_required
 def view_bang_cham_cong(request):
     """Bảng chấm công"""
     context = {
@@ -118,6 +120,7 @@ def view_bang_cham_cong(request):
     }
     return render(request, "hrm_manager/cham_cong/bang_cham_cong.html", context)
 
+@login_required
 def view_tong_hop_cham_cong(request):
     """Tổng hợp chấm công"""
     context = {
@@ -125,9 +128,14 @@ def view_tong_hop_cham_cong(request):
             {'title': 'Chấm công', 'url': '#'},
             {'title': 'Quản lý chấm công', 'url': None},
             {'title': 'Tổng hợp chấm công', 'url': None},
+        ],
+        'tabs': [
+            {'label': 'Tổng hợp tháng', 'url': '#tab-tong-hop', 'url_name': 'tab_summary', 'is_active': True},
+            {'label': 'Đã chấm công', 'url': '#tab-da-cham', 'url_name': 'tab_checked_in'},
+            {'label': 'Chưa chấm công', 'url': '#tab-chua-cham', 'url_name': 'tab_not_checked_in'},
         ]
     }
-    return render(request, "hrm_manager/cham_cong/bang_cham_cong_tong_hop.html", context)
+    return render(request, "hrm_manager/cham_cong/bang_cham_cong_summary.html", context)
 
 # ================ API CHO BẢNG CHẤM CÔNG ================
 @login_required
@@ -166,7 +174,7 @@ def api_bang_cham_cong_list(request):
                     khoang_tg_cham_cong_vao = diff_minutes(khung_gio.get("thoigianbatdau"), tg_vao)
 
                     # Xử lý Checkout (Auto-fill nếu quên)
-                    if item.get("cocancheckout", True) and not tg_ra:
+                    if not item.get("cocancheckout", True):
                         tg_ra = khung_gio.get("thoigianketthuc")
                         item['thoigianchamcongra'] = tg_ra 
 
@@ -233,16 +241,22 @@ def api_bang_cham_cong_list(request):
                     # --- CASE 3: TỰ DO ---
                     elif loai_calamviec == "TU_DO":
                         if khoang_tg_cham_cong_vao < 0:
-                            thoigiandisom = abs(khoang_tg_cham_cong_vao) # [FIX] Thêm abs()
+                            thoigiandisom = abs(khoang_tg_cham_cong_vao)
 
                         # Tính giờ ra
                         khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
                         if khoang_tg_cham_cong_ra < 0:
                             thoigianvemuon = abs(khoang_tg_cham_cong_ra)
                         
-                        # Ca tự do tính theo thực tế (Ra - Vào)
-                        tg_thuc_te_lam = diff_minutes(tg_vao, tg_ra)
-                        tg_lam_viec = max(0, tg_thuc_te_lam)
+                        # Ca tự do tính theo thực tế (Ra - Vào) với xử lý ca qua đêm
+                        in_minutes = parse_time_to_minutes(tg_vao)
+                        out_minutes = parse_time_to_minutes(tg_ra)
+                        start_minutes = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
+                        end_minutes = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
+                        
+                        tg_lam_viec = calculate_work_minutes_with_overnight(
+                            in_minutes, out_minutes, start_minutes, end_minutes
+                        )
 
                     # --- LOGIC CHUNG ---
                     
@@ -472,35 +486,51 @@ def api_bang_cham_cong_nhan_vien_list(request):
     return JsonResponse({'success': True, 'data': final_data_list}, status=200)
 
 
-@login_required
+# @login_required
 @require_http_methods(["GET"])
 def api_tong_hop_cham_cong_thang(request):
     """API Tổng hợp chấm công tháng cho nhân viên"""
     
     try:
-        thoi_gian = dt.datetime.strptime(request.GET.get('thoigian', dt.datetime.now().strftime("%Y-%m")), "%Y-%m")
-        year = thoi_gian.year
-        month = thoi_gian.month
+        phongban_id = request.GET.get('phongban_id', None)
+        phong_ban_cons_ids = get_all_child_department_ids(phongban_id, isnclude_root=True) if phongban_id else None
+        
+        search_query = request.GET.get('search', None)
+        
+        loai_cham_cong = request.GET.get('loai_chamcong', "all")
+        thoi_gian = dt.datetime.strptime(request.GET.get('thang', dt.datetime.now().strftime("%Y-%m")), "%Y-%m")
     except ValueError:
         return JsonResponse({'success': False, 'message': 'Thời gian không hợp lệ'})
     
-    # Lấy danh sách nhân viên (Dùng values để lấy dict ngay lập tức)
-    ds_nhan_vien = list(Lichsucongtac.objects.filter(
-        trangthai='active'
-    ).annotate(
+    # Base Query lấy nhân viên đang active
+    queryset = Lichsucongtac.objects.filter(trangthai='active')
+    
+    # Filter theo phòng ban (Nếu có chọn)
+    if phong_ban_cons_ids is not None:
+        queryset = queryset.filter(phongban_id__in=phong_ban_cons_ids)
+        
+    # Filter theo tìm kiếm (Nếu có nhập)
+    if search_query:
+        queryset = queryset.filter(
+            Q(nhanvien__hovaten__icontains=search_query) | 
+            Q(nhanvien__manhanvien__icontains=search_query)
+        )
+    
+    # Annotate và thực thi
+    ds_nhan_vien = list(queryset.annotate(
         ten_nv=F('nhanvien__hovaten'),
         ma_nv=F('nhanvien__manhanvien'),
         ten_cv=F("chucvu__tenvitricongviec")
     ).values('nhanvien_id', 'ten_nv', 'ma_nv', 'phongban_id', 'ten_cv').order_by('nhanvien_id'))
     
-    # Lấy dữ liệu chấm công (Dùng .values() để TỐI ƯU TỐC ĐỘ, tránh overhead của Model Object)
+    # Lấy dữ liệu chấm công
     ds_cham_cong = Bangchamcong.objects.filter(
-        ngaylamviec__year=year, 
-        ngaylamviec__month=month
+        ngaylamviec__year=thoi_gian.year, 
+        ngaylamviec__month=thoi_gian.month
     ).values()
 
     # Xử lý gom nhóm dữ liệu chấm công theo nhân viên
-    map_cc = defaultdict(lambda: {'tong_gio': 0, 'logs': defaultdict(list)}) # {nhanvien_id: {'tong_gio': int, 'logs': {ngay: [log_entries]}}}
+    map_cc = defaultdict(lambda: {'tong_gio': 0, 'logs': defaultdict(list), 'loai_chamcong': ''}) # {nhanvien_id: {'tong_gio': int, 'logs': {ngay: [log_entries], 'loai_chamcong': str}}}
 
     for cc in ds_cham_cong:
         nv_id = cc['nhanvien_id']
@@ -528,20 +558,30 @@ def api_tong_hop_cham_cong_thang(request):
         }
         
         map_cc[nv_id]['logs'][ngay_str].append(log_entry)
+        map_cc[nv_id]['loai_chamcong'] = cc.get('loaichamcong', None)
 
     # Merge dữ liệu vào danh sách nhân viên
+    merge_ds_nv = []
     for nv in ds_nhan_vien:
         data_cc = map_cc.get(nv['nhanvien_id'])
-        
+
         if data_cc:
             nv['logs'] = data_cc['logs']
             nv['tongthoigianlamviec'] = data_cc['tong_gio']
+            nv['loai_chamcong'] = data_cc['loai_chamcong']
         else:
             nv['logs'] = {}
             nv['tongthoigianlamviec'] = 0
+            nv['loai_chamcong'] = ''
+        
+        if loai_cham_cong == 'all' or loai_cham_cong == nv['loai_chamcong']:
+            merge_ds_nv.append(nv)
 
-    return JsonResponse({'success': True, 'data': ds_nhan_vien}, status=200)
+    return JsonResponse({'success': True, 'data': merge_ds_nv, 'total': len(merge_ds_nv)}, status=200)
 
+
+def api_check_cham_cong(request):
+    return JsonResponse({'success': True, 'message': 'API check chấm công hoạt động'}, status=200)
 
 # ============================================================
 # VIEWS: ĐƠN BÁO & BÁO CÁO

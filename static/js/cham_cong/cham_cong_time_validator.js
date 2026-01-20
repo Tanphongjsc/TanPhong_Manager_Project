@@ -151,6 +151,7 @@ class ChamCongTimeValidator {
         // Check thời gian làm việc tối thiểu
         if (checkIn && schedule.minWorkTime !== null && schedule.minWorkTime > 0) {
             let effectiveOutMin = (!employee?.cocancheckout || outMin === null) ? schedule.endTime : outMin;
+            if (isOvernight) effectiveOutMin = this.normalizeTimeForOvernight(effectiveOutMin, schedule, 'checkOut');
             if (inMin !== null && effectiveOutMin !== null) {
                 const lunchMinutes = this._calcLunchMinutes(inMin, effectiveOutMin, employee?.khunggionghitrua, schedule);
                 const actualWorkMinutes = Math.max(0, effectiveOutMin - inMin - lunchMinutes);
@@ -200,6 +201,7 @@ class ChamCongTimeValidator {
         if (!checkIn || (!checkOut && employee?.cocancheckout === true)) return analysis;
 
         if (!employee?.cocancheckout && outMin === null) outMin = schedule.endTime;
+        if (isOvernight && outMin !== null) outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
 
         // Check thời gian làm việc tối thiểu
         if (inMin !== null && outMin !== null && schedule.minWorkTime > 0) {

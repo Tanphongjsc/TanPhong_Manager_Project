@@ -35,6 +35,7 @@ from apps.hrm_manager.utils.view_helpers import (
 # VIEW URLS - TRANG CHÍNH
 # ============================================================================
 
+@login_required
 def view_cay_nhan_su_index(request):
     """Hiển thị trang cây nhân sự"""
 
@@ -61,6 +62,7 @@ def view_cay_nhan_su_index(request):
 
     return render(request, "hrm_manager/quan_ly_nhan_su/caynhansu.html", context=context)
 
+@login_required
 def view_nhan_vien_index(request, id):
     """Hiển thị trang chi tiết nhân viên từ cây nhân sự"""
 
@@ -233,7 +235,7 @@ def api_cong_ty_detail(request, id):
 
 
 # ==================== API PHÒNG BAN ====================
-@login_required
+# @login_required
 @require_http_methods(["GET", "POST"])
 def api_phong_ban_list(request):
     """API lấy danh sách và tạo mới Phòng Ban"""
@@ -464,7 +466,7 @@ def api_phong_ban_nhan_vien(request):
         }, status=400)
 
 
-@login_required
+# @login_required
 @require_http_methods(["GET"])
 def api_phong_ban_tree(request):
     """API lấy cây phòng ban"""
