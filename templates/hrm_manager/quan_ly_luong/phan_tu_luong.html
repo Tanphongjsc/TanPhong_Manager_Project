@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý Phần tử lương{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Sidebar nhóm đang là z-[60], nên Modal cần > 60 để hiển thị đè lên */
+    #group-form-modal {
+        z-index: 70 !important;
+    }
+</style>
+
+<div class="flex flex-col h-full space-y-4">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col">
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+        {# Toolbar chính: Button Quản lý nhóm đã có trong file extra_filters bạn gửi #}
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm theo Tên hoặc Mã..." show_add_btn=True create_text="Thêm phần tử" create_onclick="window.PhanTuLuongManager.openSidebar('create')" filter_form_id="filter-form" filter_template="hrm_manager/quan_ly_luong/partials/phantu_luong_extra_filters.html" btn_color="blue" %}
+
+        {% with headers='<th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider min-w-[150px]">Tên Phần Tử</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Mã PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-32">Loại PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-36">Nhóm PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider">Mô tả</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Trạng Thái</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-24"></th>' %}
+            {% include "components/table_wrapper.html" with table_id="salary-elements-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
+        {% endwith %}
+        
+        {% include "components/pagination.html" %}
+        {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions" %}
+    </div>
+</div>
+
+{% include "components/crud_sidebar.html" with sidebar_id="phantu-sidebar" overlay_id="phantu-sidebar-overlay" form_id="phantu-form" form_fields_template="hrm_manager/quan_ly_luong/partials/phantu_luong_form_sidebar.html" title="Thông tin phần tử lương" submit_text="Lưu thông tin" %}
+
+{% include "hrm_manager/quan_ly_luong/partials/nhom_phantu_list_sidebar.html" %}
+
+{% include "components/crud_modal.html" with modal_id="group-form-modal" form_id="group-form" title="Thông tin nhóm phần tử" content_template="hrm_manager/quan_ly_luong/partials/nhom_phantu_form_modal.html" submit_label="Lưu nhóm" %}
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+// ============================================================
+// 1. MANAGER NHÓM PHẦN TỬ (Logic Mới)
+// ============================================================
+class NhomPhanTuManager extends BaseCRUDManager {
+    constructor() {
+        // Cấu hình CRUD cho Modal Form (Create/Edit/Delete)
+        super({
+            uiMode: 'modal', // Quan trọng: Sử dụng Modal cho form
+            modalId: 'group-form-modal',
+            formId: 'group-form',
+            codeField: 'manhom',
+            autoCode: {
+                sourceField: 'tennhom',
+                targetField: 'manhom'
+            },
+            apiUrls: {
+                // API CRUD cho Nhóm
+                create: '/hrm/quan-ly-luong/api/nhom-phan-tu-luong/list',
+                detail: (id) => `/hrm/quan-ly-luong/api/nhom-phan-tu-luong/detail/${id}`,
+                update: (id) => `/hrm/quan-ly-luong/api/nhom-phan-tu-luong/detail/${id}`,
+                delete: (id) => `/hrm/quan-ly-luong/api/nhom-phan-tu-luong/detail/${id}`,
+                // API List cho Table
+                list: '/hrm/quan-ly-luong/api/nhom-phan-tu-luong/list' 
+            },
+            entityName: 'nhóm phần tử',
+            // Khi submit form thành công -> Refresh bảng nhóm & Reload select box ở màn hình chính
+            onAfterSubmit: () => {
+                this.tableManager.refresh(); 
+                window.PhanTuLuongManager.loadGroupData(); 
+            },
+            // Khi xóa thành công -> Refresh bảng nhóm & Reload select box
+            onRefreshTable: () => {
+                this.tableManager.refresh();
+                window.PhanTuLuongManager.loadGroupData();
+            }
+        });
+
+        // Khởi tạo Sidebar (Container chứa danh sách) thủ công
+        this.groupListSidebar = AppUtils.Sidebar.init('group-list-sidebar', 'group-sidebar-overlay', {
+            onClose: () => {
+                // Reset search khi đóng sidebar nếu muốn
+            }
+        });
+        
+        this.tableManager = null;
+    }
+
+    init() {
+        super.init(); // Init CRUD Modal logic
+        this.initTable(); // Init List Table logic
+    }
+
+    // Logic riêng để mở Sidebar danh sách
+    openGroupListSidebar() {
+        if (this.groupListSidebar) {
+            this.groupListSidebar.open();
+            // Refresh data khi mở
+            if (this.tableManager) {
+                this.tableManager.refresh();
+            }
+        }
+    }
+
+    closeGroupListSidebar() {
+        if (this.groupListSidebar) {
+            this.groupListSidebar.close();
+        }
+    }
+
+    // Cấu hình TableManager cho danh sách nhóm
+    initTable() {
+        this.tableManager = new TableManager({
+            tableBody: document.getElementById('group-table-body'),
+            paginationContainer: document.getElementById('group-pagination'),
+            searchInput: document.getElementById('group-search-input'),
+            apiEndpoint: this.config.apiUrls.list,
+            pageSize: 10,
+            enableBulkActions: false, // Bảng nhóm đơn giản, không cần bulk delete
+            
+            onRenderRow: (item) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-slate-700">
+                        <a href="javascript:void(0)" onclick="window.NhomPhanTuManager.openModal('edit', ${item.id})" class="text-blue-600 hover:text-blue-800">
+                            ${item.tennhom}
+                        </a>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500 bg-slate-50 w-fit rounded">${item.manhom}</td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="window.NhomPhanTuManager.openModal('edit', ${item.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Sửa">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            </button>
+                            <button onclick="window.NhomPhanTuManager.deleteItem(${item.id}, '${item.tennhom}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Xóa">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                return tr;
+            }
+        });
+    }
+}
+
+// ============================================================
+// 2. MANAGER CHÍNH (Phần tử lương - Code cũ giữ nguyên)
+// ============================================================
+class PhanTuLuongManager extends BaseCRUDManager {
+    constructor() {
+        super({
+            sidebarId: 'phantu-sidebar',
+            overlayId: 'phantu-sidebar-overlay',
+            formId: 'phantu-form',
+            codeField: 'maphantu',
+            autoCode: { sourceField: 'tenphantu', targetField: 'maphantu' },
+            apiUrls: {
+                detail: (id) => `/hrm/quan-ly-luong/api/phan-tu-luong/detail/${id}`, 
+                update: (id) => `/hrm/quan-ly-luong/api/phan-tu-luong/detail/${id}`,
+                delete: (id) => `/hrm/quan-ly-luong/api/phan-tu-luong/detail/${id}`,
+                create: '/hrm/quan-ly-luong/api/phan-tu-luong/list',
+                toggleStatus: (id) => `/hrm/quan-ly-luong/api/phan-tu-luong/${id}/toggle-status/`,
+            },
+            httpMethods: { toggleStatus: 'POST' },
+            entityName: 'phần tử lương',
+            onRefreshTable: () => this.tableManager && this.tableManager.refresh(),
+            fillFormData: (data) => {
+                const form = document.getElementById('phantu-form');
+                if (!form) return;
+                AppUtils.Form.setData(form, data);
+                // Xử lý riêng cho select nếu cần
+                const nhomSelect = form.querySelector('[name="nhomphantu"]');
+                if(nhomSelect && data.nhomphantu) nhomSelect.value = data.nhomphantu;
+            }
+        });
+        this.tableManager = null;
+    }
+
+    init() {
+        super.init();
+        this.initTable();
+        this.loadGroupData();
+    }
+
+    // Hàm load options cho Select box (Dùng chung cho cả Filter và Form)
+    async loadGroupData() {
+        try {
+            const response = await AppUtils.API.get('/hrm/quan-ly-luong/api/nhom-phan-tu-luong/list');
+            // Giả sử API trả về list trực tiếp hoặc {data: []}
+            const groups = response.data || response;
+            
+            if (Array.isArray(groups)) {
+                const optionsHtml = groups.map(group => 
+                    `<option value="${group.id}">${group.tennhom}</option>`
+                ).join('');
+
+                // Fill Toolbar Filter
+                const filterSelect = document.getElementById('filter-group-select');
+                if (filterSelect) {
+                    filterSelect.innerHTML = '<option value="">Tất cả nhóm</option>' + optionsHtml;
+                }
+
+                // Fill Sidebar Form
+                const formSelect = document.getElementById('nhomphantu');
+                if (formSelect) {
+                    formSelect.innerHTML = '<option value="">-- Chọn nhóm --</option>' + optionsHtml;
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi tải nhóm:', error);
+        }
+    }
+
+    initTable() {
+        this.tableManager = new TableManager({
+            tableBody: document.getElementById('table-body'),
+            paginationContainer: document.querySelector('.pagination-container'),
+            searchInput: document.getElementById('search-input'),
+            filtersForm: document.getElementById('filter-form'),
+            selectAllCheckbox: document.getElementById('select-all-checkbox'),
+            bulkActionsContainer: document.getElementById('bulk-actions'),
+            enableBulkActions: true,
+            onBulkDelete: (ids) => this.deleteMultipleItems(ids),
+            apiEndpoint: "/hrm/quan-ly-luong/api/phan-tu-luong/list",
+            onRenderRow: (item) => {
+                // ... (Giữ nguyên logic render row của bạn) ...
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-200';
+                
+                const isChecked = item.trangthai === 'active';
+                const statusHtml = `
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer status-toggle" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>`;
+
+                let loaiHienThi = item.loaiphantu === 'THU_NHAP' ? 'Thu nhập' : (item.loaiphantu === 'KHAU_TRU' ? 'Khấu trừ' : item.loaiphantu);
+                let loaiClass = item.loaiphantu === 'THU_NHAP' ? 'text-green-600 font-medium' : (item.loaiphantu === 'KHAU_TRU' ? 'text-red-600 font-medium' : 'text-slate-600');
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-center"><input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}"></td>
+                    <td class="px-3 py-3"><a href="javascript:void(0);" onclick="window.PhanTuLuongManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:text-blue-700 font-medium">${item.tenphantu || ''}</a></td>
+                    <td class="px-3 py-3 text-slate-600 font-mono text-xs">${item.maphantu || ''}</td>
+                    <td class="px-3 py-3 ${loaiClass}">${loaiHienThi}</td>
+                    <td class="px-3 py-3 text-slate-600"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">${item.nhomphantu_ten || item.nhomphantu || ''}</span></td>
+                    <td class="px-3 py-3 text-slate-500 text-sm truncate max-w-[200px]" title="${item.mota || ''}">${item.mota || ''}</td>
+                    <td class="px-3 py-3">${statusHtml}</td>
+                    <td class="px-3 py-3">
+                        <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <button onclick="window.PhanTuLuongManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:bg-blue-50 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                            <button onclick="window.PhanTuLuongManager.deleteItem(${item.id}, '${item.tenphantu}')" class="text-red-600 hover:bg-red-50 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div>
+                    </td>
+                `;
+                return tr;
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Khởi tạo cả 2 Manager
+    window.NhomPhanTuManager = new NhomPhanTuManager();
+    window.NhomPhanTuManager.init();
+
+    window.PhanTuLuongManager = new PhanTuLuongManager();
+    window.PhanTuLuongManager.init();
+});
+</script>
+{% endblock scripts %}
