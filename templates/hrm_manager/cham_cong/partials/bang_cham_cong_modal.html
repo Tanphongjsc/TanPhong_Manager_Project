@@ -1,0 +1,38 @@
+{# Modal hiển thị chi tiết vi phạm ràng buộc giờ chấm công #}
+<div id="violations-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-150" aria-hidden="true">
+    <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden transform scale-95 transition-transform duration-150 flex flex-col">
+        {# Header - Đơn giản hơn #}
+        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <i class="fa-solid fa-exclamation text-amber-600 text-sm"></i>
+                </div>
+                <h3 data-modal-title class="text-base font-semibold text-slate-800">
+                    Kiểm tra giờ chấm công
+                </h3>
+            </div>
+            <button type="button" data-modal-close class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Đóng">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        {# Content - Được render động bởi JS #}
+        <div id="violations-modal-body" class="px-5 py-4 overflow-y-auto custom-scrollbar flex-1">
+            {# Nội dung sẽ được inject bởi JavaScript #}
+        </div>
+
+        {# Footer - Đơn giản hơn #}
+        <div class="flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-200 bg-slate-50 shrink-0">
+            <button type="button" data-modal-close class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+                Quay lại
+            </button>
+            <button type="button" id="btn-force-save" class="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                Bỏ qua & Lưu
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </div>
+    </div>
+</div>

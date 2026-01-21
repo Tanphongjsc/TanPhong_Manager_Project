@@ -15,6 +15,7 @@
             if (localStorage.getItem('servicesSubmenuState') === 'true') html.classList.add('submenu-services-open');
             if (localStorage.getItem('hrmSubmenuState') === 'true') html.classList.add('submenu-hrm-open');
             if (localStorage.getItem('chamcongSubmenuState') === 'true') html.classList.add('submenu-chamcong-open');
+            if (localStorage.getItem('quanlyluongSubmenuState') === 'true') html.classList.add('submenu-quanlyluong-open');
         })();
     </script>
 
@@ -98,6 +99,12 @@
         html.submenu-services-open #services-menu-toggle .fa-chevron-down,
         html.submenu-hrm-open #hrm-menu-toggle .fa-chevron-down{transform:rotate(180deg)}
         html.submenu-chamcong-open #chamcong-menu-toggle .fa-chevron-down { /* <-- Thêm dòng này */
+            transform: rotate(180deg);
+        }
+        html.submenu-quanlyluong-open #quanlyluong-submenu {
+            grid-template-rows: 1fr;
+        }
+        html.submenu-quanlyluong-open #quanlyluong-menu-toggle .fa-chevron-down {
             transform: rotate(180deg);
         }
         /* Tooltips */
@@ -379,6 +386,71 @@
                 </div>
             </div>
 
+            <!-- Quản lý Tính lương -->
+            <div class="submenu-container" data-menu="quanlyluong">
+                <a href="#" id="quanlyluong-menu-toggle" aria-expanded="false" aria-controls="quanlyluong-submenu" class="sidebar-link" data-title="Tính lương">
+                    <i class="fas fa-money-bill-wave w-6 text-gray-400 shrink-0"></i>
+                    <span class="ml-3 sidebar-text flex-1">Tính lương</span>
+                    <i class="fas fa-chevron-down sidebar-text shrink-0"></i>
+                </a>
+
+                <div class="submenu-tooltip shadow-xl">
+                    <div class="tooltip-header">
+                        <i class="fas fa-money-bill-wave mr-2"></i>Tính lương
+                    </div>
+                    <div class="py-2 overflow-y-auto max-h-[60vh]">
+                        <div class="px-4 pb-1 pt-2 text-xs font-bold text-blue-600 uppercase tracking-wider">Thiết lập tính lương</div>
+                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-tag me-2"></i>Phần tử lương</a>
+                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-list me-2"></i>Chế độ lương</a>
+                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-calendar me-2"></i>Kỳ lương</a>
+
+                        <div class="my-2 border-t border-gray-200"></div>
+
+                        <div class="px-4 pb-1 text-xs font-bold text-blue-600 uppercase tracking-wider">Tính lương</div>
+                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-table me-2"></i>Bảng lương</a>
+                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-file-invoice-dollar me-2"></i>Phiếu Lương</a>
+
+                        <div class="my-2 border-t border-gray-200"></div>
+                        <a href="#" class="tooltip-link"><i class="fas fa-chart-bar me-2"></i>Báo cáo</a>
+                    </div>
+                </div>
+
+                <div id="quanlyluong-submenu" class="submenu">
+                    <div class="submenu-inner pl-8 pt-2 space-y-1">
+                        <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">
+                            Thiết lập tính lương
+                        </div>
+                        <a href="#" class="sub-link pl-6" data-title="Phần tử lương">
+                            <i class="fas fa-tag w-6 text-gray-400"></i><span class="sidebar-text">Phần tử lương</span>
+                        </a>
+                        <a href="#" class="sub-link pl-6" data-title="Chế độ lương">
+                            <i class="fas fa-list w-6 text-gray-400"></i><span class="sidebar-text">Chế độ lương</span>
+                        </a>
+                        <a href="#" class="sub-link pl-6" data-title="Kỳ lương">
+                            <i class="fas fa-calendar w-6 text-gray-400"></i><span class="sidebar-text">Kỳ lương</span>
+                        </a>
+
+                        <div class="my-2 border-t border-gray-700 mx-4"></div>
+
+                        <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">
+                            Tính lương
+                        </div>
+                        <a href="#" class="sub-link pl-6" data-title="Bảng lương">
+                            <i class="fas fa-table w-6 text-gray-400"></i><span class="sidebar-text">Bảng lương</span>
+                        </a>
+                        <a href="#" class="sub-link pl-6" data-title="Phiếu Lương">
+                            <i class="fas fa-file-invoice-dollar w-6 text-gray-400"></i><span class="sidebar-text">Phiếu Lương</span>
+                        </a>
+
+                        <div class="my-2 border-t border-gray-700 mx-4"></div>
+
+                        <a href="#" class="sub-link" data-title="Báo cáo">
+                            <i class="fas fa-chart-bar w-6 text-gray-400"></i><span class="sidebar-text">Báo cáo</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Cài đặt -->
             <a href="#" class="sidebar-link relative" data-title="Cài đặt">
                 <i class="fas fa-cog w-6 text-gray-400 shrink-0"></i>
@@ -580,7 +652,10 @@
             clearActive();
             if (best) {
                 markActiveByHref(best);
-                updateTitle(qs(`#sidebar-nav a[href="${best}"]`)?.dataset?.title || 'Dashboard');
+                const normalEl = qs(`#sidebar-nav a[href="${best}"]:not(.tooltip-link)`);
+                const tipEl = qs(`.submenu-tooltip a[href="${best}"]`);
+                const title = (normalEl?.dataset?.title || normalEl?.textContent?.trim() || tipEl?.dataset?.title || tipEl?.textContent?.trim() || 'Dashboard');
+                updateTitle(title);
             } else updateTitle('Dashboard');
         };
         document.addEventListener('click', (e) => {
@@ -588,7 +663,7 @@
             if (!link) return;
             clearActive();
             markActiveByHref(link.getAttribute('href'));
-            updateTitle(link.dataset.title || 'Dashboard');
+            updateTitle(link.dataset.title || link.textContent?.trim() || 'Dashboard');
         });
 
         // User menu

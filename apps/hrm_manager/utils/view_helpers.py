@@ -431,6 +431,31 @@ def get_field_value(request, field_name, default=''):
 # TIME HELPERS
 # ============================================================================
 
+def format_time(time_str):
+    """
+    Định dạng chuyển chuỗi thời gian HH:mm:ssXXX về thành chuỗi giờ HH:MM, bỏ qua phần giây và timezone.
+
+    Args:
+        time_str (str): Chuỗi thời gian dạng 'HH:mm:ssXXX'
+
+    Returns:
+        str: Chuỗi thời gian dạng 'HH:MM'
+    """
+
+    if not time_str or len(time_str) < 5:
+        return None
+    try:
+        h, m, *_ = time_str.split(':')
+        h = int(h)
+        m = int(m)
+        if 0 <= h <= 23 and 0 <= m <= 59:
+            return f'{h:02}:{m:02}'
+        return None
+    except ValueError:
+        return None
+
+
+
 def parse_time_to_minutes(time_str):
     """
     Parse chuỗi HH:MM thành số phút tính từ 00:00.
@@ -441,10 +466,11 @@ def parse_time_to_minutes(time_str):
     Returns:
         int | None: Số phút từ 00:00, hoặc None nếu không hợp lệ
     """
-    if not time_str or len(time_str) != 5:
+    time_str_formatted = format_time(time_str)
+    if not time_str_formatted or len(time_str_formatted) != 5:
         return None
     try:
-        h, m = map(int, time_str.split(':'))
+        h, m = map(int, time_str_formatted.split(':'))
         if 0 <= h <= 23 and 0 <= m <= 59:
             return h * 60 + m
         return None
@@ -452,3 +478,59 @@ def parse_time_to_minutes(time_str):
         return None
 
 
+def parse_minutes_to_time(minutes):
+    """
+    Chuyển số phút thành chuỗi giờ dạng 'HH:MM'.
+
+    Args:
+        minutes (int): Số phút từ 00:00
+
+    Returns:
+        str | None: Chuỗi giờ dạng 'HH:MM', hoặc None nếu không hợp lệ
+    """
+    if not isinstance(minutes, int) or minutes < 0 or minutes >= 1440:
+        return None
+    h = minutes // 60
+    m = minutes % 60
+    return f'{h:02}:{m:02}'
+
+
+def diff_minutes(time1, time2):
+    """
+    Tính hiệu số phút giữa hai thời gian dạng 'HH:MM'.
+
+    Args:
+        time1 (str): Thời gian đầu dạng 'HH:MM'
+        time2 (str): Thời gian sau dạng 'HH:MM'
+
+    Returns:
+        int | None: Hiệu số phút (time2 - time1), hoặc None nếu không hợp lệ
+    """
+    minutes1 = parse_time_to_minutes(format_time(time1))
+    minutes2 = parse_time_to_minutes(format_time(time2))
+    if minutes1 is None or minutes2 is None:
+        return 0
+    return minutes2 - minutes1
+
+def is_overnight_shift(start_minutes, end_minutes):
+    """Kiểm tra ca làm việc có qua đêm không"""
+    return start_minutes is not None and end_minutes is not None and end_minutes < start_minutes
+
+def calculate_work_minutes_with_overnight(in_minutes, out_minutes, start_minutes, end_minutes):
+    """Tính số phút làm việc, xử lý ca qua đêm"""
+    if in_minutes is None or out_minutes is None:
+        return 0
+    
+    # Kiểm tra ca qua đêm
+    is_overnight = is_overnight_shift(start_minutes, end_minutes)
+    
+    if is_overnight:
+        # Normalize giờ ra nếu nó nhỏ hơn hoặc bằng giờ kết thúc (qua ngày mới)
+        if out_minutes <= end_minutes:
+            out_minutes += 1440  # Cộng thêm 24h (1440 phút)
+        # Normalize giờ vào nếu cần
+        if in_minutes <= end_minutes:
+            in_minutes += 1440
+    
+    work_minutes = out_minutes - in_minutes
+    return max(0, work_minutes)
