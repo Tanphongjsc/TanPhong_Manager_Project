@@ -1,3 +1,4 @@
+from django.forms import model_to_dict
 from django.shortcuts import render
 from django.urls import reverse
 from django.http import JsonResponse
@@ -68,6 +69,149 @@ def tinh_luong_cham_cong(data_list):
     ket_qua = payroll_calculator.calculate_all(field_formula='bieu_thuc', field_params='tham_so', field_id='nhanvien_id')
 
     return ket_qua
+
+def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False):
+    """
+    Gom dữ liệu chấm công theo trạng thái đã/ chưa chấm công.
+    da_cham_cong=True  -> Lấy danh sách đã chấm đủ số lần.
+    da_cham_cong=False -> Lấy danh sách còn thiếu số lần chấm công.
+    """
+
+    # Subquery: Đếm số lần nhân viên đã chấm công trong ngày
+    sq_dem_so_lan_cham_cong = Bangchamcong.objects.filter(
+        ngaylamviec=ngay_lam_viec,
+        nhanvien=OuterRef('nhanvien_id')
+    ).values('nhanvien').annotate(
+        cnt=Count('id')
+    ).values('cnt')
+
+    # Main Query: Lấy lịch làm việc thực tế
+    qs_lich_lam_viec = Lichlamviecthucte.objects.filter(
+        ngaylamviec=ngay_lam_viec
+    ).annotate(
+        # Gắn số lần đã chấm công vào mỗi dòng
+        total_cham_cong=Coalesce(Subquery(sq_dem_so_lan_cham_cong, output_field=IntegerField()), 0),
+        
+        # Alias các trường dữ liệu cần dùng để code ngắn gọn hơn
+        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
+        sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
+        cocancheckout=F('calamviec__cocancheckout'),
+        loaicalamviec=F('calamviec__loaichamcong'), 
+        tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
+
+        # Build JSON danh sách khung giờ (Bao gồm ĐẦY ĐỦ các trường như yêu cầu)
+        list_khung_gio_json=JSONBAgg(
+            Func(
+                Value('thoigianbatdau'), Cast('calamviec__khunggiolamviec__thoigianbatdau', CharField()),
+                Value('thoigianketthuc'), Cast('calamviec__khunggiolamviec__thoigianketthuc', CharField()),
+                Value('thoigianchophepchamcongsomnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepchamcongsomnhat', CharField()),
+                Value('thoigianchophepvemuonnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepvemuonnhat', CharField()),
+                Value('thoigianchophepdenmuon'), F('calamviec__khunggiolamviec__thoigianchophepdenmuon'),
+                Value('thoigiandimuonkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigiandimuonkhongtinhchamcong'),
+                Value('thoigianchophepvesomnhat'), F('calamviec__khunggiolamviec__thoigianchophepvesomnhat'),
+                Value('thoigianvesomkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigianvesomkhongtinhchamcong'),
+                Value('thoigianlamviectoithieu'), F('calamviec__khunggiolamviec__thoigianlamviectoithieu'),
+                Value('sophutdenmuon'), F('calamviec__khunggiolamviec__sophutdenmuon'),
+                Value('sophutdensom'), F('calamviec__khunggiolamviec__sophutdensom'),
+                function='jsonb_build_object'
+            ),
+            ordering='calamviec__khunggiolamviec__created_at'
+        )
+    )
+
+    if da_cham_cong:
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__gte=F('solanchamcongtrongngay'))
+    else:
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__lt=F('solanchamcongtrongngay'))
+
+    qs_lich_lam_viec = qs_lich_lam_viec.values(
+        "nhanvien_id", "calamviec_id", "cophaingaynghi",
+        "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca", "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
+        "list_khung_gio_json",
+        hovaten=F('nhanvien__hovaten'),
+        manhanvien=F('nhanvien__manhanvien'),
+        loainv=F('nhanvien__loainv__id')
+    )
+
+    # Chuyển QuerySet thành List để xử lý Python
+    ds_lich_raw = list(qs_lich_lam_viec)
+    if not ds_lich_raw:
+        return []
+
+    # Lấy danh sách ID duy nhất
+    list_nhanvien_id = [item['nhanvien_id'] for item in ds_lich_raw]
+    set_calamviec_id = {item['calamviec_id'] for item in ds_lich_raw}
+
+    # Query 1 lần lấy Phòng Ban -> Map {nhanvien_id: phongban_id}
+    qs_phongban = Lichsucongtac.objects.filter(
+        nhanvien_id__in=list_nhanvien_id,
+        trangthai="active"
+    ).values('nhanvien_id', 'phongban_id')
+    map_nhan_vien_phong_ban = {p['nhanvien_id']: p['phongban_id'] for p in qs_phongban}
+
+    # Query lấy Nghỉ Trưa -> Map {calamviec_id: [list_nghi_trua]}
+    qs_nghitrua = Calamviec.objects.filter(id__in=set_calamviec_id).values('id').annotate(
+        json_nghitrua=JSONBAgg(
+            Func(
+                Value('giobatdau'), Cast('khunggionghitrua__giobatdau', CharField()),
+                Value('gioketthuc'), Cast('khunggionghitrua__gioketthuc', CharField()),
+                function='jsonb_build_object'
+            )
+        )
+    )
+    map_calam_nghitrua = {c['id']: c['json_nghitrua'] for c in qs_nghitrua}
+
+    # Xử lý logic gộp dữ liệu
+    final_result_map = {}
+    gio_hien_tai_str = timezone.now().time().strftime("%H:%M")
+
+    for item in ds_lich_raw:
+        item['phongban_id'] = map_nhan_vien_phong_ban.get(item['nhanvien_id'])
+        item['khunggionghitrua'] = map_calam_nghitrua.get(item['calamviec_id'], [])
+
+        list_khung_gio = item.pop('list_khung_gio_json', [])
+        if not list_khung_gio:
+            continue
+
+        idx_lan_cham = item['total_cham_cong']
+        if da_cham_cong:
+            idx_lan_cham = max(0, min(idx_lan_cham - 1, len(list_khung_gio) - 1))
+
+        # Logic Merge Shift: Nhiều khung giờ nhưng chỉ chấm 1 lần
+        if item['sokhunggiotrongca'] > 1 and item['solanchamcongtrongngay'] == 1:
+            khung_dau = list_khung_gio[0]
+            khung_cuoi = list_khung_gio[-1]
+            khung_dau.update({
+                'thoigianketthuc': khung_cuoi['thoigianketthuc'],
+                'thoigianchophepvesomnhat': khung_cuoi['thoigianchophepvesomnhat'],
+                'thoigianchophepvemuonnhat': khung_cuoi['thoigianchophepvemuonnhat'],
+                'thoigianvesomkhongtinhchamcong': khung_cuoi['thoigianvesomkhongtinhchamcong']
+            })
+            item['khunggiolamviec'] = khung_dau
+        else:
+            if idx_lan_cham >= len(list_khung_gio):
+                continue
+            item['khunggiolamviec'] = list_khung_gio[idx_lan_cham]
+
+        nhanvien_id = item['nhanvien_id']
+        tg_batdau = item['khunggiolamviec'].get('thoigianbatdau')
+        khoang_cach_tg = abs(diff_minutes(tg_batdau, gio_hien_tai_str))
+        item['da_cham_cong'] = da_cham_cong
+
+        if nhanvien_id not in final_result_map:
+            item['_temp_diff'] = khoang_cach_tg
+            final_result_map[nhanvien_id] = item
+        else:
+            if khoang_cach_tg < final_result_map[nhanvien_id]['_temp_diff']:
+                item['_temp_diff'] = khoang_cach_tg
+                final_result_map[nhanvien_id] = item
+
+    final_data_list = []
+    for val in final_result_map.values():
+        val.pop('_temp_diff', None)
+        final_data_list.append(val)
+
+    return final_data_list
 
 
 # ============================================================
@@ -178,6 +322,25 @@ def api_bang_cham_cong_list(request):
                         tg_ra = khung_gio.get("thoigianketthuc")
                         item['thoigianchamcongra'] = tg_ra 
 
+                    # Tính tổng phút làm việc thô (Ra - Vào)
+                    in_minutes = parse_time_to_minutes(tg_vao)
+                    out_minutes = parse_time_to_minutes(tg_ra)
+                    start_minutes = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
+                    end_minutes = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
+                    
+                    # Tính thời gian làm việc thô xử lý qua đêm
+                    tg_lam_viec_thuc = calculate_work_minutes_with_overnight(
+                        in_minutes, out_minutes, start_minutes, end_minutes
+                    )
+                    
+                    # Trừ thời gian nghỉ trưa
+                    tong_phut_nghi_trua = 0
+                    for nghi_trua in item.get('khunggionghitrua', []):
+                        if nghi_trua.get('giobatdau') and nghi_trua.get('gioketthuc'):
+                            tong_phut_nghi_trua += diff_minutes(nghi_trua['giobatdau'], nghi_trua['gioketthuc'])
+                    
+                    tg_lam_viec_thuc = tg_lam_viec_thuc - abs(tong_phut_nghi_trua)
+
                     # --- CASE 1: CỐ ĐỊNH ---
                     if loai_calamviec == "CO_DINH":
                         limit_di_muon = khung_gio.get("thoigianchophepdenmuon", 0)
@@ -199,7 +362,7 @@ def api_bang_cham_cong_list(request):
                             thoigianvemuon = abs(khoang_tg_cham_cong_ra)
 
                         # Tổng hợp thời gian (Trừ đi muộn/về sớm)
-                        tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
+                        tg_lam_viec = tg_lam_viec_thuc
 
                     # --- CASE 2: LINH ĐỘNG ---
                     elif loai_calamviec == "LINH_DONG":
@@ -236,7 +399,7 @@ def api_bang_cham_cong_list(request):
                             thoigianvemuon = abs(khoang_tg_cham_cong_ra)
 
                         # Tổng hợp thời gian
-                        tg_lam_viec = item.get("tongthoigianlamvieccuaca") - thoigiandimuon - thoigianvesom
+                        tg_lam_viec = tg_lam_viec_thuc
 
                     # --- CASE 3: TỰ DO ---
                     elif loai_calamviec == "TU_DO":
@@ -248,19 +411,12 @@ def api_bang_cham_cong_list(request):
                         if khoang_tg_cham_cong_ra < 0:
                             thoigianvemuon = abs(khoang_tg_cham_cong_ra)
                         
-                        # Ca tự do tính theo thực tế (Ra - Vào) với xử lý ca qua đêm
-                        in_minutes = parse_time_to_minutes(tg_vao)
-                        out_minutes = parse_time_to_minutes(tg_ra)
-                        start_minutes = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
-                        end_minutes = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
-                        
-                        tg_lam_viec = calculate_work_minutes_with_overnight(
-                            in_minutes, out_minutes, start_minutes, end_minutes
-                        )
+                        # Ca tự do tính theo thực tế đã được tính ở trên
+                        tg_lam_viec = tg_lam_viec_thuc
 
                     # --- LOGIC CHUNG ---
                     
-                    # Tính OT
+                    # Tính thời gian OT
                     if item.get('cotinhlamthem', False) and thoigianvemuon > 0:
                         tg_lam_them = item.get("sophutot", 0)
 
@@ -283,7 +439,11 @@ def api_bang_cham_cong_list(request):
                     # Lấy thời gian chuẩn của ca để tính đơn giá
                     thoi_gian_chuan_ca = item.get("tongthoigianlamvieccuaca")
                     if thoi_gian_chuan_ca is None or thoi_gian_chuan_ca == 0:
-                        thoi_gian_chuan_ca = 480 # Fallback 8 tiếng nếu dữ liệu lỗi
+                        # Fallback: Tính từ khung giờ chuẩn
+                        thoi_gian_chuan_ca = diff_minutes(khung_gio.get("thoigianbatdau"), khung_gio.get("thoigianketthuc")) - abs(tong_phut_nghi_trua)
+                        
+                        if thoi_gian_chuan_ca <= 0:
+                            thoi_gian_chuan_ca = 480 # Fallback cuối cùng: 8 tiếng
                     
                     # Tính tiền OT
                     tien_ot = 0
@@ -329,7 +489,7 @@ def api_bang_cham_cong_list(request):
             return JsonResponse({
                 'success': True,
                 'message': 'Chấm công thành công',
-                'data': ket_qua_thanh_tien,
+                'data':[model_to_dict(obj) for obj in objs_bang_cham_cong],
             }, status = 201)
 
         except Exception as e:
@@ -345,145 +505,8 @@ def api_bang_cham_cong_nhan_vien_list(request):
     except (ValueError, TypeError):
         return JsonResponse({'success': False, 'message': 'Ngày không hợp lệ'}, status=400)
 
-    # Subquery: Đếm số lần nhân viên đã chấm công trong ngày
-    sq_dem_so_lan_cham_cong = Bangchamcong.objects.filter(
-        ngaylamviec=ngay_lam_viec,
-        nhanvien=OuterRef('nhanvien_id')
-    ).values('nhanvien').annotate(
-        cnt=Count('id')
-    ).values('cnt')
-
-    # Main Query: Lấy lịch làm việc thực tế
-    qs_lich_lam_viec = Lichlamviecthucte.objects.filter(
-        ngaylamviec=ngay_lam_viec
-    ).annotate(
-        # Gắn số lần đã chấm công vào mỗi dòng
-        total_cham_cong=Coalesce(Subquery(sq_dem_so_lan_cham_cong, output_field=IntegerField()), 0),
-        
-        # Alias các trường dữ liệu cần dùng để code ngắn gọn hơn
-        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
-        sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
-        cocancheckout=F('calamviec__cocancheckout'),
-        loaicalamviec=F('calamviec__loaichamcong'), 
-        tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
-
-        # Build JSON danh sách khung giờ (Bao gồm ĐẦY ĐỦ các trường như yêu cầu)
-        list_khung_gio_json=JSONBAgg(
-            Func(
-                Value('thoigianbatdau'), Cast('calamviec__khunggiolamviec__thoigianbatdau', CharField()),
-                Value('thoigianketthuc'), Cast('calamviec__khunggiolamviec__thoigianketthuc', CharField()),
-                Value('thoigianchophepchamcongsomnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepchamcongsomnhat', CharField()),
-                Value('thoigianchophepvemuonnhat'), Cast('calamviec__khunggiolamviec__thoigianchophepvemuonnhat', CharField()),
-                Value('thoigianchophepdenmuon'), F('calamviec__khunggiolamviec__thoigianchophepdenmuon'),
-                Value('thoigiandimuonkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigiandimuonkhongtinhchamcong'),
-                Value('thoigianchophepvesomnhat'), F('calamviec__khunggiolamviec__thoigianchophepvesomnhat'),
-                Value('thoigianvesomkhongtinhchamcong'), F('calamviec__khunggiolamviec__thoigianvesomkhongtinhchamcong'),
-                Value('thoigianlamviectoithieu'), F('calamviec__khunggiolamviec__thoigianlamviectoithieu'),
-                Value('sophutdenmuon'), F('calamviec__khunggiolamviec__sophutdenmuon'),
-                Value('sophutdensom'), F('calamviec__khunggiolamviec__sophutdensom'),
-                function='jsonb_build_object'
-            ),
-            ordering='calamviec__khunggiolamviec__created_at'
-        )
-    ).filter(
-        # Logic: Chỉ lấy người chưa hoàn thành đủ số lần chấm công
-        total_cham_cong__lt=F('solanchamcongtrongngay')
-    ).values(
-        "nhanvien_id", "calamviec_id", "cophaingaynghi",
-        "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca", "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
-        "list_khung_gio_json",
-        hovaten=F('nhanvien__hovaten'),
-        manhanvien=F('nhanvien__manhanvien'),
-        loainv=F('nhanvien__loainv__id')
-    )
-
-    # Chuyển QuerySet thành List để xử lý Python
-    ds_lich_raw = list(qs_lich_lam_viec)
-    
-    if not ds_lich_raw:
-        return JsonResponse({'success': True, 'data': []}, status=200)
-
-    # 4. Chuẩn bị dữ liệu Map
-    # Lấy danh sách ID duy nhất
-    list_nhanvien_id = [item['nhanvien_id'] for item in ds_lich_raw]
-    set_calamviec_id = {item['calamviec_id'] for item in ds_lich_raw}
-
-    # Query 1 lần lấy Phòng Ban -> Map {nhanvien_id: phongban_id}
-    qs_phongban = Lichsucongtac.objects.filter(
-        nhanvien_id__in=list_nhanvien_id,
-        trangthai="active"
-    ).values('nhanvien_id', 'phongban_id')
-    map_nhan_vien_phong_ban = {p['nhanvien_id']: p['phongban_id'] for p in qs_phongban}
-
-    # Query lấy Nghỉ Trưa -> Map {calamviec_id: [list_nghi_trua]}
-    qs_nghitrua = Calamviec.objects.filter(id__in=set_calamviec_id).values('id').annotate(
-        json_nghitrua=JSONBAgg(
-            Func(
-                Value('giobatdau'), Cast('khunggionghitrua__giobatdau', CharField()),
-                Value('gioketthuc'), Cast('khunggionghitrua__gioketthuc', CharField()),
-                function='jsonb_build_object'
-            )
-        )
-    )
-    map_calam_nghitrua = {c['id']: c['json_nghitrua'] for c in qs_nghitrua}
-
-    # 5. Xử lý logic gộp dữ liệu
-    final_result_map = {} # Dùng dict để lọc trùng nhân viên theo logic thời gian
-    gio_hien_tai_str = timezone.now().time().strftime("%H:%M")
-
-    for item in ds_lich_raw:
-        # 5.1 Gán dữ liệu từ Map vào Item
-        item['phongban_id'] = map_nhan_vien_phong_ban.get(item['nhanvien_id'])
-        item['khunggionghitrua'] = map_calam_nghitrua.get(item['calamviec_id'], [])
-
-        # 5.2 Xử lý chọn khung giờ làm việc, Lấy ra list và xoá key cũ để output sạch sẽ
-        list_khung_gio = item.pop('list_khung_gio_json', [])
-        idx_lan_cham = item['total_cham_cong']
-
-        # Safety check: Index out of range
-        if not list_khung_gio or idx_lan_cham >= len(list_khung_gio):
-            continue
-
-        # Logic Merge Shift: Nhiều khung giờ nhưng chỉ chấm 1 lần
-        if item['sokhunggiotrongca'] > 1 and item['solanchamcongtrongngay'] == 1:
-            khung_dau = list_khung_gio[0]
-            khung_cuoi = list_khung_gio[-1]
-            
-            # Update thông tin ra về từ khung cuối vào khung đầu
-            khung_dau.update({
-                'thoigianketthuc': khung_cuoi['thoigianketthuc'],
-                'thoigianchophepvesomnhat': khung_cuoi['thoigianchophepvesomnhat'],
-                'thoigianchophepvemuonnhat': khung_cuoi['thoigianchophepvemuonnhat'],
-                'thoigianvesomkhongtinhchamcong': khung_cuoi['thoigianvesomkhongtinhchamcong']
-            })
-            item['khunggiolamviec'] = khung_dau
-        else:
-            # Lấy đúng khung giờ theo thứ tự lần chấm
-            item['khunggiolamviec'] = list_khung_gio[idx_lan_cham]
-
-        # 5.3 Logic lọc trùng: Chỉ giữ lại ca làm việc gần giờ hiện tại nhất
-        nhanvien_id = item['nhanvien_id']
-        tg_batdau = item['khunggiolamviec'].get('thoigianbatdau')
-        
-        # Tính khoảng cách thời gian (Giả định hàm diff_minutes có sẵn)
-        khoang_cach_tg = abs(diff_minutes(tg_batdau, gio_hien_tai_str))
-        
-        if nhanvien_id not in final_result_map:
-            item['_temp_diff'] = khoang_cach_tg
-            final_result_map[nhanvien_id] = item
-        else:
-            # Nếu item mới gần giờ hiện tại hơn item cũ -> Ghi đè
-            if khoang_cach_tg < final_result_map[nhanvien_id]['_temp_diff']:
-                item['_temp_diff'] = khoang_cach_tg
-                final_result_map[nhanvien_id] = item
-
-    # 6. Dọn dẹp dữ liệu thừa trước khi trả về
-    final_data_list = []
-    for val in final_result_map.values():
-        val.pop('_temp_diff', None) # Xoá biến tạm dùng để so sánh
-        final_data_list.append(val)
-
-    return JsonResponse({'success': True, 'data': final_data_list}, status=200)
+    data = build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False)
+    return JsonResponse({'success': True, 'data': data}, status=200)
 
 
 # @login_required
@@ -580,8 +603,21 @@ def api_tong_hop_cham_cong_thang(request):
     return JsonResponse({'success': True, 'data': merge_ds_nv, 'total': len(merge_ds_nv)}, status=200)
 
 
+# @login_required
+@require_http_methods(["GET"])
 def api_check_cham_cong(request):
-    return JsonResponse({'success': True, 'message': 'API check chấm công hoạt động'}, status=200)
+    """API lấy danh sách nhân viên đã hoặc chưa chấm công trong ngày."""
+    query_param_da_cham_cong = request.GET.get('dachamcong')
+    if query_param_da_cham_cong is None:
+        return JsonResponse({'success': False, 'message': 'Giá trị dachamcong không hợp lệ (true/false)'}, status=400)
+
+    try:
+        ngay_lam_viec = dt.date.fromisoformat(request.GET.get("ngaylamviec"))
+    except (ValueError, TypeError):
+        return JsonResponse({'success': False, 'message': 'Ngày không hợp lệ'}, status=400)
+
+    data = build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=query_param_da_cham_cong)
+    return JsonResponse({'success': True, 'data': data}, status=200)
 
 # ============================================================
 # VIEWS: ĐƠN BÁO & BÁO CÁO

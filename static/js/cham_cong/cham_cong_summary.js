@@ -13,6 +13,9 @@ class TimekeepingSummaryManager {
         this.els = {
             filterForm: document.getElementById('filter-form'),
             filterMonth: document.getElementById('filter-month'),
+            filterDate: document.getElementById('filter-date'),
+            filterMonthWrapper: document.getElementById('filter-month-wrapper'),
+            filterDateWrapper: document.getElementById('filter-date-wrapper'),
             filterDept: document.getElementById('filter-dept'),
             searchInput: document.getElementById('search-input'),
             tabNav: document.querySelector('#tab-container nav'),
@@ -40,8 +43,9 @@ class TimekeepingSummaryManager {
 
     initDefaultFilters() {
         const today = new Date();
-        const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const monthStr = AppUtils.DateUtils.format(today, 'yyyy-MM');
         if (this.els.filterMonth) this.els.filterMonth.value = monthStr;
+        if (this.els.filterDate) this.els.filterDate.value = AppUtils.DateUtils.toInputValue(today);
     }
 
     async loadDepartments() {
@@ -76,60 +80,71 @@ class TimekeepingSummaryManager {
     }
 
     activateTabUI(activeLink, targetId) {
-        this.els.tabNav.querySelectorAll('a').forEach(l => {
-            l.classList.remove('border-blue-600', 'text-blue-600');
-            l.classList.add('border-transparent', 'text-slate-500', 'hover:border-slate-300');
+        const activeClasses = ['border-blue-600', 'text-blue-600'];
+        const inactiveClasses = ['border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300'];
+        
+        this.els.tabNav.querySelectorAll('a').forEach(link => {
+            if (link === activeLink) {
+                link.classList.remove(...inactiveClasses);
+                link.classList.add(...activeClasses);
+            } else {
+                link.classList.remove(...activeClasses);
+                link.classList.add(...inactiveClasses);
+            }
         });
-        activeLink.classList.remove('border-transparent', 'text-slate-500', 'hover:border-slate-300');
-        activeLink.classList.add('border-blue-600', 'text-blue-600');
-        Object.keys(this.els.panes).forEach(k => 
-            this.els.panes[k].classList.toggle('hidden', k !== targetId));
+        
+        Object.entries(this.els.panes).forEach(([id, pane]) => 
+            pane.classList.toggle('hidden', id !== targetId));
     }
 
     getFilterParams() {
         const params = {};
+        const tabId = this.currentTabId;
         // 1. Get data from Filter Form
         if (this.els.filterForm) {
-            const formData = new FormData(this.els.filterForm);
-            for (const [key, value] of formData.entries()) {
-                if (value) params[key] = value;
-            }
+            const formData = AppUtils.Form.getData(this.els.filterForm);
+            Object.entries(formData).forEach(([key, value]) => {
+                if (!value) return;
+                if (tabId === '#tab-tong-hop' && key === 'ngaylamviec') return;
+                if (tabId !== '#tab-tong-hop' && key === 'thang') return;
+                params[key] = value;
+            });
         }
         // 2. Get data from Search Input (manually since we removed it from TableManager config)
         if (this.els.searchInput && this.els.searchInput.value) {
             params['search'] = this.els.searchInput.value.trim();
         }
+        // 3. Bổ sung ngày cho các tab theo ngày
+        if (tabId !== '#tab-tong-hop') {
+            this.ensureDateValue();
+            if (this.els.filterDate?.value) params['ngaylamviec'] = this.els.filterDate.value;
+        }
         return params;
     }
 
     handleTabChange(tabId) {
+        this.updateFilterVisibility(tabId);
         this.currentTabId = tabId;
         const currentParams = this.getFilterParams();
 
-        if (tabId === '#tab-tong-hop' && this.managers.summary) {
-            // Render lại header trước khi load data
-            this.renderSummaryHeader();
-            // QUAN TRỌNG: Bind lại checkbox select-all sau khi render header
-            this.rebindSummarySelectAll();
-            
-            // Update params cho manager hiện tại
-            this.managers.summary.options.apiParams = { ...currentParams };
-            this.managers.summary.refresh();
+        const tabConfig = {
+            '#tab-tong-hop': () => {
+                this.renderSummaryHeader();
+                this.rebindSummarySelectAll();
+                this.managers.summary.options.apiParams = { ...currentParams };
+                this.managers.summary.refresh();
+            },
+            '#tab-da-cham': () => {
+                this.managers.checked.options.apiParams = { ...currentParams, dachamcong: 'True' };
+                this.managers.checked.refresh();
+            },
+            '#tab-chua-cham': () => {
+                this.managers.unchecked.options.apiParams = { ...currentParams, dachamcong: 'False' };
+                this.managers.unchecked.refresh();
+            }
+        };
 
-        } else if (tabId === '#tab-da-cham' && this.managers.checked) {
-            this.managers.checked.options.apiParams = {
-                ...currentParams,
-                dachamcong: 'True'
-            };
-            this.managers.checked.refresh();
-
-        } else if (tabId === '#tab-chua-cham' && this.managers.unchecked) {
-            this.managers.unchecked.options.apiParams = {
-                ...currentParams,
-                dachamcong: 'False'
-            };
-            this.managers.unchecked.refresh();
-        }
+        tabConfig[tabId]?.();
     }
 
     // --- KHẮC PHỤC LỖI 1 & 2: RE-BIND SELECT ALL ---
@@ -148,53 +163,34 @@ class TimekeepingSummaryManager {
         }
     }
 
-    async updateEmployeeCount() {
-        if (!this.els.employeeCount) return;
-        
-        try {
-            const params = this.getFilterParams();
-            const response = await AppUtils.API.get(this.apiUrls.summary, { ...params, page_size: 1 });
-            const total = response.total || 0;
-            this.els.employeeCount.textContent = total;
-        } catch (e) {
-            console.error('Error fetching employee count:', e);
-            this.els.employeeCount.textContent = '0';
-        }
-    }
+    // employee count now set directly from pagination.total in onDataLoaded
 
     initManagers() {
-        const commonConfig = {
-            // OPTIMIZATION: Không truyền searchInput và filtersForm vào commonConfig
-            // Điều này ngăn TableManager tự động bind events trên cả 3 tabs
-            // Việc xử lý events sẽ do TimekeepingSummaryManager quản lý tập trung
-            // searchInput: this.els.searchInput,
-            // filtersForm: this.els.filterForm,
+        const createManager = (config) => new TableManager({
             enableBulkActions: true,
-            onBulkExport: (ids) => AppUtils.Notify.info(`Exporting ${ids.length} items...`)
-        };
+            onBulkExport: (ids) => AppUtils.Notify.info(`Exporting ${ids.length} items...`),
+            pageSize: 9999,
+            autoLoad: false,
+            ...config
+        });
 
-        // Manager Tab 1: Tổng hợp
-        this.managers.summary = new TableManager({
-            ...commonConfig,
+        this.managers.summary = createManager({
             tableBody: document.getElementById('summary-table-body'),
             paginationContainer: document.getElementById('pagination-summary'),
             bulkActionsContainer: document.getElementById('bulk-actions-summary'),
-            // SelectAllCheckbox ban đầu chưa có, sẽ được update bởi rebindSummarySelectAll
             apiEndpoint: this.apiUrls.summary,
             pageSize: 20,
             onRenderRow: (item, index) => this.renderSummaryRow(item, index),
-            // Khi data load xong, cần update trạng thái checkbox header (tránh trường hợp header reset mất state)
-            onDataLoaded: () => {
+            onDataLoaded: (_data, pagination) => {
                 this.managers.summary.updateBulkActions();
-                this.updateEmployeeCount();
-            } 
+                if (pagination?.total !== undefined && this.els.employeeCount) {
+                    this.els.employeeCount.textContent = pagination.total;
+                }
+            }
         });
 
-        // Manager Tab 2
-        this.managers.checked = new TableManager({
-            ...commonConfig,
+        this.managers.checked = createManager({
             tableBody: document.getElementById('checked-table-body'),
-            paginationContainer: document.getElementById('pagination-checked'),
             bulkActionsContainer: document.getElementById('bulk-actions-checked'),
             selectAllCheckbox: document.getElementById('select-all-checked'),
             apiEndpoint: this.apiUrls.checkLog,
@@ -202,11 +198,8 @@ class TimekeepingSummaryManager {
             onRenderRow: (item) => this.renderCheckedRow(item)
         });
 
-        // Manager Tab 3
-        this.managers.unchecked = new TableManager({
-            ...commonConfig,
+        this.managers.unchecked = createManager({
             tableBody: document.getElementById('unchecked-table-body'),
-            paginationContainer: document.getElementById('pagination-unchecked'),
             bulkActionsContainer: document.getElementById('bulk-actions-unchecked'),
             selectAllCheckbox: document.getElementById('select-all-unchecked'),
             apiEndpoint: this.apiUrls.checkLog,
@@ -227,6 +220,22 @@ class TimekeepingSummaryManager {
 
     getDaysInMonth(year, month) {
         return new Date(year, month, 0).getDate();
+    }
+
+    ensureDateValue() {
+        if (this.els.filterDate && !this.els.filterDate.value) {
+            this.els.filterDate.value = AppUtils.DateUtils.toInputValue(new Date());
+        }
+    }
+
+    updateFilterVisibility(tabId) {
+        const isSummaryTab = tabId === '#tab-tong-hop';
+        if (this.els.filterMonthWrapper) {
+            this.els.filterMonthWrapper.classList.toggle('hidden', !isSummaryTab);
+        }
+        if (this.els.filterDateWrapper) {
+            this.els.filterDateWrapper.classList.toggle('hidden', isSummaryTab);
+        }
     }
 
     renderSummaryHeader() {
@@ -265,7 +274,7 @@ class TimekeepingSummaryManager {
         }
 
         html += `
-                <th class="px-3 py-3 text-center text-xs font-bold text-slate-700 uppercase border-l border-slate-200 min-w-[80px] bg-slate-50 sticky right-0">
+                <th class="sticky-col-right px-3 py-3 text-center text-xs font-bold text-slate-700 uppercase border-l border-slate-200 min-w-[80px] bg-slate-50">
                     TỔNG
                 </th>
             </tr>
@@ -425,7 +434,7 @@ class TimekeepingSummaryManager {
         }
 
         const totalHtml = `
-            <td class="px-2 py-3 text-center text-sm font-bold text-blue-600 border-l border-slate-200 border-b bg-slate-50 sticky right-0 z-20">
+            <td class="sticky-col-right px-2 py-3 text-center text-sm font-bold text-blue-600 border-l border-slate-200 border-b bg-slate-50">
                 ${item.tongthoigianlamviec ? Number(item.tongthoigianlamviec).toFixed(1).replace('.0','') : '0'}
             </td>
         `;
@@ -434,22 +443,29 @@ class TimekeepingSummaryManager {
         return tr;
     }
 
+    renderEmployeeInfo(item) {
+        return `
+            <div class="font-medium text-slate-900">${item.hovaten || 'N/A'}</div>
+            <div class="text-xs text-slate-500">${item.manhanvien || 'N/A'}</div>
+        `;
+    }
+
     renderCheckedRow(item) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 border-b border-slate-200';
-        const timeIn = item.tg_vao ? AppUtils.TimeUtils.formatDisplay(item.tg_vao) : '--:--';
-        const timeOut = item.tg_ra ? AppUtils.TimeUtils.formatDisplay(item.tg_ra) : '--:--';
+        
+        const khungGio = item.khunggiolamviec || {};
+        const timeIn = AppUtils.TimeUtils.formatDisplay(khungGio.thoigianbatdau);
+        const timeOut = AppUtils.TimeUtils.formatDisplay(khungGio.thoigianketthuc);
+        const tenCa = this.getShiftName(item.loaicalamviec, khungGio);
         
         tr.innerHTML = `
             <td class="px-4 py-4 text-center">
-                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.id}">
+                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.nhanvien_id}">
             </td>
-            <td class="px-4 py-4">
-                <div class="font-medium text-slate-900">${item.ten_nv}</div>
-                <div class="text-xs text-slate-500">${item.ma_nv}</div>
-            </td>
+            <td class="px-4 py-4">${this.renderEmployeeInfo(item)}</td>
             <td class="px-4 py-4 text-sm text-slate-700">
-                <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-100">${item.tencalamviec || 'Ca mặc định'}</span>
+                <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-100">${tenCa}</span>
             </td>
             <td class="px-4 py-4">
                 <div class="flex items-center gap-3 text-sm">
@@ -472,20 +488,42 @@ class TimekeepingSummaryManager {
     renderUncheckedRow(item) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 border-b border-slate-200';
+        
+        const khungGio = item.khunggiolamviec || {};
+        const tenCa = this.getShiftName(item.loaicalamviec, khungGio);
+        
         tr.innerHTML = `
             <td class="px-4 py-4 text-center">
-                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.nhanvien_id || item.id}">
+                <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 cursor-pointer" data-id="${item.nhanvien_id}">
             </td>
-            <td class="px-4 py-4">
-                <div class="font-medium text-slate-900">${item.ten_nv}</div>
-                <div class="text-xs text-slate-500">${item.ma_nv}</div>
-            </td>
-            <td class="px-4 py-4 text-sm text-slate-500">${item.tencalamviec || '--'}</td>
+            <td class="px-4 py-4">${this.renderEmployeeInfo(item)}</td>
+            <td class="px-4 py-4 text-sm text-slate-500">${tenCa}</td>
             <td class="px-4 py-4">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Chưa chấm công</span>
             </td>
         `;
         return tr;
+    }
+
+    getShiftName(loaicalamviec, khungGio) {
+        if (!loaicalamviec) return 'Ca mặc định';
+        
+        const loaiMap = {
+            'HANH_CHINH': 'Ca hành chính',
+            'TU_DO': 'Ca tự do',
+            'THEO_CA': 'Theo ca'
+        };
+        
+        let tenCa = loaiMap[loaicalamviec] || loaicalamviec;
+        
+        // Thêm khung giờ nếu có
+        if (khungGio.thoigianbatdau && khungGio.thoigianketthuc) {
+            const start = AppUtils.TimeUtils.formatDisplay(khungGio.thoigianbatdau);
+            const end = AppUtils.TimeUtils.formatDisplay(khungGio.thoigianketthuc);
+            tenCa += ` (${start}-${end})`;
+        }
+        
+        return tenCa;
     }
 
     initEventListeners() {
@@ -494,15 +532,12 @@ class TimekeepingSummaryManager {
             this.eventManager.add(input, 'change', () => this.handleTabChange(this.currentTabId));
         });
 
-        // 2. Search Input Changes (Debounced)
+        // 2. Search Input Changes (Debounced using AppUtils)
         if (this.els.searchInput) {
-            let timeout;
-            this.eventManager.add(this.els.searchInput, 'input', () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    this.handleTabChange(this.currentTabId);
-                }, 400); // 400ms debounce
-            });
+            const debouncedSearch = AppUtils.Helper.debounce(() => {
+                this.handleTabChange(this.currentTabId);
+            }, 400);
+            this.eventManager.add(this.els.searchInput, 'input', debouncedSearch);
         }
     }
 }

@@ -1,10 +1,14 @@
-{% comment %}
-    Filter: Chọn tháng
-    QUAN TRỌNG: Đã thêm name="thang" để API nhận diện
-{% endcomment %}
-<div class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+{% comment %} Filter: Chọn tháng (chỉ dùng ở tab Tổng hợp) {% endcomment %}
+<div id="filter-month-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
     <i class="fa-regular fa-calendar text-slate-500 mr-2 text-[10px]"></i>
     <input type="month" id="filter-month" name="thang"
+           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+</div>
+
+{% comment %} Filter: Chọn ngày (dùng cho tab Đã/Chưa chấm công) {% endcomment %}
+<div id="filter-date-wrapper" class="hidden flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <i class="fa-regular fa-calendar-check text-slate-500 mr-2 text-[10px]"></i>
+    <input type="date" id="filter-date" name="ngaylamviec"
            class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
 </div>
 

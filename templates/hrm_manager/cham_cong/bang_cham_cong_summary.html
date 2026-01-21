@@ -20,6 +20,13 @@
         border-right: 2px solid #e2e8f0;
     }
     th.sticky-col-left { z-index: 20; background-color: #f8fafc; }
+    .sticky-col-right {
+        position: sticky;
+        right: 0;
+        z-index: 15;
+        background-color: #f8fafc;
+    }
+    th.sticky-col-right { top: 0; z-index: 30; }
 </style>
 {% endblock %}
 
@@ -30,7 +37,7 @@
 
     <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg">
         
-        <div id="tab-container" class="mb-4 border-b border-slate-200">
+        <div id="tab-container" class="[&>div]:!mb-0">
             {% include "components/tab_nav.html" with tabs=tabs %}
         </div>
 
@@ -91,18 +98,16 @@
             </div>
 
             <div id="tab-da-cham" class="tab-pane hidden h-full flex flex-col">
-                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-checked" class="rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Thời gian</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Chi tiết</th>' %}
+                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-checked" class="w-4 h-4 rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Thời gian</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Chi tiết</th>' %}
                     {% include "components/table_wrapper.html" with table_id="checked-table" tbody_id="checked-table-body" headers_html=headers show_checkbox=False %}
                 {% endwith %}
-                <div id="pagination-checked" class="mt-2">{% include "components/pagination.html" %}</div>
                 {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-checked" %}
             </div>
 
             <div id="tab-chua-cham" class="tab-pane hidden h-full flex flex-col">
-                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-unchecked" class="rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Trạng thái</th>' %}
+                {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-unchecked" class="w-4 h-4 rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Trạng thái</th>' %}
                     {% include "components/table_wrapper.html" with table_id="unchecked-table" tbody_id="unchecked-table-body" headers_html=headers show_checkbox=False %}
-                {% endwith %}
-                <div id="pagination-unchecked" class="mt-2">{% include "components/pagination.html" %}</div>
+                {% endwith %}`
                 {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-unchecked" %}
             </div>
 

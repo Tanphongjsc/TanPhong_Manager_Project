@@ -37,6 +37,7 @@ class TableManager {
             enableSearch: true,
             enableFilters: true,
             searchDebounce: 400,
+            autoLoad: true,  // Mặc định tự động load data khi khởi tạo
             
             ...options
         };
@@ -60,7 +61,7 @@ class TableManager {
 
     init() {
         this.setupEventListeners();
-        if (this.options.apiEndpoint) {
+        if (this.options.apiEndpoint && this.options.autoLoad) {
             this.fetchData();
         }
     }
