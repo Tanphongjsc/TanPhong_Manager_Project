@@ -1,3 +1,5 @@
+from calendar import monthrange
+from datetime import date, timedelta
 from django.shortcuts import render
 from django.db.models import Q, Count, Prefetch, Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404
@@ -7,8 +9,7 @@ from apps.hrm_manager.__core__.models import *
 import json
 from django.utils import timezone
 from django.db import transaction
-from . services import CaLamViecService, LichLamViecService, ConflictException
-
+from .services import CaLamViecService, LichLamViecService, ConflictException
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context, 
@@ -41,7 +42,7 @@ def get_thiet_ke_nghi_tabs():
         {'label': 'Tổng hợp Ngày nghỉ', 'url_name': 'tong_hop_nghi', 'url': reverse('hrm:lich_lam_viec:tong_hop_nghi')},
     ]
 
-# --- 1. VIEWS: THIẾT KẾ LỊCH LÀM VIỆC ---
+# --- 1.VIEWS: THIẾT KẾ LỊCH LÀM VIỆC ---
 
 def view_ca_lam_viec(request):
     
@@ -151,7 +152,7 @@ def view_tong_hop_lich(request):
     }
     return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
 
-# --- 2. VIEWS: THIẾT KẾ LỊCH NGHỈ ---
+# --- 2.VIEWS: THIẾT KẾ LỊCH NGHỈ ---
 
 def view_lich_nghi(request):
     context = {
@@ -200,8 +201,8 @@ def api_calamviec_list(request):
         queryset=Khunggiolamviec.objects.order_by('id')
     )
     
-    # 1. Annotate ưu tiên: CAHANHCHINH = 0, Các ca khác = 1
-    queryset = Calamviec.objects.prefetch_related(khung_gio_prefetch).annotate(
+    # 1.Annotate ưu tiên: CAHANHCHINH = 0, Các ca khác = 1
+    queryset = Calamviec.objects.filter(Q(is_deleted=False) | Q(is_deleted__isnull=True)).prefetch_related(khung_gio_prefetch).annotate(
         is_system_default=Case(
             When(macalamviec='CAHANHCHINH', then=Value(0)),
             default=Value(1),
@@ -318,17 +319,17 @@ def api_calamviec_create(request):
     """
     data = get_request_data(request)
     
-    # 1. Validate trường bắt buộc
+    # 1.Validate trường bắt buộc
     is_valid, missing = validate_required_fields(data, ['TenCa', 'MaCa'])
     if not is_valid:
         return json_error(f"Vui lòng nhập đầy đủ: {', '.join(missing)}")
 
-    # 2. Validate unique Mã
+    # 2.Validate unique Mã
     ma_ca = data.get('MaCa', '').strip().upper()
     if not validate_unique_field(Calamviec, 'macalamviec', ma_ca):
         return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
 
-    # ✅ 4. Gọi Service tạo mới (Logic tách ra)
+    # ✅ 4.Gọi Service tạo mới (Logic tách ra)
     try:
         ca_moi = CaLamViecService.create_ca(data)
         return json_success("Thêm mới thành công", id=ca_moi.id)
@@ -349,12 +350,12 @@ def api_calamviec_update(request, pk):
     
     data = get_request_data(request)
     
-    # 1. Validate unique Mã (trừ chính nó)
+    # 1.Validate unique Mã (trừ chính nó)
     ma_ca = data.get('MaCa', '').strip().upper()
     if not validate_unique_field(Calamviec, 'macalamviec', ma_ca, exclude_pk=pk):
         return json_error(f"Mã ca '{ma_ca}' đã tồn tại.")
 
-    # ✅ 3. Gọi Service cập nhật
+    # ✅ 3.Gọi Service cập nhật
     try:
         CaLamViecService.update_ca(ca, data)
         return json_success("Cập nhật thành công")
@@ -390,19 +391,19 @@ def api_calamviec_delete(request, pk):
 def api_lichlamviec_list(request):
     """API trả về danh sách lịch làm việc cho TableManager"""
     
-    # 1. Prefetch đúng cách + ORDER BY id để giữ thứ tự tạo
+    # 1.Prefetch đúng cách + ORDER BY id để giữ thứ tự tạo
     codinh_prefetch = Prefetch(
         'lichlamvieccodinh_set',
-        queryset=LichlamviecCodinh. objects.select_related('calamviec').prefetch_related(
+        queryset=LichlamviecCodinh.objects.select_related('calamviec').prefetch_related(
             Prefetch(
                 'calamviec__khunggiolamviec_set',
-                queryset=Khunggiolamviec. objects.order_by('id')
+                queryset=Khunggiolamviec.objects.order_by('id')
             )
         ).order_by('ngaytrongtuan', 'id')  # ✅ FIX: Thêm order by id để giữ thứ tự tạo
     )
 
-    # 2. Query chính - Annotate ưu tiên mặc định lên đầu
-    queryset = Lichlamviec.objects.prefetch_related(codinh_prefetch).annotate(
+    # 2.Query chính - Annotate ưu tiên mặc định lên đầu
+    queryset = Lichlamviec.objects.filter(Q(is_deleted=False) | Q(is_deleted__isnull=True)).defer('caidatca').prefetch_related(codinh_prefetch).annotate(
         num_employees=Count(
             'lichlamviecnhanvien', 
             filter=Q(lichlamviecnhanvien__trangthai='active'),
@@ -415,7 +416,7 @@ def api_lichlamviec_list(request):
         )
     ).order_by('is_system_default', '-created_at')
 
-    # 3. Sử dụng Helper get_list_context
+    # 3.Sử dụng Helper get_list_context
     context = get_list_context(
         request,
         queryset,
@@ -428,7 +429,7 @@ def api_lichlamviec_list(request):
     page_obj = context['page_obj']
     items_list = []
 
-    # 4. Transform dữ liệu - GIỮ NGUYÊN THỨ TỰ
+    # 4.Transform dữ liệu - GIỮ NGUYÊN THỨ TỰ
     items_list = LichLamViecService.format_lich_list_data(page_obj)
 
     return json_success(
@@ -437,7 +438,7 @@ def api_lichlamviec_list(request):
         pagination={
             'page': page_obj.number,
             'total': context['paginator'].count,
-            'total_pages': context['paginator']. num_pages,
+            'total_pages': context['paginator'].num_pages,
             'has_next': page_obj.has_next(),
             'has_prev': page_obj.has_previous()
         }
@@ -447,10 +448,105 @@ def api_lichlamviec_list(request):
 @handle_exceptions
 def api_lichlamviec_detail(request, pk):
     """API lấy chi tiết Lịch để fill vào form Update"""
-    lich = get_object_or_json_error(Lichlamviec, pk, "Không tìm thấy lịch làm việc")
-    if not isinstance(lich, Lichlamviec):
-        return lich
+    # ✅ SỬA: Thêm filter is_deleted để tránh trường hợp cố tình truy cập bằng URLS
+    try:
+        lich = Lichlamviec.objects.filter(Q(is_deleted=False) | Q(is_deleted__isnull=True)).get(pk=pk)
+    except Lichlamviec.DoesNotExist:
+        return json_error("Không tìm thấy lịch làm việc")
+    
     data = LichLamViecService.get_detail_for_form(lich)
+    
+    # Xử lý thêm cho LICH_TRINH
+    if lich.loaikichbanlamviec == 'LICH_TRINH':
+        
+        # ✅ FIX: Lấy danh sách chu kỳ (loại bỏ record config ẩn nếu có - backward compatibility)
+        chu_ky_list = []
+        all_lich_trinh = lich.lichlamvieclichtrinh_set.prefetch_related(
+            Prefetch(
+                'ctlichlamvieclichtrinh_set',
+                queryset=CtlichlamviecLichtrinh.objects.select_related('calamviec').prefetch_related(
+                    'calamviec__khunggiolamviec_set'
+                )
+            )
+        ).all()
+        
+        for chu_ky in all_lich_trinh:  
+            # Bỏ qua record config ẩn (backward compatibility)
+            if chu_ky.machuky == '__CONFIG__':  
+                continue
+                
+            chi_tiet_ngay = []
+            for ct in chu_ky.ctlichlamvieclichtrinh_set.all():
+                ca_id = ct.calamviec_id
+                ten_ca = 'Ngày nghỉ'
+                khung_gio = []
+                
+                if ct.calamviec: 
+                    ten_ca = ct.calamviec.tencalamviec
+                    khung_gio = [
+                        f"{kg.thoigianbatdau.strftime('%H:%M')} - {kg.thoigianketthuc.strftime('%H:%M')}"
+                        for kg in ct.calamviec.khunggiolamviec_set.order_by('id')
+                    ]
+                
+                chi_tiet_ngay.append({
+                    'NgayTrongChuKy': int(ct.calamviectungngay) if ct.calamviectungngay else 1,
+                    'CaID': ca_id,
+                    'TenCa': ten_ca,
+                    'KhungGio': khung_gio
+                })
+            
+            chu_ky_list.append({
+                'id': chu_ky.id,
+                'TenChuKy': chu_ky.tenchuky,
+                'MaChuKy': chu_ky.machuky,
+                'SoNgayLap': chu_ky.songaylap,
+                'NgayBatDauChuKy':  chu_ky.ngaybatdauchuky.isoformat() if chu_ky.ngaybatdauchuky else None,
+                'ChiTietNgay': chi_tiet_ngay
+            })
+        
+        data['DanhSachChuKy'] = chu_ky_list
+        
+        # Lấy ScheduleData từ Lichlamviecthucte
+        all_emp_ids = LichLamViecService._get_all_employee_ids_for_schedule(lich)
+        schedule_data = {}
+        
+        if all_emp_ids:
+            today = date.today()
+            start_date = today
+            _, last_day = monthrange(today.year, today.month)
+            end_date = date(today.year, today.month, last_day)
+            
+            actual_schedules = Lichlamviecthucte.objects.filter(
+                lichlamviec=lich,
+                nhanvien_id__in=all_emp_ids,
+                ngaylamviec__gte=start_date,
+                ngaylamviec__lte=end_date
+            ).select_related('calamviec').prefetch_related('calamviec__khunggiolamviec_set')
+            
+            for record in actual_schedules:
+                key = f"{record.nhanvien_id}_{record.ngaylamviec.year}_{record.ngaylamviec.month}_{record.ngaylamviec.day}"
+                if key not in schedule_data:  
+                    schedule_data[key] = []
+                
+                if record.calamviec:
+                    khung_gios = [
+                        f"{kg.thoigianbatdau.strftime('%H:%M')} - {kg.thoigianketthuc.strftime('%H:%M')}"
+                        for kg in record.calamviec.khunggiolamviec_set.order_by('id')
+                    ]
+                    schedule_data[key].append({
+                        'id':  record.calamviec.id,
+                        'TenCa': record.calamviec.tencalamviec,
+                        'KhungGio': khung_gios
+                    })
+                else:
+                    schedule_data[key].append({
+                        'id': 0,
+                        'TenCa':  'Ngày nghỉ',
+                        'KhungGio':  []
+                    })
+        
+        data['ScheduleData'] = schedule_data
+    
     return json_success("Thành công", data=data)
 
 @require_http_methods(["POST"])
@@ -536,48 +632,54 @@ def api_validate_employee_selection(request):
 @handle_exceptions
 def api_lichlamviec_create(request):
     """API Tạo mới Lịch làm việc"""
+    
     data = get_request_data(request)
 
-    # Validate trường bắt buộc
     is_valid, missing = validate_required_fields(data, ['TenNhom', 'MaNhom', 'LoaiKichBan'])
-    if not is_valid: 
+    if not is_valid:
         return json_error(f"Vui lòng nhập đầy đủ:  {', '.join(missing)}")
 
-    # Validate unique Mã lịch
     ma_nhom = data.get('MaNhom', '').strip().upper()
     if not validate_unique_field(Lichlamviec, 'malichlamviec', ma_nhom):
         return json_error(f"Mã lịch làm việc '{ma_nhom}' đã tồn tại.")
 
-    # Validate chi tiết ca
-    if data.get('LoaiKichBan') == 'CO_DINH': 
+    if data.get('LoaiKichBan') == 'CO_DINH':
         details = data.get('ChiTietCa', [])
         if not details or len(details) == 0:
             return json_error("Vui lòng cấu hình chi tiết ca làm việc cho kịch bản cố định.")
 
-    # Kiểm tra force_transfer flag
-    force_transfer = data. get('force_transfer', False)
+    force_transfer = data.get('force_transfer', False)
+    
+    # ✅ NEW: Xử lý effective_date
+    effective_date_option = data.get('effective_date', 'today')
+    if effective_date_option == 'tomorrow':
+        effective_date = date.today() + timedelta(days=1)
+    else:
+        effective_date = date.today()
 
     try:
-        lich_moi, transferred = LichLamViecService.create_lich(data, force_transfer=force_transfer)
+        lich_moi, transferred = LichLamViecService.create_lich(
+            data,
+            force_transfer=force_transfer,
+            effective_date=effective_date
+        )
         
-        response_data = {'id': lich_moi. id}
+        response_data = {'id': lich_moi.id}
         if transferred:
             response_data['transferred'] = transferred
         
         return json_success("Thêm mới lịch làm việc thành công", **response_data)
     
     except ConflictException as e:
-        # Trả về danh sách xung đột để frontend hiển thị confirm
         return json_response(
             success=False,
             message="Phát hiện nhân viên đang thuộc lịch làm việc khác",
-            data={'conflicts':  e.conflicts, 'require_confirm': True},
+            data={'conflicts': e.conflicts, 'require_confirm': True},
             status=200
         )
-    except ValueError as e: 
-        # ✅ Handle validation error từ validate_schedule_time_overlap
+    except ValueError as e:
         return json_error(str(e))
-    except Exception as e:
+    except Exception as e: 
         return json_error(f"Lỗi khi lưu dữ liệu: {str(e)}")
     
     
@@ -585,16 +687,17 @@ def api_lichlamviec_create(request):
 @handle_exceptions
 def api_lichlamviec_update(request, pk):
     """API Cập nhật Lịch làm việc"""
-    lich = get_object_or_json_error(Lichlamviec, pk, "Không tìm thấy lịch làm việc")
-    if not isinstance(lich, Lichlamviec):
-        return lich
+    # ✅ SỬA: Thêm filter is_deleted để tránh trường hợp cố tình truy cập bằng URLS
+    try:
+        lich = Lichlamviec.objects.filter(Q(is_deleted=False) | Q(is_deleted__isnull=True)).get(pk=pk)
+    except Lichlamviec.DoesNotExist:
+        return json_error("Không tìm thấy lịch làm việc")
 
     data = get_request_data(request)
 
-    # Validate
     is_valid, missing = validate_required_fields(data, ['TenNhom', 'MaNhom', 'LoaiKichBan'])
-    if not is_valid: 
-        return json_error(f"Vui lòng nhập đầy đủ: {', '.join(missing)}")
+    if not is_valid:
+        return json_error(f"Vui lòng nhập đầy đủ:  {', '.join(missing)}")
 
     ma_nhom = data.get('MaNhom', '').strip().upper()
     if not validate_unique_field(Lichlamviec, 'malichlamviec', ma_nhom, exclude_pk=pk):
@@ -606,12 +709,24 @@ def api_lichlamviec_update(request, pk):
             return json_error("Vui lòng cấu hình chi tiết ca làm việc.")
 
     force_transfer = data.get('force_transfer', False)
+    
+    # ✅ NEW: Xử lý effective_date
+    effective_date_option = data.get('effective_date', 'today')
+    if effective_date_option == 'tomorrow':
+        effective_date = date.today() + timedelta(days=1)
+    else:
+        effective_date = date.today()
 
-    try:
-        lich_updated, transferred = LichLamViecService.update_lich(lich, data, force_transfer=force_transfer)
+    try: 
+        lich_updated, transferred = LichLamViecService.update_lich(
+            lich,
+            data,
+            force_transfer=force_transfer,
+            effective_date=effective_date
+        )
         
         response_data = {}
-        if transferred:
+        if transferred: 
             response_data['transferred'] = transferred
         
         return json_success("Cập nhật lịch làm việc thành công", **response_data)
@@ -620,11 +735,10 @@ def api_lichlamviec_update(request, pk):
         return json_response(
             success=False,
             message="Phát hiện nhân viên đang thuộc lịch làm việc khác",
-            data={'conflicts':  e.conflicts, 'require_confirm': True},
+            data={'conflicts': e.conflicts, 'require_confirm': True},
             status=200
         )
     except ValueError as e:
-        # ✅ Handle validation error từ validate_schedule_time_overlap
         return json_error(str(e))
     except Exception as e: 
         return json_error(f"Lỗi khi lưu dữ liệu:  {str(e)}")
@@ -647,3 +761,19 @@ def api_lichlamviec_delete(request, pk):
         return json_success(message)
     else:
         return json_error(message)
+    
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_generate_next_month_schedules(request):
+    """
+    ✅ NEW: API cho Cron Job - Generate lịch tháng tiếp theo
+    CHỈ cho kịch bản CỐ ĐỊNH
+    """
+    try:
+        result = LichLamViecService.generate_next_month_schedules()
+        return json_success(
+            f"Đã generate lịch cho {result['generated']} nhóm cố định, {result['errors']} lỗi",
+            **result
+        )
+    except Exception as e:
+        return json_error(f"Lỗi khi generate:  {str(e)}")

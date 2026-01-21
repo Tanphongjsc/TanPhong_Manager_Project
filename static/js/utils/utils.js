@@ -1016,6 +1016,13 @@ const AppUtils = (() => {
             return `${h.toString().padStart(2, '0')} giờ ${m.toString().padStart(2, '0')} phút`;
         },
 
+        // ✅ NEW: Format phút thành HH:MM
+        formatTime(minutes) {
+            const h = Math.floor(minutes / 60) % 24;
+            const m = minutes % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        },
+        
         // Logic tính toán khoảng thời gian tuyệt đối (xử lý qua đêm)
         getAbsoluteIntervals(shift) {
             if (!shift.KhungGio || shift.KhungGio.length === 0) return [];

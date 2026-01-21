@@ -1,5 +1,5 @@
 """
-File: apps/hrm_manager/cham_cong/validators. py
+File: apps/hrm_manager/cham_cong/validators.py
 Mô tả: Validators cho Ca làm việc (HRM Business Logic)
 """
 from apps.hrm_manager.utils.view_helpers import parse_time_to_minutes as parse_time
@@ -35,7 +35,7 @@ def validate_shift_details(data):
     for i, kg in enumerate(khung_gios):
         label = f"Khung giờ {i+1}"
         
-        # 1. Validate bắt buộc
+        # 1.Validate bắt buộc
         if not kg.get('GioBatDau') or not kg.get('GioKetThuc'):
             return False, f"{label}: Phải nhập đủ giờ bắt đầu và kết thúc"
         
@@ -52,7 +52,7 @@ def validate_shift_details(data):
         if start is None or end is None:
             return False, f"{label}: Giờ không hợp lệ (định dạng HH:MM)"
         
-        # 2. Xác định xem khung giờ này có sang ngày mới so với khung trước không
+        # 2.Xác định xem khung giờ này có sang ngày mới so với khung trước không
         # Logic: Nếu giờ bắt đầu nhỏ hơn giờ kết thúc của khung liền trước -> Đã sang ngày hôm sau
         if previous_end_minute_in_day != -1 and start < previous_end_minute_in_day:
             current_day_base += 1440
@@ -66,12 +66,12 @@ def validate_shift_details(data):
         else:
             end_abs = current_day_base + end
 
-        # 3. [QUAN TRỌNG] Kiểm tra giới hạn 48h
+        # 3.[QUAN TRỌNG] Kiểm tra giới hạn 48h
         # Bất kỳ thời điểm nào vượt quá 2880 phút đều không hợp lệ
         if start_abs >= MAX_ALLOWED_MINUTES or end_abs > MAX_ALLOWED_MINUTES:
             return False, f"{label}: Thời gian vượt quá phạm vi 2 ngày (48 giờ) tính từ khung giờ đầu tiên."
         
-        # 4. Kiểm tra chồng chéo (Overlap) với các khung giờ trước
+        # 4.Kiểm tra chồng chéo (Overlap) với các khung giờ trước
         for interval in absolute_intervals:
             # Công thức check overlap: Max(start1, start2) < Min(end1, end2)
             if max(start_abs, interval['start']) < min(end_abs, interval['end']):
@@ -80,7 +80,7 @@ def validate_shift_details(data):
         # Lưu lại interval hiện tại để so sánh với các khung sau
         absolute_intervals.append({'start': start_abs, 'end': end_abs})
         
-        # 5. Cập nhật mốc so sánh cho vòng lặp sau
+        # 5.Cập nhật mốc so sánh cho vòng lặp sau
         # Lưu ý: Lấy end_abs % 1440 để đưa về giờ trong ngày (0-1440)
         previous_end_minute_in_day = end_abs % 1440 
 
@@ -93,7 +93,7 @@ def validate_shift_details(data):
             
             # Tính early_in tuyệt đối
             early_in_abs = current_day_base + early_in
-            # Nếu early_in > start (vd: start 08:00, early 07:00 -> ok. start 08:00, early 23:00 -> hôm trước)
+            # Nếu early_in > start (vd: start 08:00, early 07:00 -> ok.start 08:00, early 23:00 -> hôm trước)
             # Logic heurictic: nếu check-in > start + 12h -> coi là hôm trước
             if early_in > start and (early_in - start) > 720: 
                  early_in_abs -= 1440 # Lùi về ngày hôm trước
@@ -144,7 +144,7 @@ def validate_shift_details(data):
         if khong_tinh_cong_som > 0 and ve_som_cp >= khong_tinh_cong_som:
              return False, f"{label}: Thời gian cho phép về sớm phải nhỏ hơn Thời gian không tính công"
 
-    # 6. Validate Nghỉ trưa (Nếu có)
+    # 6.Validate Nghỉ trưa (Nếu có)
     if nghi_trua:
         break_start = parse_time(nghi_trua.get('BatDau'))
         break_end = parse_time(nghi_trua.get('KetThuc'))
@@ -219,15 +219,15 @@ def validate_schedule_time_overlap(chi_tiet_ca):
             if start is None or end is None:
                 continue
 
-            # 1. Logic nhảy ngày: Nếu Start < End của khung trước -> Sang ngày hôm sau
+            # 1.Logic nhảy ngày: Nếu Start < End của khung trước -> Sang ngày hôm sau
             if previous_end_minute != -1 and start < previous_end_minute:
                 current_day_offset += 1440
 
-            # 2. Tính thời gian tuyệt đối
+            # 2.Tính thời gian tuyệt đối
             abs_start = current_day_offset + start
             abs_end = current_day_offset + end
 
-            # 3. Xử lý qua đêm nội bộ (VD: 22:00 -> 02:00)
+            # 3.Xử lý qua đêm nội bộ (VD: 22:00 -> 02:00)
             if end <= start:
                 abs_end += 1440
 
@@ -238,7 +238,7 @@ def validate_schedule_time_overlap(chi_tiet_ca):
                 'raw_text': f"{start_str} - {end_str}"
             })
             
-            # 4. Cập nhật mốc so sánh (lấy phần dư để về giờ trong ngày 0-1440)
+            # 4.Cập nhật mốc so sánh (lấy phần dư để về giờ trong ngày 0-1440)
             previous_end_minute = abs_end % 1440
             
         ca_intervals_cache[ca.id] = intervals

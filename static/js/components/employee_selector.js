@@ -218,7 +218,7 @@ class EmployeeSelectorController {
                         // Kiểm tra nhân viên có thuộc phòng ban đã chọn không
                         if (this.isEmployeeInSelectedDepts(id)) {
                             e.target.checked = false;
-                            AppUtils.Notify.warning(`Nhân viên "${name}" đã thuộc bộ phận được chọn. Không cần thêm riêng.`);
+                            AppUtils.Notify.warning(`Nhân viên "${name}" đã thuộc bộ phận được chọn.Không cần thêm riêng.`);
                             return;
                         }
                         this.state.selectedEmps.set(id, { name, dept, code });
@@ -295,44 +295,50 @@ class EmployeeSelectorController {
         // Lọc ra những DeptID chưa có trong Cache
         const missingDeptIds = deptIdsToCheck.filter(id => !this.state.deptCache.has(id.toString()));
 
-        if (missingDeptIds.length === 0) return;
+        // Nếu đã có cache hết rồi thì chỉ cần rebuild lại Set tổng hợp từ RAM
+        if (missingDeptIds.length === 0) {
+            this.rebuildDeptEmployeesCache();
+            return;
+        }
 
         this.state.isLoadingCache = true;
         
-        // --- GIẢI PHÁP MỚI: BATCHING REQUEST ---
-        const BATCH_SIZE = 5; // Chỉ gửi 5 request cùng lúc
-        
         try {
-            // Chia mảng thành các chunk nhỏ
-            for (let i = 0; i < missingDeptIds.length; i += BATCH_SIZE) {
-                const batch = missingDeptIds.slice(i, i + BATCH_SIZE);
-                
-                // Xử lý song song trong lô này
-                const batchPromises = batch.map(deptId => 
-                    AppUtils.API.get(this.config.apiUrls.empList, {
-                        phongban_id: deptId,
-                        page_size: 1000
-                    }).then(res => ({ deptId, res }))
-                );
+            // Init cache rỗng trước để tránh fetch lại nếu API trả về rỗng/lỗi
+            missingDeptIds.forEach(id => this.state.deptCache.set(id.toString(), []));
 
-                // Đợi lô này xong mới làm lô tiếp theo
-                const results = await Promise.all(batchPromises);
+            // Gọi API Batch (1 request duy nhất)
+            const res = await AppUtils.API.get(this.config.apiUrls.empList, {
+                phongban_ids: missingDeptIds.join(','),
+                page_size: 10000 // Lấy hết
+            });
 
-                // Lưu vào Cache ngay sau khi có kết quả
-                results.forEach(({ deptId, res }) => {
-                    if (res.success && res.data) {
-                        const empIds = res.data.map(e => e.id.toString());
-                        this.state.deptCache.set(deptId.toString(), empIds);
-                    } else {
-                        this.state.deptCache.set(deptId.toString(), []);
+            if (res.success && res.data) {
+                // Phân loại nhân viên vào đúng "rổ" cache của phòng ban tương ứng
+                res.data.forEach(emp => {
+                    const empId = emp.id.toString();
+                    // ✅ Dựa vào phongban_id từ API trả về để map
+                    const deptId = emp.cong_tac?.phongban_id?.toString(); 
+
+                    if (deptId && this.state.deptCache.has(deptId)) {
+                        const currentList = this.state.deptCache.get(deptId);
+                        // Tránh duplicate trong mảng cache
+                        if (!currentList.includes(empId)) {
+                            currentList.push(empId);
+                        }
                     }
                 });
             }
+            
+            // Sau khi update cache xong, tính toán lại Set tổng hợp
+            this.rebuildDeptEmployeesCache();
+
         } catch (e) {
-            console.error('Error fetching dept employees:', e);
+            console.error('Error fetching dept employees (batch):', e);
+            // Nếu lỗi mạng, xóa cache key để lần sau thử lại
+            missingDeptIds.forEach(id => this.state.deptCache.delete(id.toString()));
         } finally {
             this.state.isLoadingCache = false;
-            // Gọi render lại 1 lần cuối để đảm bảo UI đồng bộ
             this.syncEmpCheckboxes();
         }
     }
@@ -402,7 +408,7 @@ class EmployeeSelectorController {
     open(initialData = null) {
         // Nếu chưa load tree, lưu data chờ xử lý sau
         if (!this.state.isTreeLoaded) {
-            this.state. pendingInitialData = initialData;
+            this.state.pendingInitialData = initialData;
             this.fetchDeptTree();
             this.fetchEmployees();
             this.state.isInitialized = true;
@@ -416,7 +422,7 @@ class EmployeeSelectorController {
         }
 
         // Fetch employees nếu chưa
-        if (!this. state.isInitialized) {
+        if (!this.state.isInitialized) {
             this.fetchEmployees();
             this.state.isInitialized = true;
         }
@@ -442,13 +448,13 @@ class EmployeeSelectorController {
         try {
             const res = await AppUtils.API.get(this.config.apiUrls.deptTree);
             if (res.success) {
-                this. state.treeData = res. data;
+                this.state.treeData = res.data;
                 this.buildDeptMap(res.data);
                 this.renderTree('main-tree');
                 this.renderTree('filter-tree');
                 
                 // ✅ THÊM:  Đánh dấu đã load xong
-                this. state.isTreeLoaded = true;
+                this.state.isTreeLoaded = true;
                 
                 // ✅ THÊM: Nếu có data đang chờ, restore ngay
                 if (this.state.pendingInitialData) {
@@ -623,7 +629,7 @@ class EmployeeSelectorController {
             const node = this.state.deptMap.get(id);
             if (node && node.childrenIds) {
                 node.childrenIds.forEach(cid => {
-                    affectedIds. push(cid);
+                    affectedIds.push(cid);
                     collectChildren(cid);
                 });
             }
@@ -638,18 +644,18 @@ class EmployeeSelectorController {
             this.propagateUpDeptCheck(deptId);
             
             // Chỉ fetch cache cho những phòng ban MỚI
-            await this.updateDeptEmployeesCache(affectedIds);
+            const allSelectedDeptIds = Array.from(this.state.selectedDepts);
+            await this.updateDeptEmployeesCache(allSelectedDeptIds);
         } else {
             // Xóa khỏi selectedDepts
-            affectedIds.forEach(id => this. state.selectedDepts.delete(id));
+            affectedIds.forEach(id => this.state.selectedDepts.delete(id));
             
             // Propagate lên cha (uncheck)
             this.propagateUpDeptUncheck(deptId);
-            
+            this.rebuildDeptEmployeesCache();
             
         }
         
-        await this.rebuildDeptEmployeesCache();
         // Tự động loại bỏ nhân viên trùng
         this.cleanupDuplicateEmployees();
 
@@ -665,7 +671,7 @@ class EmployeeSelectorController {
         
         const pNode = this.state.deptMap.get(node.parentId);
         if (pNode) {
-            const allChecked = pNode.childrenIds.every(cid => this. state.selectedDepts.has(cid));
+            const allChecked = pNode.childrenIds.every(cid => this.state.selectedDepts.has(cid));
             if (allChecked) {
                 this.state.selectedDepts.add(node.parentId);
             }
@@ -695,7 +701,7 @@ class EmployeeSelectorController {
     // Tách riêng logic propagate up khi uncheck
     propagateUpDeptUncheck(deptId) {
         const node = this.state.deptMap.get(deptId);
-        if (!node || !node. parentId) return;
+        if (!node || !node.parentId) return;
         
         // Khi uncheck, parent cũng phải uncheck
         this.state.selectedDepts.delete(node.parentId);

@@ -247,7 +247,10 @@ def validate_unique_field(model, field_name, value, exclude_pk=None):
             return json_error('Mã ngân hàng đã tồn tại')
     """
     queryset = model.objects.filter(**{field_name: value})
-    
+
+    if hasattr(model, 'is_deleted'):
+        queryset = queryset.exclude(is_deleted=True)
+        
     if exclude_pk:
         queryset = queryset.exclude(pk=exclude_pk)
     

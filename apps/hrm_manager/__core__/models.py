@@ -99,7 +99,9 @@ class Calamviec(models.Model):
     cocancheckout = models.BooleanField(db_column='CoCanCheckout', blank=True, null=True)  # Field name made lowercase.
     tongthoigianlamvieccuaca = models.FloatField(db_column='TongThoiGianLamViecCuaCa', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
-
+    is_deleted = models.BooleanField(db_column='Is_Deleted', blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
+    
     class Meta:
         managed = False
         db_table = '"hrm"."CaLamViec"'
@@ -403,6 +405,9 @@ class Lichlamviec(models.Model):
     loaikichbanlamviec = models.CharField(db_column='LoaiKichBanLamViec', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     lichnghi = models.ForeignKey('Lichnghi', models.DO_NOTHING, blank=True, null=True)
+    caidatca = models.TextField(db_column='CaiDatCa', blank=True, null=True)  # Field name made lowercase.
+    is_deleted = models.BooleanField(db_column='Is_Deleted', blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -415,11 +420,14 @@ class Lichlamviecthucte(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
     ngaylamviec = models.DateField(db_column='NgayLamViec', blank=True, null=True)  # Field name made lowercase.
+    is_deleted = models.BooleanField(db_column='Is_Deleted', blank=True, null=True)  # Field name made lowercase.
     cophaingaynghi = models.BooleanField(db_column='CoPhaiNgayNghi', blank=True, null=True)  # Field name made lowercase.
     chophepghide = models.BooleanField(db_column='ChoPhepGhiDe', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     calamviec = models.ForeignKey(Calamviec, models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
+    lichlamviec = models.ForeignKey(Lichlamviec, models.DO_NOTHING, blank=True, null=True)
+    nguongoc = models.CharField(db_column='NguonGoc', blank=True, null=True)
 
     class Meta:
         managed = False
@@ -432,7 +440,6 @@ class LichlamviecCodinh(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
     ngaytrongtuan = models.IntegerField(db_column='NgayTrongTuan', blank=True, null=True)  # Field name made lowercase.
-    caidatca = models.CharField(db_column='CaiDatCa', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     calamviec = models.ForeignKey(Calamviec, models.DO_NOTHING, blank=True, null=True)
     lichlamviec = models.ForeignKey(Lichlamviec, models.DO_NOTHING, blank=True, null=True)

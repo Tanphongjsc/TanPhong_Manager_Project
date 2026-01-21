@@ -1,0 +1,58 @@
+<div class="space-y-5">
+    {# ROW 1: Tên chu kỳ và Mã chu kỳ #}
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label for="cycle-name" class="block text-sm font-medium text-slate-700 mb-1">
+                Tên chu kỳ <span class="text-red-500">*</span>
+            </label>
+            <input type="text" 
+                   name="cycle_name" 
+                   id="cycle-name" 
+                   required 
+                   placeholder="VD: Ca kíp 2-2"
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm">
+        </div>
+        <div>
+            <label for="cycle-code" class="block text-sm font-medium text-slate-700 mb-1">
+                Mã chu kỳ <span class="text-red-500">*</span>
+            </label>
+            <input type="text" 
+                   name="cycle_code" 
+                   id="cycle-code" 
+                   required 
+                   placeholder="VD: CA_KIP_2_2"
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm uppercase">
+        </div>
+    </div>
+
+    {# ROW 2: Số ngày lặp #}
+    <div>
+        <label for="cycle-repeat-days" class="block text-sm font-medium text-slate-700 mb-1">
+            Số ngày lặp <span class="text-red-500">*</span>
+        </label>
+        <input type="number" 
+               name="repeat_days" 
+               id="cycle-repeat-days" 
+               required 
+               min="1"
+               max="31"
+               placeholder="Nhập số ngày (1-31)"
+               class="w-40 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm">
+    </div>
+
+    {# ROW 3: Danh sách các ngày - MỞ RỘNG FULL WIDTH #}
+    <div class="border-t border-slate-100 pt-4">
+        <div id="cycle-days-container" class="space-y-3 max-h-[450px] overflow-y-auto overflow-x-visible pr-2 custom-scrollbar">
+            <p class="text-center text-slate-400 text-sm py-8 italic">Vui lòng nhập số ngày lặp để cấu hình</p>
+        </div>
+        
+        {# Hiển thị lỗi xung đột #}
+        <div id="cycle-conflict-error" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span id="cycle-conflict-message"></span>
+        </div>
+    </div>
+</div>
+
+{# Hidden field để lưu editing cycle index #}
+<input type="hidden" id="cycle-editing-index" value="-1">

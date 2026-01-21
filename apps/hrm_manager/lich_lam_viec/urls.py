@@ -33,5 +33,7 @@ urlpatterns = [
     path('api/lich-lam-viec/<int:pk>/delete/', views.api_lichlamviec_delete, name='api_lichlamviec_delete'),
     path('api/lich-lam-viec/<int:pk>/detail/', views.api_lichlamviec_detail, name='api_lichlamviec_detail'),
     path('api/validate-employee-selection/', views.api_validate_employee_selection, name='api_validate_employee_selection'),
+    # Thêm vào urlpatterns
+    path('api/cron/generate-next-month/', views.api_generate_next_month_schedules, name='api_cron_generate_next_month'),
     
 ]

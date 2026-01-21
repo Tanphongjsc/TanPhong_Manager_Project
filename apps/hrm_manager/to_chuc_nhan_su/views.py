@@ -377,7 +377,11 @@ def api_phong_ban_detail(request, id):
 @login_required
 @require_http_methods(["GET"])
 def api_phong_ban_nhan_vien(request):
-    """API lấy danh sách nhân sự theo phòng ban"""
+    """API lấy danh sách nhân sự theo phòng ban
+    ✅ Backward compatible + Hỗ trợ batch request: 
+    - phongban_id=123 (cũ, vẫn hoạt động)
+    - phongban_ids=1,2,3 (mới, hỗ trợ batch - giảm N request xuống 1)
+    """
 
     # Lấy tham số lọc từ query params
     param_query = request.GET.dict()
@@ -385,7 +389,25 @@ def api_phong_ban_nhan_vien(request):
     page_size = param_query.pop('page_size', 10)
     search_param = param_query.pop('search', '').strip()
     congty_id = param_query.pop('congty_id', None)
-    phongban_ids = get_all_child_department_ids(param_query.pop('phongban_id', None), isnclude_root=True)
+
+    # ✅ NEW: Hỗ trợ cả phongban_id (cũ) và phongban_ids (mới)
+    single_id = param_query.pop('phongban_id', None)
+    multiple_ids = param_query.pop('phongban_ids', '')  # Format: "1,2,3"
+
+    phongban_ids = set()
+    
+    # Xử lý phongban_id đơn lẻ (backward compatible)
+    if single_id:
+        child_ids = get_all_child_department_ids(single_id, isnclude_root=True)
+        phongban_ids.update(child_ids)
+    
+    # ✅ NEW: Xử lý phongban_ids (batch)
+    if multiple_ids: 
+        for pid in multiple_ids.split(','):
+            pid = pid.strip()
+            if pid:
+                child_ids = get_all_child_department_ids(pid, isnclude_root=True)
+                phongban_ids.update(child_ids)
 
     try:        
         # Build filters từ Lichsucongtac
@@ -430,6 +452,7 @@ def api_phong_ban_nhan_vien(request):
             cong_tac = {
                 'phong_ban': lichsu.phongban.tenphongban if lichsu.phongban else None,
                 'chuc_vu': lichsu.chucvu.tenvitricongviec if lichsu.chucvu else None,
+                'phongban_id': lichsu.phongban.id if lichsu.phongban else None,
             }
             nv_data = {
                 'id': nv.id,
@@ -461,18 +484,17 @@ def api_phong_ban_nhan_vien(request):
             'success': False,
             'message': f'Lỗi: {str(e)}'
         }, status=400)
-
-
+    
 @login_required
 @require_http_methods(["GET"])
 def api_phong_ban_tree(request):
     """API lấy cây phòng ban"""
 
     try:
-        # 1. Lấy tất cả công ty
+        # 1.Lấy tất cả công ty
         cong_ty_qs = Congty.objects.values('id', 'tencongty_vi', 'macongty').order_by('id')
 
-        # 2. Lấy tất cả phòng ban + prefetch công ty để tránh N+1
+        # 2.Lấy tất cả phòng ban + prefetch công ty để tránh N+1
         phong_ban_qs = Phongban.objects.select_related('congty').values(
             'id', 'tenphongban', 'phongbancha_id', 'congty_id', 'level', 'maphongban'
         ).order_by('tenphongban')
@@ -517,7 +539,7 @@ def api_phong_ban_tree(request):
 # ------ PHONG BAN HELPER FUNCTIONS ------
 def get_all_child_department_ids(root_id, isnclude_root=False):
     """
-    Trả về list tất cả ID con, cháu, chắt... của một phòng ban.
+    Trả về list tất cả ID con, cháu, chắt...của một phòng ban.
     Tối ưu: Chỉ tốn đúng 1 câu lệnh truy vấn Database.
     """
     if not root_id:

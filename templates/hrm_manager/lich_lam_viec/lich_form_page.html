@@ -17,7 +17,7 @@
             <input type="hidden" name="selected_dept_ids" id="hidden-dept-ids" value="[]">
             <input type="hidden" name="selected_emp_ids" id="hidden-emp-ids" value="[]">
 
-            {# 1. CƠ BẢN #}
+            {# 1.CƠ BẢN #}
             <div class="space-y-4">
                 {% include "components/section_header.html" with title="Thiết lập cơ bản" icon_class="fas fa-info-circle" %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            {# 2. LỊCH LÀM VIỆC #}
+            {# 2.LỊCH LÀM VIỆC #}
             <div class="space-y-4">
                 {% include "components/section_header.html" with title="Thiết lập lịch làm việc" icon_class="fas fa-calendar-alt" %}
                 
@@ -56,8 +56,10 @@
                                 <span class="ml-2 text-sm text-slate-700 font-medium">Lịch trình</span>
                             </label>
                         </div>
-                        {# Chú thích chữ mờ nằm ngay dưới radio #}
-                        <p class="text-xs text-slate-400 italic">CBNV có lịch trình làm việc cố định và lặp lại từng tuần</p>
+                        {# Mô tả cho Cố định - hiển thị mặc định #}
+                        <p id="desc-co-dinh" class="text-xs text-slate-400 italic">CBNV có lịch trình làm việc cố định và lặp lại từng tuần</p>
+                        {# Mô tả cho Lịch trình - ẩn mặc định #}
+                        <p id="desc-lich-trinh" class="text-xs text-slate-400 italic hidden">CBNV có lịch trình làm việc linh hoạt, tối đa theo từng tháng</p>
                     </div>
 
                     {# Container Dynamic #}
@@ -97,8 +99,79 @@
                         </div>
 
                         {# BLOCK LỊCH TRÌNH #}
-                        <div id="block-lich-trinh" class="hidden p-8 bg-slate-50 rounded border border-slate-200 text-center text-slate-500 italic mt-2 ml-[220px] max-w-4xl">
-                            <i class="fas fa-hammer mr-2"></i>Chức năng thiết kế lịch trình đang được phát triển...
+                        <div id="block-lich-trinh" class="hidden space-y-6 animate-fade-in w-full">
+                            {# 1.Cấu hình Ca & Chu kỳ - Giữ layout Grid để thẳng hàng với nhãn phía trên #}
+                            <div class="grid grid-cols-[220px_1fr] gap-y-6 items-start w-full">
+                                
+                                {# Chọn ca áp dụng #}
+                                <label class="text-sm font-bold text-slate-700 text-right pr-6 pt-2">
+                                    Chọn ca áp dụng <span class="text-red-500">*</span>
+                                </label>
+                                <div class="flex flex-col gap-2">
+                                    <div id="lt-shift-badges" class="w-full min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg bg-white flex items-center flex-wrap gap-2 cursor-pointer hover:border-slate-400 transition-colors" onclick="window.lichFormController.openShiftSelectorLT()">
+                                        <span class="bg-slate-400 text-white border border-transparent text-[11px] font-bold px-2 py-0.5 rounded shadow-sm">Ngày nghỉ</span>
+                                    </div>                 
+                                </div>
+
+                                {# Chu kỳ ca #}
+                                <label class="text-sm font-bold text-slate-700 text-right pr-6 pt-2">Chu kỳ ca</label>
+                                <div class="space-y-3">
+                                    <button type="button" id="btn-add-cycle" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                                        <i class="fas fa-plus mr-1.5"></i> Thêm chu kỳ
+                                    </button>
+                                    
+                                    {% with headers='<th class="px-4 py-2 font-bold w-1/4">Tên</th><th class="px-4 py-2 font-bold w-1/4">Ca</th><th class="px-4 py-2 font-bold">Chu kỳ</th>' %}
+                                        {% include "components/table_wrapper.html" with table_id="cycle-table" tbody_id="cycle-table-body" headers_html=headers show_checkbox=False %}
+                                    {% endwith %}
+                                </div>
+
+                                {# --- BẢNG DỮ LIỆU FULL WIDTH --- #}
+                                <div class="col-span-2 pt-4 space-y-2">
+                                    {# Sử dụng Toolbar cho tìm kiếm và chọn thời gian #}
+                                    <div class="flex items-start gap-2">
+        
+                                        {# BOX 1: DATE PICKER #}
+                                        <div class="p-2 mb-2">
+                                            <div class="relative z-40">
+                                                {# BUTTON: Đã xóa class 'shadow-sm' -> Giờ nó sẽ phẳng lỳ như ô Search #}
+                                                <button type="button" id="lt-date-trigger" class="flex items-center justify-between gap-3 px-3 py-1 border border-slate-300 rounded-md bg-white hover:border-green-500 transition-colors text-xs font-medium h-[26px] min-w-[110px]">
+                                                    <span id="lt-display-date" class="text-slate-700">2026-01</span>
+                                                    <i class="far fa-calendar-alt text-slate-400"></i>
+                                                </button>
+
+                                                {# Popover giữ nguyên #}
+                                                <div id="lt-date-popover" class="hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-lg w-64 p-3 animate-fade-in min-w-[250px]">
+                                                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+                                                        <button type="button" id="lt-prev-year" class="p-1 hover:bg-slate-100 rounded text-slate-400"><i class="fas fa-angles-left text-[10px]"></i></button>
+                                                        <span id="lt-picker-year" class="font-bold text-sm text-slate-700">2026</span>
+                                                        <button type="button" id="lt-next-year" class="p-1 hover:bg-slate-100 rounded text-slate-400"><i class="fas fa-angles-right text-[10px]"></i></button>
+                                                    </div>
+                                                    <div class="grid grid-cols-3 gap-2" id="lt-month-grid"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {# BOX 2: TOOLBAR #}
+                                        <div class="flex-1">
+                                            {% include "components/toolbar.html" with search_id="lt-emp-search" search_placeholder="Tìm tên nhân viên, bộ phận..." %}
+                                        </div>
+                                    </div>
+                                        
+                                    {# Bảng chính: Sử dụng container của Table Wrapper để đồng bộ style #}
+                                    <div class="flex-1 w-full bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col mb-2">
+                                        <div class="flex-1 overflow-auto custom-scrollbar-horizontal">
+                                            <table class="w-full text-left text-[11px]" id="lt-main-table">
+                                                <thead id="lt-table-header" class="bg-slate-50 text-slate-700 font-semibold sticky top-0 z-20 shadow-sm border-b border-slate-200"></thead>
+                                                <tbody id="lt-table-body" class="divide-y divide-slate-100"></tbody>
+                                            </table>
+                                        </div> 
+                                        {# ✅ THÊM DÒNG NÀY #}
+                                        <div id="lt-pagination-container">
+                                            {% include "components/pagination.html" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -117,7 +190,7 @@
     </div>
 </div>
 
-
+{% include "components/crud_modal.html" with modal_id="cycle-modal" form_id="cycle-form" title="Thêm chu kỳ" content_template="hrm_manager/lich_lam_viec/partials/cycle_form.html" modal_size="4xl" submit_label="Chọn" %}
 {% include "components/crud_modal.html" with modal_id="shift-selector-modal" form_id="shift-selector-form" title="Thay đổi ca" content_template="hrm_manager/lich_lam_viec/partials/shift_selector.html" modal_size="3xl" submit_label="Chọn" %}
 {% include "components/crud_modal.html" with modal_id="shift-detail-modal" form_id="shift-detail-form" title="Chi tiết ca làm việc" content_template="hrm_manager/lich_lam_viec/partials/shift_detail_viewer.html" modal_size="3xl" submit_label="Chỉnh sửa" cancel_label="Đóng" %}
 {% include "components/crud_modal.html" with modal_id="employee-selector-modal" form_id="employee-selector-form" title="Chọn nhân viên, bộ phận" content_template="components/employee_selector.html" modal_size="5xl" submit_label="Chọn" %}
@@ -126,6 +199,14 @@
 
 {% block scripts %}
 <script src="{% static 'js/utils/base_form_manager.js' %}"></script>
+<!-- Components (theo thứ tự dependency) -->
 <script src="{% static 'js/components/employee_selector.js' %}"></script>
+<script src="{% static 'js/components/shift_selector.js' %}"></script>
+<script src="{% static 'js/components/cycle_manager.js' %}"></script>
+<script src="{% static 'js/components/schedule_calendar.js' %}"></script>
+
+<!-- Module-specific validators & managers -->
+<script src="{% static 'js/lich_lam_viec/schedule_validator.js' %}"></script>
+<script src="{% static 'js/lich_lam_viec/fixed_schedule.js' %}"></script>
 <script src="{% static 'js/lich_lam_viec/lich_form.js' %}"></script>
 {% endblock %}
