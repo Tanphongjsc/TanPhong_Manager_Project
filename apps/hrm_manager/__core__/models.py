@@ -11,6 +11,7 @@ class Bangchamcong(models.Model):
     thoigianlamthem = models.FloatField(db_column='ThoiGianLamThem', blank=True, null=True)  # Field name made lowercase.
     cotinhlamthem = models.BooleanField(db_column='CoTinhLamThem', blank=True, null=True)  # Field name made lowercase.
     coantrua = models.BooleanField(db_column='CoAnTrua', blank=True, null=True)  # Field name made lowercase.
+    codilam = models.BooleanField(db_column='CoDiLam', blank=True, null=True)  # Field name made lowercase.
     thoigiandimuon = models.IntegerField(db_column='ThoiGianDiMuon', blank=True, null=True)  # Field name made lowercase.
     thoigianvesom = models.IntegerField(db_column='ThoiGianVeSom', blank=True, null=True)  # Field name made lowercase.
     thoigiandisom = models.IntegerField(db_column='ThoiGianDiSom', blank=True, null=True)  # Field name made lowercase.
@@ -23,7 +24,7 @@ class Bangchamcong(models.Model):
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     congviec = models.ForeignKey('Congviec', models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
-    lichlamviec = models.ForeignKey('Lichlamviec', models.DO_NOTHING, blank=True, null=True)
+    calamviec = models.ForeignKey('Calamviec', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
