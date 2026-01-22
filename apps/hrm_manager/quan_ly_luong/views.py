@@ -9,6 +9,7 @@ from django.db.models import F
 from apps.hrm_manager.__core__.models import Phantuluong, Nhomphantuluong
 
 from json import loads
+from collections import defaultdict
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context,
@@ -39,6 +40,10 @@ def view_phan_tu_luong(request):
             {'title': 'Quản lý lương', 'url': '#'},
             {'title': 'Phần tử lương', 'url': None},
         ],
+        'tabs': [
+            {'label': 'Danh sách phần tử lương', 'url': '#tab-elements', 'url_name': 'tab_elements'},
+            {'label': 'Quản lý thông tin lương', 'url': '#tab-info', 'url_name': 'tab_info'},
+        ]
     }
 
     return render(request, 'hrm_manager/quan_ly_luong/phan_tu_luong.html', context)
@@ -54,6 +59,9 @@ def view_phan_tu_luong(request):
 @require_http_methods(["GET", "POST"])
 def api_phan_tu_luong_list(request):
     """API lấy danh sách phần tử lương"""
+
+    group_params = request.GET.get('is_group', False)
+    print(group_params)
     
     if request.method == 'GET':
         # Lấy danh sách phần tử lương
@@ -69,9 +77,23 @@ def api_phan_tu_luong_list(request):
         phan_tu_luong_qs = filter_by_field(request, phan_tu_luong_qs, 'nhomphantu', 'group')
         page_obj, paginator = paginate_queryset(request, phan_tu_luong_qs, default_page_size=int(request.GET.get('page_size', 10)))
 
+        # Nhóm phần tử nếu có tham số group_params
+        data = defaultdict(list)
+        if group_params:
+            for item in list(page_obj):
+                if item['nhomphantu'] not in data:
+                    data[item['nhomphantu']] = {
+                        'nhomphantu': item['nhomphantu'],
+                        'nhomphantu_ten': item['nhomphantu_ten'],
+                        'elements': []
+                    }
+                data[item['nhomphantu']]['elements'].append(item)
+        else:
+            data = list(page_obj)
+
         return json_success(
             'Lấy danh sách phần tử thành công',
-            data=list(page_obj),
+            data=data,
             pagination={
                 'page': page_obj.number,
                 'page_size': paginator.per_page,
