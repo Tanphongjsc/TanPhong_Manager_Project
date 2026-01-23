@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý Chế độ lương{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {# Breadcrumb #}
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-4 rounded-lg h-full flex flex-col">
+        <h1 class="text-2xl font-bold text-slate-900 mb-4">Chế độ lương</h1>
+        
+        {# Tabs nếu có #}
+        {% if tabs %}
+            {% include "components/tab_nav.html" with tabs=tabs %}
+        {% endif %}
+
+        <div class="flex-1 flex flex-col mt-2 relative overflow-x-auto">
+            {# TOOLBAR #}
+            {% url 'hrm:quan_ly_luong:che_do_luong_create' as create_url_val %}
+            {% include "components/toolbar.html" with search_id="search-che-do-luong" search_placeholder="Tìm kiếm theo tên & mã chế độ lương" create_text="Thêm chế độ lương" create_url=create_url_val|default:'#' filter_form_id="filter-che-do-luong" %}
+
+            {# TABLE WRAPPER #}
+            {% with headers='<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/5">Tên chế độ lương</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/6">Mã chế độ lương</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/4">Nhân viên áp dụng</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/4">Ghi chú</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase w-1/12">Trạng thái</th>' %}
+                {% include "components/table_wrapper.html" with table_id="che-do-luong-table" tbody_id="table-body-che-do-luong" headers_html=headers show_checkbox=True select_all_id="select-all-che-do-luong" %}
+            {% endwith %}
+
+            {# PAGINATION #}
+            {% include "components/pagination.html" %}
+
+            {# BULK ACTIONS #}
+            {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions-che-do-luong" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/quan_ly_luong/che_do_luong.js' %}"></script>
+{% endblock %}

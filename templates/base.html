@@ -401,7 +401,7 @@
                     <div class="py-2 overflow-y-auto max-h-[60vh]">
                         <div class="px-4 pb-1 pt-2 text-xs font-bold text-blue-600 uppercase tracking-wider">Thiết lập tính lương</div>
                         <a href="#" class="tooltip-link pl-6"><i class="fas fa-tag me-2"></i>Phần tử lương</a>
-                        <a href="#" class="tooltip-link pl-6"><i class="fas fa-list me-2"></i>Chế độ lương</a>
+                        <a href="{% url 'hrm:quan_ly_luong:che_do_luong' %}" class="tooltip-link pl-6"><i class="fas fa-list me-2"></i>Chế độ lương</a>
                         <a href="#" class="tooltip-link pl-6"><i class="fas fa-calendar me-2"></i>Kỳ lương</a>
 
                         <div class="my-2 border-t border-gray-200"></div>
@@ -423,7 +423,7 @@
                         <a href="#" class="sub-link pl-6" data-title="Phần tử lương">
                             <i class="fas fa-tag w-6 text-gray-400"></i><span class="sidebar-text">Phần tử lương</span>
                         </a>
-                        <a href="#" class="sub-link pl-6" data-title="Chế độ lương">
+                        <a href="{% url 'hrm:quan_ly_luong:che_do_luong' %}" class="sub-link pl-6" data-title="Chế độ lương">
                             <i class="fas fa-list w-6 text-gray-400"></i><span class="sidebar-text">Chế độ lương</span>
                         </a>
                         <a href="#" class="sub-link pl-6" data-title="Kỳ lương">

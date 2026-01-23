@@ -119,7 +119,9 @@ class Chedoluong(models.Model):
     ngayapdung = models.DateField(db_column='NgayApDung', blank=True, null=True)  # Field name made lowercase.
     ngayhethan = models.DateField(db_column='NgayHetHan', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
-
+    is_deleted = models.BooleanField(db_column='Is_Deleted', blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
+    
     class Meta:
         managed = False
         db_table = '"hrm"."CheDoLuong"'
