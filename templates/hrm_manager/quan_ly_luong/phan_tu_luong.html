@@ -12,10 +12,11 @@
     }
     .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-    /* Modal nhóm cần hiển thị đè lên Sidebar */
-    #group-form-modal {
-        z-index: 70 !important;
-    }
+    /* Modal nhóm hiển thị đè lên Sidebar */
+    #group-form-modal { z-index: 70 !important; }
+    
+    /* Đảm bảo bảng Excel không bị vỡ layout khi có sticky */
+    #tab-info { isolation: isolate; }
 </style>
 {% endblock %}
 
@@ -46,28 +47,42 @@
                 </div>
             </div>
 
-            <div id="tab-info" class="tab-pane hidden h-full flex flex-col p-2">
-                 <div class="h-full flex flex-col items-center justify-center text-slate-500 bg-white border border-slate-200 border-dashed rounded-lg">
-                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-file-invoice-dollar text-3xl text-blue-500"></i>
+            <div id="tab-info" class="tab-pane hidden h-full flex flex-col">
+                <form id="salary-info-form" class="flex-1 flex flex-col overflow-hidden pb-20">
+                    {% csrf_token %}
+                    
+                    <div class="flex justify-end items-center mb-3 px-1 flex-shrink-0 pt-2">
+                        <button type="button" onclick="window.SalaryInfoManager.openModal()" 
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm">
+                            <i class="fas fa-columns text-[11px]"></i>
+                            <span class="whitespace-nowrap">Chọn cột hiển thị</span>
+                        </button>
                     </div>
-                    <h3 class="text-lg font-medium text-slate-700">Quản lý thông tin lương</h3>
-                    <p class="text-sm mt-2 max-w-md text-center">Tính năng cấu hình thông số lương nâng cao đang được xây dựng.</p>
+
+                    {% include "components/excel_table_wrapper.html" with table_id="salary-setup-table" %}
+
+                    <div class="mt-2 relative">
+                        {% include "components/bulk_actions.html" with id="salary-setup-bulk-actions" show_export=True %}
+                    </div>
+                </form>
+                
+                {% include "components/form_footer_fixed.html" with cancel_url="#tab-elements" submit_id="btn-save-salary-info" submit_text="Lưu giá trị mặc định" %}
+                
                 </div>
-            </div>
+
+            {% include "hrm_manager/quan_ly_luong/partials/tab_thongtin_luong_form_modal.html" %}
 
         </div>
     </div>
 </div>
 
 {% include "components/crud_sidebar.html" with sidebar_id="phantu-sidebar" overlay_id="phantu-sidebar-overlay" form_id="phantu-form" form_fields_template="hrm_manager/quan_ly_luong/partials/phantu_luong_form_sidebar.html" title="Thông tin phần tử lương" submit_text="Lưu thông tin" %}
-
 {% include "hrm_manager/quan_ly_luong/partials/nhom_phantu_list_sidebar.html" %}
-
 {% include "components/crud_modal.html" with modal_id="group-form-modal" form_id="group-form" title="Thông tin nhóm phần tử" content_template="hrm_manager/quan_ly_luong/partials/nhom_phantu_form_modal.html" submit_label="Lưu nhóm" %}
 
 {% endblock content %}
 
 {% block scripts %}
+<script src="{% static 'js/utils/ExcelTableManager.js' %}"></script>
 <script src="{% static 'js/quan_ly_luong/phan_tu_luong.js' %}"></script>
 {% endblock scripts %}

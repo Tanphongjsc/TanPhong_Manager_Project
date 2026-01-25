@@ -5,8 +5,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.db.models import F
+from django.db import transaction
 
-from apps.hrm_manager.__core__.models import Phantuluong, Nhomphantuluong
+from apps.hrm_manager.__core__.models import Phantuluong, Nhomphantuluong, Thietlapsolieucodinh
 
 from json import loads
 from collections import defaultdict
@@ -327,3 +328,115 @@ def api_nhom_phan_tu_luong_detail(request, pk):
         except :
             return json_error('Lỗi trong quá trình xóa nhóm phần tử lương', status=400)
         
+# ------------------------------- SETUP GIÁ TRỊ MẶC ĐỊNH PHẦN TỬ LƯƠNG ------------------------------
+
+# @login_required
+@require_http_methods(["GET", "POST"])
+@transaction.atomic
+def api_phan_tu_luong_setup_params(request):
+    """API thiết lập các giá trị mặc định cho phần tử lương"""
+
+    if request.method == 'GET':
+        # Lấy danh sách nhóm phần tử lương
+        phantu_luong_setup_qs = Thietlapsolieucodinh.objects.select_related('phantuluong', 'nhanvien').filter(trangthai='active').values()
+        phantu_luong_id = phantu_luong_setup_qs.values_list('phantuluong_id', flat=True).distinct().order_by('phantuluong__nhomphantu__id', 'phantuluong__id')
+    
+        # Chuẩn hóa dữ liệu trả về
+        data_nhanvien_phantuluong = defaultdict(dict)
+        for item in phantu_luong_setup_qs:
+            if item.get("nhanvien_id") not in data_nhanvien_phantuluong:
+                data_nhanvien_phantuluong[item.get("nhanvien_id")] = {}
+            data_nhanvien_phantuluong[item.get("nhanvien_id")][item.get("phantuluong_id")] = item.get("giatrimacdinh")
+
+        return json_success(
+            'Lấy danh sách nhóm phần tử lương thành công',
+            data={
+                'phan_tu_luong': list(phantu_luong_id),
+                'set_up_phan_tu_luong': data_nhanvien_phantuluong,
+            }
+        )
+
+    elif request.method == 'POST':
+        # Xử lý dữ liệu đầu vào an toàn
+        try:
+            raw_data = loads(request.body)
+            employees_data = raw_data.get('employees', {})
+            
+            if not employees_data:
+                return json_error('Dữ liệu không hợp lệ: Rỗng', status=400)
+            employees_id = list(employees_data.keys())
+
+        except:
+            return json_error('Dữ liệu không hợp lệ: Sai định dạng JSON', status=400)
+
+        # Chuẩn bị dữ liệu: {(nhanvien_id, phantuluong_id): value}
+        input_mapping = {}
+        try:
+            for emp_id, salary_elements in employees_data.items():
+                for salary_id, value in salary_elements.items():
+                    input_mapping[(int(emp_id), int(salary_id))] = value
+        except (ValueError, TypeError):
+            return json_error('Dữ liệu ID hoặc giá trị không hợp lệ', status=400)
+
+        # Các list chứa object để bulk operations
+        to_create = []
+        to_update = []
+        
+        # Lấy dữ liệu cũ đang active
+        current_qs = Thietlapsolieucodinh.objects.select_related('nhanvien', 'phantuluong').filter(trangthai='active', nhanvien_id__in=employees_id)
+        today = now().date()
+
+        # Duyệt qua các bản ghi đang có trong DB
+        for item in current_qs:
+            key = (item.nhanvien_id, item.phantuluong_id)
+            
+            # CASE A: Bản ghi này CÓ trong dữ liệu gửi lên
+            if key in input_mapping:
+                print("IN: ", key, item.giatrimacdinh, input_mapping[key])
+                new_value = input_mapping[key]
+                
+                # Nếu giá trị thay đổi -> Inactive cũ, Tạo mới
+                if int(item.giatrimacdinh) != int(new_value):
+                    print("YES")
+                    # Đánh dấu bản ghi cũ là inactive
+                    item.trangthai = 'inactive'
+                    item.updated_at = today
+                    to_update.append(item)
+                    
+                    # Tạo bản ghi mới
+                    to_create.append(Thietlapsolieucodinh(
+                        nhanvien_id=item.nhanvien_id,
+                        phantuluong_id=item.phantuluong_id,
+                        giatrimacdinh=new_value,
+                        trangthai='active',
+                        created_at=today
+                    ))
+                
+                # Dữ liệu này đã xử lý xong, xóa khỏi mapping để không lặp lại ở bước tạo mới
+                del input_mapping[key]
+            
+            # CASE B: Bản ghi này KHÔNG CÓ trong dữ liệu gửi lên
+            else:
+                print("OUT: ", key, item.giatrimacdinh)
+                item.trangthai = 'inactive'
+                item.updated_at = today
+                to_update.append(item)
+
+        # Xử lý các dữ liệu còn lại trong input_mapping (Là các bản ghi hoàn toàn mới)
+        for (emp_id, salary_id), value in input_mapping.items():
+            to_create.append(Thietlapsolieucodinh(
+                nhanvien_id=emp_id,
+                phantuluong_id=salary_id,
+                giatrimacdinh=value,
+                trangthai='active',
+                created_at=today
+            ))
+
+        # Thực thi lưu vào Database
+        if to_update:
+            Thietlapsolieucodinh.objects.bulk_update(to_update, ['trangthai', 'updated_at'])
+        
+        if to_create:
+            Thietlapsolieucodinh.objects.bulk_create(to_create)
+
+        return json_success('Lưu thiết lập số liệu cố định phần tử lương thành công')
