@@ -364,6 +364,7 @@ class SalaryInfoManager {
     initFormSubmission() {
         const submitBtn = document.getElementById('btn-save-salary-info');
         const form = document.getElementById('salary-info-form');
+        const cancelLink = document.querySelector('#tab-info a[href="#tab-elements"]');
 
         if (submitBtn) {
             this.eventManager.add(submitBtn, 'click', (e) => {
@@ -372,10 +373,29 @@ class SalaryInfoManager {
             });
         }
         
+        if (cancelLink) {
+            this.eventManager.add(cancelLink, 'click', (e) => {
+                e.preventDefault();
+                this.resetChanges();
+
+                const tabLink = document.querySelector('#salary-tab-container nav a[href="#tab-elements"]');
+                if (tabLink && window.SalaryPageManager?.activateTab) {
+                    window.SalaryPageManager.activateTab(tabLink);
+                }
+            });
+        }
+
         if (form) {
             this.eventManager.add(form, 'keydown', (e) => {
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault();
             });
+        }
+    }
+
+    resetChanges() {
+        if (this.excelManager?.resetToOriginal) {
+            this.excelManager.resetToOriginal();
+            AppUtils.Notify.info('Đã khôi phục dữ liệu về trạng thái ban đầu');
         }
     }
 
@@ -445,10 +465,6 @@ class NhomPhanTuManager extends BaseCRUDManager {
                 list: '/hrm/quan-ly-luong/api/nhom-phan-tu-luong/list' 
             },
             entityName: 'nhóm phần tử',
-            onAfterSubmit: () => {
-                this.tableManager.refresh(); 
-                window.PhanTuLuongManager.loadGroupData(); 
-            },
             onRefreshTable: () => {
                 this.tableManager.refresh();
                 window.PhanTuLuongManager.loadGroupData();
@@ -477,6 +493,7 @@ class NhomPhanTuManager extends BaseCRUDManager {
             paginationContainer: document.getElementById('group-pagination'),
             searchInput: document.getElementById('group-search-input'),
             apiEndpoint: this.config.apiUrls.list,
+            autoLoad: false, // Dữ liệu chỉ nên load khi mở Sidebar
             pageSize: 10,
             onRenderRow: (item) => {
                 const tr = document.createElement('tr');

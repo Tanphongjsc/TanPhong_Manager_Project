@@ -90,6 +90,25 @@ class ExcelTableManager extends TableManager {
     }
 
     /**
+     * Khôi phục dữ liệu về snapshot gốc đã lưu khi setData
+     */
+    resetToOriginal() {
+        if (!Array.isArray(this.state.data)) return;
+
+        this.state.data.forEach(item => {
+            const id = String(this.getRowId(item));
+            const snapshot = this.originalDataMap.get(id);
+            if (!snapshot) return;
+
+            Object.entries(snapshot).forEach(([key, val]) => {
+                this.setValueByPath(item, key, val);
+            });
+        });
+
+        this.render();
+    }
+
+    /**
      * Kiểm tra thay đổi (Dirty Checking)
      */
     getChanges() {
