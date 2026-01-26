@@ -871,7 +871,8 @@ class Thietlapsolieucodinh(models.Model):
     phantuluong = models.ForeignKey(Phantuluong, models.DO_NOTHING, blank=True, null=True)
     giatrimacdinh = models.FloatField(db_column='GiaTriMacDinh', blank=True, null=True)  # Field name made lowercase.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
-
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
+    
     class Meta:
         managed = False
         db_table = '"hrm"."ThietLapSoLieuCoDinh"'

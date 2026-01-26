@@ -1,0 +1,18 @@
+<select name="type" class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer min-w-[110px]">
+    <option value="">Tất cả loại</option>
+    <option value="THU_NHAP">Thu nhập</option>
+    <option value="KHAU_TRU">Khấu trừ</option>
+</select>
+
+<select name="group" id="filter-group-select" class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer min-w-[120px]">
+    <option value="">Tất cả nhóm</option>
+</select>
+
+<button type="button" 
+    onclick="window.NhomPhanTuManager.openGroupListSidebar()"
+        class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-green-700 bg-white border border-green-600 rounded-md hover:bg-green-50 transition-colors ml-2 shadow-sm">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+    </svg>
+    Quản lý nhóm phần tử
+</button>

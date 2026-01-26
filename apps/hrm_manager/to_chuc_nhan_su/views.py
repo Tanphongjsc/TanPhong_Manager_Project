@@ -487,8 +487,9 @@ def api_phong_ban_nhan_vien(request):
             'success': False,
             'message': f'Lỗi: {str(e)}'
         }, status=400)
-    
-@login_required
+
+
+# @login_required
 @require_http_methods(["GET"])
 def api_phong_ban_tree(request):
     """API lấy cây phòng ban"""
