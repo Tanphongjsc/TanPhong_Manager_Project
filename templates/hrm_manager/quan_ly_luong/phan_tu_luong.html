@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý Phần tử lương{% endblock %}
+
+{% block styles %}
+<style>
+    /* Animation cho Tab switching */
+    @keyframes fadeIn { 
+        from { opacity: 0; transform: translateY(5px); } 
+        to { opacity: 1; transform: translateY(0); } 
+    }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+    /* Modal nhóm cần hiển thị đè lên Sidebar */
+    #group-form-modal {
+        z-index: 70 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg">
+        
+        <div id="salary-tab-container" class="[&>div]:!mb-0">
+            {% include "components/tab_nav.html" with tabs=tabs %}
+        </div>
+
+        <div class="flex-1 relative overflow-hidden">
+            
+            <div id="tab-elements" class="tab-pane h-full flex flex-col">
+                <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+                {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm theo Tên hoặc Mã..." show_add_btn=True create_text="Thêm phần tử" create_onclick="window.PhanTuLuongManager.openSidebar('create')" filter_form_id="filter-form" filter_template="hrm_manager/quan_ly_luong/partials/phantu_luong_extra_filters.html" btn_color="blue" %}
+
+                {% with headers='<th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider min-w-[150px]">Tên Phần Tử</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Mã PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-32">Loại PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-36">Nhóm PT</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider">Mô tả</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-28">Trạng Thái</th><th scope="col" class="px-3 py-1.5 text-left uppercase tracking-wider w-24"></th>' %}
+                    {% include "components/table_wrapper.html" with table_id="salary-elements-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
+                {% endwith %}
+                
+                <div class="mt-2">
+                    {% include "components/pagination.html" %}
+                    {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions" %}
+                </div>
+            </div>
+
+            <div id="tab-info" class="tab-pane hidden h-full flex flex-col p-2">
+                 <div class="h-full flex flex-col items-center justify-center text-slate-500 bg-white border border-slate-200 border-dashed rounded-lg">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-file-invoice-dollar text-3xl text-blue-500"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-slate-700">Quản lý thông tin lương</h3>
+                    <p class="text-sm mt-2 max-w-md text-center">Tính năng cấu hình thông số lương nâng cao đang được xây dựng.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% include "components/crud_sidebar.html" with sidebar_id="phantu-sidebar" overlay_id="phantu-sidebar-overlay" form_id="phantu-form" form_fields_template="hrm_manager/quan_ly_luong/partials/phantu_luong_form_sidebar.html" title="Thông tin phần tử lương" submit_text="Lưu thông tin" %}
+
+{% include "hrm_manager/quan_ly_luong/partials/nhom_phantu_list_sidebar.html" %}
+
+{% include "components/crud_modal.html" with modal_id="group-form-modal" form_id="group-form" title="Thông tin nhóm phần tử" content_template="hrm_manager/quan_ly_luong/partials/nhom_phantu_form_modal.html" submit_label="Lưu nhóm" %}
+
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/quan_ly_luong/phan_tu_luong.js' %}"></script>
+{% endblock scripts %}

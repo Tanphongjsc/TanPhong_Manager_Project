@@ -61,14 +61,44 @@
             {# THIẾT LẬP QUY TẮC - Placeholder #}
             <div class="space-y-4">
                 {% include "components/section_header.html" with title="Thiết lập quy tắc chế độ lương" icon_class="fas fa-calculator" %}
-                <div class="bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-sm mb-3">
-                        <i class="fas fa-hourglass-half text-slate-400 text-2xl"></i>
+                <div class="border border-slate-200 rounded-lg overflow-hidden">
+                    {# Table Header #}
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600 w-12">STT</th>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600 w-48">Tên phần tử</th>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600 w-36">Mã phần tử</th>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600 w-40">Nguồn dữ liệu</th>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600">Công thức</th>
+                                <th class="px-3 py-3 text-left font-medium text-slate-600 w-64">Mô tả</th>
+                                <th class="px-3 py-3 text-center font-medium text-slate-600 w-24">Kiểm thử</th>
+                                <th class="px-3 py-3 text-center font-medium text-slate-600 w-12"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="quy-tac-tbody" class="divide-y divide-slate-100">
+                            {# JS sẽ render rows ở đây #}
+                        </tbody>
+                    </table>
+                    
+                    {# Empty State #}
+                    <div id="quy-tac-empty" class="py-10 text-center text-slate-400">
+                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                        <p>Không có dữ liệu</p>
                     </div>
-                    <p class="text-slate-600 font-medium mb-1">Đang phát triển</p>
-                    <p class="text-slate-500 text-sm">Phần thiết lập quy tắc tính lương sẽ được triển khai trong phiên bản tiếp theo</p>
+                </div>
+
+                {# Footer: Nút Thêm mới + Số dòng #}
+                <div class="flex items-center gap-4 mt-3">
+                    <button type="button" id="btn-add-quy-tac" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                        <i class="fas fa-plus-circle"></i>
+                        Thêm mới
+                    </button>
+                    <span class="text-sm text-slate-500">Số dòng: <span id="quy-tac-count" class="font-medium text-slate-700">0</span></span>
                 </div>
             </div>
+            {# Hidden input để lưu quy tắc #}
+            <input type="hidden" name="quy_tac_data" id="hidden-quy-tac-data" value="[]">
 
             {% include "components/form_footer_fixed.html" with cancel_url=cancel_url submit_id="btn-save" submit_text="Lưu lại" %}
         </form>
@@ -77,11 +107,13 @@
 
 {# Employee Selector Modal #}
 {% include "components/crud_modal.html" with modal_id="employee-selector-modal" form_id="employee-selector-form" title="Chọn nhân viên, bộ phận" content_template="components/employee_selector.html" modal_size="5xl" submit_label="Chọn" %}
-
+{% include "components/crud_modal.html" with modal_id="phan-tu-selector-modal" form_id="phan-tu-selector-form" title="Chọn phần tử lương" content_template="hrm_manager/quan_ly_luong/partials/phan_tu_selector.html" modal_size="2xl" submit_label="Thêm vào quy tắc" %}
 {% endblock %}
 
 {% block scripts %}
 <script src="{% static 'js/utils/base_form_manager.js' %}"></script>
 <script src="{% static 'js/components/employee_selector.js' %}"></script>
+<script src="{% static 'js/quan_ly_luong/quy_tac_manager.js' %}"></script>
+<script src="{% static 'js/quan_ly_luong/phan_tu_selector.js' %}"></script>
 <script src="{% static 'js/quan_ly_luong/che_do_luong_form.js' %}"></script>
 {% endblock %}

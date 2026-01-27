@@ -1,0 +1,65 @@
+{% comment %}
+Modal Content: Chọn phần tử lương để thêm vào quy tắc
+{% endcomment %}
+
+<div class="space-y-4">
+    {# Search #}
+    <div class="relative">
+        <input type="text" 
+               id="phan-tu-search" 
+               placeholder="Tìm kiếm phần tử lương..."
+               class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+    </div>
+    
+    {# Filter by Group #}
+    <div class="flex items-center gap-3">
+        <label class="text-sm text-slate-600">Nhóm:</label>
+        <select id="phan-tu-group-filter" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+            <option value="">Tất cả nhóm</option>
+        </select>
+    </div>
+    
+    {# List Container #}
+    <div class="border border-slate-200 rounded-lg max-h-[400px] overflow-y-auto custom-scrollbar">
+        <div id="phan-tu-list" class="divide-y divide-slate-100">
+            {# JS renders items here #}
+        </div>
+        
+        {# Loading #}
+        <div id="phan-tu-loading" class="py-8 text-center text-slate-400">
+            <i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...
+        </div>
+        
+        {# Empty #}
+        <div id="phan-tu-empty" class="py-8 text-center text-slate-400 hidden">
+            <i class="fas fa-inbox text-2xl mb-2"></i>
+            <p>Không tìm thấy phần tử</p>
+        </div>
+    </div>
+    
+    {# Selected Count #}
+    <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+        <span class="text-sm text-slate-600">
+            Đã chọn: <span id="phan-tu-selected-count" class="font-semibold text-blue-600">0</span> phần tử
+        </span>
+        <button type="button" id="btn-clear-phan-tu" class="text-sm text-slate-500 hover:text-red-500 transition-colors">
+            <i class="fas fa-times mr-1"></i>Bỏ chọn tất cả
+        </button>
+    </div>
+</div>
+
+{# Template cho mỗi item #}
+<template id="tpl-phan-tu-item">
+    <label class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors">
+        <input type="checkbox" class="phan-tu-checkbox w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+        <div class="flex-1 min-w-0">
+            <div class="font-medium text-slate-800 truncate" data-field="tenphantu"></div>
+            <div class="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                <span><i class="fas fa-hashtag mr-1"></i><span data-field="maphantu"></span></span>
+                <span><i class="fas fa-folder mr-1"></i><span data-field="nhomphantu_ten"></span></span>
+                <span class="px-1.5 py-0.5 rounded text-xs" data-field="loaiphantu_badge"></span>
+            </div>
+        </div>
+    </label>
+</template>
