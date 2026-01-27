@@ -119,7 +119,9 @@ class Chedoluong(models.Model):
     ngayapdung = models.DateField(db_column='NgayApDung', blank=True, null=True)  # Field name made lowercase.
     ngayhethan = models.DateField(db_column='NgayHetHan', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
-
+    is_deleted = models.BooleanField(db_column='Is_Deleted', blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
+    
     class Meta:
         managed = False
         db_table = '"hrm"."CheDoLuong"'
@@ -373,11 +375,12 @@ class Kyluong(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
-    thang = models.SmallIntegerField(db_column='Thang', blank=True, null=True)  # Field name made lowercase.
+    thang = models.CharField(db_column='Thang', blank=True, null=True)  # Field name made lowercase.
     ngaybatdau = models.DateField(db_column='NgayBatDau', blank=True, null=True)  # Field name made lowercase.
     ngayketthuc = models.DateField(db_column='NgayKetThuc', blank=True, null=True)  # Field name made lowercase.
     ngaychotluong = models.DateField(db_column='NgayChotLuong', blank=True, null=True)  # Field name made lowercase.
-
+    trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)
+    
     class Meta:
         managed = False
         db_table = '"hrm"."KyLuong"'
@@ -647,6 +650,8 @@ class NhanvienChedoluong(models.Model):
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     chedoluong = models.ForeignKey(Chedoluong, models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey(Nhanvien, models.DO_NOTHING, blank=True, null=True)
+    ngayapdung = models.DateTimeField(db_column='NgayApDung', blank=True, null=True)  # Field name made lowercase.
+    ngayketthuc = models.DateTimeField(db_column='NgayKetThuc', blank=True, null=True)
 
     class Meta:
         managed = False
@@ -735,6 +740,8 @@ class PhongbanChedoluong(models.Model):
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     chedoluong = models.ForeignKey(Chedoluong, models.DO_NOTHING, blank=True, null=True)
     phongban = models.ForeignKey(Phongban, models.DO_NOTHING, blank=True, null=True)
+    ngayapdung = models.DateTimeField(db_column='NgayApDung', blank=True, null=True)  # Field name made lowercase.
+    ngayketthuc = models.DateTimeField(db_column='NgayKetThuc', blank=True, null=True)
 
     class Meta:
         managed = False

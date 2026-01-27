@@ -435,7 +435,7 @@ def api_phong_ban_nhan_vien(request):
         qs = Lichsucongtac.objects.filter(filters).select_related(
             'nhanvien', 'nhanvien__loainv', 'nhanvien__nganhang',  # Join nhân viên + related
             'phongban', 'chucvu'  # Join cho cong_tac
-        ).distinct('nhanvien__id')  # Unique theo nhân viên (nếu có duplicate active)
+        ).distinct('nhanvien__id').order_by('nhanvien__id')  # Unique theo nhân viên (nếu có duplicate active)
 
         # Sử dụng Paginator
         paginator = Paginator(qs, page_size)
@@ -487,9 +487,8 @@ def api_phong_ban_nhan_vien(request):
             'success': False,
             'message': f'Lỗi: {str(e)}'
         }, status=400)
-
-
-# @login_required
+    
+@login_required
 @require_http_methods(["GET"])
 def api_phong_ban_tree(request):
     """API lấy cây phòng ban"""
