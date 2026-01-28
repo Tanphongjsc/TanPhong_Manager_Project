@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Count, Q, Exists, OuterRef
 from datetime import date, timedelta, datetime
 from apps.hrm_manager.__core__.models import *
+from calendar import monthrange
 
 
 class PayrollPeriodLockException(Exception):
@@ -995,3 +996,410 @@ class CheDoLuongService:
         result['message'] = f"Đã chuyển {transferred_count} nhân viên/phòng ban từ '{from_che_do.tenchedo}' sang '{to_che_do.tenchedo}'"
         
         return result
+    
+class KyLuongService:
+    """Service xử lý Business Logic cho Kỳ lương - Version 2.0"""
+    
+    # Trạng thái kỳ lương
+    STATUS_DRAFT = 'draft'
+    STATUS_OPEN = 'open'
+    STATUS_PENDING = 'pending'
+    STATUS_PROCESSING = 'processing'
+    STATUS_CALCULATED = 'calculated'
+    STATUS_FINALIZED = 'finalized'
+    
+    # Cấu hình nghiệp vụ
+    MAX_DAYS_AFTER_END_FOR_CLOSING = 10
+    MIN_DAYS_AFTER_END_FOR_CLOSING = 1
+    
+    # ✅ MỚI: Độ dài kỳ lương (mặc định 30 ngày)
+    DEFAULT_PERIOD_DAYS = 30
+    MIN_PERIOD_DAYS = 28
+    MAX_PERIOD_DAYS = 35
+    
+    # ✅ MỚI: Giới hạn ngày bắt đầu so với tháng được chọn
+    MAX_START_DAY_OFFSET = 10  # Ngày bắt đầu phải từ 1-10 của tháng
+    
+    @classmethod
+    def get_default_period_for_month(cls, year, month):
+        """
+        Lấy khoảng thời gian mặc định cho 1 tháng
+        Mặc định: Ngày 1 của tháng → Ngày cuối tháng
+        """
+        first_day = date(year, month, 1)
+        _, last_day_num = monthrange(year, month)
+        last_day = date(year, month, last_day_num)
+        return first_day, last_day
+    
+    @classmethod
+    def calculate_end_date_from_start(cls, start_date, period_days=None):
+        """
+        ✅ MỚI: Tính ngày kết thúc từ ngày bắt đầu
+        VD: start=05/08/2026, period=30 → end=03/09/2026
+        """
+        if period_days is None:
+            period_days = cls.DEFAULT_PERIOD_DAYS
+        return start_date + timedelta(days=period_days - 1)
+    
+    @classmethod
+    def calculate_start_date_from_end(cls, end_date, period_days=None):
+        """
+        ✅ MỚI: Tính ngày bắt đầu từ ngày kết thúc
+        VD: end=04/09/2026, period=30 → start=06/08/2026
+        """
+        if period_days is None:
+            period_days = cls.DEFAULT_PERIOD_DAYS
+        return end_date - timedelta(days=period_days - 1)
+    
+    @classmethod
+    def get_default_closing_date(cls, end_date):
+        """Ngày chốt = Ngày kết thúc + 5 ngày"""
+        return end_date + timedelta(days=5)
+    
+    @classmethod
+    def get_date_constraints_for_month(cls, year, month):
+        """
+        ✅ UPDATED: Giới hạn ngày = ±1 tháng so với tháng hiện tại
+        VD: Tháng 8 → Range: 01/07 - 30/09
+        Returns: (min_start, max_start, min_end, max_end)
+        """
+        # Tháng trước
+        if month == 1:
+            prev_month, prev_year = 12, year - 1
+        else:
+            prev_month, prev_year = month - 1, year
+        
+        # Tháng sau
+        if month == 12:
+            next_month, next_year = 1, year + 1
+        else:
+            next_month, next_year = month + 1, year
+        
+        # Ngày đầu tháng trước
+        min_date = date(prev_year, prev_month, 1)
+        
+        # Ngày cuối tháng sau
+        _, next_last_day = monthrange(next_year, next_month)
+        max_date = date(next_year, next_month, next_last_day)
+        
+        # Áp dụng chung cho cả start và end
+        return min_date, max_date, min_date, max_date
+    
+    @classmethod
+    def validate_start_date_in_month(cls, year, month, start_date):
+        """
+        ✅ UPDATED: Validate ngày bắt đầu trong range ±1 tháng
+        """
+        min_date, max_date, _, _ = cls.get_date_constraints_for_month(year, month)
+        
+        if start_date < min_date:
+            return False, f"Ngày bắt đầu sớm nhất là {min_date.strftime('%d/%m/%Y')}"
+        
+        if start_date > max_date:
+            return False, f"Ngày bắt đầu muộn nhất là {max_date.strftime('%d/%m/%Y')}"
+        
+        # ✅ Kiểm tra ngày bắt đầu phải thuộc tháng được chọn (hoặc trong range hợp lệ)
+        # User chọn tháng 8, nhưng ngày bắt đầu có thể là cuối tháng 7 (VD: 25/7)
+        # → Chấp nhận miễn là nằm trong range ±1 tháng
+        
+        return True, ""
+    
+    @classmethod
+    def validate_period_dates(cls, start_date, end_date):
+        """Validate ngày bắt đầu và kết thúc kỳ lương"""
+        if start_date > end_date:
+            return False, "Ngày bắt đầu phải trước ngày kết thúc"
+        
+        delta = (end_date - start_date).days + 1  # +1 vì tính cả 2 ngày
+        if delta < cls.MIN_PERIOD_DAYS:
+            return False, f"Kỳ lương phải có ít nhất {cls.MIN_PERIOD_DAYS} ngày"
+        
+        if delta > cls.MAX_PERIOD_DAYS:
+            return False, f"Kỳ lương không được quá {cls.MAX_PERIOD_DAYS} ngày"
+        
+        return True, ""
+    
+    @classmethod
+    def validate_closing_date(cls, end_date, closing_date):
+        """Validate ngày chốt lương"""
+        min_closing = end_date + timedelta(days=cls.MIN_DAYS_AFTER_END_FOR_CLOSING)
+        max_closing = end_date + timedelta(days=cls.MAX_DAYS_AFTER_END_FOR_CLOSING)
+        
+        if closing_date < min_closing:
+            return False, f"Ngày chốt lương phải từ {min_closing.strftime('%d/%m/%Y')} trở đi"
+        
+        if closing_date > max_closing:
+            return False, f"Ngày chốt lương không được quá {max_closing.strftime('%d/%m/%Y')}"
+        
+        return True, ""
+    
+    @classmethod
+    def check_period_overlap(cls, start_date, end_date, exclude_id=None):
+        """
+        ✅ CẬP NHẬT: Kiểm tra xung đột kỳ lương theo DATE RANGE
+        Overlap xảy ra khi: new_start <= existing_end AND new_end >= existing_start
+        """
+        query = Kyluong.objects.filter(
+            Q(ngaybatdau__lte=end_date) & Q(ngayketthuc__gte=start_date)
+        )
+        
+        if exclude_id:
+            query = query.exclude(id=exclude_id)
+        
+        overlapping = query.first()
+        if overlapping:
+            overlap_range = f"{overlapping.ngaybatdau.strftime('%d/%m/%Y')} - {overlapping.ngayketthuc.strftime('%d/%m/%Y')}"
+            return True, f"Trùng với kỳ lương tháng {overlapping.thang} ({overlap_range})"
+        
+        return False, ""
+    
+    @classmethod
+    def check_month_uniqueness(cls, year, month, exclude_id=None):
+        """
+        ✅ MỚI: Kiểm tra tháng đã có kỳ lương chưa (bổ sung cho overlap check)
+        """
+        query = Kyluong.objects.filter(thang=month, ngaybatdau__year=year)
+        
+        if exclude_id:
+            query = query.exclude(id=exclude_id)
+        
+        if query.exists():
+            return True, f"Kỳ lương tháng {month}/{year} đã tồn tại"
+        
+        return False, ""
+    
+    @classmethod
+    def can_edit_period(cls, ky_luong):
+        """Kiểm tra có thể sửa kỳ lương không"""
+        if not ky_luong.ngaychotluong:
+            return True, ""
+        
+        now = timezone.now()
+        from datetime import datetime
+        deadline = timezone.make_aware(
+            datetime.combine(ky_luong.ngaychotluong, datetime.max.time())
+        )
+        
+        if now > deadline:
+            return False, f"Đã quá hạn chỉnh sửa (23:59 ngày {ky_luong.ngaychotluong.strftime('%d/%m/%Y')})"
+        
+        locked_statuses = [cls.STATUS_PROCESSING, cls.STATUS_CALCULATED, cls.STATUS_FINALIZED]
+        if ky_luong.trangthai in locked_statuses:
+            return False, f"Kỳ lương đang ở trạng thái '{ky_luong.trangthai}', không thể chỉnh sửa"
+        
+        return True, ""
+    
+    @classmethod
+    def can_edit_month(cls, ky_luong):
+        """
+        ✅ MỚI: Kiểm tra có thể sửa THÁNG không
+        Rule: KHÔNG BAO GIỜ cho phép sửa tháng sau khi tạo
+        """
+        return False, "Không thể thay đổi tháng của kỳ lương đã tạo"
+    
+    @classmethod
+    def can_delete_period(cls, ky_luong):
+        """Kiểm tra có thể xóa kỳ lương không"""
+        has_payrolls = Bangluong.objects.filter(kyluong=ky_luong).exists()
+        if has_payrolls:
+            return False, "Kỳ lương đã có bảng lương, không thể xóa"
+        
+        if ky_luong.trangthai == cls.STATUS_FINALIZED:
+            return False, "Kỳ lương đã chốt, không thể xóa"
+        
+        return True, ""
+    
+    @classmethod
+    def get_period_status(cls, ky_luong):
+        """Tính toán trạng thái hiện tại của kỳ lương"""
+        today = date.today()
+        
+        if ky_luong.trangthai == cls.STATUS_FINALIZED:
+            return cls.STATUS_FINALIZED
+        
+        if ky_luong.trangthai in [cls.STATUS_PROCESSING, cls.STATUS_CALCULATED]:
+            return ky_luong.trangthai
+        
+        if today < ky_luong.ngaybatdau:
+            return cls.STATUS_DRAFT
+        elif today <= ky_luong.ngayketthuc:
+            return cls.STATUS_OPEN
+        else:
+            return cls.STATUS_PENDING
+    
+    @classmethod
+    @transaction.atomic
+    def create_period(cls, data):
+        """Tạo mới kỳ lương"""
+        month = data.get('thang')
+        year = data.get('nam')
+        start_date = data.get('ngay_bat_dau')
+        end_date = data.get('ngay_ket_thuc')
+        closing_date = data.get('ngay_chot_luong')
+        
+        # ✅ Validate ngày bắt đầu thuộc tháng
+        is_valid, msg = cls.validate_start_date_in_month(year, month, start_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        # Validate date range
+        is_valid, msg = cls.validate_period_dates(start_date, end_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        # Validate closing date
+        if closing_date:
+            is_valid, msg = cls.validate_closing_date(end_date, closing_date)
+            if not is_valid:
+                raise ValueError(msg)
+        
+        # ✅ Check tháng đã tồn tại
+        has_duplicate, msg = cls.check_month_uniqueness(year, month)
+        if has_duplicate:
+            raise ValueError(msg)
+        
+        # ✅ Check overlap với các kỳ khác
+        has_overlap, msg = cls.check_period_overlap(start_date, end_date)
+        if has_overlap:
+            raise ValueError(msg)
+        
+        ky_luong = Kyluong.objects.create(
+            thang=month,
+            ngaybatdau=start_date,
+            ngayketthuc=end_date,
+            ngaychotluong=closing_date,
+            trangthai=cls.STATUS_DRAFT,
+            created_at=timezone.now()
+        )
+        
+        return ky_luong
+    
+    @classmethod
+    @transaction.atomic
+    def create_periods_for_year(cls, base_data, from_month, year):
+        """Tạo nhiều kỳ lương từ tháng bắt đầu đến hết năm"""
+        created = []
+        errors = []
+        
+        for month in range(from_month, 13):
+            try:
+                first_day, last_day = cls.get_default_period_for_month(year, month)
+                closing_date = cls.get_default_closing_date(last_day)
+                
+                # Check tháng đã tồn tại
+                has_duplicate, _ = cls.check_month_uniqueness(year, month)
+                if has_duplicate:
+                    errors.append(f"Tháng {month}/{year} đã tồn tại")
+                    continue
+                
+                # Check overlap
+                has_overlap, _ = cls.check_period_overlap(first_day, last_day)
+                if has_overlap:
+                    errors.append(f"Tháng {month}/{year} bị trùng thời gian")
+                    continue
+                
+                ky_luong = Kyluong.objects.create(
+                    thang=month,
+                    ngaybatdau=first_day,
+                    ngayketthuc=last_day,
+                    ngaychotluong=closing_date,
+                    trangthai=cls.STATUS_DRAFT,
+                    created_at=timezone.now()
+                )
+                created.append(ky_luong)
+                
+            except Exception as e:
+                errors.append(f"Tháng {month}/{year}: {str(e)}")
+        
+        return created, errors
+    
+    @classmethod
+    @transaction.atomic
+    def update_period(cls, ky_luong, data):
+        """Cập nhật kỳ lương"""
+        # Kiểm tra quyền sửa
+        can_edit, msg = cls.can_edit_period(ky_luong)
+        if not can_edit:
+            raise ValueError(msg)
+        
+        # ✅ KHÔNG cho phép sửa tháng/năm
+        month = ky_luong.thang  # Giữ nguyên
+        year = ky_luong.ngaybatdau.year  # Giữ nguyên
+        
+        start_date = data.get('ngay_bat_dau', ky_luong.ngaybatdau)
+        end_date = data.get('ngay_ket_thuc', ky_luong.ngayketthuc)
+        closing_date = data.get('ngay_chot_luong', ky_luong.ngaychotluong)
+        
+        # ✅ Validate ngày bắt đầu thuộc tháng (dùng tháng gốc)
+        is_valid, msg = cls.validate_start_date_in_month(year, month, start_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        # Validate dates
+        is_valid, msg = cls.validate_period_dates(start_date, end_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        if closing_date:
+            is_valid, msg = cls.validate_closing_date(end_date, closing_date)
+            if not is_valid:
+                raise ValueError(msg)
+        
+        # ✅ Check overlap (exclude self)
+        has_overlap, msg = cls.check_period_overlap(start_date, end_date, exclude_id=ky_luong.id)
+        if has_overlap:
+            raise ValueError(msg)
+        
+        # Update (KHÔNG update thang)
+        ky_luong.ngaybatdau = start_date
+        ky_luong.ngayketthuc = end_date
+        ky_luong.ngaychotluong = closing_date
+        ky_luong.updated_at = timezone.now()
+        ky_luong.save()
+        
+        return ky_luong
+    
+    @classmethod
+    @transaction.atomic
+    def delete_period(cls, ky_luong):
+        """Xóa kỳ lương"""
+        can_delete, msg = cls.can_delete_period(ky_luong)
+        if not can_delete:
+            return False, msg
+        
+        ky_luong.delete()
+        return True, "Xóa kỳ lương thành công"
+    
+    @classmethod
+    def format_period_display(cls, ky_luong):
+        """Format hiển thị kỳ lương"""
+        year = ky_luong.ngaybatdau.year if ky_luong.ngaybatdau else date.today().year
+        
+        return {
+            'id': ky_luong.id,
+            'thang': ky_luong.thang,
+            'nam': year,
+            'thang_display': f"{str(ky_luong.thang).zfill(2)}/{year}",
+            'ngay_bat_dau': ky_luong.ngaybatdau.strftime('%d/%m/%Y') if ky_luong.ngaybatdau else None,
+            'ngay_ket_thuc': ky_luong.ngayketthuc.strftime('%d/%m/%Y') if ky_luong.ngayketthuc else None,
+            'ky_luong_display': f"{ky_luong.ngaybatdau.strftime('%d/%m/%Y')} - {ky_luong.ngayketthuc.strftime('%d/%m/%Y')}" if ky_luong.ngaybatdau and ky_luong.ngayketthuc else None,
+            'ngay_chot_luong': ky_luong.ngaychotluong.strftime('%d/%m/%Y') if ky_luong.ngaychotluong else None,
+            'trang_thai': ky_luong.trangthai,
+            'trang_thai_display': cls.get_status_display(ky_luong.trangthai),
+            'can_edit': cls.can_edit_period(ky_luong)[0],
+            'can_delete': cls.can_delete_period(ky_luong)[0],
+            'can_edit_month': False,  # ✅ Luôn False
+        }
+    
+    @classmethod
+    def get_status_display(cls, status):
+        """Lấy text hiển thị cho trạng thái"""
+        status_map = {
+            cls.STATUS_DRAFT: 'Nháp',
+            cls.STATUS_OPEN: 'Đang mở',
+            cls.STATUS_PENDING: 'Chờ chốt',
+            cls.STATUS_PROCESSING: 'Đang xử lý',
+            cls.STATUS_CALCULATED: 'Đã tính',
+            cls.STATUS_FINALIZED: 'Đã chốt',
+        }
+        return status_map.get(status, status)

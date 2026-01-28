@@ -26,7 +26,7 @@ from django.urls import reverse
 from django.db import transaction
 from django.db.models import F, Prefetch, Count, Q, Exists, OuterRef
 from apps.hrm_manager.__core__.models import *
-from .services import CheDoLuongService, PayrollPeriodLockException, ActiveEmployeesExistException, ConflictException
+from .services import CheDoLuongService, PayrollPeriodLockException, ActiveEmployeesExistException, ConflictException, KyLuongService
 
 # Create your views here.
 
@@ -1114,3 +1114,300 @@ def _save_quy_tac(che_do, quy_tac_list):
             trangthai='active',
             created_at=now().date()
         )
+
+# ===================================================================================
+#---------------------------------- BẢNG LƯƠNG --------------------------------------
+# ===================================================================================  
+
+# VIEW URLS - TRANG CHÍNH
+@login_required
+def view_ky_luong(request):
+    """Màn hình danh sách Kỳ lương"""
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Kỳ lương', 'url': None},
+        ],
+    }
+    return render(request, "hrm_manager/quan_ly_luong/ky_luong.html", context)
+
+# ============================================================================
+# API URLS
+# ============================================================================
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_ky_luong_list(request):
+    """
+    API Lấy danh sách Kỳ lương
+    """
+    queryset = Kyluong.objects.all().order_by('-ngaybatdau', '-thang')
+    
+    # Search theo tháng/năm
+    search = request.GET.get('search', '').strip()
+    if search:
+        # Có thể search "12/2026" hoặc "2026" hoặc "12"
+        if '/' in search:
+            parts = search.split('/')
+            if len(parts) == 2:
+                try:
+                    month = int(parts[0])
+                    year = int(parts[1])
+                    queryset = queryset.filter(thang=month, ngaybatdau__year=year)
+                except ValueError:
+                    pass
+        else:
+            try:
+                num = int(search)
+                if num > 12:  # Năm
+                    queryset = queryset.filter(ngaybatdau__year=num)
+                else:  # Tháng
+                    queryset = queryset.filter(thang=num)
+            except ValueError:
+                pass
+    
+    # Filter theo năm
+    year_filter = request.GET.get('year', '').strip()
+    if year_filter:
+        try:
+            queryset = queryset.filter(ngaybatdau__year=int(year_filter))
+        except ValueError:
+            pass
+    
+    # Pagination
+    context = get_list_context(
+        request,
+        queryset,
+        search_fields=[],
+        page_size=20,
+        order_by=None
+    )
+    
+    page_obj = context['page_obj']
+    items_list = []
+    
+    for item in page_obj.object_list:
+        items_list.append(KyLuongService.format_period_display(item))
+    
+    return json_success(
+        'Thành công',
+        data=items_list,
+        pagination={
+            'page': page_obj.number,
+            'page_size': context['paginator'].per_page,
+            'total': context['paginator'].count,
+            'total_pages': context['paginator'].num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous()
+        }
+    )
+
+
+@require_http_methods(["GET"])
+@handle_exceptions  
+def api_ky_luong_detail(request, pk):
+    """
+    API Lấy chi tiết Kỳ lương
+    ✅ CẬP NHẬT: Thêm can_edit_month
+    """
+    ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
+    if not isinstance(ky_luong, Kyluong):
+        return ky_luong
+    
+    data = KyLuongService.format_period_display(ky_luong)
+    
+    # Thêm thông tin chi tiết cho form edit
+    data['ngay_bat_dau_raw'] = ky_luong.ngaybatdau.strftime('%Y-%m-%d') if ky_luong.ngaybatdau else None
+    data['ngay_ket_thuc_raw'] = ky_luong.ngayketthuc.strftime('%Y-%m-%d') if ky_luong.ngayketthuc else None
+    data['ngay_chot_luong_raw'] = ky_luong.ngaychotluong.strftime('%Y-%m-%d') if ky_luong.ngaychotluong else None
+    
+    # ✅ MỚI: Lấy constraints cho date picker (dùng tháng gốc)
+    year = ky_luong.ngaybatdau.year
+    month = ky_luong.thang
+    min_start, max_start, min_end, max_end = KyLuongService.get_date_constraints_for_month(year, month)
+    
+    data['min_ngay_bat_dau'] = min_start.strftime('%Y-%m-%d')
+    data['max_ngay_bat_dau'] = max_start.strftime('%Y-%m-%d')
+    data['min_ngay_ket_thuc'] = min_end.strftime('%Y-%m-%d')
+    data['max_ngay_ket_thuc'] = max_end.strftime('%Y-%m-%d')
+    
+    return json_success('Lấy chi tiết thành công', data=data)
+
+
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_ky_luong_create(request):
+    """
+    API Tạo mới Kỳ lương
+    """
+    data = get_request_data(request)
+    
+    # Parse dates
+    thang = data.get('thang')
+    nam = data.get('nam')
+    ngay_bat_dau = data.get('ngay_bat_dau')
+    ngay_ket_thuc = data.get('ngay_ket_thuc')
+    ngay_chot_luong = data.get('ngay_chot_luong')
+    lap_theo_thang = data.get('lap_theo_thang', False)
+    
+    # Validate required fields
+    if not thang or not nam:
+        return json_error("Vui lòng chọn tháng và năm")
+    
+    if not ngay_bat_dau or not ngay_ket_thuc:
+        return json_error("Vui lòng chọn ngày bắt đầu và kết thúc kỳ lương")
+    
+    # Parse date strings
+    try:
+        thang = int(thang)
+        nam = int(nam)
+        ngay_bat_dau = datetime.strptime(ngay_bat_dau, '%Y-%m-%d').date()
+        ngay_ket_thuc = datetime.strptime(ngay_ket_thuc, '%Y-%m-%d').date()
+        
+        if ngay_chot_luong:
+            ngay_chot_luong = datetime.strptime(ngay_chot_luong, '%Y-%m-%d').date()
+        else:
+            ngay_chot_luong = KyLuongService.get_default_closing_date(ngay_ket_thuc)
+            
+    except (ValueError, TypeError) as e:
+        return json_error(f"Định dạng ngày không hợp lệ: {str(e)}")
+    
+    try:
+        if lap_theo_thang:
+            # Tạo nhiều kỳ lương
+            created, errors = KyLuongService.create_periods_for_year(
+                base_data=data,
+                from_month=thang,
+                year=nam
+            )
+            
+            if errors and not created:
+                return json_error(f"Không thể tạo kỳ lương: {'; '.join(errors)}")
+            
+            msg = f"Đã tạo {len(created)} kỳ lương"
+            if errors:
+                msg += f". Lỗi: {'; '.join(errors)}"
+            
+            return json_success(msg, count=len(created))
+        else:
+            # Tạo 1 kỳ lương
+            ky_luong = KyLuongService.create_period({
+                'thang': thang,
+                'nam': nam,
+                'ngay_bat_dau': ngay_bat_dau,
+                'ngay_ket_thuc': ngay_ket_thuc,
+                'ngay_chot_luong': ngay_chot_luong,
+            })
+            
+            return json_success("Tạo kỳ lương thành công", id=ky_luong.id)
+            
+    except ValueError as e:
+        return json_error(str(e))
+    except Exception as e:
+        return json_error(f"Lỗi khi tạo kỳ lương: {str(e)}")
+
+
+@require_http_methods(["PUT", "POST"])
+@handle_exceptions
+def api_ky_luong_update(request, pk):
+    """
+    API Cập nhật Kỳ lương
+    """
+    ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
+    if not isinstance(ky_luong, Kyluong):
+        return ky_luong
+    
+    data = get_request_data(request)
+    
+    # Parse dates
+    thang = data.get('thang')
+    nam = data.get('nam')
+    ngay_bat_dau = data.get('ngay_bat_dau')
+    ngay_ket_thuc = data.get('ngay_ket_thuc')
+    ngay_chot_luong = data.get('ngay_chot_luong')
+    
+    try:
+        if thang:
+            thang = int(thang)
+        if nam:
+            nam = int(nam)
+        if ngay_bat_dau:
+            ngay_bat_dau = datetime.strptime(ngay_bat_dau, '%Y-%m-%d').date()
+        if ngay_ket_thuc:
+            ngay_ket_thuc = datetime.strptime(ngay_ket_thuc, '%Y-%m-%d').date()
+        if ngay_chot_luong:
+            ngay_chot_luong = datetime.strptime(ngay_chot_luong, '%Y-%m-%d').date()
+            
+    except (ValueError, TypeError) as e:
+        return json_error(f"Định dạng ngày không hợp lệ: {str(e)}")
+    
+    try:
+        KyLuongService.update_period(ky_luong, {
+            'thang': thang,
+            'nam': nam,
+            'ngay_bat_dau': ngay_bat_dau,
+            'ngay_ket_thuc': ngay_ket_thuc,
+            'ngay_chot_luong': ngay_chot_luong,
+        })
+        
+        return json_success("Cập nhật kỳ lương thành công")
+        
+    except ValueError as e:
+        return json_error(str(e))
+    except Exception as e:
+        return json_error(f"Lỗi khi cập nhật: {str(e)}")
+
+
+@require_http_methods(["POST", "DELETE"])
+@handle_exceptions
+def api_ky_luong_delete(request, pk):
+    """
+    API Xóa Kỳ lương
+    """
+    ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
+    if not isinstance(ky_luong, Kyluong):
+        return ky_luong
+    
+    success, msg = KyLuongService.delete_period(ky_luong)
+    
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_ky_luong_get_defaults(request):
+    """
+    API Lấy giá trị mặc định cho form tạo mới
+    ✅ UPDATED: Constraints đơn giản hơn
+    """
+    year = int(request.GET.get('year', date.today().year))
+    month = int(request.GET.get('month', date.today().month))
+    
+    first_day, last_day = KyLuongService.get_default_period_for_month(year, month)
+    closing_date = KyLuongService.get_default_closing_date(last_day)
+    
+    # Tính min/max cho ngày chốt
+    min_closing = last_day + timedelta(days=KyLuongService.MIN_DAYS_AFTER_END_FOR_CLOSING)
+    max_closing = last_day + timedelta(days=KyLuongService.MAX_DAYS_AFTER_END_FOR_CLOSING)
+    
+    # ✅ UPDATED: Lấy constraints ±1 tháng
+    min_date, max_date, _, _ = KyLuongService.get_date_constraints_for_month(year, month)
+    
+    return json_success('OK', data={
+        'year': year,
+        'month': month,
+        'ngay_bat_dau': first_day.strftime('%Y-%m-%d'),
+        'ngay_ket_thuc': last_day.strftime('%Y-%m-%d'),
+        'ngay_chot_luong': closing_date.strftime('%Y-%m-%d'),
+        'min_ngay_chot': min_closing.strftime('%Y-%m-%d'),
+        'max_ngay_chot': max_closing.strftime('%Y-%m-%d'),
+        # ✅ UPDATED: Chung 1 range cho cả start và end
+        'min_ngay_bat_dau': min_date.strftime('%Y-%m-%d'),
+        'max_ngay_bat_dau': max_date.strftime('%Y-%m-%d'),
+        'min_ngay_ket_thuc': min_date.strftime('%Y-%m-%d'),
+        'max_ngay_ket_thuc': max_date.strftime('%Y-%m-%d'),
+        'period_days': KyLuongService.DEFAULT_PERIOD_DAYS,
+    })

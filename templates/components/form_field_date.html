@@ -1,0 +1,23 @@
+{% comment %}
+  Component: Date Field with Label
+  Usage:
+    {% include "components/form_field_date.html" with
+        label="Ngày bắt đầu"
+        name="ngay_bat_dau"
+        id="input-ngay-bat-dau"
+        required=True
+        show_label=True
+    %}
+{% endcomment %}
+
+<div class="relative">
+    <input type="date" 
+           name="{{ name }}"
+           id="{{ id }}"
+           {% if required %}required{% endif %}
+           value="{{ value|default:'' }}"
+           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all {{ extra_class }}">
+    {% if show_label %}
+    <label class="absolute -top-2 left-2 px-1 bg-white text-xs text-slate-500">{{ label }}</label>
+    {% endif %}
+</div>

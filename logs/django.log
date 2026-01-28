@@ -35999,3 +35999,341 @@ WARNING 2026-01-27 15:58:35,073 log 5792 18576 Not Found: /.well-known/appspecif
 WARNING 2026-01-27 15:58:35,073 basehttp 5792 18576 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-01-27 15:58:37,327 log 5792 18576 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-01-27 15:58:37,327 basehttp 5792 18576 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 11:24:37,777 log 6768 1432 Not Found: /favicon.ico
+WARNING 2026-01-28 11:24:37,778 basehttp 6768 1432 "GET /favicon.ico HTTP/1.1" 404 3131
+ERROR 2026-01-28 11:27:21,638 log 6768 14092 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-01-28 11:27:21,638 basehttp 6768 14092 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93788
+ERROR 2026-01-28 11:49:36,099 log 5628 9132 Internal Server Error: /hrm/quan-ly-luong/ky-luong/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 510, in parse
+    compile_func = self.tags[command]
+                   ~~~~~~~~~^^^^^^^^^
+KeyError: 'endwith'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\quan_ly_luong\views.py", line 1133, in view_ky_luong
+    return render(request, "hrm_manager/quan_ly_luong/ky_luong.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 512, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 567, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 36: 'endwith', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2026-01-28 11:49:36,106 basehttp 5628 9132 "GET /hrm/quan-ly-luong/ky-luong/ HTTP/1.1" 500 192861
+ERROR 2026-01-28 11:50:37,313 log 5628 19152 Internal Server Error: /hrm/quan-ly-luong/api/ky-luong/list/
+ERROR 2026-01-28 11:50:37,313 basehttp 5628 19152 "GET /hrm/quan-ly-luong/api/ky-luong/list/?page=1&page_size=10 HTTP/1.1" 500 182
+WARNING 2026-01-28 15:07:02,409 log 19204 7236 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:07:02,410 basehttp 19204 7236 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:08:26,384 log 19204 7236 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:08:26,385 basehttp 19204 7236 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:12:20,252 log 19204 7236 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:12:20,252 basehttp 19204 7236 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:14:30,886 log 19204 7236 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:14:30,887 basehttp 19204 7236 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:33:33,223 log 19204 7628 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:33:33,223 basehttp 19204 7628 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:33:41,013 log 19204 7628 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:33:41,014 basehttp 19204 7628 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:41:48,173 log 19204 860 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:41:48,174 basehttp 19204 860 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:42:32,901 log 19204 14868 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 15:42:32,901 basehttp 19204 14868 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 15:50:24,728 log 19204 8320 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-28 15:50:24,744 basehttp 19204 8320 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 105
+WARNING 2026-01-28 15:50:33,875 log 19204 8320 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-28 15:50:33,875 basehttp 19204 8320 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 105
+WARNING 2026-01-28 16:43:53,993 log 10896 9336 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 16:43:53,994 basehttp 10896 9336 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 16:52:38,134 log 10896 9520 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 16:52:38,135 basehttp 10896 9520 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 16:57:11,848 log 10896 9520 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 16:57:11,848 basehttp 10896 9520 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:00:24,301 log 10896 19340 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:00:24,301 basehttp 10896 19340 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:10:06,349 log 10896 3584 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:10:06,350 basehttp 10896 3584 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:11:41,428 log 10896 3584 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:11:41,429 basehttp 10896 3584 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:12:30,609 log 10896 3584 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:12:30,609 basehttp 10896 3584 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:19:21,365 log 10896 12064 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:19:21,365 basehttp 10896 12064 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:23:05,502 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:23:05,503 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:23:30,213 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:23:30,214 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:23:40,802 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:23:40,803 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:24:16,693 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:24:16,693 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:24:30,231 log 10896 17944 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:24:30,231 basehttp 10896 17944 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:25:57,080 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:25:57,080 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:25:57,312 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:25:57,312 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:25:57,549 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:25:57,549 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:26:01,776 log 10896 7148 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:26:01,777 basehttp 10896 7148 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:26:24,646 log 10896 17824 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:26:24,647 basehttp 10896 17824 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:28:29,918 log 15100 4936 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:28:29,919 basehttp 15100 4936 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:46:15,005 log 15100 10052 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:46:15,006 basehttp 15100 10052 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:54:32,825 log 15100 17004 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:54:32,826 basehttp 15100 17004 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 17:56:52,132 log 15100 17004 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 17:56:52,132 basehttp 15100 17004 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:17:35,841 log 15100 3816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:17:35,841 basehttp 15100 3816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:19:05,932 log 15100 13840 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:19:05,932 basehttp 15100 13840 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:20:35,799 log 15100 13840 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:20:35,799 basehttp 15100 13840 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:23:37,452 log 15100 13840 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:23:37,458 basehttp 15100 13840 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2026-01-28 18:34:20,917 basehttp 15100 19228 "GET /hrm/quan-ly-luong/ky-luong/ HTTP/1.1" 500 333791
+WARNING 2026-01-28 18:34:21,203 log 15100 19228 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:34:21,203 basehttp 15100 19228 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2026-01-28 18:34:42,267 log 15100 19228 Internal Server Error: /hrm/quan-ly-luong/ky-luong/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 210, in render
+    return template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 173, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 214, in select_template
+    raise TemplateDoesNotExist(", ".join(not_found))
+django.template.exceptions.TemplateDoesNotExist: components/form_field_date_range_vn.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\quan_ly_luong\views.py", line 1132, in view_ky_luong
+    return render(request, "hrm_manager/quan_ly_luong/ky_luong.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 109, in render
+    reraise(exc, self.backend)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 130, in reraise
+    raise new from exc
+django.template.exceptions.TemplateDoesNotExist: components/form_field_date_range_vn.html
+ERROR 2026-01-28 18:34:42,272 basehttp 15100 19228 "GET /hrm/quan-ly-luong/ky-luong/ HTTP/1.1" 500 289094
+WARNING 2026-01-28 18:34:42,988 log 15100 10152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:34:42,988 basehttp 15100 10152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:35:33,992 log 15100 10152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:35:33,992 basehttp 15100 10152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:41:03,161 log 15100 12888 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:41:03,162 basehttp 15100 12888 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 18:45:37,738 log 13648 15152 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 18:45:37,742 basehttp 13648 15152 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 22:01:08,383 log 9252 15452 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 22:01:08,398 basehttp 9252 15452 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 22:01:12,721 log 9252 15452 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 22:01:12,723 basehttp 9252 15452 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 22:31:50,242 log 15940 17476 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 22:31:50,242 basehttp 15940 17476 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 22:41:26,908 log 15940 12240 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-28 22:41:26,908 basehttp 15940 12240 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 105
+WARNING 2026-01-28 22:41:35,444 log 15940 12240 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-28 22:41:35,444 basehttp 15940 12240 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 105
+WARNING 2026-01-28 22:41:52,988 log 15940 12240 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-28 22:41:52,988 basehttp 15940 12240 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 115
+WARNING 2026-01-28 22:47:44,577 log 10064 12424 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 22:47:44,578 basehttp 10064 12424 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 22:59:57,368 log 10064 10692 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 22:59:57,368 basehttp 10064 10692 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-28 23:06:22,619 log 10064 14324 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-28 23:06:22,619 basehttp 10064 14324 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242

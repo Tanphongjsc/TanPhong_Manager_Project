@@ -24,7 +24,7 @@ urlpatterns = [
     # -------------------------------- Thiết lập số liệu cố đính ------------------------------
     path("api/phan-tu-luong/thiet-lap-gia-tri", views.api_phan_tu_luong_setup_params, name="api_phan_tu_luong_setup_params"),
 
-    # View chính
+    # ------------------------------ CHẾ ĐỘ LƯƠNG -----------------------------
     path('che-do-luong/', views.view_che_do_luong, name='che_do_luong'),
     path('che-do-luong/create/', views.view_che_do_luong_create, name='che_do_luong_create'),
     path('che-do-luong/<int:pk>/update/', views.view_che_do_luong_update, name='che_do_luong_update'),
@@ -39,7 +39,19 @@ urlpatterns = [
     # API: Check conditions
     path('api/che-do-luong/<int:pk>/check-delete/', views.api_che_do_luong_check_delete, name='api_che_do_luong_check_delete'),
     path('api/che-do-luong/<int:pk>/check-toggle/', views.api_che_do_luong_check_toggle, name='api_che_do_luong_check_toggle'),
-    
     # API: Transfer
     path('api/che-do-luong/transfer/', views.api_che_do_luong_transfer, name='api_che_do_luong_transfer'),
+
+    # ------------------------------ KỲ LƯƠNG -----------------------------
+    # Kỳ lương - Views
+    path('ky-luong/', views.view_ky_luong, name='ky_luong'),
+    
+    # Kỳ lương - APIs
+    path('api/ky-luong/list/', views.api_ky_luong_list, name='api_ky_luong_list'),
+    path('api/ky-luong/<int:pk>/detail/', views.api_ky_luong_detail, name='api_ky_luong_detail'),
+    path('api/ky-luong/create/', views.api_ky_luong_create, name='api_ky_luong_create'),
+    path('api/ky-luong/<int:pk>/update/', views.api_ky_luong_update, name='api_ky_luong_update'),
+    path('api/ky-luong/<int:pk>/delete/', views.api_ky_luong_delete, name='api_ky_luong_delete'),
+    path('api/ky-luong/get-defaults/', views.api_ky_luong_get_defaults, name='api_ky_luong_get_defaults'),
+    #path('api/ky-luong/check-overlap/', views.api_ky_luong_check_overlap, name='api-ky-luong-check-overlap'),
 ]
