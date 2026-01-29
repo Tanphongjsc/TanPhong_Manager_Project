@@ -6,12 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.db.models import F
 from django.db import transaction
+from django.db.models import F, Q, Sum, Count
 
-from apps.hrm_manager.__core__.models import Phantuluong, Nhomphantuluong, Thietlapsolieucodinh
+from apps.hrm_manager.__core__.models import Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, Lichsucongtac
 
 from json import loads
 from collections import defaultdict
 
+from apps.hrm_manager.cham_cong.services import PayrollCalculator
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context,
     json_response,
@@ -27,7 +29,125 @@ from apps.hrm_manager.utils.view_helpers import (
     search_queryset, filter_by_field, filter_by_status
 )
 
-# Create your views here.
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+def genarate_phieu_luong_from_bang_luong(bang_luong_id):
+    """
+    Sinh phiếu lương cho bảng lương đã chọn, gom dữ liệu, áp dụng công thức động, trả về kết quả từng nhân viên.
+    """
+    # 1. Lấy thông tin bảng lương, kỳ lương, chế độ lương
+    try:
+        bangluong_obj = Bangluong.objects.select_related('kyluong', 'chedoluong').get(id=bang_luong_id)
+    except Bangluong.DoesNotExist:
+        return None
+    thoigian_batdau = bangluong_obj.kyluong.ngaybatdau
+    thoigian_ketthuc = bangluong_obj.kyluong.ngayketthuc
+    chedoluong_id = bangluong_obj.chedoluong_id
+
+    # 2. Lấy danh sách quy tắc tính lương (rules) đang active cho chế độ lương này
+    rules_qs = Quytacchedoluong.objects.filter(
+        chedoluong_id=chedoluong_id, trangthai='active'
+    ).values(
+        'maquytac', 'bieuthuctinhtoan', 'nguondulieu', 'phantuluong', 'phantuluong__loaiphantu'
+    )
+    rules_list = list(rules_qs)
+    # Các mã quy tắc cần tính bằng công thức
+    formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'].strip().lower() == 'formula']
+
+    # 3. Lấy dữ liệu chấm công tổng hợp theo nhân viên trong kỳ lương
+    bcc_data = Bangchamcong.objects.filter(
+        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
+    ).values('nhanvien', 'loaichamcong').annotate(
+        tong_tien_luong=Sum('thanhtien'),
+        tong_so_luong_an=Count('coantrua', filter=Q(coantrua=True))
+    )
+    bcc_dict = {item['nhanvien']: item for item in bcc_data}
+    # Lấy danh sách nhân viên cần tính lương
+    nhanvien_ids = Lichsucongtac.objects.filter(trangthai='active').values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id')
+
+    # 4. Lấy dữ liệu thiết lập số liệu cố định cho từng nhân viên
+    setup_data = Thietlapsolieucodinh.objects.filter(
+        nhanvien_id__in=nhanvien_ids, trangthai='active'
+    ).values('nhanvien', 'phantuluong', 'giatrimacdinh')
+    setup_dict = defaultdict(dict)
+    for item in setup_data:
+        # Chuyển giá trị về float an toàn
+        try:
+            val = float(item['giatrimacdinh']) if item['giatrimacdinh'] is not None else None
+        except (TypeError, ValueError):
+            val = 0.0
+        setup_dict[item['nhanvien']][item['phantuluong']] = val
+
+    # 5. Chuẩn bị dữ liệu đầu vào cho PayrollCalculator
+    # Dạng: { 'ID_NV': [ { 'tham_so': {...} } ] }
+    data_groups_map = {}
+    for nv_id in nhanvien_ids:
+        nv_bcc = bcc_dict.get(nv_id, {})
+        nv_setup = setup_dict.get(nv_id, {})
+        context_params = {}
+        
+        # A. Dữ liệu biến động từ chấm công
+        context_params['SO_LUONG_AN'] = float(nv_bcc.get('tong_so_luong_an', 0))
+        # Nếu là SX thì lấy lương SP làm lương cơ bản
+        if nv_bcc.get('loaichamcong') == 'SX':
+            context_params['LUONG_CO_BAN'] = float(nv_bcc.get('tong_tien_luong', 0))
+
+        # B. Dữ liệu từ rules: system/manual/formula
+        for rule in rules_list:
+            ma_qt = rule['maquytac']
+            src = rule['nguondulieu'].strip().lower()
+            if src == 'system':
+                # Lấy từ thiết lập cố định nếu có
+                if rule['phantuluong'] in nv_setup:
+                    context_params[ma_qt] = nv_setup[rule['phantuluong']]
+            elif src == 'manual':
+                context_params[ma_qt] = None # Chờ nhập liệu tay
+            elif src == 'formula':
+                # Gán chuỗi công thức, sẽ được tính động khi cần
+                context_params[ma_qt] = rule['bieuthuctinhtoan']
+
+        # Đóng gói dữ liệu cho từng nhân viên
+        data_groups_map[str(nv_id)] = [{
+            'tham_so': context_params,
+            'nhanvien_id': nv_id
+        }]
+
+    # 6. Khởi tạo PayrollCalculator và tính toán các trường công thức cho từng nhân viên
+    payroll_calculator = PayrollCalculator(data_groups_map)
+    phieu_luong_final = {}
+    for nv_id_str, members in data_groups_map.items():
+        member_data = members[0]
+        params = member_data['tham_so']
+        # Tính tất cả các trường công thức cho nhân viên này
+        calculated_results = payroll_calculator.calculate_batch_fields(
+            field_keys=formula_keys,
+            params=params,
+            group_id=nv_id_str
+        )
+        # Cập nhật lại params với kết quả vừa tính
+        params.update(calculated_results)
+        
+        # 7. Định dạng kết quả đầu ra cho từng nhân viên
+        nv_id = int(nv_id_str)
+        phieu_luong_final[nv_id] = {}
+        for rule in rules_list:
+            ma_qt = rule['maquytac']
+            val = params.get(ma_qt)
+            phieu_luong_final[nv_id][rule['phantuluong']] = {
+                "value": val,
+                "type": rule['phantuluong__loaiphantu'],
+                "status": "calculated" if val is not None else rule['nguondulieu'].strip().lower(),
+                "formula": rule['bieuthuctinhtoan']
+            }
+
+    # Trả về danh sách phần tử lương và phiếu lương từng nhân viên
+    return {
+        "phan_tu_luong": [r['phantuluong'] for r in rules_list],
+        "phieu_luong": phieu_luong_final
+    }
+
 
 # ============================================================================
 # VIEW URLS - TRANG CHÍNH
@@ -50,6 +170,21 @@ def view_phan_tu_luong(request):
     return render(request, 'hrm_manager/quan_ly_luong/phan_tu_luong.html', context)
 
 
+# ------------------------------- PHIẾU LƯƠNG ------------------------------
+@login_required
+def view_phieu_luong(request):
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Phiếu lương', 'url': None},
+        ],
+    }
+
+    return render(request, 'hrm_manager/quan_ly_luong/phieu_luong_main.html', context)
+
+
+
+
 
 # ============================================================================
 # API URLS
@@ -62,7 +197,6 @@ def api_phan_tu_luong_list(request):
     """API lấy danh sách phần tử lương"""
 
     group_params = request.GET.get('is_group', False)
-    print(group_params)
     
     if request.method == 'GET':
         # Lấy danh sách phần tử lương
@@ -392,12 +526,10 @@ def api_phan_tu_luong_setup_params(request):
             
             # CASE A: Bản ghi này CÓ trong dữ liệu gửi lên
             if key in input_mapping:
-                print("IN: ", key, item.giatrimacdinh, input_mapping[key])
                 new_value = input_mapping[key]
                 
                 # Nếu giá trị thay đổi -> Inactive cũ, Tạo mới
                 if int(item.giatrimacdinh) != int(new_value):
-                    print("YES")
                     # Đánh dấu bản ghi cũ là inactive
                     item.trangthai = 'inactive'
                     item.updated_at = today
@@ -417,7 +549,6 @@ def api_phan_tu_luong_setup_params(request):
             
             # CASE B: Bản ghi này KHÔNG CÓ trong dữ liệu gửi lên
             else:
-                print("OUT: ", key, item.giatrimacdinh)
                 item.trangthai = 'inactive'
                 item.updated_at = today
                 to_update.append(item)
@@ -440,3 +571,26 @@ def api_phan_tu_luong_setup_params(request):
             Thietlapsolieucodinh.objects.bulk_create(to_create)
 
         return json_success('Lưu thiết lập số liệu cố định phần tử lương thành công')
+
+
+# ------------------------------ PHIẾU LƯƠNG ------------------------------
+# @login_required
+@require_http_methods(["GET", "POST"])
+def api_phieu_luong_list(request):
+    if request.method == 'GET':
+        bang_luong_id = request.GET.get('bangluong_id', None)
+        if not bang_luong_id:
+            return json_error('Thiếu tham số bangluong_id', status=400)
+
+        if not Phieuluong.objects.filter(bangluong_id=bang_luong_id).exists():
+            data = genarate_phieu_luong_from_bang_luong(bang_luong_id)
+            if data:
+                return json_success('Tạo danh sách phiếu lương thành công', data=data)
+            return json_error('Tạo phiếu lương không thành công', data=data)
+        else:
+            return json_success('Lấy danh sách phiếu lương thành công')
+        
+
+    
+    return json_success('Lấy danh sách phiếu lương thành công')
+    

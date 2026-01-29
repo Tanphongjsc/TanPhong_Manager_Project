@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chi tiết Phiếu Lương{% endblock %}
+
+{% block styles %}
+<style>
+    /* Ẩn scrollbar ngang của body nếu bảng quá rộng */
+    body { overflow-x: hidden; }
+    /* Context cho sticky headers */
+    /* #payroll-form { isolation: isolate; } -> Moved to parent container class 'isolate' */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative isolate">
+        
+        <form id="payroll-form" class="flex-1 flex flex-col overflow-hidden pb-20">
+            {% csrf_token %}
+            
+            <div class="flex justify-between items-center gap-3 px-2 py-2 border-b border-slate-100 mb-2">
+                <div class="flex items-center gap-2">
+                    <label for="salary-table-select" class="text-sm font-medium text-slate-700 whitespace-nowrap">Bảng lương:</label>
+                    <select id="salary-table-select" class="block w-64 pl-3 pr-8 py-1.5 text-sm border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md shadow-sm">
+                        <option value="1" selected>Bảng lương Tháng 01/2026</option>
+                        <option value="2">Bảng lương Tháng 12/2025</option>
+                    </select>
+                </div>
+                
+                <div id="data-loading-status" class="text-xs text-slate-500 hidden">
+                    <i class="fas fa-circle-notch fa-spin text-blue-500 mr-1"></i> Đang tải dữ liệu...
+                </div>
+            </div>
+
+            {% include "components/excel_table_wrapper.html" with table_id="payroll-table" %}
+            
+            <div class="mt-2 relative">
+                {% include "components/bulk_actions.html" with id="payroll-table-bulk-actions" show_export=True %}
+            </div>
+
+        </form>
+
+        {% include "components/form_footer_fixed.html" with cancel_url="/hrm/quan-ly-luong/bang-luong" submit_id="btn-save-payroll" submit_text="Lưu phiếu lương" %}
+        
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/utils/ExcelTableManager.js' %}"></script>
+<script src="{% static 'js/quan_ly_luong/phieu_luong.js' %}"></script>
+{% endblock scripts %}
