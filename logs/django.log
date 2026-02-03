@@ -36337,3 +36337,115 @@ WARNING 2026-01-28 22:59:57,368 log 10064 10692 Not Found: /.well-known/appspeci
 WARNING 2026-01-28 22:59:57,368 basehttp 10064 10692 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-01-28 23:06:22,619 log 10064 14324 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-01-28 23:06:22,619 basehttp 10064 14324 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 10:40:29,266 log 20444 4452 Not Found: /favicon.ico
+WARNING 2026-01-29 10:40:29,266 basehttp 20444 4452 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-29 10:45:06,731 log 20444 17176 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 10:45:06,731 basehttp 20444 17176 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 11:13:33,444 log 20444 2336 Bad Request: /hrm/quan-ly-luong/api/bang-luong/create/
+WARNING 2026-01-29 11:13:33,444 basehttp 20444 2336 "POST /hrm/quan-ly-luong/api/bang-luong/create/ HTTP/1.1" 400 172
+WARNING 2026-01-29 11:13:39,542 log 20444 2336 Bad Request: /hrm/quan-ly-luong/api/bang-luong/create/
+WARNING 2026-01-29 11:13:39,558 basehttp 20444 2336 "POST /hrm/quan-ly-luong/api/bang-luong/create/ HTTP/1.1" 400 172
+ERROR 2026-01-29 11:40:43,890 log 4296 10148 Internal Server Error: /hrm/quan-ly-luong/bang-luong/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\quan_ly_luong\views.py", line 1433, in view_bang_luong
+    che_do_luong_list = BangLuongService.get_available_che_do_luong_for_filter()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'BangLuongService' has no attribute 'get_available_che_do_luong_for_filter'
+ERROR 2026-01-29 11:40:43,890 basehttp 4296 10148 "GET /hrm/quan-ly-luong/bang-luong/ HTTP/1.1" 500 80114
+WARNING 2026-01-29 11:42:39,700 log 12392 19596 Bad Request: /hrm/quan-ly-luong/api/bang-luong/1/update/
+WARNING 2026-01-29 11:42:39,702 basehttp 12392 19596 "PUT /hrm/quan-ly-luong/api/bang-luong/1/update/ HTTP/1.1" 400 172
+WARNING 2026-01-29 17:11:07,995 log 18716 4124 Bad Request: /hrm/quan-ly-luong/api/bang-luong/create/
+WARNING 2026-01-29 17:11:07,995 basehttp 18716 4124 "POST /hrm/quan-ly-luong/api/bang-luong/create/ HTTP/1.1" 400 172
+WARNING 2026-01-29 17:17:54,348 log 18716 18428 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 17:17:54,349 basehttp 18716 18428 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 17:25:03,078 log 18468 10540 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 17:25:03,078 basehttp 18468 10540 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 17:25:08,331 log 18468 9448 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 17:25:08,331 basehttp 18468 9448 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 17:30:27,901 log 16008 13184 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 17:30:27,901 basehttp 16008 13184 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:49:26,626 log 208 10372 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:49:26,626 basehttp 208 10372 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:50:17,181 log 208 7456 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:50:17,181 basehttp 208 7456 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:51:55,135 log 208 20016 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:51:55,135 basehttp 208 20016 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:51:56,311 log 208 20016 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:51:56,311 basehttp 208 20016 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:53:07,266 log 208 17012 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:53:07,266 basehttp 208 17012 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:54:45,006 log 208 21392 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:54:45,007 basehttp 208 21392 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:55:59,322 log 208 6000 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:55:59,322 basehttp 208 6000 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:56:22,383 log 208 12736 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:56:22,383 basehttp 208 12736 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-29 21:57:02,567 log 208 6000 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-29 21:57:02,567 basehttp 208 6000 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 09:54:30,293 log 1664 8548 Not Found: /favicon.ico
+WARNING 2026-01-30 09:54:30,295 basehttp 1664 8548 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-30 09:55:19,272 log 1664 17296 Bad Request: /hrm/quan-ly-luong/api/bang-luong/create/
+WARNING 2026-01-30 09:55:19,272 basehttp 1664 17296 "POST /hrm/quan-ly-luong/api/bang-luong/create/ HTTP/1.1" 400 172
+WARNING 2026-01-30 10:43:23,387 log 9184 17676 Bad Request: /hrm/quan-ly-luong/api/bang-luong/9/update/
+WARNING 2026-01-30 10:43:23,388 basehttp 9184 17676 "PUT /hrm/quan-ly-luong/api/bang-luong/9/update/ HTTP/1.1" 400 172
+WARNING 2026-01-30 10:43:51,368 log 9184 17676 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-30 10:43:51,369 basehttp 9184 17676 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 115
+WARNING 2026-01-30 10:43:59,801 log 9184 17676 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-30 10:43:59,802 basehttp 9184 17676 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 115
+ERROR 2026-01-30 10:47:47,549 log 9184 17676 Internal Server Error: /hrm/quan-ly-luong/api/ky-luong/26/detail/
+ERROR 2026-01-30 10:47:47,549 basehttp 9184 17676 "GET /hrm/quan-ly-luong/api/ky-luong/26/detail/ HTTP/1.1" 500 83
+ERROR 2026-01-30 10:47:54,604 log 9184 17676 Internal Server Error: /hrm/quan-ly-luong/api/ky-luong/26/detail/
+ERROR 2026-01-30 10:47:54,604 basehttp 9184 17676 "GET /hrm/quan-ly-luong/api/ky-luong/26/detail/ HTTP/1.1" 500 83
+WARNING 2026-01-30 10:48:02,715 log 9184 2900 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 10:48:02,716 basehttp 9184 2900 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+ERROR 2026-01-30 10:48:04,794 log 9184 2900 Internal Server Error: /hrm/quan-ly-luong/api/ky-luong/26/detail/
+ERROR 2026-01-30 10:48:04,794 basehttp 9184 2900 "GET /hrm/quan-ly-luong/api/ky-luong/26/detail/ HTTP/1.1" 500 83
+WARNING 2026-01-30 10:57:54,467 log 17484 9132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 10:57:54,469 basehttp 17484 9132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 10:58:07,549 log 17484 9132 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-30 10:58:07,549 basehttp 17484 9132 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 179
+WARNING 2026-01-30 11:39:40,395 log 17484 132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:39:40,395 basehttp 17484 132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 11:40:38,413 log 17484 14364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:40:38,413 basehttp 17484 14364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 11:41:33,121 log 17484 132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:41:33,121 basehttp 17484 132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 11:41:54,394 log 17484 132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:41:54,394 basehttp 17484 132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 11:41:58,200 log 17484 1956 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:41:58,200 basehttp 17484 1956 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 11:42:05,957 log 17484 132 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 11:42:05,957 basehttp 17484 132 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 15:02:14,193 log 13928 18052 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 15:02:14,194 basehttp 13928 18052 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 15:02:18,967 log 13928 18052 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 15:02:18,968 basehttp 13928 18052 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 15:08:23,070 log 13928 11680 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 15:08:23,071 basehttp 13928 11680 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 15:09:18,170 log 13928 5976 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 15:09:18,171 basehttp 13928 5976 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-30 15:09:31,134 log 13928 8328 Bad Request: /hrm/quan-ly-luong/api/ky-luong/24/update/
+WARNING 2026-01-30 15:09:31,134 basehttp 13928 8328 "PUT /hrm/quan-ly-luong/api/ky-luong/24/update/ HTTP/1.1" 400 179
+WARNING 2026-01-30 15:09:39,653 log 13928 8328 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-30 15:09:39,653 basehttp 13928 8328 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 179
+WARNING 2026-01-30 15:09:46,900 log 13928 8328 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-30 15:09:46,900 basehttp 13928 8328 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 179
+WARNING 2026-01-30 15:30:04,450 log 13928 17364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-01-30 15:30:04,450 basehttp 13928 17364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-01-31 08:04:40,354 log 14868 9440 Not Found: /favicon.ico
+WARNING 2026-01-31 08:04:40,356 basehttp 14868 9440 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-01-31 08:07:21,944 log 14868 17308 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-31 08:07:21,944 basehttp 14868 17308 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 105
+WARNING 2026-01-31 08:07:42,351 log 14868 17308 Bad Request: /hrm/quan-ly-luong/api/ky-luong/create/
+WARNING 2026-01-31 08:07:42,351 basehttp 14868 17308 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 179
+WARNING 2026-02-03 10:13:14,247 log 18328 9016 Not Found: /favicon.ico
+WARNING 2026-02-03 10:13:14,247 basehttp 18328 9016 "GET /favicon.ico HTTP/1.1" 404 3131

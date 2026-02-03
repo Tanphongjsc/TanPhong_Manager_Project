@@ -12,6 +12,7 @@ class PhanTuSelectorController {
         this.filteredList = [];
         this.selectedIds = new Set();
         this.excludeIds = [];
+        this.fixedElementCode = null; // Mã phần tử cố định cần loại trừ
         this.groups = [];
         this.onConfirmCallback = null;
 
@@ -76,6 +77,7 @@ class PhanTuSelectorController {
         // Lắng nghe event từ QuyTacManager
         document.addEventListener('openPhanTuSelector', (e) => {
             this.excludeIds = e.detail.excludeIds || [];
+            this.fixedElementCode = e.detail.fixedElementCode || null;
             this.onConfirmCallback = e.detail.onConfirm;
             this.open();
         });
@@ -139,6 +141,13 @@ class PhanTuSelectorController {
                     pt => !this.excludeIds.includes(pt.id)
                 );
 
+                // Filter exclude phần tử cố định (THUC_LINH)
+                if (this.fixedElementCode) {
+                    this.phanTuList = this.phanTuList.filter(
+                        pt => pt.maphantu !== this.fixedElementCode
+                    );
+                }
+                
                 // Extract groups
                 this.extractGroups();
                 this.renderGroupFilter();

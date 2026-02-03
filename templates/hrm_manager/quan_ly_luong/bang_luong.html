@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý bảng lương{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {# Breadcrumb #}
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-2 h-full flex flex-col">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6">Bảng lương</h1>
+
+        {# Toolbar với filters #}
+        {% include "components/toolbar.html" with search_id="search-bang-luong" search_placeholder="Tìm theo tên, mã bảng lương..." create_text="Thêm bảng lương" create_onclick="window.BangLuongManager.openSidebar('create')" filter_form_id="filter-form-bang-luong" filter_template="hrm_manager/quan_ly_luong/partials/bang_luong_filters.html" %}
+
+        {# Bulk Actions #}
+        {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions-bang-luong" %}
+
+        {# Table #}
+        {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Mã Bảng lương</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tên bảng lương</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Kỳ lương</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Chế độ lương</th><th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Số nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Ngày tạo</th><th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase">Trạng thái</th>' %}
+            {% include "components/table_wrapper.html" with table_id="bang-luong-table" tbody_id="table-body-bang-luong" headers_html=headers show_checkbox=True select_all_id="select-all-bang-luong" %}
+        {% endwith %}
+
+        {# Pagination #}
+        {% include "components/pagination.html" %}
+    </div>
+</div>
+
+{# Sidebar Form #}
+{% include "components/crud_sidebar.html" with sidebar_id="bang-luong-sidebar" overlay_id="bang-luong-sidebar-overlay" form_id="bang-luong-form" form_fields_template="hrm_manager/quan_ly_luong/partials/bang_luong_form.html" submit_text="Lưu bảng lương" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/quan_ly_luong/bang_luong.js' %}"></script>
+{% endblock %}

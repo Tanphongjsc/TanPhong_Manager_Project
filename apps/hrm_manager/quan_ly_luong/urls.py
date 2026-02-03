@@ -53,5 +53,17 @@ urlpatterns = [
     path('api/ky-luong/<int:pk>/update/', views.api_ky_luong_update, name='api_ky_luong_update'),
     path('api/ky-luong/<int:pk>/delete/', views.api_ky_luong_delete, name='api_ky_luong_delete'),
     path('api/ky-luong/get-defaults/', views.api_ky_luong_get_defaults, name='api_ky_luong_get_defaults'),
-    #path('api/ky-luong/check-overlap/', views.api_ky_luong_check_overlap, name='api-ky-luong-check-overlap'),
+    
+    # =============================== BẢNG LƯƠNG ==============================
+    path('bang-luong/', views.view_bang_luong, name='bang_luong'),
+    path('api/bang-luong/list/', views.api_bang_luong_list, name='api_bang_luong_list'),
+    path('api/bang-luong/<int:pk>/detail/', views.api_bang_luong_detail, name='api_bang_luong_detail'),
+    path('api/bang-luong/create/', views.api_bang_luong_create, name='api_bang_luong_create'),
+    path('api/bang-luong/<int:pk>/update/', views.api_bang_luong_update, name='api_bang_luong_update'),
+    path('api/bang-luong/<int:pk>/delete/', views.api_bang_luong_delete, name='api_bang_luong_delete'),
+    path('api/bang-luong/get-options/', views.api_bang_luong_get_options, name='api_bang_luong_get_options'),
+    
+    # =============================== PHIẾU LƯƠNG ==============================
+    # Phiếu lương - View chính (nhận bang_luong_id để hiển thị phiếu lương của bảng lương đó)
+    path('phieu-luong/<int:bang_luong_id>/', views.view_phieu_luong, name='phieu_luong'),
 ]

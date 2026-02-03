@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -26,7 +26,14 @@ from django.urls import reverse
 from django.db import transaction
 from django.db.models import F, Prefetch, Count, Q, Exists, OuterRef
 from apps.hrm_manager.__core__.models import *
-from .services import CheDoLuongService, PayrollPeriodLockException, ActiveEmployeesExistException, ConflictException, KyLuongService
+from .services import ( 
+    CheDoLuongService, 
+    PayrollPeriodLockException, 
+    ActiveEmployeesExistException, 
+    ConflictException, 
+    KyLuongService,
+    BangLuongService
+)
 
 # Create your views here.
 
@@ -275,7 +282,6 @@ def api_nhom_phan_tu_luong_list(request):
                 'manhom': nhom_phan_tu_luong_obj.manhom,
             }
         )
-
 
 @login_required
 @require_http_methods(["GET", "PUT", "DELETE"])
@@ -1095,11 +1101,39 @@ def api_che_do_luong_transfer(request):
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
+# Mã phần tử cố định - luôn có trong chế độ lương
+FIXED_ELEMENT_CODE = 'THUC_LINH'
 
 def _save_quy_tac(che_do, quy_tac_list):
-    """Helper function để lưu quy tắc"""
+    """
+    Helper function để lưu quy tắc
+    Đảm bảo phần tử THUC_LINH luôn được lưu
+    """
     # Xóa quy tắc cũ
     Quytacchedoluong.objects.filter(chedoluong=che_do).delete()
+    
+    # Kiểm tra xem THUC_LINH đã có trong danh sách chưa
+    has_fixed_element = any(
+        qt.get('maphantu') == FIXED_ELEMENT_CODE 
+        for qt in quy_tac_list
+    )
+    
+    # Nếu chưa có, tìm và thêm phần tử THUC_LINH
+    if not has_fixed_element:
+        fixed_element = Phantuluong.objects.filter(
+            maphantu=FIXED_ELEMENT_CODE,
+            trangthai='active'
+        ).first()
+        
+        if fixed_element:
+            quy_tac_list.append({
+                'phantuluong_id': fixed_element.id,
+                'tenphantu': fixed_element.tenphantu,
+                'maphantu': fixed_element.maphantu,
+                'nguondulieu': 'formula',
+                'bieuthuc': '',
+                'mota': ''
+            })
     
     # Tạo quy tắc mới
     for qt in quy_tac_list:
@@ -1116,7 +1150,7 @@ def _save_quy_tac(che_do, quy_tac_list):
         )
 
 # ===================================================================================
-#---------------------------------- BẢNG LƯƠNG --------------------------------------
+#---------------------------------- KỲ LƯƠNG --------------------------------------
 # ===================================================================================  
 
 # VIEW URLS - TRANG CHÍNH
@@ -1411,3 +1445,259 @@ def api_ky_luong_get_defaults(request):
         'max_ngay_ket_thuc': max_date.strftime('%Y-%m-%d'),
         'period_days': KyLuongService.DEFAULT_PERIOD_DAYS,
     })
+
+# ===================================================================================
+#---------------------------------- BẢNG LƯƠNG ------------------------------------
+# ===================================================================================
+
+# VIEW URLS - TRANG CHÍNH
+
+@login_required
+def view_bang_luong(request):
+    """Màn hình danh sách Bảng lương"""
+    
+    # Lấy danh sách chế độ lương cho filter
+    che_do_luong_list = BangLuongService.get_available_che_do_luong()
+    
+    # Lấy danh sách kỳ lương đã có trong bảng lương (cho filter)
+    ky_luong_list = BangLuongService.get_available_ky_luong_for_filter()
+    
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Bảng lương', 'url': None},
+        ],
+        'che_do_luong_list': che_do_luong_list,
+        'ky_luong_list': ky_luong_list,
+    }
+    return render(request, "hrm_manager/quan_ly_luong/bang_luong.html", context)
+
+
+# ============================================================================
+# API URLS
+# ============================================================================
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_bang_luong_list(request):
+    """
+    API Lấy danh sách Bảng lương
+    """
+    queryset = Bangluong.objects.select_related(
+        'kyluong', 'chedoluong'
+    ).order_by('-ngaytao', '-created_at')
+    
+    # Search theo tên, mã bảng lương
+    search = request.GET.get('search', '').strip()
+    if search:
+        queryset = search_queryset(
+            request, queryset, 
+            ['tenbangluong', 'mabangluong']
+        )
+    
+    # Filter theo kỳ lương
+    ky_luong_id = request.GET.get('ky_luong', '').strip()
+    if ky_luong_id:
+        queryset = queryset.filter(kyluong_id=ky_luong_id)
+    
+    # Filter theo chế độ lương
+    che_do_luong_id = request.GET.get('che_do_luong', '').strip()
+    if che_do_luong_id:
+        queryset = queryset.filter(chedoluong_id=che_do_luong_id)
+    
+    # Filter theo trạng thái
+    trang_thai = request.GET.get('trang_thai', '').strip()
+    if trang_thai:
+        queryset = queryset.filter(trangthai=trang_thai)
+    
+    # Pagination
+    context = get_list_context(
+        request,
+        queryset,
+        search_fields=[],
+        page_size=20,
+        order_by=None
+    )
+    
+    page_obj = context['page_obj']
+    items_list = [
+        BangLuongService.format_display(item)
+        for item in page_obj.object_list
+    ]
+    
+    return json_success(
+        'Thành công',
+        data=items_list,
+        pagination={
+            'page': page_obj.number,
+            'page_size': context['paginator'].per_page,
+            'total': context['paginator'].count,
+            'total_pages': context['paginator'].num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous()
+        }
+    )
+
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_bang_luong_detail(request, pk):
+    """
+    API Lấy chi tiết Bảng lương
+    """
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    data = BangLuongService.format_display(bang_luong)
+    
+    return json_success('Lấy chi tiết thành công', data=data)
+
+
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_bang_luong_create(request):
+    """
+    API Tạo mới Bảng lương
+    """
+    data = get_request_data(request)
+    
+    try:
+        che_do_luong_id = data.get('che_do_luong_id')
+        
+        # Tính số nhân viên từ chế độ lương
+        so_nhan_vien = 0
+        if che_do_luong_id:
+            so_nhan_vien = BangLuongService.count_employees_in_che_do(che_do_luong_id)
+
+        bang_luong = BangLuongService.create({
+            'ten_bang_luong': data.get('ten_bang_luong', ''),
+            'ky_luong_id': data.get('ky_luong_id'),
+            'che_do_luong_id': data.get('che_do_luong_id'),
+            'nguoi_tao': request.user.username if request.user.is_authenticated else '',
+        })
+
+        return json_success("Tạo bảng lương thành công", id=bang_luong.id)
+        
+    except ValueError as e:
+        return json_error(str(e))
+    except Exception as e:
+        return json_error(f"Lỗi khi tạo bảng lương: {str(e)}")
+
+
+@require_http_methods(["PUT", "POST"])
+@handle_exceptions
+def api_bang_luong_update(request, pk):
+    """
+    API Cập nhật Bảng lương
+    """
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    data = get_request_data(request)
+    
+    try:
+        BangLuongService.update(bang_luong, {
+            'ten_bang_luong': data.get('ten_bang_luong', ''),
+            'ky_luong_id': data.get('ky_luong_id'),
+            'che_do_luong_id': data.get('che_do_luong_id'),
+        })
+        
+        return json_success("Cập nhật bảng lương thành công")
+        
+    except ValueError as e:
+        return json_error(str(e))
+    except Exception as e:
+        return json_error(f"Lỗi khi cập nhật: {str(e)}")
+
+
+@require_http_methods(["POST", "DELETE"])
+@handle_exceptions
+def api_bang_luong_delete(request, pk):
+    """
+    API Xóa Bảng lương
+    """
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    success, msg = BangLuongService.delete(bang_luong)
+    
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+
+
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_bang_luong_get_options(request):
+    """
+    API Lấy options cho dropdown (kỳ lương, chế độ lương)
+    """
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+    
+    # Kỳ lương theo tháng/năm (cho tạo mới)
+    ky_luong_list = BangLuongService.get_available_ky_luong_for_create(month, year)
+    ky_luong_options = []
+    
+    for kl in ky_luong_list:
+        kl_year = kl.ngaybatdau.year if kl.ngaybatdau else year
+        # Format đúng: 01/2026
+        display = "{}/{}".format(str(kl.thang).zfill(2), kl_year)
+        ky_luong_options.append({
+            'id': kl.id,
+            'thang': kl.thang,
+            'nam': kl_year,
+            'display': display
+        })
+    
+    # Chế độ lương (tất cả active)
+    che_do_luong_list = BangLuongService.get_available_che_do_luong()
+    che_do_luong_options = []
+    
+    for cdl in che_do_luong_list:
+        so_nv = BangLuongService.count_employees_in_che_do(cdl.id)
+        che_do_luong_options.append({
+            'id': cdl.id,
+            'ma': cdl.machedo,
+            'display': cdl.tenchedo,
+            'so_nhan_vien': so_nv
+        })
+    
+    return json_success('OK', data={
+        'ky_luong': ky_luong_options,
+        'che_do_luong': che_do_luong_options,
+        'current_month': month,
+        'current_year': year,
+    })
+
+
+# ===================================================================================
+#---------------------------------- PHIẾU LƯƠNG ------------------------------------
+# ===================================================================================
+
+@login_required
+def view_phieu_luong(request, bang_luong_id):
+    """
+    Màn hình Phiếu lương - Hiển thị danh sách phiếu lương của một bảng lương
+    
+    Args:
+        bang_luong_id: ID của bảng lương cần xem phiếu lương
+    """
+    # Lấy thông tin bảng lương
+    bang_luong = get_object_or_404(Bangluong, pk=bang_luong_id)
+    
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Bảng lương', 'url': '/hrm/quan-ly-luong/bang-luong/'},
+            {'title': bang_luong.tenbangluong or f'Bảng lương #{bang_luong_id}', 'url': None},
+        ],
+        'bang_luong': bang_luong,
+        'bang_luong_id': bang_luong_id,
+    }
+    return render(request, "hrm_manager/quan_ly_luong/phieu_luong_main.html", context)

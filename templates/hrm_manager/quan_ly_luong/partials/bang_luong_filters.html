@@ -1,0 +1,29 @@
+{# Filter theo Kỳ lương - Chỉ hiển thị kỳ lương đã có bảng lương #}
+<select name="ky_luong" class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer">
+    <option value="">Kỳ lương</option>
+    {% for kl in ky_luong_list %}
+        <option value="{{ kl.id }}" {% if request.GET.ky_luong == kl.id|stringformat:"s" %}selected{% endif %}>
+            {{ kl.display }}
+        </option>
+    {% endfor %}
+</select>
+
+{# Filter theo Chế độ lương - Chỉ hiển thị chế độ lương đã có bảng lương #}
+<select name="che_do_luong" class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer">
+    <option value="">Chế độ lương</option>
+    {% for cdl in che_do_luong_list %}
+        <option value="{{ cdl.id }}" {% if request.GET.che_do_luong == cdl.id|stringformat:"s" %}selected{% endif %}>
+            {{ cdl.tenchedo }}
+        </option>
+    {% endfor %}
+</select>
+
+{# Filter theo Trạng thái #}
+<select name="trang_thai" class="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer">
+    <option value="">Trạng thái</option>
+    <option value="draft" {% if request.GET.trang_thai == 'draft' %}selected{% endif %}>Nháp</option>
+    <option value="processing" {% if request.GET.trang_thai == 'processing' %}selected{% endif %}>Đang xử lý</option>
+    <option value="calculated" {% if request.GET.trang_thai == 'calculated' %}selected{% endif %}>Đã tính</option>
+    <option value="approved" {% if request.GET.trang_thai == 'approved' %}selected{% endif %}>Đã duyệt</option>
+    <option value="paid" {% if request.GET.trang_thai == 'paid' %}selected{% endif %}>Đã chi trả</option>
+</select>

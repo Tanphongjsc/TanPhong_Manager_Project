@@ -1063,6 +1063,8 @@ class KyLuongService:
         VD: Tháng 8 → Range: 01/07 - 30/09
         Returns: (min_start, max_start, min_end, max_end)
         """
+        year = int(year)
+        month = int(month)
         # Tháng trước
         if month == 1:
             prev_month, prev_year = 12, year - 1
@@ -1086,10 +1088,59 @@ class KyLuongService:
         return min_date, max_date, min_date, max_date
     
     @classmethod
+    def validate_period_belongs_to_month(cls, year, month, start_date, end_date):
+        """
+        ✅ MỚI: Validate ít nhất 1 ngày trong kỳ lương thuộc tháng được chọn
+        
+        Logic:
+        - Ngày bắt đầu hoặc ngày kết thúc phải thuộc tháng/năm được chọn
+        - HOẶC kỳ lương bao trùm cả tháng (start trước tháng, end sau tháng)
+        
+        Args:
+            year: Năm được chọn
+            month: Tháng được chọn (1-12)
+            start_date: Ngày bắt đầu kỳ lương
+            end_date: Ngày kết thúc kỳ lương
+        
+        Returns:
+            tuple: (is_valid: bool, message: str)
+        """
+        # Ép kiểu
+        year = int(year)
+        month = int(month)
+        
+        # Tính ngày đầu và cuối của tháng được chọn
+        first_day_of_month = date(year, month, 1)
+        _, last_day_num = monthrange(year, month)
+        last_day_of_month = date(year, month, last_day_num)
+        
+        # Case 1: Ngày bắt đầu thuộc tháng được chọn
+        if start_date.year == year and start_date.month == month:
+            return True, ""
+        
+        # Case 2: Ngày kết thúc thuộc tháng được chọn
+        if end_date.year == year and end_date.month == month:
+            return True, ""
+        
+        # Case 3: Kỳ lương bao trùm cả tháng (start trước, end sau)
+        if start_date <= first_day_of_month and end_date >= last_day_of_month:
+            return True, ""
+        
+        # Không hợp lệ
+        month_display = f"{str(month).zfill(2)}/{year}"
+        return False, (
+            f"Kỳ lương phải có ít nhất 1 ngày thuộc tháng {month_display}. "
+            f"Hiện tại: {start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+        )
+
+    @classmethod
     def validate_start_date_in_month(cls, year, month, start_date):
         """
         ✅ UPDATED: Validate ngày bắt đầu trong range ±1 tháng
         """
+        year = int(year)
+        month = int(month)
+
         min_date, max_date, _, _ = cls.get_date_constraints_for_month(year, month)
         
         if start_date < min_date:
@@ -1158,6 +1209,8 @@ class KyLuongService:
         """
         ✅ MỚI: Kiểm tra tháng đã có kỳ lương chưa (bổ sung cho overlap check)
         """
+        year = int(year)
+        month = int(month)
         query = Kyluong.objects.filter(thang=month, ngaybatdau__year=year)
         
         if exclude_id:
@@ -1237,7 +1290,16 @@ class KyLuongService:
         end_date = data.get('ngay_ket_thuc')
         closing_date = data.get('ngay_chot_luong')
         
-        # ✅ Validate ngày bắt đầu thuộc tháng
+        # ✅ Ép kiểu về int
+        month = int(month)
+        year = int(year)
+        
+        # ✅ MỚI: Validate kỳ lương phải thuộc tháng được chọn
+        is_valid, msg = cls.validate_period_belongs_to_month(year, month, start_date, end_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        # Validate ngày bắt đầu thuộc range ±1 tháng
         is_valid, msg = cls.validate_start_date_in_month(year, month, start_date)
         if not is_valid:
             raise ValueError(msg)
@@ -1253,12 +1315,12 @@ class KyLuongService:
             if not is_valid:
                 raise ValueError(msg)
         
-        # ✅ Check tháng đã tồn tại
+        # Check tháng đã tồn tại
         has_duplicate, msg = cls.check_month_uniqueness(year, month)
         if has_duplicate:
             raise ValueError(msg)
         
-        # ✅ Check overlap với các kỳ khác
+        # Check overlap với các kỳ khác
         has_overlap, msg = cls.check_period_overlap(start_date, end_date)
         if has_overlap:
             raise ValueError(msg)
@@ -1322,15 +1384,20 @@ class KyLuongService:
         if not can_edit:
             raise ValueError(msg)
         
-        # ✅ KHÔNG cho phép sửa tháng/năm
-        month = ky_luong.thang  # Giữ nguyên
-        year = ky_luong.ngaybatdau.year  # Giữ nguyên
+        # KHÔNG cho phép sửa tháng/năm
+        month = int(ky_luong.thang)  # ✅ Ép kiểu
+        year = int(ky_luong.ngaybatdau.year)  # ✅ Ép kiểu
         
         start_date = data.get('ngay_bat_dau', ky_luong.ngaybatdau)
         end_date = data.get('ngay_ket_thuc', ky_luong.ngayketthuc)
         closing_date = data.get('ngay_chot_luong', ky_luong.ngaychotluong)
         
-        # ✅ Validate ngày bắt đầu thuộc tháng (dùng tháng gốc)
+        # ✅ MỚI: Validate kỳ lương phải thuộc tháng gốc
+        is_valid, msg = cls.validate_period_belongs_to_month(year, month, start_date, end_date)
+        if not is_valid:
+            raise ValueError(msg)
+        
+        # Validate ngày bắt đầu thuộc range ±1 tháng
         is_valid, msg = cls.validate_start_date_in_month(year, month, start_date)
         if not is_valid:
             raise ValueError(msg)
@@ -1345,7 +1412,7 @@ class KyLuongService:
             if not is_valid:
                 raise ValueError(msg)
         
-        # ✅ Check overlap (exclude self)
+        # Check overlap (exclude self)
         has_overlap, msg = cls.check_period_overlap(start_date, end_date, exclude_id=ky_luong.id)
         if has_overlap:
             raise ValueError(msg)
@@ -1403,3 +1470,320 @@ class KyLuongService:
             cls.STATUS_FINALIZED: 'Đã chốt',
         }
         return status_map.get(status, status)
+    
+class BangLuongService:
+    """Service xử lý Business Logic cho Bảng lương"""
+    
+    # Trạng thái bảng lương
+    STATUS_DRAFT = 'draft'           # Nháp - mới tạo
+    STATUS_PROCESSING = 'processing' # Đang tính lương
+    STATUS_CALCULATED = 'calculated' # Đã tính xong
+    STATUS_APPROVED = 'approved'     # Đã duyệt
+    STATUS_PAID = 'paid'             # Đã chi trả
+    STATUS_CANCELLED = 'cancelled'   # Đã hủy
+    
+    @classmethod
+    def get_available_ky_luong_for_filter(cls):
+        """
+        Lấy danh sách kỳ lương đã có bảng lương (dùng cho filter)
+        ✅ FIX: Trả về format display sẵn
+        """
+        used_ky_luong_ids = Bangluong.objects.exclude(
+            kyluong__isnull=True
+        ).values_list('kyluong_id', flat=True).distinct()
+        
+        queryset = Kyluong.objects.filter(
+            id__in=used_ky_luong_ids
+        ).order_by('-ngaybatdau')
+        
+        # ✅ Format display ngay trong queryset
+        result = []
+        for kl in queryset:
+            year = kl.ngaybatdau.year if kl.ngaybatdau else date.today().year
+            result.append({
+                'id': kl.id,
+                'display': "{}/{}".format(str(kl.thang).zfill(2), year)
+            })
+        
+        return result
+    
+    @classmethod
+    def get_available_ky_luong_for_create(cls, month=None, year=None):
+        """
+        Lấy danh sách kỳ lương khả dụng cho dropdown khi tạo mới
+        Chỉ lấy kỳ lương của tháng/năm hiện tại hoặc được chỉ định
+        """
+        today = date.today()
+        target_month = month or today.month
+        target_year = year or today.year
+        
+        return Kyluong.objects.filter(
+            thang=target_month,
+            ngaybatdau__year=target_year
+        ).order_by('-ngaybatdau')
+    
+    @classmethod
+    def get_available_che_do_luong(cls):
+        """
+        Lấy danh sách chế độ lương đang hoạt động
+        """
+        return Chedoluong.objects.filter(
+            Q(trangthai='active') | Q(trangthai='Active') | Q(trangthai__isnull=True),
+            Q(is_deleted=False) | Q(is_deleted__isnull=True)
+        ).order_by('tenchedo')
+    
+    @classmethod
+    def generate_ma_bang_luong(cls, ky_luong, che_do_luong):
+        """
+        Tự động sinh mã bảng lương
+        Format: BL_{MaCheDo}_{Thang}{Nam}_{Sequence}
+        """
+        base_code = f"BL_{che_do_luong.machedo}_{str(ky_luong.thang).zfill(2)}{ky_luong.ngaybatdau.year}"
+        
+        # Đếm số bảng lương đã có với prefix này
+        existing_count = Bangluong.objects.filter(
+            mabangluong__startswith=base_code
+        ).count()
+        
+        return f"{base_code}_{str(existing_count + 1).zfill(3)}"
+    
+    @classmethod
+    def check_duplicate(cls, ky_luong_id, che_do_luong_id, exclude_id=None):
+        """
+        Kiểm tra trùng lặp bảng lương (1 kỳ + 1 chế độ chỉ có 1 bảng lương)
+        """
+        query = Bangluong.objects.filter(
+            kyluong_id=ky_luong_id,
+            chedoluong_id=che_do_luong_id
+        )
+        
+        if exclude_id:
+            query = query.exclude(id=exclude_id)
+        
+        if query.exists():
+            return True, "Bảng lương cho kỳ lương và chế độ lương này đã tồn tại"
+        
+        return False, ""
+    
+    @classmethod
+    def can_edit(cls, bang_luong):
+        """
+        Kiểm tra có thể sửa bảng lương không
+        """
+        locked_statuses = [cls.STATUS_APPROVED, cls.STATUS_PAID]
+        
+        if bang_luong.trangthai in locked_statuses:
+            return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể chỉnh sửa"
+        
+        return True, ""
+    
+    @classmethod
+    def can_delete(cls, bang_luong):
+        """
+        Kiểm tra có thể xóa bảng lương không
+        """
+        # Kiểm tra có phiếu lương không
+        has_payslips = Phieuluong.objects.filter(bangluong=bang_luong).exists()
+        if has_payslips:
+            return False, "Bảng lương đã có phiếu lương, không thể xóa"
+        
+        # Kiểm tra trạng thái
+        locked_statuses = [cls.STATUS_APPROVED, cls.STATUS_PAID]
+        if bang_luong.trangthai in locked_statuses:
+            return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể xóa"
+        
+        return True, ""
+    
+    @classmethod
+    def count_employees_in_che_do(cls, che_do_luong_id):
+        """
+        Đếm số lượng nhân viên đang áp dụng chế độ lương.
+        Logic: Chỉ cần đếm trong bảng NhanvienChedoluong là đủ 
+        (vì khi gán phòng ban, hệ thống đã snapshot nhân viên vào bảng này rồi).
+        """
+        if not che_do_luong_id:
+            return 0
+            
+        return NhanvienChedoluong.objects.filter(
+            chedoluong_id=che_do_luong_id,
+            trangthai='active',
+            # Bổ sung: Chỉ đếm nhân viên đang active (chưa nghỉ việc) để số liệu chính xác hơn
+            nhanvien__trangthai='active' 
+        ).count()
+    
+    @classmethod
+    @transaction.atomic
+    def create(cls, data):
+        """
+        Tạo mới bảng lương
+        """
+        ten_bang_luong = data.get('ten_bang_luong', '').strip()
+        ky_luong_id = data.get('ky_luong_id')
+        che_do_luong_id = data.get('che_do_luong_id')
+        
+        # Validate required
+        if not ten_bang_luong:
+            raise ValueError("Tên bảng lương không được để trống")
+        
+        if not ky_luong_id:
+            raise ValueError("Vui lòng chọn kỳ lương")
+        
+        if not che_do_luong_id:
+            raise ValueError("Vui lòng chọn chế độ lương")
+        
+        # Get related objects
+        try:
+            ky_luong = Kyluong.objects.get(id=ky_luong_id)
+        except Kyluong.DoesNotExist:
+            raise ValueError("Kỳ lương không tồn tại")
+        
+        try:
+            che_do_luong = Chedoluong.objects.get(id=che_do_luong_id)
+        except Chedoluong.DoesNotExist:
+            raise ValueError("Chế độ lương không tồn tại")
+        
+        # Check duplicate
+        is_duplicate, msg = cls.check_duplicate(ky_luong_id, che_do_luong_id)
+        if is_duplicate:
+            raise ValueError(msg)
+        
+        # Generate mã bảng lương
+        ma_bang_luong = cls.generate_ma_bang_luong(ky_luong, che_do_luong)
+        
+        bang_luong = Bangluong.objects.create(
+            mabangluong=ma_bang_luong,
+            tenbangluong=ten_bang_luong,
+            kyluong=ky_luong,
+            chedoluong=che_do_luong,
+            tongsoluongnhanvien=0,
+            tongtienluong=0,
+            ngaytao=date.today(),
+            nguoitao=data.get('nguoi_tao', ''),
+            trangthai=cls.STATUS_DRAFT,
+            created_at=timezone.now()
+        )
+        
+        return bang_luong
+    
+    @classmethod
+    @transaction.atomic
+    def update(cls, bang_luong, data):
+        """
+        Cập nhật bảng lương
+        """
+        # Kiểm tra quyền sửa
+        can_edit, msg = cls.can_edit(bang_luong)
+        if not can_edit:
+            raise ValueError(msg)
+        
+        ten_bang_luong = data.get('ten_bang_luong', '').strip()
+        ky_luong_id = data.get('ky_luong_id')
+        che_do_luong_id = data.get('che_do_luong_id')
+        
+        # Validate required
+        if not ten_bang_luong:
+            raise ValueError("Tên bảng lương không được để trống")
+        
+        # Nếu thay đổi kỳ lương hoặc chế độ lương -> check duplicate
+        if ky_luong_id and che_do_luong_id:
+            if (int(ky_luong_id) != (bang_luong.kyluong_id or 0) or 
+                int(che_do_luong_id) != (bang_luong.chedoluong_id or 0)):
+                
+                is_duplicate, msg = cls.check_duplicate(
+                    ky_luong_id, che_do_luong_id, exclude_id=bang_luong.id
+                )
+                if is_duplicate:
+                    raise ValueError(msg)
+                
+                # Update foreign keys
+                try:
+                    bang_luong.kyluong = Kyluong.objects.get(id=ky_luong_id)
+                except Kyluong.DoesNotExist:
+                    raise ValueError("Kỳ lương không tồn tại")
+                
+                try:
+                    bang_luong.chedoluong = Chedoluong.objects.get(id=che_do_luong_id)
+                except Chedoluong.DoesNotExist:
+                    raise ValueError("Chế độ lương không tồn tại")
+        
+        bang_luong.tenbangluong = ten_bang_luong
+        bang_luong.updated_at = timezone.now()
+        bang_luong.save()
+        
+        return bang_luong
+    
+    @classmethod
+    @transaction.atomic
+    def delete(cls, bang_luong):
+        """
+        Xóa bảng lương
+        """
+        can_delete, msg = cls.can_delete(bang_luong)
+        if not can_delete:
+            return False, msg
+        
+        bang_luong.delete()
+        return True, "Xóa bảng lương thành công"
+    
+    @classmethod
+    def format_display(cls, bang_luong):
+        """
+        Format hiển thị bảng lương cho API response
+        Tính realtime số nhân viên cho bảng lương DRAFT/PROCESSING
+        """
+        ky_luong = bang_luong.kyluong
+        che_do_luong = bang_luong.chedoluong
+        
+        ky_luong_display = None
+        if ky_luong:
+            year = ky_luong.ngaybatdau.year if ky_luong.ngaybatdau else date.today().year
+            ky_luong_display = "{}/{}".format(str(ky_luong.thang).zfill(2), year)
+        
+        # Tính số nhân viên từ chế độ lương
+        # - Bảng lương DRAFT/PROCESSING: Tính realtime (để cập nhật khi chế độ lương thay đổi)
+        # - Bảng lương đã APPROVED/PAID: Dùng cached value (đã chốt số liệu)
+        so_nhan_vien = 0
+    
+        status = bang_luong.trangthai or cls.STATUS_DRAFT
+        is_locked = status in [cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]
+        
+        if is_locked:
+            # Dùng cached value (đã chốt)
+            so_nhan_vien = bang_luong.tongsoluongnhanvien or 0
+        else:
+            # Tính realtime từ chế độ lương
+            if che_do_luong:
+                so_nhan_vien = cls.count_employees_in_che_do(che_do_luong.id)
+
+        return {
+            'id': bang_luong.id,
+            'ma_bang_luong': bang_luong.mabangluong,
+            'ten_bang_luong': bang_luong.tenbangluong,
+            'ky_luong_id': ky_luong.id if ky_luong else None,
+            'ky_luong_display': ky_luong_display,
+            'che_do_luong_id': che_do_luong.id if che_do_luong else None,
+            'che_do_luong_display': che_do_luong.tenchedo if che_do_luong else None,
+            'tong_so_nhan_vien': so_nhan_vien,
+            'tong_tien_luong': bang_luong.tongtienluong or 0,
+            'ngay_tao': bang_luong.ngaytao.strftime('%d/%m/%Y') if bang_luong.ngaytao else None,
+            'nguoi_tao': bang_luong.nguoitao,
+            'trang_thai': bang_luong.trangthai,
+            'trang_thai_display': cls.get_status_display(bang_luong.trangthai),
+            'can_edit': cls.can_edit(bang_luong)[0],
+            'can_delete': cls.can_delete(bang_luong)[0],
+        }
+    
+    @classmethod
+    def get_status_display(cls, status):
+        """
+        Lấy text hiển thị cho trạng thái
+        """
+        status_map = {
+            cls.STATUS_DRAFT: 'Nháp',
+            cls.STATUS_PROCESSING: 'Đang xử lý',
+            cls.STATUS_CALCULATED: 'Đã tính',
+            cls.STATUS_APPROVED: 'Đã duyệt',
+            cls.STATUS_PAID: 'Đã chi trả',
+            cls.STATUS_CANCELLED: 'Đã hủy',
+        }
+        return status_map.get(status, status or 'Nháp')

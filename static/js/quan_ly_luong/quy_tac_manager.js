@@ -1,8 +1,11 @@
 /**
  * QuyTacManager - Quản lý bảng quy tắc chế độ lương
- * Version: 1.0
+ * Version: 1.1 - Thêm phần tử cố định THUC_LINH
  */
 class QuyTacManager {
+    // Phần tử cố định - luôn có trong chế độ lương
+    static FIXED_ELEMENT_CODE = 'THUC_LINH';
+    
     constructor(options = {}) {
         this.options = {
             tbodyId: 'quy-tac-tbody',
@@ -15,6 +18,7 @@ class QuyTacManager {
 
         // State
         this.quyTacList = []; // [{id, phantuluong_id, tenphantu, maphantu, nguondulieu, bieuthuc, ...}]
+        this.fixedElement = null; // Cache phần tử cố định
         
         // DOM Elements
         this.tbody = document.getElementById(this.options.tbodyId);
@@ -35,7 +39,85 @@ class QuyTacManager {
 
     init() {
         this.bindEvents();
+        // Load phần tử cố định trước khi render
+        this.loadFixedElement();
+    }
+
+    // ============================================================
+    // FIXED ELEMENT (THUC_LINH)
+    // ============================================================
+
+    /**
+     * Load phần tử cố định THUC_LINH từ API
+     */
+    async loadFixedElement() {
+        try {
+            const res = await AppUtils.API.get('/hrm/quan-ly-luong/api/phan-tu-luong/list', {
+                page_size: 999
+            });
+
+            if (res.success && res.data) {
+                // Tìm phần tử THUC_LINH
+                const fixedEl = res.data.find(pt => pt.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
+                
+                if (fixedEl) {
+                    this.fixedElement = {
+                        phantuluong_id: fixedEl.id,
+                        tenphantu: fixedEl.tenphantu,
+                        maphantu: fixedEl.maphantu,
+                        nguondulieu: 'formula', // Mặc định là công thức
+                        bieuthuc: '',
+                        mota: '',
+                        isFixed: true // Đánh dấu là phần tử cố định
+                    };
+                    
+                    // Thêm vào danh sách nếu chưa có
+                    this.ensureFixedElement();
+                }
+            }
+        } catch (e) {
+            console.error('Load fixed element error:', e);
+        }
+    }
+
+    /**
+     * Đảm bảo phần tử cố định luôn tồn tại trong danh sách
+     */
+    ensureFixedElement() {
+        if (!this.fixedElement) return;
+
+        // Kiểm tra đã có trong danh sách chưa
+        const exists = this.quyTacList.some(q => q.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
+        
+        if (!exists) {
+            // Thêm phần tử cố định
+            this.quyTacList.push({ ...this.fixedElement });
+        }
+        
+        // Đảm bảo THUC_LINH ở cuối danh sách
+        this.sortWithFixedAtEnd();
         this.render();
+    }
+
+    /**
+     * Kiểm tra phần tử có phải là cố định không
+     */
+    isFixedElement(maphantu) {
+        return maphantu === QuyTacManager.FIXED_ELEMENT_CODE;
+    }
+
+    /**
+     * Sắp xếp danh sách với THUC_LINH ở cuối
+     */
+    sortWithFixedAtEnd() {
+        this.quyTacList.sort((a, b) => {
+            const aIsFixed = this.isFixedElement(a.maphantu);
+            const bIsFixed = this.isFixedElement(b.maphantu);
+            
+            if (aIsFixed && !bIsFixed) return 1;
+            if (!aIsFixed && bIsFixed) return -1;
+            return 0;
+        });
     }
 
     bindEvents() {
@@ -91,11 +173,13 @@ class QuyTacManager {
         const isFormula = item.nguondulieu === 'formula';
         const isManual = item.nguondulieu === 'manual';
         const isSystem = item.nguondulieu === 'system';
+        const isFixed = this.isFixedElement(item.maphantu);
 
         tr.innerHTML = `
             <td class="px-3 py-3 text-slate-600 text-center align-middle">${index + 1}</td>
             <td class="px-3 py-3 align-middle">
                 <span class="font-medium text-slate-800">${this.escapeHtml(item.tenphantu)}</span>
+                ${isFixed ? '<span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">Bắt buộc</span>' : ''}
             </td>
             <td class="px-3 py-3 align-middle">
                 <code class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">${this.escapeHtml(item.maphantu)}</code>
@@ -139,9 +223,15 @@ class QuyTacManager {
                 ` : `<span class="text-slate-300">-</span>`}
             </td>
             <td class="px-3 py-3 text-center align-middle">
-                <button type="button" data-action="remove" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center" title="Xóa">
-                    <i class="fas fa-times"></i>
-                </button>
+                ${isFixed ? `
+                    <span class="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center justify-center" title="Phần tử bắt buộc, không thể xóa">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                ` : `
+                    <button type="button" data-action="remove" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center" title="Xóa">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `}
             </td>
         `;
 
@@ -227,6 +317,9 @@ class QuyTacManager {
             // Kiểm tra đã tồn tại chưa
             const exists = this.quyTacList.some(q => q.phantuluong_id === pt.id);
             if (exists) return;
+            
+            // Không cho thêm phần tử cố định (đã có sẵn)
+            if (this.isFixedElement(pt.maphantu)) return;
 
             this.quyTacList.push({
                 phantuluong_id: pt.id,
@@ -238,10 +331,21 @@ class QuyTacManager {
             });
         });
 
+        // Sắp xếp lại để THUC_LINH ở cuối
+        this.sortWithFixedAtEnd();
         this.render();
     }
 
     removeQuyTac(phantuluongId) {
+        // Tìm phần tử cần xóa
+        const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(phantuluongId));
+        
+        // Không cho xóa phần tử cố định
+        if (item && this.isFixedElement(item.maphantu)) {
+            AppUtils.Notify.warning('Không thể xóa phần tử bắt buộc "Thực lĩnh"');
+            return;
+        }
+        
         this.quyTacList = this.quyTacList.filter(q => String(q.phantuluong_id) !== String(phantuluongId));
         this.render();
     }
@@ -289,9 +393,11 @@ class QuyTacManager {
 
     openPhanTuSelector() {
         // Trigger event để PhanTuSelectorController xử lý
+        // Loại trừ cả phần tử đã chọn và phần tử cố định
         const event = new CustomEvent('openPhanTuSelector', {
             detail: {
-                excludeIds: this.quyTacList.map(q => q.phantuluong_id),
+                excludeIds: this.getExcludeIds(),
+                fixedElementCode: QuyTacManager.FIXED_ELEMENT_CODE, // Truyền mã phần tử cố định
                 onConfirm: (selected) => this.addQuyTac(selected)
             }
         });
@@ -308,12 +414,33 @@ class QuyTacManager {
 
     setData(data) {
         this.quyTacList = data || [];
-        this.render();
+        
+        // Đảm bảo phần tử cố định luôn có
+        if (this.fixedElement) {
+            this.ensureFixedElement();
+        } else {
+            // Nếu fixedElement chưa load xong, đánh dấu từ data
+            const fixedInData = this.quyTacList.find(q => q.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
+            if (fixedInData) {
+                fixedInData.isFixed = true;
+            }
+            this.sortWithFixedAtEnd();
+            this.render();
+        }
     }
 
     clear() {
-        this.quyTacList = [];
+        // Giữ lại phần tử cố định khi clear
+        const fixedItem = this.quyTacList.find(q => this.isFixedElement(q.maphantu));
+        this.quyTacList = fixedItem ? [fixedItem] : [];
         this.render();
+    }
+
+    /**
+     * Lấy danh sách ID phần tử để loại trừ khi mở selector
+     */
+    getExcludeIds() {
+        return this.quyTacList.map(q => q.phantuluong_id);
     }
 
     // ============================================================
