@@ -70,6 +70,7 @@ class Ctphieuluong(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
+    phantuluong_id = models.BigIntegerField(blank=True, null=True)
     maphantuluong = models.CharField(db_column='MaPhanTuLuong', blank=True, null=True)  # Field name made lowercase.
     tenphantuluong = models.CharField(db_column='TenPhanTuLuong', blank=True, null=True)  # Field name made lowercase.
     loaiphantu = models.CharField(db_column='LoaiPhanTu', blank=True, null=True)  # Field name made lowercase.

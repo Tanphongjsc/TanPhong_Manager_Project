@@ -9,6 +9,7 @@ urlpatterns = [
     # ========================================================================
     path("phan-tu-luong/", views.view_phan_tu_luong, name="phan_tu_luong"),
     path("phieu-luong/", views.view_phieu_luong, name="phieu_luong"),
+    path("phieu-luong/<int:bangluong_id>/", views.view_phieu_luong, name="phieu_luong_with_id"),
 
     # ===================== API URLS =====================
     

@@ -1,6 +1,7 @@
 
 # Sử dụng thư viện simpleeval để đánh giá biểu thức toán học và logic một cách an toàn, tránh thực thi code nguy hiểm.
 from simpleeval import SimpleEval
+import ast
 
 # --- LỚP BAO ĐÓNG GIÁ TRỊ TRƯỜNG (WRAPPER CLASS) ---
 # FieldProxy dùng để gắn thêm tên trường gốc cho giá trị số, giúp truy vết nguồn gốc khi tính toán phức tạp hoặc tổng hợp.
@@ -272,3 +273,41 @@ class PayrollCalculator:
                     results[key_val] = results.get(key_val, 0) + (thanhtien if thanhtien is not None else 0)
 
         return results
+
+    def extract_formula_params(self, formula, input_params):
+        """
+        Trích xuất các tham số được sử dụng trong công thức và giá trị tương ứng.
+        
+        Args:
+            formula (str): Chuỗi công thức, ví dụ: "LUONG_CB * 0.1 + PHU_CAP"
+            input_params (dict): Dict chứa toàn bộ tham số, ví dụ: {"LUONG_CB": 1000, "THUONG": 200...}
+            
+        Returns:
+            dict: Dict con chỉ chứa các tham số xuất hiện trong công thức.
+        """
+        if not formula or not isinstance(formula, str):
+            return {}
+
+        used_names = set()
+        try:
+            # 1. Parse công thức thành AST (An toàn: Không thực thi code)
+            tree = ast.parse(formula, mode='eval')
+            
+            # 2. Duyệt cây để tìm các định danh (biến)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Name):
+                    used_names.add(node.id)
+                    
+        except SyntaxError:
+            # Xử lý trường hợp công thức bị lỗi cú pháp
+            return {}
+
+        # 3. Lọc và trả về dict kết quả (Tối ưu: Chỉ lấy key có trong input)
+        # Cách này tự động loại bỏ các tên hàm (ví dụ: sum, max) vì chúng không nằm trong input_params
+        result = {
+            key: input_params[key] 
+            for key in used_names 
+            if key in input_params
+        }
+        
+        return result
