@@ -9,7 +9,6 @@ class PayrollDetailManager {
         this.eventManager = AppUtils.EventManager.create();
         this.lastFocusedElement = null;
         
-        this.isMerging = false; 
         this.baseColumns = this.getBaseColumns();
         
         // Formula Engine
@@ -18,12 +17,17 @@ class PayrollDetailManager {
         this.codeToIdMap = {}; 
         this.formulaConfig = {}; 
 
-        // Debounce tính công thức
+        // Store full data for export
+        this.allEmployeesData = []; 
+        this.salaryElementsList = []; 
+
         this.debouncedRecalc = AppUtils.Helper.debounce((changes) => this.processExcelChanges(changes), 150);
 
-        // DOM Elements cho Modal
+        // DOM Elements
         this.modal = document.getElementById('detail-modal');
         this.modalTemplate = document.getElementById('detail-modal-template');
+        this.btnExportMain = document.getElementById('btn-export-excel-main');
+        this.loadingStatus = document.getElementById('data-loading-status');
     }
 
     init() {
@@ -55,26 +59,24 @@ class PayrollDetailManager {
             tableHeader: document.getElementById('payroll-table-header'),
             tableBody: document.getElementById('payroll-table-body'),
             bulkActionsContainer: document.getElementById('payroll-table-bulk-actions'),
-            apiEndpoint: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/employee/',
-            apiParams: { page_size: 1000, ordering: 'ten_nhanvien' },
-            autoLoad: true,
+            autoLoad: false,
             enableBulkActions: true,
             columns: this.baseColumns,
-            onDataLoaded: () => this.handleDataLoaded(),
-            onCellChange: (changes) => this.onExcelDataChange(changes)
+            onCellChange: (changes) => this.onExcelDataChange(changes),
+            onBulkExport: () => this.exportExcel('selected')
         });
 
         this.initTableEvents();
+        this.loadCombinedData(); 
     }
 
     getBaseColumns() {
         return [
             {
                 key: 'employee_info', title: 'Họ và tên', width: 250, sticky: true, 
-                // UPDATE: Thêm sự kiện click mở modal
                 render: (item) => `
-                    <button type="button" class="w-full text-left flex flex-col justify-center h-full cursor-pointer group" data-detail-open="payroll" data-employee-id="${item.id}" aria-label="Xem chi tiết lương của ${item.hovaten}">
-                        <div class="font-medium text-blue-600 group-hover:text-blue-800 group-hover:underline text-sm truncate" title="Xem chi tiết lương của ${item.hovaten}">
+                    <button type="button" class="w-full text-left flex flex-col justify-center h-full cursor-pointer group" data-detail-open="payroll" data-employee-id="${item.id}" aria-label="Xem chi tiết">
+                        <div class="font-medium text-blue-600 group-hover:text-blue-800 group-hover:underline text-sm truncate" title="${item.hovaten}">
                             ${item.hovaten || 'Chưa có tên'}
                         </div>
                         <div class="text-xs text-slate-500 font-mono mt-0.5">${item.manhanvien || 'N/A'}</div>
@@ -87,49 +89,46 @@ class PayrollDetailManager {
         ];
     }
 
-    // --- 2. DATA HANDLING (CORE LOGIC) ---
+    // --- 2. DATA HANDLING ---
 
-    async handleDataLoaded() {
-        if (this.isMerging) return;
-        this.isMerging = true;
+    async loadCombinedData() {
         this.toggleLoading(true);
-
         try {
-            const rows = this.excelManager.state.data;
-            if (!rows?.length) return;
+            const [employeeRes, payrollRes] = await Promise.all([
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/phong-ban/employee/', { 
+                    page_size: 1000, 
+                    ordering: 'ten_nhanvien' 
+                }),
+                AppUtils.API.get('/hrm/quan-ly-luong/api/phieu-luong/list', { 
+                    bangluong_id: this.currentPayrollId
+                })
+            ]);
 
-            const payrollRes = await AppUtils.API.get('/hrm/quan-ly-luong/api/phieu-luong/list', { 
-                bangluong_id: this.currentPayrollId
-            });
-
-            if (!payrollRes.success) throw new Error('Lỗi tải dữ liệu lương');
-
-            // === BƯỚC CHUẨN HÓA DỮ LIỆU ===
+            if (!payrollRes.success) throw new Error(payrollRes.message || 'Lỗi tải dữ liệu lương');
+            
+            let allEmployees = employeeRes.data || (Array.isArray(employeeRes) ? employeeRes : []);
+            
             const { columnIds, valuesMap, extraDataMap } = this.normalizePayrollData(payrollRes.data);
+            this.currentPhanTuLuong = columnIds;
+            this.salaryElementsList = columnIds;
 
-            this.currentPhanTuLuong = columnIds; // Lưu để dùng khi Save
+            const validEmployeeIds = new Set(Object.keys(valuesMap).map(String));
+            const filteredEmployees = allEmployees.filter(emp => validEmployeeIds.has(String(emp.id)));
 
-            // Xây dựng config tính toán
-            this.buildFormulaMappings(columnIds, rows, valuesMap);
-
-            // Tạo cột động trên bảng
+            this.buildFormulaMappings(columnIds, filteredEmployees, valuesMap);
             const dynamicColumns = this.buildDynamicColumns(columnIds);
             this.excelManager.setColumns([...this.baseColumns, ...dynamicColumns]);
 
-            // Map dữ liệu vào từng dòng
-            rows.forEach(row => {
+            filteredEmployees.forEach(row => {
                 const empId = String(row.id);
-                // Dữ liệu chi tiết lương (Map<ElementID, Details>)
-                const empPayrollDetails = valuesMap[empId] || {};
+                const details = valuesMap[empId] || {};
                 
-                // Dữ liệu mở rộng (Timesheet, Total Salary...) dùng cho Modal
                 row.extra_data = extraDataMap[empId] || null;
-                
                 row.salary_values = {}; 
                 row.salary_meta = {};
 
                 columnIds.forEach(colId => {
-                    const detail = empPayrollDetails[colId];
+                    const detail = details[colId];
                     if (detail) {
                         row.salary_values[colId] = detail.value;
                         row.salary_meta[colId] = { 
@@ -137,8 +136,6 @@ class PayrollDetailManager {
                             type: detail.type, 
                             formula: detail.formula 
                         };
-                        
-                        // Cập nhật type vào map để dùng tính tổng (Nếu metadata chưa có)
                         const meta = this.elementMap.get(Number(colId));
                         if (meta && !meta.type) meta.type = detail.type;
                     } else {
@@ -148,166 +145,238 @@ class PayrollDetailManager {
                 });
             });
 
-            // Init Engine & Render
-            const flatData = this.transformToEngineData(rows);
+            this.allEmployeesData = filteredEmployees;
+
+            const flatData = this.transformToEngineData(filteredEmployees);
             this.formulaEngine = new FormulaEngine(flatData, this.formulaConfig);
 
-            this.excelManager.setData(rows);
+            this.excelManager.setData(filteredEmployees);
             this.updateCellStyles();
 
         } catch (error) {
-            console.error(error);
+            console.error('Load Data Error:', error);
             AppUtils.Notify.error(error.message);
         } finally {
             this.toggleLoading(false);
-            setTimeout(() => { this.isMerging = false; }, 300);
+        }
+    }
+
+    normalizePayrollData(data) {
+        let columnIds = [];
+        let valuesMap = {}; 
+        let extraDataMap = {};
+
+        if (Array.isArray(data.phan_tu_luong)) columnIds = data.phan_tu_luong.map(String);
+
+        if (Array.isArray(data.phieu_luong)) {
+            data.phieu_luong.forEach(item => {
+                const empId = String(item.nhanvien_id);
+                valuesMap[empId] = item.ct_phieu_luong || {};
+                extraDataMap[empId] = item;
+            });
+        } else if (typeof data.phieu_luong === 'object') {
+            Object.keys(data.phieu_luong).forEach(empId => {
+                valuesMap[empId] = data.phieu_luong[empId];
+                extraDataMap[empId] = { nhanvien_id: empId, is_draft: true };
+            });
+        }
+        return { columnIds, valuesMap, extraDataMap };
+    }
+
+    // --- 3. EXPORT EXCEL LOGIC (FIXED) ---
+
+    initEvents() {
+        const btnSave = document.getElementById('btn-save-payroll');
+        if (btnSave) this.eventManager.add(btnSave, 'click', () => this.savePayroll());
+        
+        const modal = document.getElementById('detail-modal');
+        if (modal) {
+            this.eventManager.add(modal, 'click', (e) => {
+                if (e.target === modal) this.toggleModal(false);
+            });
+            const closeBtns = modal.querySelectorAll('[data-modal-close]');
+            closeBtns.forEach(btn => this.eventManager.add(btn, 'click', () => this.toggleModal(false)));
+        }
+
+        // --- EXPORT EVENTS ---
+        
+        // 1. Export Main (All Data)
+        if (this.btnExportMain) {
+            this.eventManager.add(this.btnExportMain, 'click', () => this.exportExcel('all'));
+        }
+
+        // 2. Bulk Export (Selected) sẽ dùng onBulkExport của ExcelTableManager
+    }
+
+    /**
+     * Xuất Excel Đa năng
+     * @param {string} scope - 'all' | 'selected' | 'single'
+     * @param {string|number} singleId - ID nhân viên nếu scope là 'single'
+     */
+    exportExcel(scope, singleId = null) {
+        if (typeof XLSX === 'undefined') {
+            return AppUtils.Notify.error('Thư viện Excel chưa được tải. Vui lòng tải lại trang.');
+        }
+
+        if (scope === 'all') {
+            // Case 1: Xuất 1 file tổng hợp cho tất cả (như cũ)
+            const employees = this.allEmployeesData;
+            if (employees.length === 0) return AppUtils.Notify.warning('Không có dữ liệu.');
+            this.createAndDownloadWorkbook(employees, 'Bang_Luong_Tong_Hop');
+            AppUtils.Notify.success(`Đã xuất tổng hợp ${employees.length} nhân viên.`);
+
+        } else if (scope === 'selected') {
+            // Case 2: Xuất N file riêng biệt cho N người được chọn
+            const selectedIds = this.excelManager.state.selectedItems;
+            if (selectedIds.size === 0) return AppUtils.Notify.warning('Vui lòng chọn nhân viên để xuất.');
+            
+            const employeesToExport = this.allEmployeesData.filter(e => selectedIds.has(String(e.id)));
+            
+            if (employeesToExport.length === 0) return AppUtils.Notify.warning('Không tìm thấy dữ liệu nhân viên đã chọn.');
+
+            // Lặp và xuất từng file
+            let count = 0;
+            employeesToExport.forEach(emp => {
+                // Tận dụng logic tạo file đơn
+                this.createAndDownloadWorkbook([emp], `Phieu_Luong_${emp.manhanvien}_${emp.hovaten}`);
+                count++;
+            });
+            AppUtils.Notify.success(`Đang tải xuống ${count} phiếu lương...`);
+
+        } else if (scope === 'single' && singleId) {
+            // Case 3: Xuất 1 file cho 1 người (từ modal)
+            const emp = this.allEmployeesData.find(e => String(e.id) === String(singleId));
+            if (!emp) return AppUtils.Notify.error('Không tìm thấy dữ liệu nhân viên.');
+            
+            this.createAndDownloadWorkbook([emp], `Phieu_Luong_${emp.manhanvien}_${emp.hovaten}`);
+            AppUtils.Notify.success('Đã xuất phiếu lương.');
         }
     }
 
     /**
-     * Chuẩn hóa dữ liệu từ API về một format chung
-     * @param {Object} data - Dữ liệu thô từ API
+     * Hàm helper tạo và tải file Excel từ danh sách nhân viên
+     * Nếu danh sách có 1 người -> File chi tiết cá nhân
+     * Nếu danh sách nhiều người -> File tổng hợp (Logic hiển thị giống nhau, chỉ khác tên file)
      */
-    normalizePayrollData(data) {
-        let columnIds = [];
-        let valuesMap = {}; // Map<EmpID, DetailsMap>
-        let extraDataMap = {}; // Map<EmpID, FullObject>
+    createAndDownloadWorkbook(employees, fileNamePrefix) {
+        // 1. Chuẩn bị dữ liệu Sheet Lương (Sheet 1)
+        const salarySheetData = [];
+        
+        // Header
+        const headerRow = ['Mã NV', 'Họ tên', 'Phòng ban', 'Chức vụ'];
+        this.salaryElementsList.forEach(colId => {
+            const meta = this.elementMap.get(Number(colId));
+            headerRow.push(meta ? meta.name : `Col ${colId}`);
+        });
+        salarySheetData.push(headerRow);
 
-        // 1. Lấy danh sách cột
-        if (Array.isArray(data.phan_tu_luong)) {
-            columnIds = data.phan_tu_luong.map(String);
-        }
-
-        // 2. Xử lý phần phiếu lương
-        if (Array.isArray(data.phieu_luong)) {
-            // CASE 2: Đã lưu (Array of Objects)
-            data.phieu_luong.forEach(item => {
-                const empId = String(item.nhanvien_id);
-                valuesMap[empId] = item.ct_phieu_luong || {};
-                extraDataMap[empId] = item; // Lưu full object để lấy ngaychamcong
+        // Rows
+        employees.forEach(emp => {
+            const row = [
+                emp.manhanvien || '',
+                emp.hovaten || '',
+                emp.cong_tac?.phong_ban || '',
+                emp.cong_tac?.chuc_vu || ''
+            ];
+            
+            this.salaryElementsList.forEach(colId => {
+                const val = emp.salary_values?.[colId] || 0;
+                row.push(Number(val));
             });
-        } else if (typeof data.phieu_luong === 'object') {
-            // CASE 1: Tạo mới / Draft (Map<EmpID, Map<ElID, Detail>>)
-            Object.keys(data.phieu_luong).forEach(empId => {
-                valuesMap[empId] = data.phieu_luong[empId];
-                // Case này thường chưa có dữ liệu chấm công chi tiết trả về cấu trúc
-                extraDataMap[empId] = { 
-                    nhanvien_id: empId, 
-                    is_draft: true // Đánh dấu là draft
-                };
-            });
-        }
-
-        return { columnIds, valuesMap, extraDataMap };
-    }
-
-    // --- 3. CALCULATION LOGIC (Giữ nguyên logic cũ) ---
-    onExcelDataChange(changes) {
-        if (!this.formulaEngine || !changes.length) return;
-        this.debouncedRecalc(changes);
-    }
-
-    processExcelChanges(changes) {
-        const affectedRowIds = new Set();
-        changes.forEach(change => {
-            const { item, key, value } = change;
-            if (key.startsWith('salary_values.')) {
-                const colId = key.split('.')[1];
-                const colCode = this.idToCodeMap[colId];
-                const rowId = item.id;
-                
-                const numVal = Number(value) || 0;
-                if(!item.salary_values) item.salary_values = {};
-                item.salary_values[colId] = numVal;
-
-                if (colCode) {
-                    const engineRow = this.formulaEngine.dataset.find(r => String(r.id) === String(rowId));
-                    if (engineRow) engineRow.salary_values[colCode] = numVal;
-                }
-                affectedRowIds.add(rowId);
-            }
+            salarySheetData.push(row);
         });
 
-        affectedRowIds.forEach(rowId => {
-            const formulaChanges = this.formulaEngine.recalculateRow(rowId);
-            const rowData = this.excelManager.state.data.find(r => String(r.id) === String(rowId));
-            const rowIndex = this.excelManager.state.data.indexOf(rowData);
-            if (rowData && rowIndex !== -1) {
-                this.applyFormulaChangesToUI(rowIndex, rowData, formulaChanges);
-            }
-        });
-    }
+        // 2. Chuẩn bị dữ liệu Sheet Chấm công (Sheet 2)
+        const timesheetSheetData = [];
+        timesheetSheetData.push(['Mã NV', 'Họ tên', 'Ngày', 'Loại công', 'Vào', 'Ra', 'Giờ công (phút)', 'Công việc']);
 
-    applyFormulaChangesToUI(rowIndex, rowData, changes) {
-        const tableBody = this.excelManager.options.tableBody;
-        if (!tableBody) return;
-        Object.keys(changes).forEach(changedCode => {
-            const changedId = this.codeToIdMap[changedCode];
-            if (!changedId) return;
-            const newValue = changes[changedCode];
-            rowData.salary_values[changedId] = newValue;
-
-            const cellInput = tableBody.querySelector(`input[data-row="${rowIndex}"][data-key="salary_values.${changedId}"]`);
-            if (cellInput) {
-                cellInput.value = this.formatNumber(newValue);
-                this.flashHighlight(cellInput.closest('td') || cellInput);
+        employees.forEach(emp => {
+            const timesheets = emp.extra_data?.ngaychamcong || [];
+            if (timesheets.length > 0) {
+                timesheets.forEach(ts => {
+                    timesheetSheetData.push([
+                        emp.manhanvien,
+                        emp.hovaten,
+                        AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM/yyyy'),
+                        ts.loaichamcong || '',
+                        ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '',
+                        ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '',
+                        ts.thoigianlamviec || 0,
+                        ts.tencongviec || ''
+                    ]);
+                });
             } else {
-                const cellDiv = tableBody.querySelector(`div[data-row="${rowIndex}"][data-key="salary_values.${changedId}"]`);
-                if (cellDiv) {
-                    cellDiv.textContent = this.formatNumber(newValue);
-                    this.flashHighlight(cellDiv);
-                }
+                timesheetSheetData.push([emp.manhanvien, emp.hovaten, 'Không có dữ liệu', '', '', '', '', '']);
             }
         });
+
+        // 3. Tạo Workbook
+        const wb = XLSX.utils.book_new();
+
+        // Add Sheet 1: Tổng hợp Lương
+        const wsSalary = XLSX.utils.aoa_to_sheet(salarySheetData);
+        // Auto width đơn giản
+        const wscolsSalary = headerRow.map(() => ({ wch: 15 })); 
+        wscolsSalary[1] = { wch: 25 }; 
+        wsSalary['!cols'] = wscolsSalary;
+        XLSX.utils.book_append_sheet(wb, wsSalary, "Chi tiết Lương");
+
+        // Add Sheet 2: Chi tiết Chấm công
+        const wsTimesheet = XLSX.utils.aoa_to_sheet(timesheetSheetData);
+        const wscolsTime = [{wch:10}, {wch:25}, {wch:12}, {wch:10}, {wch:10}, {wch:10}, {wch:15}, {wch:20}];
+        wsTimesheet['!cols'] = wscolsTime;
+        XLSX.utils.book_append_sheet(wb, wsTimesheet, "Chi tiết Chấm công");
+
+        // 4. Write File
+        const cleanFileName = AppUtils.Helper.removeAccents(fileNamePrefix).replace(/\s+/g, '_');
+        const finalName = `${cleanFileName}_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, finalName);
     }
 
-    // --- 4. MODAL CHI TIẾT (TÍNH NĂNG MỚI) ---
-    
+    // --- OTHER METHODS ---
+
+    toggleLoading(isLoading) {
+        if (this.loadingStatus) this.loadingStatus.classList.toggle('hidden', !isLoading);
+        if (this.btnExportMain) {
+            const hasData = this.allEmployeesData && this.allEmployeesData.length > 0;
+            this.btnExportMain.classList.toggle('hidden', isLoading || !hasData);
+        }
+        if (this.excelManager) isLoading ? this.excelManager.showLoading?.() : this.excelManager.hideLoading?.();
+    }
+
     openDetailModal(employeeId) {
         const row = this.excelManager.state.data.find(r => String(r.id) === String(employeeId));
         if (!row) return;
 
-        // 1. Inject Template vào Modal Body
         const modalForm = document.querySelector('#detail-modal form');
         if (modalForm && this.modalTemplate) {
-            modalForm.innerHTML = ''; // Clear old
+            modalForm.innerHTML = ''; 
             modalForm.appendChild(this.modalTemplate.content.cloneNode(true));
         }
 
-        // 2. Tùy chỉnh Footer (Ẩn Cancel, Chỉnh Submit thành Xuất phiếu lương)
         const btnSave = document.querySelector('#detail-modal [data-modal-submit]');
-        const btnCancel = document.querySelector('#detail-modal [data-modal-close]:not([title="Đóng"])'); // Chọn nút Hủy (không phải nút X)
+        const btnCancel = document.querySelector('#detail-modal [data-modal-close]:not([title="Đóng"])');
         
-        if (btnCancel && btnCancel.tagName === 'BUTTON') {
-             btnCancel.classList.add('hidden'); // Ẩn nút hủy
-        }
+        if (btnCancel && btnCancel.tagName === 'BUTTON') btnCancel.classList.add('hidden');
 
         if (btnSave) {
-            btnSave.innerHTML = '<i class="fas fa-print mr-2"></i>Xuất phiếu lương';
-            btnSave.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-slate-500', 'hover:bg-slate-600');
-            btnSave.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'text-white');
-            // Gán sự kiện Export (Hiện tại chỉ log hoặc placeholder)
+            btnSave.innerHTML = '<i class="fas fa-file-excel mr-2"></i>Xuất Excel';
+            btnSave.className = 'px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow-sm font-medium transition-colors flex items-center';
             btnSave.onclick = (e) => { 
                 e.preventDefault(); 
-                AppUtils.Notify.info('Tính năng xuất phiếu lương đang phát triển'); 
+                this.exportExcel('single', employeeId);
             };
         }
 
-        // 3. Render Dữ liệu
         const extraData = row.extra_data || {};
-        const titleEl = document.querySelector('#detail-modal [data-modal-title]'); // Title modal
+        const titleEl = document.querySelector('#detail-modal [data-modal-title]');
         if (titleEl) titleEl.textContent = `Chi tiết lương: ${row.hovaten} (${row.manhanvien})`;
 
-        // A. Render Timesheet (Cột Trái)
         this.renderTimesheetTable(extraData.ngaychamcong);
-
-        // B. Render Salary Detail (Cột Phải)
         this.renderSalaryDetailList(row);
-
-        // 4. Show Modal
         this.toggleModal(true);
     }
-
+    
     toggleModal(show) {
         const modal = this.modal || document.getElementById('detail-modal');
         if (!modal) return;
@@ -317,12 +386,7 @@ class PayrollDetailManager {
             modal.setAttribute('aria-hidden', 'false');
             AppUtils.Modal.open(modal);
             document.body.classList.add('overflow-hidden');
-            const focusTarget = modal.querySelector('[data-modal-close], [data-modal-submit], button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (focusTarget) focusTarget.focus();
         } else {
-            if (modal.contains(document.activeElement)) {
-                document.activeElement.blur();
-            }
             modal.setAttribute('aria-hidden', 'true');
             modal.inert = true;
             AppUtils.Modal.close(modal);
@@ -344,16 +408,12 @@ class PayrollDetailManager {
         }
 
         let totalHours = 0;
-        let totalAmount = 0;
 
         timesheets.forEach(ts => {
             const date = new Date(ts.ngaylamviec).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-            // Fix: TimeField return HH:MM:SS, so slice 0-5 for HH:MM
             const inTime = ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '--:--';
             const outTime = ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '--:--';
             const hours = (ts.thoigianlamviec / 60).toFixed(1);
-            
-            // Fix: Show Job Name instead of Amount
             const jobName = ts.tencongviec || '-';
 
             totalHours += (ts.thoigianlamviec / 60);
@@ -384,7 +444,6 @@ class PayrollDetailManager {
         const salaryValues = row.salary_values || {};
         const salaryMeta = row.salary_meta || {};
         
-        // Group by Type (Thu nhập / Khấu trừ)
         const groups = { 'THU_NHAP': [], 'KHAU_TRU': [], 'OTHER': [] };
 
         Object.keys(salaryValues).forEach(colId => {
@@ -394,17 +453,13 @@ class PayrollDetailManager {
 
             const type = meta.type || 'OTHER';
             const item = {
-                name: meta.name,
-                code: meta.code,
-                value: val,
-                meta: salaryMeta[colId] || {}
+                name: meta.name, code: meta.code, value: val, meta: salaryMeta[colId] || {}
             };
 
             if (groups[type]) groups[type].push(item);
             else groups['OTHER'].push(item);
         });
 
-        // Helper render group
         const renderGroup = (title, items, colorClass, borderClass) => {
             if (items.length === 0) return '';
             const total = items.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
@@ -436,7 +491,6 @@ class PayrollDetailManager {
         
         container.innerHTML = `<div class="grid grid-cols-1 gap-2">${incomeHtml}${deductionHtml}</div>`;
 
-        // Tính thực lĩnh
         const thucLinhCol = Array.from(this.elementMap.values()).find(e => e.code === 'THUC_LINH');
         let finalSalary = 0;
         
@@ -452,8 +506,7 @@ class PayrollDetailManager {
         if (totalEl) totalEl.innerHTML = `${this.formatNumber(finalSalary)} <span class="text-sm text-slate-400 font-normal">VNĐ</span>`;
     }
 
-    // --- 5. HELPERS & UTILS ---
-
+    // --- UTILS ---
     flashHighlight(element) {
         element.classList.add('bg-green-100');
         setTimeout(() => element.classList.remove('bg-green-100'), 500);
@@ -469,13 +522,9 @@ class PayrollDetailManager {
         this.elementMap.forEach((meta, id) => {
             this.idToCodeMap[id] = meta.code; this.codeToIdMap[meta.code] = id;
         });
-
-        // Chỉ cần lấy công thức từ row đầu tiên (giả sử công thức áp dụng chung cột)
-        // Hoặc duyệt valuesMap của row đầu tiên
         if (rows.length > 0 && columnIds.length > 0) {
             const firstEmpId = String(rows[0].id);
             const firstDetails = valuesMap[firstEmpId] || {};
-            
             columnIds.forEach(colId => {
                 const detail = firstDetails[colId];
                 if (detail?.formula) {
@@ -514,6 +563,7 @@ class PayrollDetailManager {
             const isDeduction = meta?.type === 'KHAU_TRU';
             return {
                 key: `salary_values.${id}`, title: meta ? meta.name : `Phần tử ${id}`, width: 120, align: 'right', type: 'input',
+                elementId: id,
                 render: (item) => {
                     const val = item.salary_values?.[id] || 0;
                     const metaStatus = item.salary_meta?.[id]?.status;
@@ -543,28 +593,6 @@ class PayrollDetailManager {
         });
     }
 
-    toggleLoading(isLoading) {
-        const statusEl = document.getElementById('data-loading-status');
-        if (statusEl) statusEl.classList.toggle('hidden', !isLoading);
-        if (this.excelManager) isLoading ? this.excelManager.showLoading?.() : this.excelManager.hideLoading?.();
-    }
-
-    initEvents() {
-        const btnSave = document.getElementById('btn-save-payroll');
-        if (btnSave) this.eventManager.add(btnSave, 'click', () => this.savePayroll());
-        
-        // Sự kiện đóng modal khi click ra ngoài
-        const modal = document.getElementById('detail-modal');
-        if (modal) {
-            this.eventManager.add(modal, 'click', (e) => {
-                if (e.target === modal) this.toggleModal(false);
-            });
-            // Nút X đóng
-            const closeBtns = modal.querySelectorAll('[data-modal-close]');
-            closeBtns.forEach(btn => this.eventManager.add(btn, 'click', () => this.toggleModal(false)));
-        }
-    }
-
     initTableEvents() {
         const tableBody = this.excelManager?.options?.tableBody;
         if (!tableBody) return;
@@ -577,7 +605,56 @@ class PayrollDetailManager {
             this.openDetailModal(empId);
         });
     }
+    
+    onExcelDataChange(changes) {
+        if (!this.formulaEngine || !changes.length) return;
+        this.debouncedRecalc(changes);
+    }
+    processExcelChanges(changes) {
+        const affectedRowIds = new Set();
+        changes.forEach(change => {
+            const { item, key, value } = change;
+            if (key.startsWith('salary_values.')) {
+                const colId = key.split('.')[1];
+                const colCode = this.idToCodeMap[colId];
+                const rowId = item.id;
+                
+                const numVal = Number(value) || 0;
+                if(!item.salary_values) item.salary_values = {};
+                item.salary_values[colId] = numVal;
 
+                if (colCode) {
+                    const engineRow = this.formulaEngine.dataset.find(r => String(r.id) === String(rowId));
+                    if (engineRow) engineRow.salary_values[colCode] = numVal;
+                }
+                affectedRowIds.add(rowId);
+            }
+        });
+
+        affectedRowIds.forEach(rowId => {
+            const formulaChanges = this.formulaEngine.recalculateRow(rowId);
+            const rowData = this.excelManager.state.data.find(r => String(r.id) === String(rowId));
+            const rowIndex = this.excelManager.state.data.indexOf(rowData);
+            if (rowData && rowIndex !== -1) {
+                this.applyFormulaChangesToUI(rowIndex, rowData, formulaChanges);
+            }
+        });
+    }
+    applyFormulaChangesToUI(rowIndex, rowData, changes) {
+        const tableBody = this.excelManager.options.tableBody;
+        if (!tableBody) return;
+        Object.keys(changes).forEach(changedCode => {
+            const changedId = this.codeToIdMap[changedCode];
+            if (!changedId) return;
+            const newValue = changes[changedCode];
+            rowData.salary_values[changedId] = newValue;
+            const cellInput = tableBody.querySelector(`input[data-row="${rowIndex}"][data-key="salary_values.${changedId}"]`);
+            if (cellInput) {
+                cellInput.value = this.formatNumber(newValue);
+                this.flashHighlight(cellInput.closest('td') || cellInput);
+            }
+        });
+    }
     async savePayroll() {
         const { changes, count } = this.excelManager.getChanges();
         if (count === 0) return AppUtils.Notify.info('Không có thay đổi nào');
