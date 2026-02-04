@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chi tiết Phiếu Lương{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative isolate">
+        
+        <form id="payroll-form" class="flex-1 flex flex-col overflow-hidden pb-20">
+            {% csrf_token %}
+            
+            <div class="flex justify-between items-center gap-3 px-2 py-2 border-b border-slate-100 mb-2">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-medium text-slate-700 whitespace-nowrap">Bảng lương:</label>
+                    <input type="hidden" id="salary-table-select" value="{{ bangluong.id }}">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">
+                        {% if bangluong.tenbangluong %}
+                            {{ bangluong.tenbangluong }}
+                        {% else %}
+                            Bảng lương Tháng {{ bangluong.kyluong.ngaybatdau|date:"m/Y" }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div id="data-loading-status" class="text-xs text-slate-500 hidden flex items-center">
+                        <i class="fas fa-circle-notch fa-spin text-blue-500 mr-1"></i> Đang tải dữ liệu...
+                    </div>
+                    
+                    <button type="button" id="btn-export-excel-main" class="hidden inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded shadow-sm transition-colors">
+                        <i class="fas fa-file-excel mr-1.5"></i> Xuất Excel Tổng hợp
+                    </button>
+                </div>
+            </div>
+
+            {% include "components/excel_table_wrapper.html" with table_id="payroll-table" %}
+            
+            <div class="mt-2 relative">
+                {% include "components/bulk_actions.html" with id="payroll-table-bulk-actions" show_export=True %}
+            </div>
+
+        </form>
+
+        {% include "components/form_footer_fixed.html" with cancel_url="/hrm/quan-ly-luong/bang-luong" submit_id="btn-save-payroll" submit_text="Lưu phiếu lương" %}
+        
+    </div>
+</div>
+
+{# === MODAL GIỮ NGUYÊN === #}
+{% include "components/crud_modal.html" with modal_id="detail-modal" form_id="detail-form" title="Chi tiết lương & Chấm công" content_template="" modal_size="7xl" submit_label="Đóng" %}
+
+<template id="detail-modal-template">
+    {# ... (Nội dung template giữ nguyên như cũ) ... #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-2 min-h-[500px]">
+        <div class="flex flex-col h-full border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+            <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">🗓️</span>
+                    <span class="font-semibold text-slate-700">Nhật ký chấm công</span>
+                </div>
+                <span class="text-xs font-medium text-slate-500" id="modal-summary-work"></span>
+            </div>
+            
+            <div class="flex-1 overflow-auto custom-scrollbar">
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="px-3 py-2.5 font-semibold border-b border-slate-200">Ngày</th>
+                            <th class="px-3 py-2.5 font-semibold text-center border-b border-slate-200">Ca</th>
+                            <th class="px-3 py-2.5 font-semibold text-center border-b border-slate-200">Vào/Ra</th>
+                            <th class="px-3 py-2.5 font-semibold text-right border-b border-slate-200">Giờ công</th>
+                            <th class="px-3 py-2.5 font-semibold text-left border-b border-slate-200">Công việc</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-timesheet-body" class="divide-y divide-slate-100 bg-white">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex flex-col h-full border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+            <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">💰</span>
+                    <span class="font-semibold text-slate-700">Chi tiết lương</span>
+                </div>
+                <div class="flex flex-col items-end leading-tight">
+                    <span class="text-lg font-bold text-blue-600" id="modal-total-salary"></span>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-auto p-4 custom-scrollbar bg-slate-50/30" id="modal-salary-body">
+                </div>
+        </div>
+    </div>
+</template>
+
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<script src="{% static 'js/utils/ExcelTableManager.js' %}"></script>
+<script src="{% static 'js/quan_ly_luong/phieu_luong.js' %}"></script>
+<script src="{% static 'js/utils/PayrollFormulaEngine.js' %}"></script>
+{% endblock scripts %}
