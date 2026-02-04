@@ -66,7 +66,4 @@ urlpatterns = [
     path('api/bang-luong/<int:pk>/delete/', views.api_bang_luong_delete, name='api_bang_luong_delete'),
     path('api/bang-luong/get-options/', views.api_bang_luong_get_options, name='api_bang_luong_get_options'),
     
-    # =============================== PHIẾU LƯƠNG ==============================
-    # Phiếu lương - View chính (nhận bang_luong_id để hiển thị phiếu lương của bảng lương đó)
-    path('phieu-luong/<int:bang_luong_id>/', views.view_phieu_luong, name='phieu_luong'),
 ]

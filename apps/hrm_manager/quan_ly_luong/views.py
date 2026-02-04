@@ -2,12 +2,14 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
-from django.db.models import F
 from django.db import transaction
-from django.db.models import F, Q, Sum, Count
+from django.db.models import F, Q, Sum, Count, Exists, OuterRef
+from django.urls import reverse
 
-from apps.hrm_manager.__core__.models import Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, Lichsucongtac, Ctphieuluong, NhanvienChedoluong
+from apps.hrm_manager.__core__.models import (Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, 
+                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban)
 
 from json import loads, dumps
 from collections import defaultdict
@@ -30,23 +32,6 @@ from apps.hrm_manager.utils.view_helpers import (
     search_queryset, filter_by_field, filter_by_status
 )
 
-from django.urls import reverse
-from django.db import transaction
-from django.db.models import F, Prefetch, Count, Q, Exists, OuterRef
-from apps.hrm_manager.__core__.models import *
-from .services import ( 
-    CheDoLuongService, 
-    PayrollPeriodLockException, 
-    ActiveEmployeesExistException, 
-    ConflictException, 
-    KyLuongService,
-    BangLuongService
-)
-
-from django.urls import reverse
-from django.db import transaction
-from django.db.models import F, Prefetch, Count, Q, Exists, OuterRef
-from apps.hrm_manager.__core__.models import *
 from .services import ( 
     CheDoLuongService, 
     PayrollPeriodLockException, 
@@ -88,9 +73,16 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     # Các mã quy tắc cần tính bằng công thức
     formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'].strip().lower() == 'formula']
 
+    # Lấy danh sách nhân viên cần tính lương
+    nhanvien_ids = Lichsucongtac.objects.filter(
+        trangthai='active', 
+        nhanvien_id__in=nhanvien_ids_in_bangluong
+    ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id')
+
     # 3. Lấy dữ liệu chấm công tổng hợp theo nhân viên trong kỳ lương
     bcc_data = Bangchamcong.objects.filter(
-        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
+        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc],
+        nhanvien_id__in=nhanvien_ids_in_bangluong,
     ).values('nhanvien', 'loaichamcong').annotate(
         tong_tien_luong=Sum('thanhtien'),
         tong_so_luong_an=Count('coantrua', filter=Q(coantrua=True)),
@@ -100,12 +92,7 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     bcc_dict = {item['nhanvien']: item for item in bcc_data}
     if not bcc_dict:
         return None, "Chưa có dữ liệu chấm công trong kỳ lương"
-
-    # Lấy danh sách nhân viên cần tính lương
-    nhanvien_ids = Lichsucongtac.objects.filter(
-        trangthai='active', 
-        nhanvien_id__in=nhanvien_ids_in_bangluong
-    ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id')
+    print(bcc_dict)
 
     # 4. Lấy dữ liệu thiết lập số liệu cố định cho từng nhân viên
     setup_data = Thietlapsolieucodinh.objects.filter(
@@ -124,10 +111,13 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     # Dạng: { 'ID_NV': [ { 'tham_so': {...} } ] }
     data_groups_map = {}
     for nv_id in nhanvien_ids:
+        print("Processing NV ID:", nv_id)
         nv_bcc = bcc_dict.get(nv_id, {})
         nv_setup = setup_dict.get(nv_id, {})
         context_params = {}
         
+        print("BCC:", nv_bcc)
+
         # A. Dữ liệu biến động từ chấm công
         context_params['SO_LUONG_AN'] = float(nv_bcc.get('tong_so_luong_an', 0))
         # Nếu là SX thì lấy lương SP làm lương cơ bản
@@ -138,14 +128,15 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         for rule in rules_list:
             ma_qt = rule['maquytac']
             src = rule['nguondulieu'].strip().lower()
-            print(ma_qt, src)
-            
+
             if src == 'system':
                 if ma_qt == 'LUONG_CO_BAN':
+                    print(nv_bcc.get('loaichamcong'))
                     if nv_bcc.get('loaichamcong') == 'VP':
                         context_params[ma_qt] = nv_setup.get(rule['phantuluong'], None)
                         if context_params[ma_qt]:
-                            context_params[ma_qt] = round(float(context_params[ma_qt]/(26*8)) * float(nv_bcc.get('tong_thoigian_lamviec', 0)),2)             
+                            context_params[ma_qt] = round(float(context_params[ma_qt]/(26*8)) * float(nv_bcc.get('tong_thoigian_lamviec', 0)),2)
+                        print("LUONG_CO_BAN", context_params[ma_qt])
                 else:
                     context_params[ma_qt] = nv_setup.get(rule['phantuluong'], 0.0)
             elif src == 'manual':
@@ -154,8 +145,6 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
                 # Gán chuỗi công thức, sẽ được tính động khi cần
                 context_params[ma_qt] = rule['bieuthuctinhtoan']
             
-            print(context_params[ma_qt])
-
         # Đóng gói dữ liệu cho từng nhân viên
         data_groups_map[str(nv_id)] = [{
             'tham_so': context_params,
@@ -228,7 +217,7 @@ def view_phieu_luong(request, bangluong_id=None):
     bangluong_qs = Bangluong.objects.filter(id=bangluong_id).first()
     if bangluong_qs is None:
         return render(request, 'registration/404.html', {})
-    print(bangluong_qs)
+
     context = {
         'breadcrumbs': [
             {'title': 'Quản lý lương', 'url': '#'},
@@ -2072,30 +2061,3 @@ def api_bang_luong_get_options(request):
         'current_month': month,
         'current_year': year,
     })
-
-
-# ===================================================================================
-#---------------------------------- PHIẾU LƯƠNG ------------------------------------
-# ===================================================================================
-
-@login_required
-def view_phieu_luong(request, bang_luong_id):
-    """
-    Màn hình Phiếu lương - Hiển thị danh sách phiếu lương của một bảng lương
-    
-    Args:
-        bang_luong_id: ID của bảng lương cần xem phiếu lương
-    """
-    # Lấy thông tin bảng lương
-    bang_luong = get_object_or_404(Bangluong, pk=bang_luong_id)
-    
-    context = {
-        'breadcrumbs': [
-            {'title': 'Quản lý lương', 'url': '#'},
-            {'title': 'Bảng lương', 'url': '/hrm/quan-ly-luong/bang-luong/'},
-            {'title': bang_luong.tenbangluong or f'Bảng lương #{bang_luong_id}', 'url': None},
-        ],
-        'bang_luong': bang_luong,
-        'bang_luong_id': bang_luong_id,
-    }
-    return render(request, "hrm_manager/quan_ly_luong/phieu_luong_main.html", context)
