@@ -277,10 +277,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadNotifications() {
         showLoading(true);
         
+        // Trim và normalize company filter value
+        const companyValue = filterCompany.value ? filterCompany.value.trim().replace(/\s+/g, ' ') : '';
+        
         const params = new URLSearchParams({
             month: filterMonth.value || '',
             year: filterYear.value || '',
-            company: filterCompany.value || '',
+            company: companyValue || '',
             page: currentPage,
             per_page: 10
         });
@@ -297,7 +300,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     notifications = data.data;
                     totalPages = data.pagination.total_pages;
                     
-                    // XÓA LOGIC CŨ, THÊM LOGIC MỚI:
                     // Luôn clear tbody trước
                     notificationsTbody.innerHTML = '';
                     

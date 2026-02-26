@@ -322,10 +322,17 @@ def api_danh_sach_thong_bao(request):
             queryset = queryset.filter(thoigiantao__year=int(year))
             
         if company:
-            # Tìm theo tên công ty trong bảng HopDong
-            queryset = queryset.filter(
-                id_hopdong__tencongty__icontains=company
-            )
+            # Trim và normalize whitespace trước khi tìm kiếm
+            company_search = company.strip()
+            if company_search:
+                # Tách thành các từ và tìm kiếm từng từ để xử lý trường hợp thừa dấu cách
+                company_words = company_search.split()
+                company_filter = Q()
+                for word in company_words:
+                    word = word.strip()
+                    if word:
+                        company_filter &= Q(id_hopdong__tencongty__icontains=word)
+                queryset = queryset.filter(company_filter)
         
         # Sắp xếp theo thời gian tạo từ mới đến cũ
         queryset = queryset.order_by('-thoigiantao')
@@ -627,7 +634,21 @@ def api_tao_moi_thong_bao(request):
         
         # SỬA: Parse full_date thay vì year/month riêng lẻ
         try:
-            thoigian_tao = datetime.strptime(period['full_date'], '%Y-%m-%d')
+            # Parse date string thành các thành phần ngày tháng
+            date_parts = period['full_date'].split('-')
+            p_year = int(date_parts[0])
+            p_month = int(date_parts[1])
+            p_day = int(date_parts[2])
+            
+            # Tạo datetime với timezone local để tránh lệch ngày do UTC conversion
+            from django.utils import timezone as tz
+            
+            # Tạo naive datetime rồi make_aware với timezone hiện tại
+            naive_dt = datetime(p_year, p_month, p_day, 12, 0, 0)  # Đặt 12:00 trưa để tránh lệch ngày
+            if hasattr(tz, 'make_aware') and tz.is_naive(naive_dt):
+                thoigian_tao = tz.make_aware(naive_dt)
+            else:
+                thoigian_tao = naive_dt
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -975,20 +996,20 @@ def api_in_thong_bao(request, notification_id):
         final_amount = total_after_tax_calc - discount_amount
         
         # Chuyển đổi tiền thành chữ
-        amount_in_words = num2words(int(final_amount), lang='vi').capitalize() + " đồng"
+        amount_in_words = num2words(int(round(final_amount)), lang='vi').capitalize() + " đồng"
         
         # Đọc template HTML
         
         
         context = {
-            'day': day,
-            'month': month,
-            'year': year,
-            'period_month': created_date.month,
-            'period_year': created_date.year,
-            'payment_day': payment_day,
-            'payment_month': payment_month,
-            'payment_year': payment_year,
+            'day': str(day),
+            'month': str(month),
+            'year': str(year),
+            'period_month': str(created_date.month),
+            'period_year': str(created_date.year),
+            'payment_day': str(payment_day),
+            'payment_month': str(payment_month),
+            'payment_year': str(payment_year),
             'company_name': company_name,
             'suggested_filename': suggested_filename,  # Tên file có tháng/năm
             'services_rows': services_rows,

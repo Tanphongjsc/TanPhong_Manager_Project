@@ -3874,3 +3874,19 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'quan_ly_tam_ung_index' not f
 ERROR 2025-11-03 17:58:26,095 basehttp 73080 49948 "GET /hrm/hop-dong-lao-dong/quan-ly/hop-dong/ HTTP/1.1" 500 180943
 WARNING 2025-11-03 17:58:26,542 log 73080 49948 Not Found: /favicon.ico
 WARNING 2025-11-03 17:58:26,543 basehttp 73080 49948 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-02-26 10:46:38,429 log 15284 7212 Bad Request: /dichvudiennuoc/api/tao-moi-thong-bao/
+WARNING 2026-02-26 10:46:38,429 basehttp 15284 7212 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 400 121
+WARNING 2026-02-26 10:46:48,357 log 15284 7212 Bad Request: /dichvudiennuoc/api/tao-moi-thong-bao/
+WARNING 2026-02-26 10:46:48,358 basehttp 15284 7212 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 400 121
+WARNING 2026-02-26 10:46:53,198 log 15284 7212 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-02-26 10:46:53,199 basehttp 15284 7212 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-02-26 10:47:03,329 log 15284 7212 Method Not Allowed (GET): /dichvudiennuoc/api/tao-moi-thong-bao/
+WARNING 2026-02-26 10:47:03,611 basehttp 15284 7212 "GET /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 405 0
+WARNING 2026-02-26 10:47:51,979 log 10384 21688 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-02-26 10:47:51,979 basehttp 10384 21688 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-02-26 10:48:09,257 log 10384 18576 Bad Request: /dichvudiennuoc/api/tao-moi-thong-bao/
+WARNING 2026-02-26 10:48:09,258 basehttp 10384 18576 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 400 121
+WARNING 2026-02-26 10:48:41,452 log 10384 18576 Bad Request: /dichvudiennuoc/api/tao-moi-thong-bao/
+WARNING 2026-02-26 10:48:41,452 basehttp 10384 18576 "POST /dichvudiennuoc/api/tao-moi-thong-bao/ HTTP/1.1" 400 121
+WARNING 2026-02-26 10:49:35,265 log 10384 18576 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-02-26 10:49:35,265 basehttp 10384 18576 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
