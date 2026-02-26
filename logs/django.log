@@ -36449,3 +36449,5 @@ WARNING 2026-01-31 08:07:42,351 log 14868 17308 Bad Request: /hrm/quan-ly-luong/
 WARNING 2026-01-31 08:07:42,351 basehttp 14868 17308 "POST /hrm/quan-ly-luong/api/ky-luong/create/ HTTP/1.1" 400 179
 WARNING 2026-02-03 10:13:14,247 log 18328 9016 Not Found: /favicon.ico
 WARNING 2026-02-03 10:13:14,247 basehttp 18328 9016 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-02-26 16:58:00,829 log 12832 6328 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-02-26 16:58:00,830 basehttp 12832 6328 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
