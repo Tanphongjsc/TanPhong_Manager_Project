@@ -1187,6 +1187,7 @@ const AppUtils = (() => {
         Form,
         EventManager,
         UI,
+        Time,
         Helper,
         DateUtils,
         TimeUtils,
