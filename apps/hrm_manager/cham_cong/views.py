@@ -119,9 +119,11 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False):
         )
     )
 
-    if da_cham_cong:
+    if da_cham_cong == 'True':
+        print("A O")
         qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__gte=F('solanchamcongtrongngay'))
     else:
+        print("B O")
         qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__lt=F('solanchamcongtrongngay'))
 
     qs_lich_lam_viec = qs_lich_lam_viec.values(
@@ -163,7 +165,6 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False):
 
     # Xử lý logic gộp dữ liệu
     final_result_map = {}
-    gio_hien_tai_str = timezone.now().time().strftime("%H:%M")
 
     for item in ds_lich_raw:
         item['phongban_id'] = map_nhan_vien_phong_ban.get(item['nhanvien_id'])
@@ -173,8 +174,10 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False):
         if not list_khung_gio:
             continue
 
+        # Xác định khung giờ cần lấy (Index dựa trên số lần chấm công)
         idx_lan_cham = item['total_cham_cong']
-        if da_cham_cong:
+        if da_cham_cong == 'True':
+            # Nếu đang xem danh sách ĐÃ chấm: Lấy lại thông tin của lần chấm gần nhất (lùi 1 index)
             idx_lan_cham = max(0, min(idx_lan_cham - 1, len(list_khung_gio) - 1))
 
         # Logic Merge Shift: Nhiều khung giờ nhưng chỉ chấm 1 lần
@@ -189,28 +192,19 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False):
             })
             item['khunggiolamviec'] = khung_dau
         else:
+            # Lấy khung giờ tương ứng với lần chấm công hiện tại
             if idx_lan_cham >= len(list_khung_gio):
                 continue
             item['khunggiolamviec'] = list_khung_gio[idx_lan_cham]
 
         nhanvien_id = item['nhanvien_id']
-        tg_batdau = item['khunggiolamviec'].get('thoigianbatdau')
-        khoang_cach_tg = abs(diff_minutes(tg_batdau, gio_hien_tai_str))
         item['da_cham_cong'] = da_cham_cong
 
+        # Chỉ giữ lại 1 ca per nhân viên (ca đầu tiên tìm được theo số lần chấm công)
         if nhanvien_id not in final_result_map:
-            item['_temp_diff'] = khoang_cach_tg
             final_result_map[nhanvien_id] = item
-        else:
-            if khoang_cach_tg < final_result_map[nhanvien_id]['_temp_diff']:
-                item['_temp_diff'] = khoang_cach_tg
-                final_result_map[nhanvien_id] = item
 
-    final_data_list = []
-    for val in final_result_map.values():
-        val.pop('_temp_diff', None)
-        final_data_list.append(val)
-
+    final_data_list = list(final_result_map.values())
     return final_data_list
 
 
@@ -298,7 +292,23 @@ def api_bang_cham_cong_list(request):
             ket_qua_thanh_tien = tinh_luong_cham_cong(data_list)
             objs_bang_cham_cong = []
 
+            # Gom nhóm dữ liệu theo nhân viên để tránh trùng lặp bản ghi
+            grouped_data = {}
             for item in data_list:
+                nv_id = item['nhanvien_id']
+                if nv_id not in grouped_data:
+                    grouped_data[nv_id] = {'main_item': item, 'sub_items': []}
+                grouped_data[nv_id]['sub_items'].append(item)
+
+            for nv_id, group in grouped_data.items():
+                # Lấy thông tin chung từ item đầu tiên (Giờ vào/ra, Ca làm việc giống nhau)
+                item = group['main_item']
+                sub_items = group['sub_items']
+
+                # Gộp tên công việc và ghi chú từ tất cả các tasks
+                combined_ten_cv = ", ".join([sub.get('tencongviec', '') for sub in sub_items if sub.get('tencongviec')])
+                combined_ghi_chu = "; ".join([sub.get('ghichu', '') for sub in sub_items if sub.get('ghichu')])
+
                 khung_gio = item.get("khunggiolamviec", {})
                 tg_vao = item.get("thoigianchamcongvao")
                 tg_ra = item.get("thoigianchamcongra")
@@ -347,7 +357,7 @@ def api_bang_cham_cong_list(request):
                         
                         # Đi muộn
                         if khoang_tg_cham_cong_vao > limit_di_muon:
-                            thoigiandimuon = khoang_tg_cham_cong_vao - limit_di_muon
+                            thoigiandimuon = khoang_tg_cham_cong_vao
                         elif khoang_tg_cham_cong_vao < 0:
                             thoigiandisom = abs(khoang_tg_cham_cong_vao)
 
@@ -357,7 +367,7 @@ def api_bang_cham_cong_list(request):
                         limit_ve_som = khung_gio.get("thoigianchophepvesomnhat", 0)
 
                         if khoang_tg_cham_cong_ra > limit_ve_som: 
-                            thoigianvesom = khoang_tg_cham_cong_ra - limit_ve_som
+                            thoigianvesom = khoang_tg_cham_cong_ra
                         elif khoang_tg_cham_cong_ra < 0: 
                             thoigianvemuon = abs(khoang_tg_cham_cong_ra)
 
@@ -386,7 +396,7 @@ def api_bang_cham_cong_list(request):
                         else:
                             # Quá hạn mức linh động -> Tính phạt như Ca cố định
                             if khoang_tg_cham_cong_vao > phut_den_muon_cho_phep:
-                                thoigiandimuon = khoang_tg_cham_cong_vao - phut_den_muon_cho_phep
+                                thoigiandimuon = khoang_tg_cham_cong_vao
                             elif khoang_tg_cham_cong_vao < 0:
                                 thoigiandisom = abs(khoang_tg_cham_cong_vao)
 
@@ -458,6 +468,21 @@ def api_bang_cham_cong_list(request):
                     if tg_lam_viec == 0 and tg_lam_them == 0:
                         tong_tien_cuoi_cung = 0
 
+                # Xử lý thamsotinhluong: Nếu làm nhiều việc, lưu cấu trúc JSON chứa danh sách
+                if len(sub_items) > 1:
+                    final_thamsotinhluong = {
+                        'mode': 'multi_task',
+                        'details': [
+                            {
+                                'congviec_id': sub.get('congviec_id'),
+                                'tencongviec': sub.get('tencongviec'),
+                                'thamsotinhluong': sub.get('thamsotinhluong')
+                            } for sub in sub_items
+                        ]
+                    }
+                else:
+                    final_thamsotinhluong = item.get('thamsotinhluong', {})
+
                 # Tạo Object
                 objs_bang_cham_cong.append(Bangchamcong(
                     created_at = timezone.now(),
@@ -467,23 +492,23 @@ def api_bang_cham_cong_list(request):
                     ngaylamviec = dt.date.fromisoformat(item['ngaylamviec']),
                     thoigianlamthem = tg_lam_them,
                     cotinhlamthem = item.get('cotinhlamthem', False),
-                    coantrua = item.get('cocantrua', False),
+                    coantrua = item.get('coantrua', False),
                     codilam = codilam,
                     thoigiandimuon = thoigiandimuon,
                     thoigianvesom = thoigianvesom,
                     thoigiandisom = thoigiandisom,
                     thoigianvemuon = thoigianvemuon,
                     loaichamcong = item.get('loaichamcong', ''),
-                    tencongviec = item.get('tencongviec', ''),
+                    tencongviec = combined_ten_cv if combined_ten_cv else item.get('tencongviec', ''),
                     cophaingaynghi = item.get('cophaingaynghi', {}),
-                    thamsotinhluong = dumps(item.get('thamsotinhluong')) if isinstance(item.get('thamsotinhluong', {}), dict) else item.get('thamsotinhluong', {}),
+                    thamsotinhluong = dumps(final_thamsotinhluong) if isinstance(final_thamsotinhluong, dict) else final_thamsotinhluong,
                     thanhtien = tong_tien_cuoi_cung if codilam == True else 0,
-                    ghichu = item.get('ghichu', ''),
+                    ghichu = combined_ghi_chu,
                     congviec_id = item.get('congviec_id'),
                     nhanvien_id = item['nhanvien_id'],
                     calamviec_id = item.get('calamviec_id', None)
                 ))
-            
+
             Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
             
             return JsonResponse({
@@ -550,7 +575,7 @@ def api_tong_hop_cham_cong_thang(request):
     ds_cham_cong = Bangchamcong.objects.filter(
         ngaylamviec__year=thoi_gian.year, 
         ngaylamviec__month=thoi_gian.month
-    ).values()
+    ).values().order_by('created_at')
 
     # Xử lý gom nhóm dữ liệu chấm công theo nhân viên
     map_cc = defaultdict(lambda: {'tong_gio': 0, 'logs': defaultdict(list), 'loai_chamcong': ''}) # {nhanvien_id: {'tong_gio': int, 'logs': {ngay: [log_entries], 'loai_chamcong': str}}}

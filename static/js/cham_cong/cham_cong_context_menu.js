@@ -51,7 +51,7 @@ class ChamCongContextMenu {
     attachGlobalEvents() {
         this.eventManager.add(document, 'contextmenu', e => {
             const row = e.target.closest('tr');
-            if (row && row.classList.contains('group') && (row.closest('#vp-body') || row.closest('#sx-body'))) {
+            if (row && row.classList.contains('group') && row.closest('#hybrid-body')) {
                 e.preventDefault(); this.show(e.pageX, e.pageY, row);
             }
         });
@@ -108,8 +108,7 @@ class ChamCongContextMenu {
         const emp = this.manager.getEmpById(parseInt(tr.dataset.id));
         if (!emp) return;
         emp.uiState = { ...emp.uiState, in: data.in, out: data.out, lunch: data.lunch, ot: data.ot, jobs: JSON.parse(JSON.stringify(data.jobs || [])) };
-        const type = tr.closest('#vp-body') ? 'vp' : 'sx';
-        this.manager.refreshRow(tr, emp, type);
+        this.manager.refreshRow(tr, emp);
         const newTr = document.querySelector(`tr[data-id="${emp.id}"]`);
         if (newTr) { newTr.classList.add('bg-green-50'); setTimeout(() => newTr.classList.remove('bg-green-50'), 500); }
     }
