@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}404 - Không tìm thấy trang{% endblock title %}
+
+{% block content %}
+<div class="h-full flex flex-col items-center justify-center min-h-[70vh] text-center p-6 animate-fade-in-up">
+    <!-- Illustration Area -->
+    <div class="mb-8 relative user-select-none">
+        <!-- Background Text -->
+        <h1 class="text-[10rem] font-black text-gray-50 leading-none select-none">404</h1>
+        
+        <!-- Overlay Icon -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-2 animate-bounce-slow">
+                <i class="fas fa-search text-4xl text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Message -->
+    <div class="relative z-10 -mt-10">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3 tracking-tight">
+            Không tìm thấy trang yêu cầu
+        </h2>
+        <p class="text-gray-500 text-base md:text-lg max-w-lg mx-auto mb-8 leading-relaxed">
+            Dữ liệu bạn đang tìm kiếm (như phiếu lương, nhân viên...) có thể đã bị xóa, không tồn tại hoặc bạn không có quyền truy cập vào khu vực này.
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <button onclick="window.history.back()" 
+                    class="group w-full sm:w-auto px-6 py-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 hover:border-gray-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-100 transition-all duration-200 flex items-center justify-center shadow-sm">
+                <i class="fas fa-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
+                Quay lại trang trước
+            </button>
+            
+            <a href="/" 
+               class="group w-full sm:w-auto px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 flex items-center justify-center shadow-md shadow-blue-500/20">
+                <i class="fas fa-home mr-2"></i>
+                Về trang chủ
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translate3d(0, 20px, 0); }
+        to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @keyframes bounceSlow {
+        0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+        50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+    .animate-bounce-slow { animation: bounceSlow 3s infinite; }
+</style>
+{% endblock content %}

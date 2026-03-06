@@ -37,6 +37,12 @@ class BangLuongManager extends BaseCRUDManager {
             getFormData: (form) => this.getFormData(form),
         });
         
+        // BaseCRUDManager only copies known config fields, so ensure
+        // `phieuLuongUrl` is available on `this.config` at runtime.
+        if (!this.config.phieuLuongUrl) {
+            this.config.phieuLuongUrl = (bangLuongId) => `/hrm/quan-ly-luong/phieu-luong/${bangLuongId}/`;
+        }
+
         this.tableManager = null;
         this.optionsData = null;
         this.pendingEditData = null; // ✅ Lưu data edit tạm
