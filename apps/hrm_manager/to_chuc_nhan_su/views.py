@@ -222,6 +222,14 @@ def api_cong_ty_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Công Ty
         try:
+            # ✅ BỔ SUNG: Check công ty còn phòng ban
+            has_departments = Phongban.objects.filter(congty=cong_ty).exists()
+            if has_departments:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Công ty đang có phòng ban. Vui lòng xóa/chuyển phòng ban trước.'
+                }, status=400)
+            
             cong_ty.delete()
             return JsonResponse({
                 'success': True,
@@ -361,6 +369,42 @@ def api_phong_ban_detail(request, id):
         # Xóa Phòng Ban
         try:
             phong_ban_cons_ids = get_all_child_department_ids(phong_ban.id)
+            # ✅ BỔ SUNG: Check có nhân viên active trong phòng ban hoặc các phòng ban con
+            has_active_employees = Lichsucongtac.objects.filter(
+                phongban_id__in=phong_ban_cons_ids,
+                trangthai='active'
+            ).exists()
+            if has_active_employees:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Phòng ban (hoặc phòng ban con) đang có nhân viên hoạt động. Vui lòng chuyển nhân viên trước.'
+                }, status=400)
+
+            # ✅ BỔ SUNG: Check phòng ban đang được gán trong lịch làm việc active
+            has_active_schedule = LichlamviecPhongban.objects.filter(
+                phongban_id__in=phong_ban_cons_ids,
+                trangthai='active'
+            ).filter(
+                Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True)
+            ).exists()
+            if has_active_schedule:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Phòng ban đang được gán trong lịch làm việc. Vui lòng gỡ bỏ trước.'
+                }, status=400)
+
+            # ✅ BỔ SUNG: Check phòng ban đang thuộc chế độ lương active
+            has_active_salary = PhongbanChedoluong.objects.filter(
+                phongban_id__in=phong_ban_cons_ids,
+                trangthai='active'
+            ).filter(
+                Q(chedoluong__is_deleted=False) | Q(chedoluong__is_deleted__isnull=True)
+            ).exists()
+            if has_active_salary:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Phòng ban đang thuộc chế độ lương. Vui lòng gỡ bỏ trước.'
+                }, status=400)
             phong_ban_con_list = Phongban.objects.filter(id__in=phong_ban_cons_ids)
             phong_ban_con_list.delete() # Xóa các phòng ban con trước
 
@@ -659,19 +703,70 @@ def api_nhan_vien_list(request):
 
         nhan_vien_ids = request.GET.getlist('nhan_vien_ids', [])
         try:
-            nhan_vien = Nhanvien.objects.filter(id__in = nhan_vien_ids)
-            nhan_vien.delete()
+            # ✅ BỔ SUNG: Check từng nhân viên có dữ liệu ràng buộc không
+            blocked_ids = []
+
+            # NV đang trong lịch làm việc hoặc chế độ lương active
+            active_in_schedule = set(LichlamviecNhanvien.objects.filter(
+                nhanvien_id__in=nhan_vien_ids, trangthai='active'
+            ).values_list('nhanvien_id', flat=True))
+
+            active_in_salary = set(NhanvienChedoluong.objects.filter(
+                nhanvien_id__in=nhan_vien_ids, trangthai='active'
+            ).values_list('nhanvien_id', flat=True))
+
+            blocked_ids = list(active_in_schedule | active_in_salary)
+
+            if blocked_ids:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Không thể xóa {len(blocked_ids)} nhân viên đang được gán lịch làm việc hoặc chế độ lương.'
+                }, status=400)
+
+            # NV có dữ liệu lịch sử → soft delete
+            has_history_ids = set(Bangchamcong.objects.filter(
+                nhanvien_id__in=nhan_vien_ids
+            ).values_list('nhanvien_id', flat=True))
+
+            has_payslip_ids = set(Phieuluong.objects.filter(
+                nhanvien_id__in=nhan_vien_ids
+            ).values_list('nhanvien_id', flat=True))
+
+            soft_delete_ids = list(has_history_ids | has_payslip_ids)
+            hard_delete_ids = list(set(nhan_vien_ids) - set(soft_delete_ids))
+
+            # Soft delete
+            if soft_delete_ids:
+                Nhanvien.objects.filter(id__in=soft_delete_ids).update(
+                    trangthainv='Đã nghỉ việc',
+                    updated_at=datetime.now()
+                )
+                Lichsucongtac.objects.filter(
+                    nhanvien_id__in=soft_delete_ids,
+                    trangthai='active'
+                ).update(
+                    trangthai='inactive',
+                    ketthuc=datetime.now().date(),
+                    updated_at=datetime.now()
+                )
+
+            # Hard delete
+            if hard_delete_ids:
+                Nhanvien.objects.filter(id__in=hard_delete_ids).delete()
+
+            msg_parts = []
+            if hard_delete_ids:
+                msg_parts.append(f"Đã xóa {len(hard_delete_ids)} nhân viên")
+            if soft_delete_ids:
+                msg_parts.append(f"Đã chuyển {len(soft_delete_ids)} nhân viên sang 'Đã nghỉ việc' (có dữ liệu lịch sử)")
 
             return JsonResponse({
-                "success" :True,
-                "message": "Xóa nhân viên thành công"
+                'success': True,
+                'message': '. '.join(msg_parts)
             })
-        
+
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'Lỗi: {str(e)}'
-            }, status=400)
+            return JsonResponse({'success': False, 'message': f'Lỗi: {str(e)}'}, status=400)
 
 
 @login_required
@@ -725,6 +820,51 @@ def api_nhan_vien_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Nhân Viên
         try:
+            # ✅ BỔ SUNG: Check nhân viên có dữ liệu chấm công
+            has_attendance = Bangchamcong.objects.filter(nhanvien=nhan_vien).exists()
+
+            # ✅ BỔ SUNG: Check nhân viên có phiếu lương
+            has_payslip = Phieuluong.objects.filter(nhanvien=nhan_vien).exists()
+
+            # ✅ BỔ SUNG: Check nhân viên đang trong lịch làm việc
+            has_schedule = LichlamviecNhanvien.objects.filter(
+                nhanvien=nhan_vien,
+                trangthai='active'
+            ).exists()
+
+            # ✅ BỔ SUNG: Check nhân viên đang trong chế độ lương
+            has_salary_regime = NhanvienChedoluong.objects.filter(
+                nhanvien=nhan_vien,
+                trangthai='active'
+            ).exists()
+
+            if has_schedule or has_salary_regime:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Nhân viên đang được gán lịch làm việc hoặc chế độ lương. Vui lòng gỡ bỏ trước.'
+                }, status=400)
+
+            if has_attendance or has_payslip:
+                # Có dữ liệu lịch sử → chỉ cho nghỉ việc, không xóa cứng
+                nhan_vien.trangthainv = 'Đã nghỉ việc'
+                nhan_vien.updated_at = datetime.now()
+                nhan_vien.save()
+
+                # Đóng lịch sử công tác
+                Lichsucongtac.objects.filter(
+                    nhanvien=nhan_vien,
+                    trangthai='active'
+                ).update(
+                    trangthai='inactive',
+                    ketthuc=datetime.now().date(),
+                    updated_at=datetime.now()
+                )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Nhân viên đã có dữ liệu lịch sử, đã chuyển sang trạng thái "Đã nghỉ việc"'
+                })
+            
             nhan_vien.delete()
             return JsonResponse({
                 'success': True,
@@ -1053,16 +1193,32 @@ def api_chuc_vu_detail(request, id):
     elif request.method == "DELETE":
         # Xóa chức vụ
         try:
+            # ✅ BỔ SUNG: Check chức vụ đang được sử dụng trong lịch sử công tác active
+            is_assigned = Lichsucongtac.objects.filter(
+                chucvu=chuc_vu,
+                trangthai='active'
+            ).exists()
+            if is_assigned:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Không thể xóa: Chức vụ đang được gán cho nhân viên đang hoạt động'
+                }, status=400)
+
+            # ✅ BỔ SUNG: Check có dữ liệu lịch sử (inactive) → chỉ cho inactive
+            has_history = Lichsucongtac.objects.filter(chucvu=chuc_vu).exists()
+            if has_history:
+                chuc_vu.trangthai = 'inactive'
+                chuc_vu.updated_at = datetime.now()
+                chuc_vu.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Chức vụ đã có dữ liệu lịch sử, đã chuyển sang ngừng hoạt động'
+                })
+
             chuc_vu.delete()
-            return JsonResponse({
-                'success': True,
-                'message': 'Xóa chức vụ thành công'
-            })
+            return JsonResponse({'success': True, 'message': 'Xóa chức vụ thành công'})
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'Lỗi: {str(e)}'
-            }, status=400)
+            return JsonResponse({'success': False, 'message': f'Lỗi: {str(e)}'}, status=400)
 
 @login_required
 @require_http_methods(["POST", "PUT"]) 
@@ -1431,6 +1587,11 @@ def api_nganhang_update(request, pk):
 def api_nganhang_delete(request, pk):
     try:
         item = get_object_or_404(Nganhang, pk=pk)
+        # ✅ BỔ SUNG: Check ngân hàng đang được nhân viên sử dụng
+        is_used = Nhanvien.objects.filter(nganhang=item).exists()
+        if is_used:
+            return json_error('Không thể xóa: Ngân hàng đang được nhân viên sử dụng')
+        
         success, message = safe_delete(item)
         return json_success(message) if success else json_error(message)
     except Exception as e:
@@ -1535,6 +1696,14 @@ def api_baohiem_update(request, pk):
 def api_baohiem_delete(request, pk):
     try:
         item = get_object_or_404(Baohiem, pk=pk)
+         # ✅ BỔ SUNG: Check bảo hiểm đang có nhân viên đăng ký active
+        is_used = NhanvienBaohiem.objects.filter(
+            baohiem=item,
+            trangthai='active'
+        ).exists()
+        if is_used:
+            return json_error('Không thể xóa: Bảo hiểm đang có nhân viên đăng ký')
+        
         success, message = safe_delete(item)
         return json_success(message) if success else json_error(message)
     except Exception as e:
@@ -1643,7 +1812,12 @@ def api_loainhanvien_delete(request, pk):
         item = get_object_or_404(Loainhanvien, pk=pk)
         if item.maloainv == 'NV': # Bảo vệ mã mặc định
              return json_error('Không thể xóa loại nhân viên mặc định')
-             
+        
+        # ✅ BỔ SUNG: Check loại NV đang được sử dụng
+        is_used = Nhanvien.objects.filter(loainv=item).exists()
+        if is_used:
+            return json_error('Không thể xóa: Loại nhân viên đang được gán cho nhân viên')
+        
         success, message = safe_delete(item)
         return json_success(message) if success else json_error(message)
     except Exception as e:
@@ -1758,6 +1932,15 @@ def api_congviec_delete(request, pk):
 
     try:
         congviec = get_object_or_404(Congviec, pk=pk)
+        # ✅ BỔ SUNG: Check công việc đã có dữ liệu chấm công
+        has_attendance = Bangchamcong.objects.filter(congviec=congviec).exists()
+        if has_attendance:
+            # Có dữ liệu → chỉ cho inactive
+            congviec.trangthaicv = 'inactive'
+            congviec.updated_at = timezone.now()
+            congviec.save()
+            return json_success('Công việc đã có dữ liệu chấm công, đã chuyển sang ngừng hoạt động')
+        
         congviec.delete()
 
         return json_success('Xóa công việc thành công')

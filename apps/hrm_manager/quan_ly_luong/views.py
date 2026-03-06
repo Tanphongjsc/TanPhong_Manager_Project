@@ -373,6 +373,38 @@ def api_phan_tu_luong_detail(request, pk):
             return json_error('Dữ liệu không hợp lệ hoặc lỗi trong quá trình cập nhật', status=400)
 
     elif request.method == 'DELETE':
+        # ✅ BỔ SUNG: Check phần tử lương đang được sử dụng trong quy tắc chế độ lương
+        is_used_in_rule = Quytacchedoluong.objects.filter(
+            phantuluong=phan_tu_luong,
+            trangthai='active'
+        ).exists()
+        if is_used_in_rule:
+            return json_error(
+                'Không thể xóa: Phần tử lương đang được sử dụng trong quy tắc chế độ lương đang hoạt động',
+                status=400
+            )
+
+        # ✅ BỔ SUNG: Check phần tử lương đang có dữ liệu thiết lập số liệu cố định
+        is_used_in_setup = Thietlapsolieucodinh.objects.filter(
+            phantuluong=phan_tu_luong,
+            trangthai='active'
+        ).exists()
+        if is_used_in_setup:
+            return json_error(
+                'Không thể xóa: Phần tử lương đang có dữ liệu thiết lập số liệu cố định',
+                status=400
+            )
+
+        # ✅ BỔ SUNG: Check phần tử lương đã xuất hiện trong chi tiết phiếu lương
+        is_used_in_payslip = Ctphieuluong.objects.filter(
+            phantuluong_id=phan_tu_luong.id
+        ).exists()
+        if is_used_in_payslip:
+            # Có dữ liệu lịch sử → chỉ cho inactive, không xóa cứng
+            phan_tu_luong.trangthai = 'inactive'
+            phan_tu_luong.updated_at = now().date()
+            phan_tu_luong.save()
+            return json_response(message='Phần tử lương đã có dữ liệu phiếu lương, đã chuyển sang trạng thái ngừng hoạt động')
         # Xóa phần tử lương
         try:        
             phan_tu_luong.delete()
@@ -390,6 +422,22 @@ def api_phan_tu_luong_toggle_status(request, id):
     except:
         return json_error('Không tìm thấy phần tử lương', status=404)
 
+    # ✅ BỔ SUNG: Nếu đang active muốn tắt → check ràng buộc
+    if phan_tu_luong.trangthai == 'active':
+        is_used_in_active_rule = Quytacchedoluong.objects.filter(
+            phantuluong=phan_tu_luong,
+            trangthai='active',
+            chedoluong__trangthai='active'
+        ).filter(
+            Q(chedoluong__is_deleted=False) | Q(chedoluong__is_deleted__isnull=True)
+        ).exists()
+
+        if is_used_in_active_rule:
+            return json_error(
+                'Không thể tắt: Phần tử lương đang được sử dụng trong quy tắc chế độ lương đang hoạt động',
+                status=400
+            )
+        
     # Chuyển đổi trạng thái
     if phan_tu_luong.trangthai == 'active':
         phan_tu_luong.trangthai = 'inactive'
@@ -500,6 +548,16 @@ def api_nhom_phan_tu_luong_detail(request, pk):
             return json_error('Dữ liệu không hợp lệ hoặc lỗi trong quá trình cập nhật', status=400)
 
     elif request.method == 'DELETE':
+        # ✅ BỔ SUNG: Check nhóm còn chứa phần tử lương active
+        has_active_elements = Phantuluong.objects.filter(
+            nhomphantu=nhom_phan_tu_luong,
+            trangthai='active'
+        ).exists()
+        if has_active_elements:
+            return json_error(
+                'Không thể xóa: Nhóm phần tử lương đang chứa các phần tử lương đang hoạt động',
+                status=400
+            )
         # Xóa phần tử lương
         try:        
             nhom_phan_tu_luong.delete()
@@ -632,6 +690,14 @@ def api_phieu_luong_list(request):
         if not Phieuluong.objects.filter(bangluong_id=bang_luong_id).exists():
             data, message = genarate_phieu_luong_from_bang_luong(bang_luong_id)
             if data:
+                # ✅ THÊM: Chuyển bảng lương sang processing khi bắt đầu sinh phiếu
+                Bangluong.objects.filter(
+                    id=bang_luong_id, 
+                    trangthai='draft'
+                ).update(
+                    trangthai='processing',
+                    updated_at=now()
+                )
                 return json_success(message, data=data)
             return json_error(message, data=data)
         else:
@@ -686,6 +752,14 @@ def api_phieu_luong_list(request):
         except Bangluong.DoesNotExist:
             return json_error('Bảng lương không tồn tại', status=400)
 
+        # ✅ BỔ SUNG: Check trạng thái bảng lương
+        locked_statuses = ['approved', 'paid']
+        if bang_luong_obj.trangthai in locked_statuses:
+            return json_error(
+                f'Bảng lương đã ở trạng thái "{bang_luong_obj.trangthai}", không thể tạo/ghi đè phiếu lương',
+                status=400
+            )
+        
         # Lấy thông tin nhân viên
         nhanvien_list = Lichsucongtac.objects.filter(trangthai='active', nhanvien_id__in=nhanvien_ids).select_related("nhanvien", "phongban", "chucvu").annotate(
             ho_ten=F('nhanvien__hovaten'),
@@ -830,6 +904,15 @@ def api_phieu_luong_list(request):
         
         Phieuluong.objects.bulk_create(phieuluong_objs)
         Ctphieuluong.objects.bulk_create(chitiet_phieuluong_objs)
+
+        # ✅ THÊM: Chuyển bảng lương sang calculated sau khi lưu phiếu lương thành công
+        bang_luong_obj.trangthai = 'calculated'
+        bang_luong_obj.tongsoluongnhanvien = len(nhanvien_ids)
+        bang_luong_obj.tongtienluong = sum(
+            float(calculated_results.get(str(nv_id), 0)) for nv_id in nhanvien_ids
+        )
+        bang_luong_obj.updated_at = now()
+        bang_luong_obj.save(update_fields=['trangthai', 'tongsoluongnhanvien', 'tongtienluong', 'updated_at'])
 
         return json_success('Lưu phiếu lương thành công')
     
@@ -1608,6 +1691,8 @@ def api_ky_luong_list(request):
     items_list = []
     
     for item in page_obj.object_list:
+        # ✅ THÊM: Lazy sync trạng thái vào DB
+        KyLuongService.sync_status_to_db(item)
         items_list.append(KyLuongService.format_period_display(item))
     
     return json_success(

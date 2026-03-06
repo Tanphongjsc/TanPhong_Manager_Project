@@ -1236,9 +1236,10 @@ class KyLuongService:
         if now > deadline:
             return False, f"Đã quá hạn chỉnh sửa (23:59 ngày {ky_luong.ngaychotluong.strftime('%d/%m/%Y')})"
         
+        computed_status = cls.get_period_status(ky_luong)
         locked_statuses = [cls.STATUS_PROCESSING, cls.STATUS_CALCULATED, cls.STATUS_FINALIZED]
-        if ky_luong.trangthai in locked_statuses:
-            return False, f"Kỳ lương đang ở trạng thái '{ky_luong.trangthai}', không thể chỉnh sửa"
+        if computed_status in locked_statuses:
+            return False, f"Kỳ lương đang ở trạng thái '{computed_status}', không thể chỉnh sửa"
         
         return True, ""
     
@@ -1260,6 +1261,12 @@ class KyLuongService:
         if ky_luong.trangthai == cls.STATUS_FINALIZED:
             return False, "Kỳ lương đã chốt, không thể xóa"
         
+        # ✅ BỔ SUNG: Không xóa kỳ lương đang mở (ngày hiện tại nằm trong khoảng)
+        today = date.today()
+        if ky_luong.ngaybatdau and ky_luong.ngayketthuc:
+            if ky_luong.ngaybatdau <= today <= ky_luong.ngayketthuc:
+                return False, "Không thể xóa kỳ lương đang trong thời gian hoạt động"
+            
         return True, ""
     
     @classmethod
@@ -1438,10 +1445,36 @@ class KyLuongService:
         return True, "Xóa kỳ lương thành công"
     
     @classmethod
+    def sync_status_to_db(cls, ky_luong):
+        """
+        ✅ MỚI: Đồng bộ computed status vào DB
+        Chỉ ghi khi trạng thái thực sự thay đổi, tránh write thừa
+        
+        Gọi khi:
+        - API list/detail kỳ lương (lazy sync)
+        - Cron job chạy đầu ngày (optional)
+        """
+        computed = cls.get_period_status(ky_luong)
+        db_status = ky_luong.trangthai
+        
+        # Chỉ sync các trạng thái tự động (draft → open → pending)
+        # Không ghi đè processing/calculated/finalized (do user action)
+        auto_statuses = [cls.STATUS_DRAFT, cls.STATUS_OPEN, cls.STATUS_PENDING]
+        
+        if computed != db_status and db_status in auto_statuses:
+            ky_luong.trangthai = computed
+            ky_luong.updated_at = timezone.now()
+            ky_luong.save(update_fields=['trangthai', 'updated_at'])
+            return True
+        
+        return False
+
+    @classmethod
     def format_period_display(cls, ky_luong):
         """Format hiển thị kỳ lương"""
         year = ky_luong.ngaybatdau.year if ky_luong.ngaybatdau else date.today().year
-        
+        # ✅ SỬA: Dùng get_period_status() thay vì đọc DB trực tiếp
+        computed_status = cls.get_period_status(ky_luong)
         return {
             'id': ky_luong.id,
             'thang': ky_luong.thang,
@@ -1451,8 +1484,8 @@ class KyLuongService:
             'ngay_ket_thuc': ky_luong.ngayketthuc.strftime('%d/%m/%Y') if ky_luong.ngayketthuc else None,
             'ky_luong_display': f"{ky_luong.ngaybatdau.strftime('%d/%m/%Y')} - {ky_luong.ngayketthuc.strftime('%d/%m/%Y')}" if ky_luong.ngaybatdau and ky_luong.ngayketthuc else None,
             'ngay_chot_luong': ky_luong.ngaychotluong.strftime('%d/%m/%Y') if ky_luong.ngaychotluong else None,
-            'trang_thai': ky_luong.trangthai,
-            'trang_thai_display': cls.get_status_display(ky_luong.trangthai),
+            'trang_thai': computed_status,
+            'trang_thai_display': cls.get_status_display(computed_status),
             'can_edit': cls.can_edit_period(ky_luong)[0],
             'can_delete': cls.can_delete_period(ky_luong)[0],
             'can_edit_month': False,  # ✅ Luôn False
@@ -1570,7 +1603,12 @@ class BangLuongService:
         """
         Kiểm tra có thể sửa bảng lương không
         """
-        locked_statuses = [cls.STATUS_APPROVED, cls.STATUS_PAID]
+        locked_statuses = [
+            cls.STATUS_CALCULATED,  # ← BỔ SUNG: Đã tính xong, không cho sửa
+            cls.STATUS_APPROVED, 
+            cls.STATUS_PAID,
+            cls.STATUS_CANCELLED,   # ← BỔ SUNG: Đã hủy, không cho sửa
+        ]
         
         if bang_luong.trangthai in locked_statuses:
             return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể chỉnh sửa"
@@ -1588,7 +1626,12 @@ class BangLuongService:
             return False, "Bảng lương đã có phiếu lương, không thể xóa"
         
         # Kiểm tra trạng thái
-        locked_statuses = [cls.STATUS_APPROVED, cls.STATUS_PAID]
+        locked_statuses = [
+            cls.STATUS_CALCULATED,  # ← BỔ SUNG
+            cls.STATUS_APPROVED, 
+            cls.STATUS_PAID,
+            cls.STATUS_CANCELLED,   # ← BỔ SUNG
+        ]
         if bang_luong.trangthai in locked_statuses:
             return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể xóa"
         
@@ -1726,6 +1769,29 @@ class BangLuongService:
         return True, "Xóa bảng lương thành công"
     
     @classmethod
+    def get_computed_status(cls, bang_luong):
+        """
+        ✅ MỚI: Tính trạng thái realtime cho bảng lương
+        Bổ sung logic: nếu DB là draft nhưng đã có phiếu lương → calculated
+        """
+        db_status = bang_luong.trangthai or cls.STATUS_DRAFT
+        
+        # Nếu DB đã là trạng thái cao (approved, paid, cancelled) → giữ nguyên
+        if db_status in [cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]:
+            return db_status
+        
+        # Kiểm tra có phiếu lương không
+        has_payslips = Phieuluong.objects.filter(bangluong=bang_luong).exists()
+        
+        if has_payslips and db_status in [cls.STATUS_DRAFT, cls.STATUS_PROCESSING]:
+            return cls.STATUS_CALCULATED
+        
+        if not has_payslips and db_status == cls.STATUS_DRAFT:
+            return cls.STATUS_DRAFT
+        
+        return db_status
+
+    @classmethod
     def format_display(cls, bang_luong):
         """
         Format hiển thị bảng lương cho API response
@@ -1742,10 +1808,11 @@ class BangLuongService:
         # Tính số nhân viên từ chế độ lương
         # - Bảng lương DRAFT/PROCESSING: Tính realtime (để cập nhật khi chế độ lương thay đổi)
         # - Bảng lương đã APPROVED/PAID: Dùng cached value (đã chốt số liệu)
+        # ✅ SỬA: Dùng computed status
+        computed_status = cls.get_computed_status(bang_luong)
         so_nhan_vien = 0
     
-        status = bang_luong.trangthai or cls.STATUS_DRAFT
-        is_locked = status in [cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]
+        is_locked = computed_status in [cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]
         
         if is_locked:
             # Dùng cached value (đã chốt)
@@ -1767,8 +1834,8 @@ class BangLuongService:
             'tong_tien_luong': bang_luong.tongtienluong or 0,
             'ngay_tao': bang_luong.ngaytao.strftime('%d/%m/%Y') if bang_luong.ngaytao else None,
             'nguoi_tao': bang_luong.nguoitao,
-            'trang_thai': bang_luong.trangthai,
-            'trang_thai_display': cls.get_status_display(bang_luong.trangthai),
+            'trang_thai': computed_status,
+            'trang_thai_display': cls.get_status_display(computed_status),
             'can_edit': cls.can_edit(bang_luong)[0],
             'can_delete': cls.can_delete(bang_luong)[0],
         }
