@@ -92,7 +92,7 @@ class ChamCongManager {
             const res = await AppUtils.API.get(this.apiUrls.employees, { ngaylamviec: this.currentDate, page_size: 2000 }, opts);
             this.employees = (res.data || []).map(e => ({
                 id: e.nhanvien_id, hovaten: e.hovaten, manhanvien: e.manhanvien, phongban_id: e.phongban_id, loainv: e.loainv,
-                calamviec_id: e.calamviec_id, khunggiolamviec: e.khunggiolamviec || {}, khunggionghitrua: e.khunggionghitrua || [],
+                calamviec_id: e.calamviec_id, khunggiolamviec: this.buildKhungGioPayload(e.khunggiolamviec), khunggionghitrua: e.khunggionghitrua || [],
                 solanchamcongtrongngay: e.solanchamcongtrongngay || 0, sokhunggiotrongca: e.sokhunggiotrongca || 1,
                 cocancheckout: e.cocancheckout === true, loaichamcong: e.loaichamcong || 'CO_DINH', loaicalamviec: e.loaicalamviec || 'CO_DINH',
                 tongthoigianlamvieccuaca: e.tongthoigianlamvieccuaca || 0, cophaingaynghi: e.cophaingaynghi === true
@@ -111,6 +111,16 @@ class ChamCongManager {
     initMasterSelect() {
         if (!this.elements.masterJobSelect) return;
         this.elements.masterJobSelect.innerHTML = '<option value="">-- Công việc --</option>' + this.jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
+    }
+
+    buildKhungGioPayload(khungGio = {}) {
+        const source = khungGio || {};
+        const rawCong = source.congcuakhunggio;
+        const parsedCong = rawCong === '' || rawCong === null || rawCong === undefined ? null : Number(rawCong);
+        return {
+            ...source,
+            congcuakhunggio: Number.isFinite(parsedCong) ? parsedCong : null
+        };
     }
 
     handleFilter() { this.state.filters.search = AppUtils.Helper.removeAccents(this.elements.searchInput.value).toLowerCase(); this.render(); }
@@ -350,7 +360,10 @@ class ChamCongManager {
         this.state.isLoading = true;
         try {
             const response = await AppUtils.API.post(this.apiUrls.saveChamCong, payload);
-            if (response.success || response.id || Array.isArray(response)) AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
+            if (response.success || response.id || Array.isArray(response)) {
+                AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
+                await this.loadDailyData();
+            }
             else throw new Error(response.message || 'Lỗi không xác định');
         } catch (error) { console.error('Save Error:', error); AppUtils.Notify.error('Lưu thất bại: ' + error.message); }
         finally { this.state.isLoading = false; }
@@ -383,7 +396,7 @@ class ChamCongManager {
                 coantrua: isActive ? (s.lunch === true) : false,
                 loaicalamviec: emp.loaicalamviec || 'CO_DINH',
                 cophaingaynghi: emp.cophaingaynghi === true, id: null, codilam: isActive, calamviec_id: emp.calamviec_id,
-                khunggionghitrua: emp.khunggionghitrua || {}, khunggiolamviec: emp.khunggiolamviec || {}, cocancheckout: emp.cocancheckout === true,
+                khunggionghitrua: emp.khunggionghitrua || {}, khunggiolamviec: this.buildKhungGioPayload(emp.khunggiolamviec), cocancheckout: emp.cocancheckout === true,
                 sogiolamthucte: workHours?.actualMinutes || 0, sophutot: isActive && s.otMinutes ? parseInt(s.otMinutes, 10) || 0 : 0, tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0
             };
 
