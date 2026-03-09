@@ -11,6 +11,7 @@ class ChamCongManager {
         
         const urlParams = new URLSearchParams(window.location.search);
         const dateParam = urlParams.get('ngaylamviec');
+        this.mode = this.normalizeMode(urlParams.get('mode'));
         this.currentDate = dateParam || AppUtils.DateUtils.toInputValue(new Date());
 
         this.state = { filters: { search: '', dept: 'all' }, isLoading: false, loadController: null };
@@ -37,6 +38,76 @@ class ChamCongManager {
             hybridBody: $('hybrid-body'), masterJobSelect: $('m-job'), dateInput: $('work-date'),
             deptSelect: $('dept-filter'), searchInput: $('search-input'),
             checkAllHybrid: $('check-all-hybrid')
+        };
+    }
+
+    normalizeMode(modeValue) {
+        const mode = String(modeValue || 'create').toLowerCase();
+        return mode === 'update' ? 'update' : 'create';
+    }
+
+    toInputTime(value) {
+        if (!value) return '';
+        const normalized = AppUtils.TimeUtils.normalize(value, null);
+        return normalized || '';
+    }
+
+    getJobsFromApiRecord(record) {
+        const emptyJobs = [{ jobId: '', params: {} }];
+        if (this.mode !== 'update' || record.loaichamcong !== 'SX') return emptyJobs;
+
+        const salaryConfig = record.thamsotinhluong;
+        if (salaryConfig?.mode === 'multi_task' && Array.isArray(salaryConfig.details)) {
+            const jobs = salaryConfig.details
+                .filter(detail => detail?.congviec_id)
+                .map(detail => ({
+                    jobId: String(detail.congviec_id),
+                    params: detail?.thamsotinhluong?.tham_so || {}
+                }));
+            return jobs.length ? jobs : emptyJobs;
+        }
+
+        if (record.congviec_id) {
+            return [{
+                jobId: String(record.congviec_id),
+                params: salaryConfig?.tham_so || {}
+            }];
+        }
+
+        return emptyJobs;
+    }
+
+    mapEmployeeRecord(record) {
+        const rowId = this.mode === 'update' ? (record.id ?? record.nhanvien_id) : record.nhanvien_id;
+        const otMinutes = Number(record.sophutot ?? record.thoigianlamthem ?? 0);
+        return {
+            rowId,
+            id: record.nhanvien_id,
+            recordId: record.id || null,
+            hovaten: record.hovaten,
+            manhanvien: record.manhanvien,
+            phongban_id: record.phongban_id,
+            loainv: record.loainv,
+            calamviec_id: record.calamviec_id,
+            khunggiolamviec: this.buildKhungGioPayload(record.khunggiolamviec),
+            khunggionghitrua: record.khunggionghitrua || [],
+            solanchamcongtrongngay: record.solanchamcongtrongngay || 0,
+            sokhunggiotrongca: record.sokhunggiotrongca || 1,
+            cocancheckout: record.cocancheckout === true,
+            loaichamcong: record.loaichamcong || 'CO_DINH',
+            loaicalamviec: record.loaicalamviec || 'CO_DINH',
+            tongthoigianlamvieccuaca: record.tongthoigianlamvieccuaca || 0,
+            cophaingaynghi: record.cophaingaynghi === true,
+            uiState: {
+                in: this.toInputTime(record.thoigianchamcongvao),
+                out: this.toInputTime(record.thoigianchamcongra),
+                lunch: record.coantrua !== false,
+                ot: record.cotinhlamthem === true,
+                otMinutes: Number.isFinite(otMinutes) && otMinutes > 0 ? String(parseInt(otMinutes, 10)) : '',
+                isActive: record.codilam !== false,
+                jobs: this.getJobsFromApiRecord(record),
+                note: record.ghichu || ''
+            }
         };
     }
 
@@ -89,14 +160,8 @@ class ChamCongManager {
             this.state.isLoading = true;
         }
         try {
-            const res = await AppUtils.API.get(this.apiUrls.employees, { ngaylamviec: this.currentDate, page_size: 2000 }, opts);
-            this.employees = (res.data || []).map(e => ({
-                id: e.nhanvien_id, hovaten: e.hovaten, manhanvien: e.manhanvien, phongban_id: e.phongban_id, loainv: e.loainv,
-                calamviec_id: e.calamviec_id, khunggiolamviec: this.buildKhungGioPayload(e.khunggiolamviec), khunggionghitrua: e.khunggionghitrua || [],
-                solanchamcongtrongngay: e.solanchamcongtrongngay || 0, sokhunggiotrongca: e.sokhunggiotrongca || 1,
-                cocancheckout: e.cocancheckout === true, loaichamcong: e.loaichamcong || 'CO_DINH', loaicalamviec: e.loaicalamviec || 'CO_DINH',
-                tongthoigianlamvieccuaca: e.tongthoigianlamvieccuaca || 0, cophaingaynghi: e.cophaingaynghi === true
-            }));
+            const res = await AppUtils.API.get(this.apiUrls.employees, { ngaylamviec: this.currentDate, mode: this.mode, page_size: 2000 }, opts);
+            this.employees = (res.data || []).map(e => this.mapEmployeeRecord(e));
             this.render();
         } catch (error) {
             if (error.name !== 'AbortError') { console.error("Employee Load Error:", error); AppUtils.Notify.error("Lỗi tải danh sách nhân viên: " + error.message); }
@@ -159,7 +224,7 @@ class ChamCongManager {
         if (!emp.uiState.isActive) tr.classList.add('inactive');
         const scheduleIn = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianbatdau) || '08:00';
         const scheduleOut = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianketthuc) || '17:00';
-        tr.dataset.id = emp.id;
+        tr.dataset.id = emp.rowId;
 
         if (emp.uiState.in || !emp.cocancheckout) {
             const schedule = this.validator?.normalizeSchedule(emp.khunggiolamviec);
@@ -217,7 +282,7 @@ class ChamCongManager {
         if (!emp.uiState.jobs?.length) emp.uiState.jobs = [{ jobId: '', params: {} }];
     }
 
-    getEmpById(id) { return this.employees.find(x => x.id === parseInt(id)); }
+    getEmpById(id) { return this.employees.find(x => String(x.rowId) === String(id)); }
     refreshRow(tr, emp) { tr.replaceWith(this.createRow(emp)); }
 
     computeOtMinutes(emp, outVal) {
@@ -359,7 +424,8 @@ class ChamCongManager {
     async executeSave(payload) {
         this.state.isLoading = true;
         try {
-            const response = await AppUtils.API.post(this.apiUrls.saveChamCong, payload);
+            const requestFn = this.mode === 'update' ? AppUtils.API.put : AppUtils.API.post;
+            const response = await requestFn(this.apiUrls.saveChamCong, payload);
             if (response.success || response.id || Array.isArray(response)) {
                 AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
                 await this.loadDailyData();
@@ -395,7 +461,7 @@ class ChamCongManager {
                 cotinhlamthem: isActive ? (s.ot || false) : false, 
                 coantrua: isActive ? (s.lunch === true) : false,
                 loaicalamviec: emp.loaicalamviec || 'CO_DINH',
-                cophaingaynghi: emp.cophaingaynghi === true, id: null, codilam: isActive, calamviec_id: emp.calamviec_id,
+                cophaingaynghi: emp.cophaingaynghi === true, id: this.mode === 'update' ? (emp.recordId || null) : null, codilam: isActive, calamviec_id: emp.calamviec_id,
                 khunggionghitrua: emp.khunggionghitrua || {}, khunggiolamviec: this.buildKhungGioPayload(emp.khunggiolamviec), cocancheckout: emp.cocancheckout === true,
                 sogiolamthucte: workHours?.actualMinutes || 0, sophutot: isActive && s.otMinutes ? parseInt(s.otMinutes, 10) || 0 : 0, tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0
             };

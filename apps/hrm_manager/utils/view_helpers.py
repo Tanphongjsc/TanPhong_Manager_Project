@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from functools import wraps
+import datetime as dt
 import json
 
 
@@ -531,6 +532,11 @@ def calculate_work_minutes_with_overnight(in_minutes, out_minutes, start_minutes
     
     work_minutes = out_minutes - in_minutes
     return max(0, work_minutes)
+
+def serialize_time_value(value):
+    if isinstance(value, dt.time):
+        return value.strftime('%H:%M:%S') if value else None
+    return value
 
 
 def tinh_phut_nghi_trua_trong_khoang(bat_dau_minutes, ket_thuc_minutes, ds_nghi_trua):
