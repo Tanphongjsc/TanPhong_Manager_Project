@@ -36551,3 +36551,17 @@ WARNING 2026-03-10 16:08:28,478 log 15780 17116 Not Found: /.well-known/appspeci
 WARNING 2026-03-10 16:08:28,479 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-03-10 16:08:30,587 log 15780 17116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-03-10 16:08:30,587 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:01:58,695 log 3520 19764 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:01:58,695 basehttp 3520 19764 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:20:40,802 log 19116 6000 Bad Request: /hrm/quan-ly-luong/api/ky-luong/12/finalize/
+WARNING 2026-03-11 11:20:40,802 basehttp 19116 6000 "POST /hrm/quan-ly-luong/api/ky-luong/12/finalize/ HTTP/1.1" 400 269
+WARNING 2026-03-11 11:31:43,629 log 12236 15988 Bad Request: /hrm/quan-ly-luong/api/ky-luong/12/finalize/
+WARNING 2026-03-11 11:31:43,629 basehttp 12236 15988 "POST /hrm/quan-ly-luong/api/ky-luong/12/finalize/ HTTP/1.1" 400 269
+WARNING 2026-03-11 11:31:46,157 log 12236 15988 Bad Request: /hrm/quan-ly-luong/api/ky-luong/13/finalize/
+WARNING 2026-03-11 11:31:46,173 basehttp 12236 15988 "POST /hrm/quan-ly-luong/api/ky-luong/13/finalize/ HTTP/1.1" 400 206
+WARNING 2026-03-11 14:47:17,210 log 16336 20980 Bad Request: /hrm/quan-ly-luong/api/ky-luong/12/finalize/
+WARNING 2026-03-11 14:47:17,211 basehttp 16336 20980 "POST /hrm/quan-ly-luong/api/ky-luong/12/finalize/ HTTP/1.1" 400 269
+WARNING 2026-03-11 14:48:44,462 log 16336 15888 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/
+WARNING 2026-03-11 14:48:44,463 basehttp 16336 15888 "POST /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/ HTTP/1.1" 400 236
+WARNING 2026-03-11 14:48:49,844 log 16336 15888 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/3/toggle-status/
+WARNING 2026-03-11 14:48:49,845 basehttp 16336 15888 "POST /hrm/quan-ly-luong/api/phan-tu-luong/3/toggle-status/ HTTP/1.1" 400 236

@@ -1469,6 +1469,11 @@ class KyLuongService:
             count = not_approved.count()
             return False, f"Còn {count} bảng lương chưa được duyệt hoặc chi trả. Vui lòng hoàn tất trước khi chốt kỳ."
         
+        # ✅ MỚI: Phải có ít nhất 1 bảng lương approved/paid (không tính cancelled)
+        completed = bang_luong_in_ky.filter(trangthai__in=['approved', 'paid'])
+        if not completed.exists():
+            return False, "Kỳ lương không có bảng lương nào được duyệt hoặc chi trả. Không thể chốt kỳ chỉ có bảng lương đã hủy."
+
         ky_luong.trangthai = cls.STATUS_FINALIZED
         ky_luong.updated_at = timezone.now()
         ky_luong.save(update_fields=['trangthai', 'updated_at'])
@@ -1520,6 +1525,8 @@ class KyLuongService:
             'can_edit': cls.can_edit_period(ky_luong)[0],
             'can_delete': cls.can_delete_period(ky_luong)[0],
             'can_edit_month': False,  # ✅ Luôn False
+            # ✅ BỔ SUNG: Cho phép chốt kỳ khi trạng thái phù hợp
+            'can_finalize': computed_status in [cls.STATUS_PENDING, cls.STATUS_PROCESSING, cls.STATUS_CALCULATED],
         }
     
     @classmethod
@@ -1641,9 +1648,10 @@ class BangLuongService:
             cls.STATUS_CANCELLED,   # ← BỔ SUNG: Đã hủy, không cho sửa
         ]
         
-        if bang_luong.trangthai in locked_statuses:
-            return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể chỉnh sửa"
-        
+        # ✅ SỬA: Dùng computed status thay vì DB status
+        computed = cls.get_computed_status(bang_luong)
+        if computed in locked_statuses:
+            return False, f"Bảng lương đã {cls.get_status_display(computed)}, không thể chỉnh sửa"
         return True, ""
     
     @classmethod
@@ -1663,8 +1671,10 @@ class BangLuongService:
             cls.STATUS_PAID,
             cls.STATUS_CANCELLED,   # ← BỔ SUNG
         ]
-        if bang_luong.trangthai in locked_statuses:
-            return False, f"Bảng lương đã {cls.get_status_display(bang_luong.trangthai)}, không thể xóa"
+        # ✅ SỬA: Dùng computed status thay vì DB status
+        computed = cls.get_computed_status(bang_luong)
+        if computed in locked_statuses:
+            return False, f"Bảng lương đã {cls.get_status_display(computed)}, không thể xóa"
         
         return True, ""
     
@@ -1868,6 +1878,9 @@ class BangLuongService:
             if che_do_luong:
                 so_nhan_vien = cls.count_employees_in_che_do(che_do_luong.id)
 
+        # Tính allowed transitions cho frontend
+        allowed = cls.ALLOWED_TRANSITIONS.get(computed_status, [])
+
         return {
             'id': bang_luong.id,
             'ma_bang_luong': bang_luong.mabangluong,
@@ -1884,6 +1897,10 @@ class BangLuongService:
             'trang_thai_display': cls.get_status_display(computed_status),
             'can_edit': cls.can_edit(bang_luong)[0],
             'can_delete': cls.can_delete(bang_luong)[0],
+            # ✅ BỔ SUNG: Flags cho frontend biết nút nào hiển thị
+            'can_approve': cls.STATUS_APPROVED in allowed,
+            'can_pay': cls.STATUS_PAID in allowed,
+            'can_cancel': cls.STATUS_CANCELLED in allowed,
         }
     
     # ============================================================

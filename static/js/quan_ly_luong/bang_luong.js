@@ -17,6 +17,9 @@ class BangLuongManager extends BaseCRUDManager {
                 update: (id) => `/hrm/quan-ly-luong/api/bang-luong/${id}/update/`,
                 delete: (id) => `/hrm/quan-ly-luong/api/bang-luong/${id}/delete/`,
                 getOptions: '/hrm/quan-ly-luong/api/bang-luong/get-options/',
+                approve: (id) => `/hrm/quan-ly-luong/api/bang-luong/${id}/approve/`,
+                markPaid: (id) => `/hrm/quan-ly-luong/api/bang-luong/${id}/mark-paid/`,
+                cancel: (id) => `/hrm/quan-ly-luong/api/bang-luong/${id}/cancel/`,
             },
             
             // URL phiếu lương
@@ -95,14 +98,26 @@ class BangLuongManager extends BaseCRUDManager {
                 e.stopPropagation(); // Ngăn row click
                 this.openSidebar('edit', parseInt(id, 10));
             }
-            // Delete đã được xử lý bởi BaseCRUDManager
+            // ✅ MỚI: Xử lý transition actions
+            if (action === 'approve' && id && !btn.disabled) {
+                e.stopPropagation();
+                this.handleStatusAction('approve', parseInt(id, 10), btn.dataset.name);
+            }
+            if (action === 'mark-paid' && id && !btn.disabled) {
+                e.stopPropagation();
+                this.handleStatusAction('markPaid', parseInt(id, 10), btn.dataset.name);
+            }
+            if (action === 'cancel' && id && !btn.disabled) {
+                e.stopPropagation();
+                this.handleStatusAction('cancel', parseInt(id, 10), btn.dataset.name);
+            }
         });
     }
 
     renderRow(item) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition-colors cursor-pointer';
-        tr.dataset.id = item.id; // Lưu id để xử lý click
+        tr.dataset.id = item.id;
         
         const statusColors = {
             'draft': 'bg-slate-100 text-slate-600',
@@ -116,6 +131,39 @@ class BangLuongManager extends BaseCRUDManager {
         
         const editDisabled = !item.can_edit;
         const deleteDisabled = !item.can_delete;
+        
+        // ✅ MỚI: Build action buttons dựa trên trạng thái
+        let actionButtons = '';
+        
+        if (item.can_approve) {
+            actionButtons += `
+                <button type="button" data-action="approve" data-id="${item.id}" data-name="${item.ten_bang_luong || ''}"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
+                        title="Duyệt bảng lương">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Duyệt
+                </button>`;
+        }
+        
+        if (item.can_pay) {
+            actionButtons += `
+                <button type="button" data-action="mark-paid" data-id="${item.id}" data-name="${item.ten_bang_luong || ''}"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors"
+                        title="Đánh dấu đã chi trả">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Chi trả
+                </button>`;
+        }
+        
+        if (item.can_cancel) {
+            actionButtons += `
+                <button type="button" data-action="cancel" data-id="${item.id}" data-name="${item.ten_bang_luong || ''}"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
+                        title="Hủy bảng lương">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Hủy
+                </button>`;
+        }
         
         tr.innerHTML = `
             <td class="px-4 py-4 text-center" data-action="checkbox">
@@ -149,24 +197,25 @@ class BangLuongManager extends BaseCRUDManager {
                     ${item.trang_thai_display || 'Nháp'}
                 </span>
             </td>
-            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium" data-action="buttons">
-                <div class="flex items-center justify-end gap-2">
+            <td class="px-4 py-4 whitespace-nowrap text-center" data-action="buttons">
+                <div class="flex items-center justify-center gap-1 flex-wrap">
+                    ${actionButtons}
                     <button type="button" 
                             data-action="edit"
                             data-id="${item.id}"
-                            class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors ${editDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
-                            ${editDisabled ? 'disabled title="Không thể sửa bảng lương này"' : 'title="Sửa"'}>
-                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            class="p-1 rounded text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition-colors ${editDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
+                            ${editDisabled ? 'disabled title="Không thể sửa"' : 'title="Sửa"'}>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                         </svg>
                     </button>
                     <button type="button" 
-                            class="delete-btn text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors ${deleteDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
+                            class="delete-btn p-1 rounded text-red-600 hover:text-red-900 hover:bg-red-50 transition-colors ${deleteDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
                             data-id="${item.id}" 
                             data-name="${item.ten_bang_luong || 'Bảng lương'}"
                             data-action="delete"
-                            ${deleteDisabled ? 'disabled title="Không thể xóa bảng lương này"' : 'title="Xóa"'}>
-                        <svg class="w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            ${deleteDisabled ? 'disabled title="Không thể xóa"' : 'title="Xóa"'}>
+                        <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                         </svg>
                     </button>
@@ -174,12 +223,66 @@ class BangLuongManager extends BaseCRUDManager {
             </td>
         `;
         
-        // Thêm event click vào dòng để redirect sang phiếu lương
         tr.addEventListener('click', (e) => this.handleRowClick(e, item.id));
         
         return tr;
     }
 
+    // ============================================================
+    // ✅ MỚI: STATUS TRANSITION ACTIONS
+    // ============================================================
+    handleStatusAction(action, id, name) {
+        const configs = {
+            approve: {
+                title: 'Duyệt bảng lương',
+                message: `Bạn có chắc chắn muốn duyệt bảng lương "${name}"? Sau khi duyệt sẽ không thể chỉnh sửa.`,
+                confirmText: 'Duyệt',
+                type: 'info',
+                apiUrl: this.config.apiUrls.approve(id),
+                successMsg: 'Đã duyệt bảng lương thành công',
+            },
+            markPaid: {
+                title: 'Xác nhận chi trả',
+                message: `Bạn có chắc chắn đã chi trả bảng lương "${name}"?`,
+                confirmText: 'Xác nhận chi trả',
+                type: 'info',
+                apiUrl: this.config.apiUrls.markPaid(id),
+                successMsg: 'Đã đánh dấu chi trả thành công',
+            },
+            cancel: {
+                title: 'Hủy bảng lương',
+                message: `Bạn có chắc chắn muốn hủy bảng lương "${name}"? Thao tác này không thể hoàn tác.`,
+                confirmText: 'Hủy bảng lương',
+                type: 'danger',
+                apiUrl: this.config.apiUrls.cancel(id),
+                successMsg: 'Đã hủy bảng lương thành công',
+            },
+        };
+
+        const cfg = configs[action];
+        if (!cfg) return;
+
+        AppUtils.Modal.showConfirm({
+            title: cfg.title,
+            message: cfg.message,
+            confirmText: cfg.confirmText,
+            type: cfg.type,
+            onConfirm: async () => {
+                try {
+                    const res = await AppUtils.API.post(cfg.apiUrl);
+                    if (res.success) {
+                        AppUtils.Notify.success(res.message || cfg.successMsg);
+                        this.tableManager?.refresh();
+                    } else {
+                        AppUtils.Notify.error(res.message || 'Có lỗi xảy ra');
+                    }
+                } catch (err) {
+                    AppUtils.Notify.error(err.message || 'Có lỗi xảy ra');
+                }
+            }
+        });
+    }
+    
     /**
      * Xử lý click vào dòng - redirect sang trang phiếu lương
      * Bỏ qua nếu click vào checkbox, nút edit, nút delete

@@ -716,6 +716,18 @@ def api_phieu_luong_list(request):
         if not bang_luong_id:
             return json_error('Thiếu tham số bangluong_id', status=400)
 
+        # ✅ BỔ SUNG: Check trạng thái bảng lương trước khi sinh phiếu
+        try:
+            bl_obj = Bangluong.objects.get(id=bang_luong_id)
+            blocked_statuses = ['approved', 'paid', 'cancelled']
+            if bl_obj.trangthai in blocked_statuses:
+                if not Phieuluong.objects.filter(bangluong_id=bang_luong_id).exists():
+                    return json_error(
+                        f'Bảng lương đã ở trạng thái "{BangLuongService.get_status_display(bl_obj.trangthai)}", không thể sinh phiếu lương mới'
+                    )
+        except Bangluong.DoesNotExist:
+            return json_error('Bảng lương không tồn tại', status=400)
+        
         if not Phieuluong.objects.filter(bangluong_id=bang_luong_id).exists():
             data, message = genarate_phieu_luong_from_bang_luong(bang_luong_id)
             if data:
@@ -782,7 +794,7 @@ def api_phieu_luong_list(request):
             return json_error('Bảng lương không tồn tại', status=400)
 
         # ✅ BỔ SUNG: Check trạng thái bảng lương
-        locked_statuses = ['approved', 'paid']
+        locked_statuses = ['approved', 'paid', 'cancelled']
         if bang_luong_obj.trangthai in locked_statuses:
             return json_error(
                 f'Bảng lương đã ở trạng thái "{bang_luong_obj.trangthai}", không thể tạo/ghi đè phiếu lương',

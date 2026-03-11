@@ -17,6 +17,7 @@ class KyLuongManager extends BaseCRUDManager {
                 update: (id) => `/hrm/quan-ly-luong/api/ky-luong/${id}/update/`,
                 delete: (id) => `/hrm/quan-ly-luong/api/ky-luong/${id}/delete/`,
                 getDefaults: '/hrm/quan-ly-luong/api/ky-luong/get-defaults/',
+                finalize: (id) => `/hrm/quan-ly-luong/api/ky-luong/${id}/finalize/`,
             },
             
             texts: {
@@ -86,6 +87,19 @@ class KyLuongManager extends BaseCRUDManager {
         const editDisabled = !item.can_edit;
         const deleteDisabled = !item.can_delete;
         
+        // ✅ MỚI: Nút chốt kỳ
+        let finalizeBtn = '';
+        if (item.can_finalize) {
+            finalizeBtn = `
+                <button type="button" 
+                        onclick="window.KyLuongManager.finalizeKyLuong(${item.id}, '${item.thang_display}')"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition-colors"
+                        title="Chốt kỳ lương">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Chốt kỳ
+                </button>`;
+        }
+        
         tr.innerHTML = `
             <td class="px-4 py-4 text-center">
                 <input type="checkbox" 
@@ -108,7 +122,8 @@ class KyLuongManager extends BaseCRUDManager {
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex items-center justify-end gap-2">
+                <div class="flex items-center justify-end gap-1">
+                    ${finalizeBtn}
                     <button type="button" 
                             onclick="window.KyLuongManager.openSidebar('edit', ${item.id})"
                             class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors ${editDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -133,6 +148,31 @@ class KyLuongManager extends BaseCRUDManager {
         return tr;
     }
 
+    // ============================================================
+    // ✅ MỚI: CHỐT KỲ LƯƠNG
+    // ============================================================
+    finalizeKyLuong(id, displayName) {
+        AppUtils.Modal.showConfirm({
+            title: 'Chốt kỳ lương',
+            message: `Bạn có chắc chắn muốn chốt kỳ lương "${displayName}"? Sau khi chốt, mọi thay đổi sẽ bị khóa vĩnh viễn.`,
+            confirmText: 'Chốt kỳ lương',
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    const res = await AppUtils.API.post(this.config.apiUrls.finalize(id));
+                    if (res.success) {
+                        AppUtils.Notify.success(res.message || 'Đã chốt kỳ lương thành công');
+                        this.tableManager?.refresh();
+                    } else {
+                        AppUtils.Notify.error(res.message || 'Có lỗi xảy ra');
+                    }
+                } catch (err) {
+                    AppUtils.Notify.error(err.message || 'Có lỗi xảy ra');
+                }
+            }
+        });
+    }
+    
     // ============================================================
     // MONTH-YEAR PICKER
     // ============================================================
