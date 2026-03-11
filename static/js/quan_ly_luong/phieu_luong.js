@@ -134,7 +134,8 @@ class PayrollDetailManager {
                         row.salary_meta[colId] = { 
                             status: detail.status, 
                             type: detail.type, 
-                            formula: detail.formula 
+                            formula: detail.formula,
+                            code: detail.code 
                         };
                         const meta = this.elementMap.get(Number(colId));
                         if (meta && !meta.type) meta.type = detail.type;
@@ -266,7 +267,11 @@ class PayrollDetailManager {
         const headerRow = ['Mã NV', 'Họ tên', 'Phòng ban', 'Chức vụ'];
         this.salaryElementsList.forEach(colId => {
             const meta = this.elementMap.get(Number(colId));
-            headerRow.push(meta ? meta.name : `Col ${colId}`);
+            if (meta?.code) {
+                headerRow.push(`${meta.name} (${meta.code})`);
+            } else {
+                headerRow.push(meta ? meta.name : `Col ${colId}`);
+            }
         });
         salarySheetData.push(headerRow);
 
@@ -288,7 +293,17 @@ class PayrollDetailManager {
 
         // 2. Chuẩn bị dữ liệu Sheet Chấm công (Sheet 2)
         const timesheetSheetData = [];
-        timesheetSheetData.push(['Mã NV', 'Họ tên', 'Ngày', 'Loại công', 'Vào', 'Ra', 'Giờ công (phút)', 'Công việc']);
+        timesheetSheetData.push(['Mã NV', 'Họ tên', 'Ngày', 'Loại công', 'Vào', 'Ra', 'Giờ công (giờ)', 'Số công', 'Tham số công việc', 'Công việc']);
+
+        const formatWorkParams = (timesheet) => {
+            const params = timesheet?.thamsotinhluong?.tham_so;
+            if (!params || typeof params !== 'object' || Array.isArray(params) || Object.keys(params).length === 0) {
+                return '';
+            }
+            return Object.entries(params)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('; ');
+        };
 
         employees.forEach(emp => {
             const timesheets = emp.extra_data?.ngaychamcong || [];
@@ -301,16 +316,50 @@ class PayrollDetailManager {
                         ts.loaichamcong || '',
                         ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '',
                         ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '',
-                        ts.thoigianlamviec || 0,
+                        Number((Number(ts.thoigianlamviec || 0) / 60).toFixed(2)),
+                        Number(ts.conglamviec || 0),
+                        formatWorkParams(ts),
                         ts.tencongviec || ''
                     ]);
                 });
             } else {
-                timesheetSheetData.push([emp.manhanvien, emp.hovaten, 'Không có dữ liệu', '', '', '', '', '']);
+                timesheetSheetData.push([emp.manhanvien, emp.hovaten, 'Không có dữ liệu', '', '', '', '', '', '', '']);
             }
         });
 
-        // 3. Tạo Workbook
+        // 3. Chuẩn bị dữ liệu Sheet Chi tiết phần tử lương (Sheet 3)
+        const salaryDetailSheetData = [];
+        salaryDetailSheetData.push([
+            'Mã NV', 'Họ tên', 'ID phần tử', 'Tên phần tử', 'Mã phần tử', 'Loại', 'Giá trị', 'Công thức'
+        ]);
+
+        employees.forEach(emp => {
+            const salaryValues = emp.salary_values || {};
+            const salaryMeta = emp.salary_meta || {};
+
+            this.salaryElementsList.forEach(colId => {
+                const val = salaryValues?.[colId] ?? 0;
+                const meta = this.elementMap.get(Number(colId));
+                const detailMeta = salaryMeta?.[colId] || {};
+                const itemCode = detailMeta.code || meta?.code || '';
+                const itemName = meta?.name || `Phần tử ${colId}`;
+                const itemType = detailMeta.type || meta?.type || '';
+                const formula = detailMeta.formula || '';
+
+                salaryDetailSheetData.push([
+                    emp.manhanvien || '',
+                    emp.hovaten || '',
+                    Number(colId),
+                    itemName,
+                    itemCode,
+                    itemType,
+                    Number(val || 0),
+                    formula
+                ]);
+            });
+        });
+
+        // 4. Tạo Workbook
         const wb = XLSX.utils.book_new();
 
         // Add Sheet 1: Tổng hợp Lương
@@ -323,11 +372,19 @@ class PayrollDetailManager {
 
         // Add Sheet 2: Chi tiết Chấm công
         const wsTimesheet = XLSX.utils.aoa_to_sheet(timesheetSheetData);
-        const wscolsTime = [{wch:10}, {wch:25}, {wch:12}, {wch:10}, {wch:10}, {wch:10}, {wch:15}, {wch:20}];
+        const wscolsTime = [{wch:10}, {wch:25}, {wch:12}, {wch:10}, {wch:10}, {wch:10}, {wch:14}, {wch:10}, {wch:35}, {wch:20}];
         wsTimesheet['!cols'] = wscolsTime;
         XLSX.utils.book_append_sheet(wb, wsTimesheet, "Chi tiết Chấm công");
 
-        // 4. Write File
+        // Add Sheet 3: Chi tiết phần tử lương
+        const wsSalaryDetail = XLSX.utils.aoa_to_sheet(salaryDetailSheetData);
+        wsSalaryDetail['!cols'] = [
+            { wch: 10 }, { wch: 25 }, { wch: 12 }, { wch: 24 }, { wch: 16 },
+            { wch: 12 }, { wch: 14 }, { wch: 45 }
+        ];
+        XLSX.utils.book_append_sheet(wb, wsSalaryDetail, "Chi tiết thành phần lương");
+
+        // 5. Write File
         const cleanFileName = AppUtils.Helper.removeAccents(fileNamePrefix).replace(/\s+/g, '_');
         const finalName = `${cleanFileName}_${new Date().toISOString().slice(0,10)}.xlsx`;
         XLSX.writeFile(wb, finalName);
@@ -402,21 +459,35 @@ class PayrollDetailManager {
         tbody.innerHTML = '';
 
         if (!timesheets || !Array.isArray(timesheets) || timesheets.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400 italic text-sm">Chưa có dữ liệu chấm công chi tiết</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 italic text-sm">Chưa có dữ liệu chấm công chi tiết</td></tr>`;
             if (summaryEl) summaryEl.textContent = '';
             return;
         }
 
         let totalHours = 0;
+        let totalCong = 0;
 
         timesheets.forEach(ts => {
             const date = new Date(ts.ngaylamviec).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
             const inTime = ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '--:--';
             const outTime = ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '--:--';
-            const hours = (ts.thoigianlamviec / 60).toFixed(1);
+            const hoursValue = Number(ts.thoigianlamviec || 0) / 60;
+            const congValue = Number(ts.conglamviec || 0);
+            const hours = hoursValue.toFixed(1);
             const jobName = ts.tencongviec || '-';
+            const workParams = ts?.thamsotinhluong?.tham_so;
+            const workParamsHtml = (workParams && typeof workParams === 'object' && !Array.isArray(workParams) && Object.keys(workParams).length > 0)
+                ? Object.entries(workParams)
+                    .map(([paramName, paramValue]) => `
+                        <div class="flex items-center justify-between gap-2 py-0.5 border-b border-dashed border-slate-100 last:border-0">
+                            <span class="text-[11px] text-slate-500 font-mono">${paramName}</span>
+                            <span class="text-[11px] text-slate-700 font-semibold">${this.formatNumber(paramValue)}</span>
+                        </div>
+                    `).join('')
+                : `<span class="text-[11px] text-slate-400 italic">Không có tham số</span>`;
 
-            totalHours += (ts.thoigianlamviec / 60);
+            totalHours += hoursValue;
+            totalCong += congValue;
 
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors';
@@ -426,13 +497,23 @@ class PayrollDetailManager {
                     <span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-medium">${ts.loaichamcong || '-'}</span>
                 </td>
                 <td class="px-3 py-2.5 text-center font-mono text-xs text-slate-500">${inTime} - ${outTime}</td>
-                <td class="px-3 py-2.5 text-right font-medium text-slate-700">${hours}h</td>
+                <td class="px-3 py-2.5 text-right font-medium text-slate-700">
+                    <div>${hours}h</div>
+                    <div class="text-[11px] text-slate-400">${this.formatNumber(congValue)} công</div>
+                </td>
+                <td class="px-3 py-2.5 align-top min-w-[190px]">
+                    <div class="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+                        ${workParamsHtml}
+                    </div>
+                </td>
                 <td class="px-3 py-2.5 text-left text-slate-600 truncate max-w-[150px]" title="${jobName}">${jobName}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        if (summaryEl) summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h</span>`;
+        if (summaryEl) {
+            summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h • ${this.formatNumber(totalCong)} công</span>`;
+        }
     }
 
     renderSalaryDetailList(row) {
@@ -444,30 +525,39 @@ class PayrollDetailManager {
         const salaryValues = row.salary_values || {};
         const salaryMeta = row.salary_meta || {};
         
-        const groups = { 'THU_NHAP': [], 'KHAU_TRU': [], 'OTHER': [] };
+        const groups = { 'THU_NHAP': [], 'KHAU_TRU': [], 'THUC_LINH': [], 'OTHER': [] };
 
         Object.keys(salaryValues).forEach(colId => {
             const val = salaryValues[colId];
             const meta = this.elementMap.get(Number(colId));
-            if (!meta) return;
-
-            const type = meta.type || 'OTHER';
+            const detailMeta = salaryMeta[colId] || {};
+            const itemCode = detailMeta.code || meta?.code || '';
+            const itemType = detailMeta.type || meta?.type || 'OTHER';
+            const normalizedCode = String(itemCode || '').trim().toUpperCase();
+            const type = normalizedCode === 'THUC_LINH' ? 'THUC_LINH' : itemType;
             const item = {
-                name: meta.name, code: meta.code, value: val, meta: salaryMeta[colId] || {}
+                name: meta?.name || `Phần tử ${colId}`,
+                code: itemCode,
+                value: val,
+                meta: detailMeta
             };
 
             if (groups[type]) groups[type].push(item);
             else groups['OTHER'].push(item);
         });
 
-        const renderGroup = (title, items, colorClass, borderClass) => {
+        const renderGroup = (title, items, colorClass, borderClass, options = {}) => {
             if (items.length === 0) return '';
+            const { showFormula = false, singleValue = false } = options;
             const total = items.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
             const rows = items.map(i => `
                 <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-100 last:border-0 hover:bg-slate-50 px-3 transition-colors rounded-sm">
-                    <div class="flex flex-col">
-                        <span class="text-sm text-slate-700">${i.name}</span>
-                        <span class="text-[10px] text-slate-400 font-mono hidden group-hover:block">${i.code}</span>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-slate-700">${i.name}</span>
+                            ${i.code ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-[10px] text-slate-500 font-mono" title="Mã phần tử">${i.code}</span>` : ''}
+                        </div>
+                        ${showFormula && i.meta?.formula ? `<span class="text-[11px] text-slate-500">Công thức: <span class="font-mono text-slate-600">${i.meta.formula}</span></span>` : ''}
                     </div>
                     <span class="font-mono font-medium text-sm ${colorClass}">${this.formatNumber(i.value)}</span>
                 </div>
@@ -477,7 +567,7 @@ class PayrollDetailManager {
                 <div class="mb-4">
                     <div class="flex justify-between items-end mb-2 px-3">
                         <span class="font-medium text-xs uppercase text-slate-500 tracking-wider">${title}</span>
-                        <span class="font-bold text-sm ${colorClass}">${this.formatNumber(total)}</span>
+                        <span class="font-bold text-sm ${colorClass}">${this.formatNumber(singleValue ? Number(items[0]?.value || 0) : total)}</span>
                     </div>
                     <div class="bg-white border ${borderClass} rounded-lg shadow-sm overflow-hidden">
                         ${rows}
@@ -488,13 +578,20 @@ class PayrollDetailManager {
 
         const incomeHtml = renderGroup('Thu nhập', groups['THU_NHAP'], 'text-emerald-600', 'border-emerald-100');
         const deductionHtml = renderGroup('Khấu trừ', groups['KHAU_TRU'], 'text-red-600', 'border-red-100');
+        const thucLinhHtml = renderGroup('Thực lĩnh', groups['THUC_LINH'], 'text-blue-600', 'border-blue-100', {
+            showFormula: true,
+            singleValue: true
+        });
         
-        container.innerHTML = `<div class="grid grid-cols-1 gap-2">${incomeHtml}${deductionHtml}</div>`;
+        container.innerHTML = `<div class="grid grid-cols-1 gap-2">${incomeHtml}${deductionHtml}${thucLinhHtml}</div>`;
 
+        const thucLinhByGroup = groups['THUC_LINH']?.[0]?.value;
         const thucLinhCol = Array.from(this.elementMap.values()).find(e => e.code === 'THUC_LINH');
         let finalSalary = 0;
         
-        if (thucLinhCol) {
+        if (thucLinhByGroup != null) {
+             finalSalary = thucLinhByGroup;
+        } else if (thucLinhCol) {
              const id = this.codeToIdMap['THUC_LINH'];
              finalSalary = salaryValues[id] || 0;
         } else {
@@ -562,7 +659,12 @@ class PayrollDetailManager {
             const meta = this.elementMap.get(Number(id));
             const isDeduction = meta?.type === 'KHAU_TRU';
             return {
-                key: `salary_values.${id}`, title: meta ? meta.name : `Phần tử ${id}`, width: 120, align: 'right', type: 'input',
+                key: `salary_values.${id}`,
+                title: meta ? meta.name : `Phần tử ${id}`,
+                subtitle: meta?.code || '',
+                width: 120,
+                align: 'right',
+                type: 'input',
                 elementId: id,
                 render: (item) => {
                     const val = item.salary_values?.[id] || 0;

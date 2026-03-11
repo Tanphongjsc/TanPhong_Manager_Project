@@ -7,7 +7,7 @@
 <div class="flex flex-col h-full space-y-4">
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative isolate">
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative">
         
         <form id="payroll-form" class="flex-1 flex flex-col overflow-hidden pb-20">
             {% csrf_token %}
@@ -72,6 +72,7 @@
                             <th class="px-3 py-2.5 font-semibold text-center border-b border-slate-200">Ca</th>
                             <th class="px-3 py-2.5 font-semibold text-center border-b border-slate-200">Vào/Ra</th>
                             <th class="px-3 py-2.5 font-semibold text-right border-b border-slate-200">Giờ công</th>
+                            <th class="px-3 py-2.5 font-semibold text-left border-b border-slate-200">Tham số công việc</th>
                             <th class="px-3 py-2.5 font-semibold text-left border-b border-slate-200">Công việc</th>
                         </tr>
                     </thead>
@@ -99,6 +100,18 @@
 </template>
 
 {% endblock content %}
+
+{% block styles %}
+<style>
+    #payroll-table-container thead {
+        z-index: 20;
+    }
+
+    #payroll-table-container thead .sticky-col {
+        z-index: 25;
+    }
+</style>
+{% endblock styles %}
 
 {% block scripts %}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
