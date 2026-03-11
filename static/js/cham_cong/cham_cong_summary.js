@@ -7,7 +7,8 @@ class TimekeepingSummaryManager {
         this.apiUrls = {
             dept: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/',
             summary: '/hrm/cham-cong/api/bang-cham-cong/tong-hop-thang/',
-            checkLog: '/hrm/cham-cong/api/bang-cham-cong/check-cham-cong/'
+            checkLog: '/hrm/cham-cong/api/bang-cham-cong/check-cham-cong/',
+            editBangChamCong: '/hrm/cham-cong/bang-cham-cong/'
         };
 
         this.els = {
@@ -274,8 +275,11 @@ class TimekeepingSummaryManager {
         }
 
         html += `
-                <th class="sticky-col-right px-3 py-3 text-center text-xs font-bold text-slate-700 uppercase border-l border-slate-200 min-w-[80px] bg-slate-50">
-                    TỔNG
+                <th class="sticky-col-right px-3 py-3 text-center text-xs font-bold text-slate-700 uppercase border-l border-slate-200 min-w-[96px] bg-slate-50">
+                    <div class="flex flex-col leading-tight">
+                        <span>TỔNG</span>
+                        <span class="text-[10px] font-medium normal-case text-slate-500">công / giờ</span>
+                    </div>
                 </th>
             </tr>
         `;
@@ -323,7 +327,8 @@ class TimekeepingSummaryManager {
 
         for (let i = 1; i <= days; i++) {
             const dayKey = String(i).padStart(2, '0');
-            const dayLogs = logs[dayKey] || [];
+            const dayLogs = logs[dayKey] || logs[String(i)] || [];
+            const workDate = `${year}-${String(month).padStart(2, '0')}-${dayKey}`;
             
             const date = new Date(year, month - 1, i);
             const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
@@ -337,6 +342,7 @@ class TimekeepingSummaryManager {
 
             if (dayLogs.length > 0) {
                 let totalWork = 0;
+                let totalCong = 0;
                 let hasLate = false;
                 let hasEarly = false;
                 let hasOff = false;
@@ -344,27 +350,39 @@ class TimekeepingSummaryManager {
 
                 // Tính toán tổng hợp từ các log trong ngày
                 dayLogs.forEach(log => {
-                    if (log.tg_lamviec) totalWork += log.tg_lamviec;
+                    totalWork += Number(log.tg_lamviec || 0);
+                    totalCong += Number(log.conglamviec || 0);
                     if (log.codimuon) hasLate = true;
                     if (log.covesom) hasEarly = true;
                     // Logic xác định nghỉ: log có codilam=False
                     if (log.codilam === false) hasOff = true;
                     // Nếu log có tg_lamviec > 0 hoặc không phải record nghỉ explicitly -> coi là có đi làm
-                    if (log.tg_lamviec > 0) hasWork = true;
+                    if (Number(log.tg_lamviec || 0) > 0 || Number(log.conglamviec || 0) > 0 || log.codilam === true) hasWork = true;
                 });
 
                 // --- 1. Main Display Logic ---
                 if (hasOff && !hasWork) {
                     const isKP = dayLogs.some(l => l.ghichu && l.ghichu.toLowerCase().includes('không phép'));
                     cellContent = `<span class="text-[10px] font-bold ${isKP ? 'text-red-600 bg-red-100 border-red-200' : 'text-orange-600 bg-orange-100 border-orange-200'} px-1 rounded border shadow-sm select-none">${isKP ? 'KP' : 'P'}</span>`;
-                } else if (totalWork > 0) {
-                    cellContent = `<strong>${Number(totalWork).toFixed(1).replace('.0','')}</strong>`;
+                } else if (totalWork > 0 || totalCong > 0) {
+                    const displayCong = this.formatMetric(totalCong, 2);
+                    const displayHours = this.formatMetric(totalWork, 1);
+                    cellContent = `
+                        <div class="flex flex-col items-center leading-tight select-none">
+                            <span class="text-[11px] font-extrabold text-blue-700">${displayCong}c</span>
+                            <span class="text-[10px] text-slate-500">${displayHours}h</span>
+                        </div>
+                    `;
                     if (hasLate || hasEarly) {
                         cellContent += `<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>`;
                     }
-                    cellContent = `<span class="text-slate-900">${cellContent}</span>`;
                 } else {
-                    cellContent = `<span class="text-orange-500 font-medium">0</span>`;
+                    cellContent = `
+                        <div class="flex flex-col items-center leading-tight select-none">
+                            <span class="text-[11px] font-bold text-orange-500">0c</span>
+                            <span class="text-[10px] text-slate-400">0h</span>
+                        </div>
+                    `;
                 }
 
                 // --- 2. Tooltip Logic ---
@@ -386,7 +404,18 @@ class TimekeepingSummaryManager {
                     if (rec.codilam === false) {
                         statusHtml = `<div class="text-orange-300">📝 ${rec.ghichu || 'Nghỉ'}</div>`;
                     } else {
-                        statusHtml = `<div>🕒 ${timeStr} <span class="text-slate-400">(${Number(rec.tg_lamviec||0).toFixed(1)}h)</span></div>`;
+                        const recHours = this.formatMetric(rec.tg_lamviec, 1);
+                        const recCong = this.formatMetric(rec.conglamviec, 2);
+                        statusHtml = `
+                            <div class="flex items-center justify-between">
+                                <span>🕒 ${timeStr}</span>
+                                <div class="text-[10px] text-right ml-2 bg-slate-700/50 px-1.5 py-0.5 rounded border border-slate-600">
+                                    <span class="text-blue-300 font-bold">${recCong}c</span>
+                                    <span class="text-slate-400 mx-0.5">·</span>
+                                    <span class="text-slate-300">${recHours}h</span>
+                                </div>
+                            </div>
+                        `;
                     }
 
                     return `
@@ -425,7 +454,7 @@ class TimekeepingSummaryManager {
             }
 
             daysHtml += `
-                <td class="border-l border-slate-100 border-b p-0 text-center text-sm group relative cursor-pointer hover:bg-slate-50 transition-colors ${cellBg}">
+                <td class="border-l border-slate-100 border-b p-0 text-center text-sm group relative cursor-pointer hover:bg-slate-50 transition-colors ${cellBg}" data-work-date="${workDate}">
                     <div class="h-12 flex items-center justify-center w-full relative">
                         ${cellContent}
                     </div>
@@ -433,14 +462,28 @@ class TimekeepingSummaryManager {
             `;
         }
 
+        const totalCong = this.formatMetric(item.tongconglamviec, 2);
+        const totalHours = this.formatMetric(item.tongthoigianlamviec, 1);
         const totalHtml = `
-            <td class="sticky-col-right px-2 py-3 text-center text-sm font-bold text-blue-600 border-l border-slate-200 border-b bg-slate-50">
-                ${item.tongthoigianlamviec ? Number(item.tongthoigianlamviec).toFixed(1).replace('.0','') : '0'}
+            <td class="sticky-col-right px-2 py-3 text-center border-l border-slate-200 border-b bg-slate-50">
+                <div class="flex flex-col items-center leading-tight">
+                    <span class="text-sm font-extrabold text-blue-700">${totalCong}c</span>
+                    <span class="text-[11px] text-slate-500">${totalHours}h</span>
+                </div>
             </td>
         `;
 
         tr.innerHTML = leftColHtml + daysHtml + totalHtml;
         return tr;
+    }
+
+    formatMetric(value, decimals = 1) {
+        const numeric = Number(value || 0);
+        if (!Number.isFinite(numeric)) return '0';
+        return numeric
+            .toFixed(decimals)
+            .replace(/\.0+$/, '')
+            .replace(/(\.\d*[1-9])0+$/, '$1');
     }
 
     renderEmployeeInfo(item) {
@@ -538,6 +581,19 @@ class TimekeepingSummaryManager {
                 this.handleTabChange(this.currentTabId);
             }, 400);
             this.eventManager.add(this.els.searchInput, 'input', debouncedSearch);
+        }
+
+        const summaryBody = document.getElementById('summary-table-body');
+        if (summaryBody) {
+            this.eventManager.add(summaryBody, 'click', (event) => {
+                if (this.currentTabId !== '#tab-tong-hop') return;
+                const cell = event.target.closest('td[data-work-date]');
+                if (!cell) return;
+                const selectedDate = cell.dataset.workDate;
+                if (!selectedDate) return;
+                const targetUrl = `${this.apiUrls.editBangChamCong}?ngaylamviec=${encodeURIComponent(selectedDate)}&mode=update`;
+                window.location.href = targetUrl;
+            });
         }
     }
 }

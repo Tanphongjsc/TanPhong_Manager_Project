@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from functools import wraps
+import datetime as dt
 import json
 
 
@@ -534,3 +535,37 @@ def calculate_work_minutes_with_overnight(in_minutes, out_minutes, start_minutes
     
     work_minutes = out_minutes - in_minutes
     return max(0, work_minutes)
+
+def serialize_time_value(value):
+    if isinstance(value, dt.time):
+        return value.strftime('%H:%M:%S') if value else None
+    return value
+
+
+def tinh_phut_nghi_trua_trong_khoang(bat_dau_minutes, ket_thuc_minutes, ds_nghi_trua):
+    """
+    Tính tổng phút nghỉ trưa giao nhau với khoảng [bat_dau, ket_thuc].
+    Chỉ trừ phần thực sự nằm trong khoảng làm việc, tránh trừ thừa.
+
+    Args:
+        bat_dau_minutes (int): Phút bắt đầu khoảng cần kiểm tra
+        ket_thuc_minutes (int): Phút kết thúc khoảng cần kiểm tra
+        ds_nghi_trua (list): Danh sách khung nghỉ trưa [{'giobatdau': 'HH:MM', 'gioketthuc': 'HH:MM'}, ...]
+
+    Returns:
+        int: Tổng số phút nghỉ trưa giao nhau (>= 0)
+    """
+    if bat_dau_minutes is None or ket_thuc_minutes is None:
+        return 0
+    tong = 0
+    for nghi_trua in ds_nghi_trua:
+        nt_bat_dau = parse_time_to_minutes(nghi_trua.get('giobatdau'))
+        nt_ket_thuc = parse_time_to_minutes(nghi_trua.get('gioketthuc'))
+        if nt_bat_dau is None or nt_ket_thuc is None:
+            continue
+        # Phần giao nhau giữa [bat_dau, ket_thuc] và [nt_bat_dau, nt_ket_thuc]
+        overlap_start = max(bat_dau_minutes, nt_bat_dau)
+        overlap_end = min(ket_thuc_minutes, nt_ket_thuc)
+        if overlap_start < overlap_end:
+            tong += (overlap_end - overlap_start)
+    return tong

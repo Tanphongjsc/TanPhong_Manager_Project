@@ -109,12 +109,11 @@ class ChamCongTimeValidator {
                 if (schedule.startTime !== null && schedule.invalidLateInMinutes !== null) {
                     const lateFromStart = inMin - schedule.startTime;
                     if (lateFromStart > schedule.invalidLateInMinutes) {
-                        const effectiveLate = schedule.lateGraceMinutes !== null ? lateFromStart - schedule.lateGraceMinutes : lateFromStart;
                         violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_IN_TOO_LATE, employee, {
                             value: checkIn, scheduleStart: this.toTimeString(schedule.startTime), limit: schedule.invalidLateInMinutes,
-                            diff: Math.max(effectiveLate, lateFromStart), rawLate: lateFromStart, graceMinutes: schedule.lateGraceMinutes,
+                            diff: lateFromStart, rawLate: lateFromStart, graceMinutes: schedule.lateGraceMinutes,
                             suggestion: this.toTimeString(schedule.startTime + schedule.invalidLateInMinutes),
-                            note: `Đi muộn ${Math.max(effectiveLate, lateFromStart)}p (vượt ngưỡng ${schedule.invalidLateInMinutes}p)`
+                            note: `Đi muộn ${lateFromStart}p (vượt ngưỡng ${schedule.invalidLateInMinutes}p)`
                         }));
                     }
                 }
@@ -129,12 +128,11 @@ class ChamCongTimeValidator {
                 if (schedule.endTime !== null && schedule.invalidEarlyOutMinutes !== null) {
                     const earlyFromEnd = schedule.endTime - outMin;
                     if (earlyFromEnd > schedule.invalidEarlyOutMinutes) {
-                        const effectiveEarly = schedule.earlyGraceMinutes !== null ? earlyFromEnd - schedule.earlyGraceMinutes : earlyFromEnd;
                         violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_EARLY, employee, {
                             value: checkOut, scheduleEnd: this.toTimeString(schedule.endTime), limit: schedule.invalidEarlyOutMinutes,
-                            diff: Math.max(effectiveEarly, earlyFromEnd), rawEarly: earlyFromEnd, graceMinutes: schedule.earlyGraceMinutes,
+                            diff: earlyFromEnd, rawEarly: earlyFromEnd, graceMinutes: schedule.earlyGraceMinutes,
                             suggestion: this.toTimeString(schedule.endTime - schedule.invalidEarlyOutMinutes),
-                            note: `Về sớm ${Math.max(effectiveEarly, earlyFromEnd)}p (vượt ngưỡng ${schedule.invalidEarlyOutMinutes}p)`
+                            note: `Về sớm ${earlyFromEnd}p (vượt ngưỡng ${schedule.invalidEarlyOutMinutes}p)`
                         }));
                     }
                 }
@@ -220,7 +218,7 @@ class ChamCongTimeValidator {
                     const grace = schedule.lateGraceMinutes || 0;
                     const effectiveLate = Math.max(0, lateFromStart - grace);
                     if (schedule.invalidLateInMinutes !== null && lateFromStart > schedule.invalidLateInMinutes) {
-                        addV('check_in_too_late', `Muộn ${effectiveLate}p (vượt ${schedule.invalidLateInMinutes}p)`);
+                        addV('check_in_too_late', `Muộn ${lateFromStart}p (vượt ${schedule.invalidLateInMinutes}p)`);
                     } else if (effectiveLate > 0) {
                         addW(`Muộn ${effectiveLate}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
                     }
@@ -236,7 +234,7 @@ class ChamCongTimeValidator {
                 const grace = schedule.earlyGraceMinutes || 0;
                 const effectiveEarly = Math.max(0, earlyFromEnd - grace);
                 if (schedule.invalidEarlyOutMinutes !== null && earlyFromEnd > schedule.invalidEarlyOutMinutes) {
-                    addV('check_out_too_early', `Về sớm ${effectiveEarly}p (vượt ${schedule.invalidEarlyOutMinutes}p)`);
+                    addV('check_out_too_early', `Về sớm ${earlyFromEnd}p (vượt ${schedule.invalidEarlyOutMinutes}p)`);
                 } else if (effectiveEarly > 0) {
                     addW(`Về sớm ${effectiveEarly}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
                 }
