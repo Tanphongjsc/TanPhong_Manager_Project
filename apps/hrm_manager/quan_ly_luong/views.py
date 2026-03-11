@@ -56,7 +56,6 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             trangthai='active'
         ).values('nhanvien_id')
     ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id'))
-    print(nhanvien_ids)
 
     # 2. Lấy danh sách quy tắc tính lương (rules) đang active cho chế độ lương này
     rules_qs = Quytacchedoluong.objects.filter(
