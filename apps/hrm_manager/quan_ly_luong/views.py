@@ -5,11 +5,12 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.db import transaction
-from django.db.models import F, Q, Sum, Count, Exists, OuterRef
+from django.db.models import F, Q, Sum, Count, Exists, OuterRef, FloatField
 from django.urls import reverse
+from django.db.models.functions import Coalesce
 
 from apps.hrm_manager.__core__.models import (Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, 
-                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban)
+                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban, Lichlamviecthucte)
 
 from json import loads, dumps
 from collections import defaultdict
@@ -58,10 +59,14 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     thoigian_ketthuc = bangluong_obj.kyluong.ngayketthuc
     chedoluong_id = bangluong_obj.chedoluong_id
 
-    # 1.5. Lấy danh sách nhân viên được setup trong bảng lương
-    nhanvien_ids_in_bangluong = NhanvienChedoluong.objects.filter(
-        chedoluong_id=chedoluong_id, trangthai='active'
-    ).values_list('nhanvien_id', flat=True).distinct()
+    # 1.5. Lấy danh sách nhân viên ACTIVE được cấu hình trong chế độ lương của bảng lương này
+    nhanvien_ids = list(Lichsucongtac.objects.filter(
+        trangthai='active',
+        nhanvien_id__in=NhanvienChedoluong.objects.filter(
+            chedoluong_id=chedoluong_id,
+            trangthai='active'
+        ).values('nhanvien_id')
+    ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id'))
 
     # 2. Lấy danh sách quy tắc tính lương (rules) đang active cho chế độ lương này
     rules_qs = Quytacchedoluong.objects.filter(
@@ -70,34 +75,40 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         'maquytac', 'bieuthuctinhtoan', 'nguondulieu', 'phantuluong', 'phantuluong__loaiphantu'
     )
     rules_list = list(rules_qs)
-    
-    # ✅ BỔ SUNG #6: Check quy tắc rỗng trước khi sinh phiếu
+    #Check quy tắc rỗng trước khi sinh phiếu
     if not rules_list:
         return None, "Chế độ lương chưa có quy tắc tính lương nào. Vui lòng thiết lập quy tắc trước."
     
     # Các mã quy tắc cần tính bằng công thức
     formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'].strip().lower() == 'formula']
 
-    # Lấy danh sách nhân viên cần tính lương
-    nhanvien_ids = Lichsucongtac.objects.filter(
-        trangthai='active', 
-        nhanvien_id__in=nhanvien_ids_in_bangluong
-    ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id')
-
     # 3. Lấy dữ liệu chấm công tổng hợp theo nhân viên trong kỳ lương
     bcc_data = Bangchamcong.objects.filter(
-        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc],
-        nhanvien_id__in=nhanvien_ids_in_bangluong,
-    ).values('nhanvien', 'loaichamcong').annotate(
-        tong_tien_luong=Sum('thanhtien'),
+        nhanvien_id__in=nhanvien_ids,
+        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
+    ).values('nhanvien').annotate(
         tong_so_luong_an=Count('coantrua', filter=Q(coantrua=True)),
-        tong_thoigian_lamviec=Sum('thoigianlamviec')/60,
-        tong_thoigian_lamthem=Sum('thoigianlamthem')/60,
+        tong_thoigian_lamviec=(
+            Coalesce(Sum('thoigianlamviec'), 0.0, output_field=FloatField()) +
+            Coalesce(Sum('thoigiandisom'), 0.0, output_field=FloatField()) +
+            Coalesce(Sum('thoigianvemuon'), 0.0, output_field=FloatField())
+        ) / 60.0,
+        tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem'), 0.0, output_field=FloatField()) / 60.0,
+        tong_cong_lamviec=Coalesce(Sum('conglamviec'), 0.0, output_field=FloatField()),
+        tong_cong_vp_thucte=(Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP')), 0.0, output_field=FloatField())),
+        tong_tien_sx=Coalesce(Sum('thanhtien', filter=Q(loaichamcong='SX')), 0.0, output_field=FloatField()),
     )
     bcc_dict = {item['nhanvien']: item for item in bcc_data}
     if not bcc_dict:
         return None, "Chưa có dữ liệu chấm công trong kỳ lương"
-    print(bcc_dict)
+    
+    # 3.5 Lấy ra số công số giờ làm chuẩn từ Lịch làm việc thực tế + Ca làm việc (cho các nhân viên đã lọc)
+    lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
+        nhanvien_id__in=nhanvien_ids,
+        ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
+    ).values('nhanvien').annotate(tong_cong_lamviec_thucte=Sum('calamviec__congcuacalamviec'))
+    # Chuyển về dict {nhanvien_id: tong_cong_lamviec}
+    lich_lam_viec_dict = {item['nhanvien']: item['tong_cong_lamviec_thucte'] for item in lich_lam_viec_qs}
 
     # 4. Lấy dữ liệu thiết lập số liệu cố định cho từng nhân viên
     setup_data = Thietlapsolieucodinh.objects.filter(
@@ -112,22 +123,21 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             val = 0.0
         setup_dict[item['nhanvien']][item['phantuluong']] = val
 
-    # 5. Chuẩn bị dữ liệu đầu vào cho PayrollCalculator
-    # Dạng: { 'ID_NV': [ { 'tham_so': {...} } ] }
+    # 5. Chuẩn bị dữ liệu đầu vào cho PayrollCalculator Dạng: { 'ID_NV': [ { 'tham_so': {...} } ] }
     data_groups_map = {}
     for nv_id in nhanvien_ids:
-        print("Processing NV ID:", nv_id)
         nv_bcc = bcc_dict.get(nv_id, {})
         nv_setup = setup_dict.get(nv_id, {})
         context_params = {}
         
-        print("BCC:", nv_bcc)
-
         # A. Dữ liệu biến động từ chấm công
-        context_params['SO_LUONG_AN'] = float(nv_bcc.get('tong_so_luong_an', 0))
-        # Nếu là SX thì lấy lương SP làm lương cơ bản
-        if nv_bcc.get('loaichamcong') == 'SX':
-            context_params['LUONG_CO_BAN'] = float(nv_bcc.get('tong_tien_luong', 0))
+        context_params['SO_LUONG_AN'] = float(nv_bcc.get('tong_so_luong_an', 0)) # Số lượng ăn
+        context_params['SO_CONG_LAM_VIEC'] = float(nv_bcc.get('tong_cong_lamviec', 0)) # Số công làm việc
+
+        cong_chuan_thang = lich_lam_viec_dict.get(nv_id, 26)
+        if cong_chuan_thang <= 0:
+            cong_chuan_thang = 26
+        context_params['CONG_CHUAN_THANG'] = cong_chuan_thang
 
         # B. Dữ liệu từ rules: system/manual/formula
         for rule in rules_list:
@@ -135,13 +145,13 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             src = rule['nguondulieu'].strip().lower()
 
             if src == 'system':
-                if ma_qt == 'LUONG_CO_BAN':
-                    print(nv_bcc.get('loaichamcong'))
-                    if nv_bcc.get('loaichamcong') == 'VP':
-                        context_params[ma_qt] = nv_setup.get(rule['phantuluong'], None)
-                        if context_params[ma_qt]:
-                            context_params[ma_qt] = round(float(context_params[ma_qt]/(26*8)) * float(nv_bcc.get('tong_thoigian_lamviec', 0)),2)
-                        print("LUONG_CO_BAN", context_params[ma_qt])
+                if ma_qt == 'LUONG_CO_BAN':  
+                    luong_co_ban_thiet_lap = float(nv_setup.get(rule['phantuluong'], 0) or 0)
+
+                    context_params[ma_qt] = round(
+                        ((luong_co_ban_thiet_lap / cong_chuan_thang) * nv_bcc.get('tong_cong_vp_thucte', 0)) + nv_bcc.get('tong_tien_sx', 0),
+                        2
+                    )
                 else:
                     context_params[ma_qt] = nv_setup.get(rule['phantuluong'], 0.0)
             elif src == 'manual':
@@ -149,7 +159,7 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             elif src == 'formula':
                 # Gán chuỗi công thức, sẽ được tính động khi cần
                 context_params[ma_qt] = rule['bieuthuctinhtoan']
-            
+
         # Đóng gói dữ liệu cho từng nhân viên
         data_groups_map[str(nv_id)] = [{
             'tham_so': context_params,
@@ -731,7 +741,7 @@ def api_phieu_luong_list(request):
             return json_error(message, data=data)
         else:
             phieu_luong_data = Phieuluong.objects.filter(bangluong_id=bang_luong_id).select_related('nhanvien').values()
-            ct_phieu_luong_data = Ctphieuluong.objects.filter(phieuluong_id__in=phieu_luong_data.values_list('id', flat=True)).select_related('phantuluong').values()
+            ct_phieu_luong_data = Ctphieuluong.objects.filter(phieuluong_id__in=phieu_luong_data.values_list('id', flat=True)).select_related('phantuluong').order_by('thutuhienthi').values()
             ct_phieu_luong_map = defaultdict()
             for item in ct_phieu_luong_data:
                 if item['phieuluong_id'] not in ct_phieu_luong_map:
@@ -743,6 +753,7 @@ def api_phieu_luong_list(request):
                     "status": 'calculated',
                     "formula": item['bieuthuctinhtoan'],
                     "input_value": item['giatridauvao'],
+                    "code": item['maphantuluong']
                 }
             
             for item in phieu_luong_data:
@@ -817,11 +828,7 @@ def api_phieu_luong_list(request):
             nhanvien_id__in=nhanvien_ids,
             ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc],
             codilam=True
-        ).values(
-            'thoigianchamcongvao', 'thoigianchamcongra', 'thoigianlamviec', 'ngaylamviec', 'thoigianlamthem',
-            'thoigiandimuon', 'thoigianvesom', 'thoigiandisom', 'thoigianvemuon', 'loaichamcong', 'tencongviec',
-            'cophaingaynghi', 'thamsotinhluong', 'thanhtien', 'congviec_id', 'nhanvien_id', 'calamviec_id'
-        )
+        ).values()
         bcc_map = defaultdict(list)
         for item in bcc_data:
             bcc_map[str(item['nhanvien_id'])].append(item)
@@ -836,7 +843,7 @@ def api_phieu_luong_list(request):
         calc_input = {}
         for nv_id, phieu_luong_data in changes.items():
             params = {}
-            # Build params for calculator from changed data
+            # Gán trực tiếp các phần tử lương có trong dữ liệu gửi lên
             for pt_id in phantu_luong:
                 rule = quytac_chedoluong_map.get(int(pt_id))
                 if rule:
@@ -867,7 +874,7 @@ def api_phieu_luong_list(request):
             val_thuc_nhan = calculated_results.get(str(nv_id), 0)
             if float(val_thuc_nhan) != float(phieu_luong_data.get(str(id_phantu_luong_thuc_nhan))):
                 logging.warning(f"Giá trị THUC_LINH cho NV {nv_id} được tính lại: {phieu_luong_data.get(str(id_phantu_luong_thuc_nhan))} -> {val_thuc_nhan:.2f}")
-            phieu_luong_data[str(id_phantu_luong_thuc_nhan)] = val_thuc_nhan # Update value in dataset
+            phieu_luong_data[str(id_phantu_luong_thuc_nhan)] = val_thuc_nhan # Update giá trị thực nhận sau khi tính toán
 
             tong_thu_nhap = 0
             tong_khau_tru = 0
@@ -894,7 +901,7 @@ def api_phieu_luong_list(request):
             # Cập nhật THUC_LINH vào params context nếu công thức khác cần dùng (dù hiện tại chỉ print ra)
             calc_context_params['THUC_LINH'] = val_thuc_nhan
             
-            for pt_id in phantu_luong:
+            for i, pt_id in enumerate(phantu_luong):
                 val = phieu_luong_data.get(str(pt_id))
                 quy_tac = quytac_chedoluong_map.get(int(pt_id))
 
@@ -908,7 +915,7 @@ def api_phieu_luong_list(request):
 
                 loai_phan_tu = quy_tac.get('loai_phan_tu', '')
 
-                if loai_phan_tu == 'THU_NHAP':
+                if loai_phan_tu == 'THU_NHAP' and quy_tac.get('maquytac') != 'THUC_LINH':  # Không cộng THUC_LINH vào tổng thu nhập
                     tong_thu_nhap += val_float
                 elif loai_phan_tu == 'KHAU_TRU':
                     tong_khau_tru += val_float
@@ -924,6 +931,7 @@ def api_phieu_luong_list(request):
                         bieuthuctinhtoan=quy_tac.get('bieuthuctinhtoan', ''),
                         giatridauvao=dumps(calculator.extract_formula_params(quy_tac.get('bieuthuctinhtoan', ''), calc_context_params)),
                         giatritinhduoc=val_float,
+                        thutuhienthi=i,
                         phieuluong=phieuluong_obj
                     )
                 )

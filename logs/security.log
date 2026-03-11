@@ -195,3 +195,4 @@ WARNING 2025-11-13 09:43:31,567 log 9884 14732 Forbidden (CSRF token missing.): 
 WARNING 2025-11-13 09:43:32,904 log 9884 15816 Forbidden (CSRF token missing.): /hrm/to-chuc-nhan-su/api/v1/nhan-vien/
 WARNING 2025-11-13 09:43:42,711 log 9884 18488 Forbidden (CSRF token missing.): /hrm/to-chuc-nhan-su/api/v1/nhan-vien/
 WARNING 2025-11-17 23:08:38,930 log 61712 65656 Forbidden (CSRF cookie not set.): /accounts/login/
+WARNING 2026-03-11 10:35:07,131 log 144652 151360 Forbidden (CSRF token from POST incorrect.): /accounts/login/

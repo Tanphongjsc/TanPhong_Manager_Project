@@ -36551,3 +36551,48 @@ WARNING 2026-03-10 16:08:28,478 log 15780 17116 Not Found: /.well-known/appspeci
 WARNING 2026-03-10 16:08:28,479 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-03-10 16:08:30,587 log 15780 17116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-03-10 16:08:30,587 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:32:25,020 log 144652 151348 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:32:25,021 basehttp 144652 151348 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:32:55,822 log 144652 151348 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:32:55,824 basehttp 144652 151348 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:32:58,281 log 144652 151348 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:32:58,282 basehttp 144652 151348 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:07,395 basehttp 144652 151360 "POST /accounts/login/ HTTP/1.1" 403 2503
+WARNING 2026-03-11 10:35:07,843 log 144652 151360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:07,844 basehttp 144652 151360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:08,627 log 144652 151360 Not Found: /favicon.ico
+WARNING 2026-03-11 10:35:08,628 basehttp 144652 151360 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-03-11 10:35:12,710 log 144652 151360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:12,711 basehttp 144652 151360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:16,409 log 144652 151360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:16,410 basehttp 144652 151360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:28,462 log 144652 151348 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:28,463 basehttp 144652 151348 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:32,266 log 144652 147588 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:32,266 basehttp 144652 147588 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:35:35,251 log 144652 147232 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:35:35,252 basehttp 144652 147232 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:38:09,144 log 144652 147588 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:38:09,144 basehttp 144652 147588 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:38:12,128 log 144652 151348 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:38:12,129 basehttp 144652 151348 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:38:17,602 log 144652 147588 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:38:17,603 basehttp 144652 147588 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:38:19,117 log 144652 147232 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:38:19,118 basehttp 144652 147232 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:40:18,687 log 144652 147588 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:40:18,688 basehttp 144652 147588 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:40:21,886 log 144652 147588 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 10:40:21,886 basehttp 144652 147588 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 10:41:59,397 log 144652 132876 Bad Request: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+WARNING 2026-03-11 10:41:59,399 basehttp 144652 132876 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=&mode=update&page_size=2000 HTTP/1.1" 400 70
+WARNING 2026-03-11 11:06:01,226 log 144652 109264 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:06:01,227 basehttp 144652 109264 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:06:03,714 log 144652 147060 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:06:03,715 basehttp 144652 147060 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:06:42,681 log 144652 109264 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:06:42,682 basehttp 144652 109264 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:07:15,797 log 144652 136456 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:07:15,798 basehttp 144652 136456 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-11 11:07:48,699 log 144652 145816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-11 11:07:48,700 basehttp 144652 145816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
