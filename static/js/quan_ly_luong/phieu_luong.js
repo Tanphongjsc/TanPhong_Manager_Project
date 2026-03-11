@@ -264,7 +264,15 @@ class PayrollDetailManager {
         const salarySheetData = [];
         
         // Header
-        const headerRow = ['Mã NV', 'Họ tên', 'Phòng ban', 'Chức vụ'];
+        const headerRow = [
+            'Mã NV',
+            'Họ tên',
+            'Phòng ban',
+            'Chức vụ',
+            'Ngân hàng',
+            'Số tài khoản',
+            'Tên chủ tài khoản'
+        ];
         this.salaryElementsList.forEach(colId => {
             const meta = this.elementMap.get(Number(colId));
             if (meta?.code) {
@@ -277,11 +285,15 @@ class PayrollDetailManager {
 
         // Rows
         employees.forEach(emp => {
+            const bankInfo = emp.ngan_hang || {};
             const row = [
                 emp.manhanvien || '',
                 emp.hovaten || '',
                 emp.cong_tac?.phong_ban || '',
-                emp.cong_tac?.chuc_vu || ''
+                emp.cong_tac?.chuc_vu || '',
+                bankInfo.tennganhang || '',
+                bankInfo.sotknganhang || '',
+                bankInfo.tentknganhang || ''
             ];
             
             this.salaryElementsList.forEach(colId => {
@@ -366,7 +378,10 @@ class PayrollDetailManager {
         const wsSalary = XLSX.utils.aoa_to_sheet(salarySheetData);
         // Auto width đơn giản
         const wscolsSalary = headerRow.map(() => ({ wch: 15 })); 
-        wscolsSalary[1] = { wch: 25 }; 
+        wscolsSalary[1] = { wch: 25 };
+        wscolsSalary[4] = { wch: 24 };
+        wscolsSalary[5] = { wch: 18 };
+        wscolsSalary[6] = { wch: 28 };
         wsSalary['!cols'] = wscolsSalary;
         XLSX.utils.book_append_sheet(wb, wsSalary, "Chi tiết Lương");
 
