@@ -6,6 +6,7 @@ class Bangchamcong(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     thoigianchamcongvao = models.TimeField(db_column='ThoiGianChamCongVao', blank=True, null=True)  # Field name made lowercase.
     thoigianchamcongra = models.TimeField(db_column='ThoiGianChamCongRa', blank=True, null=True)  # Field name made lowercase.
+    conglamviec = models.FloatField(db_column='CongLamViec', blank=True, null=True)  # Field name made lowercase.
     thoigianlamviec = models.FloatField(db_column='ThoiGianLamViec', blank=True, null=True)  # Field name made lowercase.
     ngaylamviec = models.DateField(db_column='NgayLamViec', blank=True, null=True)  # Field name made lowercase.
     thoigianlamthem = models.FloatField(db_column='ThoiGianLamThem', blank=True, null=True)  # Field name made lowercase.

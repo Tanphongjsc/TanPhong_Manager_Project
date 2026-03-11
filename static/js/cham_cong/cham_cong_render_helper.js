@@ -46,8 +46,17 @@ const ChamCongRenderHelper = (() => {
                     <span class="text-slate-400 mx-0.5">|</span>
                     <span class="font-mono text-blue-600 font-semibold text-[11.5px]" title="Ca làm việc">${scheduleIn} - ${scheduleOut}</span>
                 </div></td>
-            <td class="p-0.5 border-r border-slate-200"><input type="time" value="${s.in || ''}" class="cell-input inp-in mt-1 !text-[13px]"></td>
-            <td class="p-0.5 border-r border-slate-200"><input type="time" value="${s.out || ''}" class="cell-input inp-out mt-1 !text-[13px]" ${outDisabled} title="${outTitle}" placeholder="${outPlaceholder}"></td>
+            <td class="p-1 border-r border-slate-200">
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-flex items-center justify-center w-4 text-blue-600" title="Giờ vào"><i class="fa-solid fa-right-to-bracket text-[9px]"></i></span>
+                        <input type="time" value="${s.in || ''}" class="cell-input inp-in !text-[13px] flex-1 min-w-0">
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-flex items-center justify-center w-4 text-blue-500" title="Giờ ra"><i class="fa-solid fa-right-from-bracket text-[9px]"></i></span>
+                        <input type="time" value="${s.out || ''}" class="cell-input inp-out !text-[13px] flex-1 min-w-0" ${outDisabled} title="${outTitle}" placeholder="${outPlaceholder}">
+                    </div>
+                </div></td>
             <td class="p-0.5 border-r border-slate-200 text-center"><div class="work-hours-display text-[12px] font-mono px-1.5 py-0.5 rounded ${workHoursClass}" title="Số giờ làm thực tế">${workHoursDisplay}</div></td>`;
     };
 
@@ -57,8 +66,8 @@ const ChamCongRenderHelper = (() => {
             <div class="inline-flex items-center justify-center w-full h-full py-1"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}></div></td>
         <td class="p-0.5 border-r border-slate-200 text-center align-middle">
             <div class="inline-flex items-center justify-center gap-1 w-full h-full py-1">
-                <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${s.ot ? 'checked' : ''}>
-                <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-orange-400 focus:ring-1 focus:ring-orange-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
+                <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-blue-600 cursor-pointer" ${s.ot ? 'checked' : ''}>
+                <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-blue-400 focus:ring-1 focus:ring-blue-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
             </div></td>
         <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
 
@@ -68,9 +77,9 @@ const ChamCongRenderHelper = (() => {
         if (!jobDef) return '';
         return parseParams(jobDef.danhsachthamso).map(p => {
             const val = jobItem.params[p.ma] !== undefined ? jobItem.params[p.ma] : (p.giatri_macdinh || '');
-            return `<div class="flex items-center bg-white border border-slate-200 rounded overflow-hidden h-[24px] shadow-sm hover:border-orange-300 transition-colors">
+            return `<div class="flex items-center bg-white border border-slate-200 rounded overflow-hidden h-[24px] shadow-sm hover:border-blue-300 transition-colors">
                 <div class="bg-slate-50 text-[9px] text-slate-500 font-bold px-1.5 h-full flex items-center border-r border-slate-100 uppercase tracking-wider select-none">${p.ma}</div>
-                <input type="text" class="param-val w-11 text-center text-xs font-semibold text-slate-700 bg-transparent border-none outline-none h-full focus:bg-orange-50 px-1" data-index="${index}" data-key="${p.ma}" value="${val}">
+                <input type="text" class="param-val w-11 text-center text-xs font-semibold text-slate-700 bg-transparent border-none outline-none h-full focus:bg-blue-50 px-1" data-index="${index}" data-key="${p.ma}" value="${val}">
             </div>`;
         }).join('');
     };
@@ -83,32 +92,69 @@ const ChamCongRenderHelper = (() => {
             const deleteBtn = showDelete
                 ? `<button class="btn-remove-job w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all ml-auto shrink-0" data-index="${index}" title="Xóa"><i class="fa-solid fa-xmark text-xs"></i></button>`
                 : '<div class="w-6 h-6 ml-auto shrink-0"></div>';
-            return `<div class="job-row flex items-center gap-2 p-1.5 border-b border-dashed border-slate-200 last:border-0 hover:bg-orange-50/40 transition-colors group/job relative">
-                <div class="w-5 h-5 flex items-center justify-center bg-orange-100 text-orange-700 text-[10px] font-bold rounded-full border border-orange-200 shadow-sm select-none shrink-0">${index + 1}</div>
-                <div class="w-[150px] shrink-0"><select class="job-select w-full text-xs font-medium text-slate-700 border border-slate-200 rounded py-0.5 px-1.5 focus:border-orange-500 outline-none bg-white shadow-sm h-[26px]" data-index="${index}"><option value="">--</option>${currentOpts}</select></div>
+            return `<div class="job-row flex items-center gap-2 p-1.5 border-b border-dashed border-slate-200 last:border-0 hover:bg-blue-50/40 transition-colors group/job relative">
+                <div class="min-w-[16px] h-4 px-1 inline-flex items-center justify-center bg-orange-100 text-orange-700 text-[9px] font-bold rounded border border-orange-200 shadow-sm select-none shrink-0 leading-none">${index + 1}</div>
+                <div class="w-[150px] shrink-0"><select class="job-select w-full text-xs font-medium text-slate-700 border border-slate-200 rounded py-0.5 px-1.5 focus:border-blue-500 outline-none bg-white shadow-sm h-[26px]" data-index="${index}"><option value="">--</option>${currentOpts}</select></div>
                 <div class="flex-1 flex flex-wrap items-center gap-2 min-h-[26px]">${renderJobParams(jobItem, index, jobs)}</div>
                 ${deleteBtn}</div>`;
         }).join('');
 
         return `<td class="p-0 border-r border-slate-200 align-top"><div class="flex flex-col w-full">${jobListHtml}
-                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs text-slate-400 hover:text-orange-500 font-medium transition-colors" title="Thêm">+ Thêm</button></div></div></td>
+                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs text-slate-400 hover:text-blue-500 font-medium transition-colors" title="Thêm">+ Thêm</button></div></div></td>
             <td class="p-0.5 border-r border-slate-200 text-center align-middle">
                 <div class="inline-flex items-center justify-center w-full h-full py-1"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}></div></td>
             <td class="p-0.5 border-r border-slate-200 text-center align-middle">
                 <div class="inline-flex items-center justify-center gap-1 w-full h-full py-1">
-                    <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${s.ot ? 'checked' : ''}>
-                    <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-orange-400 focus:ring-1 focus:ring-orange-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
+                    <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-blue-600 cursor-pointer" ${s.ot ? 'checked' : ''}>
+                    <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-blue-400 focus:ring-1 focus:ring-blue-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
                 </div></td>
-            <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-orange-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
+            <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
+    };
+
+    const renderHybridCells = (s, jobs) => {
+        const jobOpts = jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
+        const jobListHtml = s.jobs.map((jobItem, index) => {
+            const currentOpts = jobItem.jobId ? jobOpts.replace(`value="${jobItem.jobId}"`, `value="${jobItem.jobId}" selected`) : jobOpts;
+            const showDelete = index > 0 || s.jobs.length > 1 || jobItem.jobId;
+            const deleteBtn = showDelete
+                ? `<button class="btn-remove-job w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all ml-auto shrink-0" data-index="${index}" title="Xóa"><i class="fa-solid fa-xmark text-xs"></i></button>`
+                : '<div class="w-6 h-6 ml-auto shrink-0"></div>';
+            return `<div class="job-row flex items-center gap-2 p-1.5 border-b border-dashed border-slate-200 last:border-0 hover:bg-blue-50/40 transition-colors group/job relative">
+                <div class="min-w-[16px] h-4 px-1 inline-flex items-center justify-center bg-orange-100 text-orange-700 text-[9px] font-bold rounded border border-orange-200 shadow-sm select-none shrink-0 leading-none">${index + 1}</div>
+                <div class="w-[150px] shrink-0"><select class="job-select w-full text-xs font-medium text-slate-700 border border-slate-200 rounded py-0.5 px-1.5 focus:border-blue-500 outline-none bg-white shadow-sm h-[26px]" data-index="${index}"><option value="">--</option>${currentOpts}</select></div>
+                <div class="flex-1 flex flex-wrap items-center gap-2 min-h-[26px]">${renderJobParams(jobItem, index, jobs)}</div>
+                ${deleteBtn}</div>`;
+        }).join('');
+
+        return `
+        <td class="px-2 py-1 border-r border-slate-200"><div class="analysis-result flex flex-wrap gap-0.5 min-h-[16px] mt-1"><span class="text-[10px] text-slate-300">-</span></div></td>
+        <td class="p-0 border-r border-slate-200 align-top"><div class="flex flex-col w-full">${jobListHtml}
+                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs text-slate-400 hover:text-blue-500 font-medium transition-colors" title="Thêm">+ Thêm</button></div></div></td>
+        <td class="px-2 py-1 border-r border-slate-200">
+            <div class="flex items-center gap-2 mb-2 pb-1 border-b border-slate-100">
+                <label class="inline-flex items-center gap-1 text-[11px] text-slate-600">
+                    <input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}>
+                    Ăn
+                </label>
+            </div>
+            <div class="flex items-center gap-1.5 pt-1">
+                <label class="inline-flex items-center gap-1 text-[11px] text-slate-600">
+                    <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-orange-500 cursor-pointer" ${s.ot ? 'checked' : ''}>
+                    OT
+                </label>
+                <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-orange-400 focus:ring-1 focus:ring-orange-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${s.ot ? '' : 'disabled'}>
+            </div>
+        </td>
+        <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300" placeholder="..." value="${s.note || ''}"></td>`;
     };
 
     const renderMasterParams = (job) => parseParams(job.danhsachthamso).map(p => `
-        <div class="param-group bg-orange-50 border-orange-200">
-            <label class="param-label text-orange-700">${p.ma}</label>
-            <input type="text" class="param-val m-p-val text-orange-800" data-key="${p.ma}" value="${p.giatri_macdinh || ''}">
+        <div class="param-group bg-blue-50 border-blue-200">
+            <label class="param-label text-blue-700">${p.ma}</label>
+            <input type="text" class="param-val m-p-val text-blue-800" data-key="${p.ma}" value="${p.giatri_macdinh || ''}">
         </div>`).join('');
 
-    return { formatTimeDisplay, parseParams, renderCompactAnalysis, renderDetailedAnalysis, renderCommonCells, renderVPCells, renderSXCells, renderJobParams, renderMasterParams };
+    return { formatTimeDisplay, parseParams, renderCompactAnalysis, renderDetailedAnalysis, renderCommonCells, renderVPCells, renderSXCells, renderHybridCells, renderJobParams, renderMasterParams };
 })();
 
 window.ChamCongRenderHelper = ChamCongRenderHelper;
