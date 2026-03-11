@@ -376,7 +376,7 @@ def api_phong_ban_detail(request, id):
                 'message': f'Lỗi: {str(e)}'
             }, status=400)
 
-@login_required
+# @login_required
 @require_http_methods(["GET"])
 def api_phong_ban_nhan_vien(request):
     """API lấy danh sách nhân sự theo phòng ban
@@ -466,6 +466,11 @@ def api_phong_ban_nhan_vien(request):
                 'loainv': nv.loainv.id if nv.loainv else None,
             }
             nv_data['cong_tac'] = cong_tac
+            nv_data['ngan_hang'] = {
+                'tennganhang': nv.nganhang.tennganhang if nv.nganhang else None,
+                'sotknganhang': nv.sotknganhang,
+                'tentknganhang': nv.tentknganhang
+            }
 
             result.append(nv_data)
 
