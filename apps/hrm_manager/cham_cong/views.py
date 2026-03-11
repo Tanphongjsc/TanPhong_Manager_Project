@@ -322,6 +322,42 @@ def _get_calamviec_meta(calamviec_ids, include_khung_gio=False):
         for c in qs
     }
 
+def _build_merged_khung_gio(item, list_khung_gio):
+    """
+    Gộp nhiều khung giờ thành 1 khung khi ca chỉ yêu cầu chấm công 1 lần.
+    Áp dụng giống logic mode create.
+    """
+    if not list_khung_gio:
+        return None
+
+    if item.get('sokhunggiotrongca', 0) <= 1 or item.get('solanchamcongtrongngay', 0) != 1:
+        return None
+
+    khung_dau = dict(list_khung_gio[0])
+    khung_cuoi = list_khung_gio[-1]
+    khung_dau.update({
+        'congcuakhunggio': item.get('congtongcuaca', khung_dau.get('congcuakhunggio')),
+        'thoigianketthuc': khung_cuoi.get('thoigianketthuc'),
+        'thoigianchophepvesomnhat': khung_cuoi.get('thoigianchophepvesomnhat'),
+        'thoigianchophepvemuonnhat': khung_cuoi.get('thoigianchophepvemuonnhat'),
+        'thoigianvesomkhongtinhchamcong': khung_cuoi.get('thoigianvesomkhongtinhchamcong')
+    })
+    return khung_dau
+
+def _resolve_khung_gio_lam_viec(item, list_khung_gio, idx_lan_cham):
+    """
+    Chọn khung giờ làm việc cho 1 bản ghi chấm công.
+    Ưu tiên logic gộp khung giờ, nếu không thì lấy theo index lần chấm.
+    """
+    merged_khung_gio = _build_merged_khung_gio(item, list_khung_gio)
+    if merged_khung_gio is not None:
+        return merged_khung_gio
+
+    if idx_lan_cham < 0 or idx_lan_cham >= len(list_khung_gio):
+        return None
+
+    return list_khung_gio[idx_lan_cham]
+
 def build_cham_cong_data_for_update(ngay_lam_viec):
     """
     Lấy dữ liệu chấm công đã lưu để phục vụ chỉnh sửa (mode=update).
@@ -338,10 +374,12 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
         cocancheckout=F('calamviec__cocancheckout'),
         loaicalamviec=F('calamviec__loaichamcong'),
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
+        congtongcuaca=F('calamviec__congcuacalamviec'),
     ).values(
         'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi',
         'hovaten', 'manhanvien', 'loainv',
         'solanchamcongtrongngay', 'sokhunggiotrongca', 'cocancheckout', 'loaicalamviec', 'tongthoigianlamvieccuaca',
+        'congtongcuaca',
         'thoigianchamcongvao', 'thoigianchamcongra', 'coantrua', 'cotinhlamthem', 'thoigianlamthem',
         'codilam', 'loaichamcong', 'tencongviec', 'congviec_id', 'thamsotinhluong', 'ghichu'
     ).order_by('nhanvien_id', 'id')
@@ -368,11 +406,12 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
         item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
 
         idx = row_index_by_emp[nhanvien_id]
-        if list_khung_gio:
-            idx_safe = min(idx, len(list_khung_gio) - 1)
-            item['khunggiolamviec'] = list_khung_gio[idx_safe]
-        else:
-            item['khunggiolamviec'] = {}
+        khung_gio_lam_viec = _resolve_khung_gio_lam_viec(item, list_khung_gio, idx)
+        if khung_gio_lam_viec is None:
+            row_index_by_emp[nhanvien_id] += 1
+            continue
+
+        item['khunggiolamviec'] = khung_gio_lam_viec
         row_index_by_emp[nhanvien_id] += 1
 
         item['sophutot'] = item.get('thoigianlamthem') or 0
@@ -491,23 +530,9 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
             # Nếu đang xem danh sách ĐÃ chấm: Lấy lại thông tin của lần chấm gần nhất (lùi 1 index)
             idx_lan_cham = max(0, min(idx_lan_cham - 1, len(list_khung_gio) - 1))
 
-        # Logic Merge Shift: Nhiều khung giờ nhưng chỉ chấm 1 lần
-        if item['sokhunggiotrongca'] > 1 and item['solanchamcongtrongngay'] == 1:
-            khung_dau = list_khung_gio[0]
-            khung_cuoi = list_khung_gio[-1]
-            khung_dau.update({
-                'congcuakhunggio': item['congtongcuaca'],
-                'thoigianketthuc': khung_cuoi['thoigianketthuc'],
-                'thoigianchophepvesomnhat': khung_cuoi['thoigianchophepvesomnhat'],
-                'thoigianchophepvemuonnhat': khung_cuoi['thoigianchophepvemuonnhat'],
-                'thoigianvesomkhongtinhchamcong': khung_cuoi['thoigianvesomkhongtinhchamcong']
-            })
-            item['khunggiolamviec'] = khung_dau
-        else:
-            # Lấy khung giờ tương ứng với lần chấm công hiện tại
-            if idx_lan_cham >= len(list_khung_gio):
-                continue
-            item['khunggiolamviec'] = list_khung_gio[idx_lan_cham]
+        item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_khung_gio, idx_lan_cham)
+        if item['khunggiolamviec'] is None:
+            continue
 
         nhanvien_id = item['nhanvien_id']
         item['da_cham_cong'] = da_cham_cong
