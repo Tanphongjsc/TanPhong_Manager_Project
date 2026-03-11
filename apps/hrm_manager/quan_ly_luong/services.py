@@ -1445,6 +1445,37 @@ class KyLuongService:
         return True, "Xóa kỳ lương thành công"
     
     @classmethod
+    @transaction.atomic
+    def finalize_period(cls, ky_luong):
+        """
+        Chốt kỳ lương: pending -> finalized
+        Điều kiện: tất cả bảng lương trong kỳ phải ở trạng thái approved hoặc paid
+        """
+        computed_status = cls.get_period_status(ky_luong)
+        if computed_status not in [cls.STATUS_PENDING, cls.STATUS_CALCULATED, cls.STATUS_PROCESSING]:
+            return False, f"Kỳ lương đang ở trạng thái '{cls.get_status_display(computed_status)}', không thể chốt"
+        
+        # Kiểm tra tất cả bảng lương trong kỳ
+        bang_luong_in_ky = Bangluong.objects.filter(kyluong=ky_luong)
+        
+        if not bang_luong_in_ky.exists():
+            return False, "Kỳ lương chưa có bảng lương nào, không thể chốt"
+        
+        # Tất cả bảng lương phải ở approved hoặc paid
+        not_approved = bang_luong_in_ky.exclude(
+            trangthai__in=['approved', 'paid', 'cancelled']
+        )
+        if not_approved.exists():
+            count = not_approved.count()
+            return False, f"Còn {count} bảng lương chưa được duyệt hoặc chi trả. Vui lòng hoàn tất trước khi chốt kỳ."
+        
+        ky_luong.trangthai = cls.STATUS_FINALIZED
+        ky_luong.updated_at = timezone.now()
+        ky_luong.save(update_fields=['trangthai', 'updated_at'])
+        
+        return True, "Đã chốt kỳ lương thành công"
+    
+    @classmethod
     def sync_status_to_db(cls, ky_luong):
         """
         ✅ MỚI: Đồng bộ computed status vào DB
@@ -1685,6 +1716,16 @@ class BangLuongService:
         except Chedoluong.DoesNotExist:
             raise ValueError("Chế độ lương không tồn tại")
         
+        # ✅ BỔ SUNG #3: Không cho tạo bảng lương cho kỳ lương đã finalized
+        if ky_luong.trangthai == KyLuongService.STATUS_FINALIZED:
+            raise ValueError("Kỳ lương đã chốt, không thể tạo bảng lương mới")
+        
+        # ✅ BỔ SUNG #4: Chế độ lương phải active và chưa bị xóa mềm
+        if che_do_luong.trangthai != 'active':
+            raise ValueError("Chế độ lương không ở trạng thái hoạt động")
+        if hasattr(che_do_luong, 'is_deleted') and che_do_luong.is_deleted:
+            raise ValueError("Chế độ lương đã bị xóa")
+        
         # Check duplicate
         is_duplicate, msg = cls.check_duplicate(ky_luong_id, che_do_luong_id)
         if is_duplicate:
@@ -1731,6 +1772,11 @@ class BangLuongService:
         if ky_luong_id and che_do_luong_id:
             if (int(ky_luong_id) != (bang_luong.kyluong_id or 0) or 
                 int(che_do_luong_id) != (bang_luong.chedoluong_id or 0)):
+                
+                # ✅ BỔ SUNG #5: Không cho đổi kỳ/chế độ lương nếu đã có phiếu lương
+                has_payslips = Phieuluong.objects.filter(bangluong=bang_luong).exists()
+                if has_payslips:
+                    raise ValueError("Bảng lương đã có phiếu lương, không thể thay đổi kỳ lương hoặc chế độ lương")
                 
                 is_duplicate, msg = cls.check_duplicate(
                     ky_luong_id, che_do_luong_id, exclude_id=bang_luong.id
@@ -1839,6 +1885,73 @@ class BangLuongService:
             'can_edit': cls.can_edit(bang_luong)[0],
             'can_delete': cls.can_delete(bang_luong)[0],
         }
+    
+    # ============================================================
+    # STATUS TRANSITION
+    # ============================================================
+    
+    # Allowed transitions map
+    ALLOWED_TRANSITIONS = {
+        STATUS_DRAFT: [STATUS_PROCESSING, STATUS_CANCELLED],
+        STATUS_PROCESSING: [STATUS_CALCULATED, STATUS_CANCELLED],
+        STATUS_CALCULATED: [STATUS_APPROVED, STATUS_CANCELLED],
+        STATUS_APPROVED: [STATUS_PAID],
+        STATUS_PAID: [],
+        STATUS_CANCELLED: [],
+    }
+    
+    @classmethod
+    def _validate_transition(cls, bang_luong, target_status):
+        """Validate chuyển trạng thái có hợp lệ không"""
+        current = cls.get_computed_status(bang_luong)
+        allowed = cls.ALLOWED_TRANSITIONS.get(current, [])
+        if target_status not in allowed:
+            return False, f"Không thể chuyển từ '{cls.get_status_display(current)}' sang '{cls.get_status_display(target_status)}'"
+        return True, ""
+    
+    @classmethod
+    @transaction.atomic
+    def approve(cls, bang_luong):
+        """Duyệt bảng lương: calculated -> approved"""
+        is_valid, msg = cls._validate_transition(bang_luong, cls.STATUS_APPROVED)
+        if not is_valid:
+            return False, msg
+        
+        # Phải có phiếu lương mới được duyệt
+        has_payslips = Phieuluong.objects.filter(bangluong=bang_luong).exists()
+        if not has_payslips:
+            return False, "Bảng lương chưa có phiếu lương, không thể duyệt"
+        
+        bang_luong.trangthai = cls.STATUS_APPROVED
+        bang_luong.updated_at = timezone.now()
+        bang_luong.save(update_fields=['trangthai', 'updated_at'])
+        return True, "Đã duyệt bảng lương"
+    
+    @classmethod
+    @transaction.atomic
+    def mark_paid(cls, bang_luong):
+        """Đánh dấu đã chi trả: approved -> paid"""
+        is_valid, msg = cls._validate_transition(bang_luong, cls.STATUS_PAID)
+        if not is_valid:
+            return False, msg
+        
+        bang_luong.trangthai = cls.STATUS_PAID
+        bang_luong.updated_at = timezone.now()
+        bang_luong.save(update_fields=['trangthai', 'updated_at'])
+        return True, "Đã đánh dấu chi trả bảng lương"
+    
+    @classmethod
+    @transaction.atomic
+    def cancel(cls, bang_luong):
+        """Hủy bảng lương: draft/processing/calculated -> cancelled"""
+        is_valid, msg = cls._validate_transition(bang_luong, cls.STATUS_CANCELLED)
+        if not is_valid:
+            return False, msg
+        
+        bang_luong.trangthai = cls.STATUS_CANCELLED
+        bang_luong.updated_at = timezone.now()
+        bang_luong.save(update_fields=['trangthai', 'updated_at'])
+        return True, "Đã hủy bảng lương"
     
     @classmethod
     def get_status_display(cls, status):

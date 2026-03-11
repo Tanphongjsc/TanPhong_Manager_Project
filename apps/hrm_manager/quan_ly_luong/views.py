@@ -70,6 +70,11 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         'maquytac', 'bieuthuctinhtoan', 'nguondulieu', 'phantuluong', 'phantuluong__loaiphantu'
     )
     rules_list = list(rules_qs)
+    
+    # ✅ BỔ SUNG #6: Check quy tắc rỗng trước khi sinh phiếu
+    if not rules_list:
+        return None, "Chế độ lương chưa có quy tắc tính lương nào. Vui lòng thiết lập quy tắc trước."
+    
     # Các mã quy tắc cần tính bằng công thức
     formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'].strip().lower() == 'formula']
 
@@ -292,6 +297,12 @@ def api_phan_tu_luong_list(request):
         except :
             return json_error('Dữ liệu không hợp lệ', status=400)
 
+        # ✅ BỔ SUNG #10: Validate unique mã phần tử
+        maphantu = data.get('maphantu', '').strip()
+        if maphantu:
+            if not validate_unique_field(Phantuluong, 'maphantu', maphantu):
+                return json_error('Mã phần tử lương đã tồn tại', status=400)
+            
         phantu_luong_obj = Phantuluong.objects.create(
             tenphantu = data.get('tenphantu', '').strip().title(),
             maphantu = data.get('maphantu', '').strip(),
@@ -346,6 +357,12 @@ def api_phan_tu_luong_detail(request, pk):
         try:
             data = loads(request.body)
 
+            # ✅ BỔ SUNG #10: Validate unique mã phần tử khi update
+            maphantu = data.get('maphantu', phan_tu_luong.maphantu).strip()
+            if maphantu != phan_tu_luong.maphantu:
+                if not validate_unique_field(Phantuluong, 'maphantu', maphantu, exclude_pk=phan_tu_luong.id):
+                    return json_error('Mã phần tử lương đã tồn tại', status=400)
+                
             phan_tu_luong.tenphantu = data.get('tenphantu', phan_tu_luong.tenphantu).strip().title()
             phan_tu_luong.maphantu = data.get('maphantu', phan_tu_luong.maphantu).strip()
             phan_tu_luong.loaiphantu = data.get('loaiphantu', phan_tu_luong.loaiphantu).strip()
@@ -488,7 +505,13 @@ def api_nhom_phan_tu_luong_list(request):
             data = loads(request.body)
         except :
             return json_error('Dữ liệu không hợp lệ', status=400)
-
+        
+         # ✅ BỔ SUNG #9: Validate unique mã nhóm
+        manhom = data.get('manhom', '').strip()
+        if manhom:
+            if not validate_unique_field(Nhomphantuluong, 'manhom', manhom):
+                return json_error('Mã nhóm phần tử lương đã tồn tại', status=400)
+            
         nhom_phan_tu_luong_obj = Nhomphantuluong.objects.create(
             manhom = data.get('manhom', '').strip(),
             tennhom = data.get('tennhom', '').strip().title(),
@@ -529,6 +552,12 @@ def api_nhom_phan_tu_luong_detail(request, pk):
         try:
             data = loads(request.body)
 
+            # ✅ BỔ SUNG #9: Validate unique mã nhóm khi update
+            manhom = data.get('manhom', nhom_phan_tu_luong.manhom).strip()
+            if manhom != nhom_phan_tu_luong.manhom:
+                if not validate_unique_field(Nhomphantuluong, 'manhom', manhom, exclude_pk=nhom_phan_tu_luong.id):
+                    return json_error('Mã nhóm phần tử lương đã tồn tại', status=400)
+                
             nhom_phan_tu_luong.tennhom = data.get('tennhom', nhom_phan_tu_luong.tennhom).strip().title()
             nhom_phan_tu_luong.manhom = data.get('manhom', nhom_phan_tu_luong.manhom).strip()
             nhom_phan_tu_luong.updated_at = now().date()
@@ -1881,7 +1910,20 @@ def api_ky_luong_delete(request, pk):
     else:
         return json_error(msg)
 
-
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_ky_luong_finalize(request, pk):
+    """API Chốt kỳ lương: pending -> finalized"""
+    ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
+    if not isinstance(ky_luong, Kyluong):
+        return ky_luong
+    
+    success, msg = KyLuongService.finalize_period(ky_luong)
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+    
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_ky_luong_get_defaults(request):
@@ -2101,6 +2143,50 @@ def api_bang_luong_delete(request, pk):
     else:
         return json_error(msg)
 
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_bang_luong_approve(request, pk):
+    """API Duyệt bảng lương: calculated -> approved"""
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    success, msg = BangLuongService.approve(bang_luong)
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+
+
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_bang_luong_mark_paid(request, pk):
+    """API Đánh dấu đã chi trả: approved -> paid"""
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    success, msg = BangLuongService.mark_paid(bang_luong)
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+
+
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_bang_luong_cancel(request, pk):
+    """API Hủy bảng lương: draft/processing/calculated -> cancelled"""
+    bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
+    if not isinstance(bang_luong, Bangluong):
+        return bang_luong
+    
+    success, msg = BangLuongService.cancel(bang_luong)
+    if success:
+        return json_success(msg)
+    else:
+        return json_error(msg)
+    
 
 @require_http_methods(["GET"])
 @handle_exceptions

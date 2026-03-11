@@ -36497,3 +36497,57 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lam_them/quytac_lam_them.html
 ERROR 2026-03-06 15:17:40,103 basehttp 7560 10748 "GET /hrm/cham-cong/lam-them/quy-tac/ HTTP/1.1" 500 92947
+WARNING 2026-03-10 10:29:39,454 log 18312 11904 Not Found: /favicon.ico
+WARNING 2026-03-10 10:29:39,462 basehttp 18312 11904 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-03-10 10:30:05,198 log 18312 10108 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/
+WARNING 2026-03-10 10:30:05,198 basehttp 18312 10108 "POST /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/ HTTP/1.1" 400 236
+WARNING 2026-03-10 10:30:10,492 log 18312 10108 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/6/toggle-status/
+WARNING 2026-03-10 10:30:10,492 basehttp 18312 10108 "POST /hrm/quan-ly-luong/api/phan-tu-luong/6/toggle-status/ HTTP/1.1" 400 236
+ERROR 2026-03-10 11:14:49,418 log 18312 13116 Internal Server Error: /hrm/quan-ly-luong/api/phieu-luong/list
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\quan_ly_luong\views.py", line 839, in api_phieu_luong_list
+    if float(val_thuc_nhan) != float(phieu_luong_data.get(str(id_phantu_luong_thuc_nhan))):
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+ERROR 2026-03-10 11:14:49,422 basehttp 18312 13116 "POST /hrm/quan-ly-luong/api/phieu-luong/list HTTP/1.1" 500 22275
+WARNING 2026-03-10 11:30:19,090 log 11720 8112 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/list
+WARNING 2026-03-10 11:30:19,095 basehttp 11720 8112 "POST /hrm/quan-ly-luong/api/phan-tu-luong/list HTTP/1.1" 400 116
+WARNING 2026-03-10 15:58:36,028 log 14752 19884 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/
+WARNING 2026-03-10 15:58:36,030 basehttp 14752 19884 "POST /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/ HTTP/1.1" 400 236
+WARNING 2026-03-10 16:02:04,499 log 14752 19884 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:02:04,500 basehttp 14752 19884 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:02:11,974 log 14752 19884 Method Not Allowed (GET): /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/
+WARNING 2026-03-10 16:02:12,128 basehttp 14752 19884 "GET /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/ HTTP/1.1" 405 0
+WARNING 2026-03-10 16:02:18,806 log 14752 19884 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:02:18,807 basehttp 14752 19884 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:03:51,129 log 14752 15912 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:03:51,130 basehttp 14752 15912 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:04:03,121 log 14752 19884 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:04:03,122 basehttp 14752 19884 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:07:51,080 log 15780 17908 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:07:51,081 basehttp 15780 17908 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:07:53,738 log 15780 4328 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:07:53,739 basehttp 15780 4328 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:08:20,337 log 15780 17116 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/list
+WARNING 2026-03-10 16:08:20,339 basehttp 15780 17116 "POST /hrm/quan-ly-luong/api/phan-tu-luong/list HTTP/1.1" 400 105
+WARNING 2026-03-10 16:08:28,268 log 15780 17116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:08:28,270 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:08:28,478 log 15780 17116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:08:28,479 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-10 16:08:30,587 log 15780 17116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-10 16:08:30,587 basehttp 15780 17116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242

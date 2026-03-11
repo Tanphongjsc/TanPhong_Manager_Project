@@ -1229,7 +1229,21 @@ class LichLamViecService:
             is_valid, msg = validate_schedule_time_overlap(data.get('ChiTietCa', []))
             if not is_valid:  
                 raise ValueError(msg)
-        
+            
+        # ✅ BỔ SUNG #8: Chặn đổi loại kịch bản nếu có dữ liệu lịch thực tế quá khứ
+        new_loai = data.get('LoaiKichBan')
+        if new_loai and new_loai != lich.loaikichbanlamviec:
+            has_past_data = Lichlamviecthucte.objects.filter(
+                lichlamviec=lich,
+                ngaylamviec__lt=date.today(),
+                is_deleted=False
+            ).exists()
+            if has_past_data:
+                raise ValueError(
+                    "Không thể thay đổi loại kịch bản vì lịch làm việc đã có dữ liệu thực tế trong quá khứ. "
+                    "Vui lòng tạo lịch làm việc mới."
+                )
+            
         all_dept_ids = LichLamViecService._expand_dept_ids(dept_ids)
         all_emp_ids = LichLamViecService.resolve_all_employees(all_dept_ids, direct_emp_ids)
         
