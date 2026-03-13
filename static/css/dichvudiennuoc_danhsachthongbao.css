@@ -1,8 +1,8 @@
-/* Danh sách thông báo dịch vụ - CSS */
+/* Danh sách thông báo dịch vụ - CSS (Tailwind-compatible) */
 
 .page-container {
-    max-width: none; 
-    width: 100%;     
+    max-width: none;
+    width: 100%;
     margin: 0 auto;
     padding: 20px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -30,25 +30,68 @@
     font-size: 1.8rem;
 }
 
-/* Z-index cho modal layers */
-.modal {
+/* ==================== MODAL SYSTEM (Custom - thay thế Bootstrap Modal) ==================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
     z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
 }
 
-.modal-backdrop {
-    z-index: 1040;
+.modal-overlay.hidden {
+    display: none !important;
 }
 
-/* Khi có modal thêm dịch vụ mở từ edit modal */
-.modal.modal-nested {
-    z-index: 1060 !important;
+.modal-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.2s ease-out;
 }
 
-.modal.modal-nested + .modal-backdrop {
-    z-index: 1055 !important;
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-/* Fix cho body khi có nhiều modal */
+.modal-container.modal-sm {
+    max-width: 500px;
+}
+
+.modal-container.modal-xl {
+    max-width: 95%;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.modal-close-btn:hover {
+    opacity: 1;
+}
+
+/* Z-index cho nested modal (addServiceModal mở từ editModal) */
+.modal-overlay.modal-nested {
+    z-index: 1060;
+}
+
+/* Fix cho body khi có modal */
 body.modal-open {
     overflow: hidden;
 }
@@ -136,22 +179,22 @@ body.modal-open {
     background: white;
     border: 1px solid #ddd;
     border-top: none;
-    max-height: 250px; /* Tăng chiều cao tối đa */
+    max-height: 250px;
     overflow-y: auto;
-    z-index: 1000;
+    z-index: 1070;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     display: none;
 }
 
 .company-dropdown-item {
-    padding: 10px 12px; /* Tăng padding để dễ click */
+    padding: 10px 12px;
     cursor: pointer;
     border-bottom: 1px solid #f0f0f0;
     transition: background-color 0.2s;
-    word-wrap: break-word; /* Xuống dòng nếu tên công ty dài */
+    word-wrap: break-word;
 }
 
-/* Thêm scrollbar styling cho dropdown */
+/* Scrollbar styling cho dropdown */
 .company-dropdown::-webkit-scrollbar {
     width: 6px;
 }
@@ -260,6 +303,17 @@ body.modal-open {
     color: white !important;
 }
 
+.btn-outline-success {
+    background: transparent;
+    color: #1cc88a;
+    border: 2px solid #1cc88a;
+}
+
+.btn-outline-success:hover {
+    background: #1cc88a;
+    color: white;
+}
+
 .btn-secondary {
     background: #6c757d;
     color: white;
@@ -276,6 +330,11 @@ body.modal-open {
 
 .btn-danger:hover {
     background: #c0392b;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
 }
 
 /* Data Table */
@@ -388,6 +447,10 @@ body.modal-open {
 
 .text-end {
     text-align: right !important;
+}
+
+.text-center {
+    text-align: center !important;
 }
 
 /* Text overflow handling */
@@ -569,7 +632,7 @@ body.modal-open {
     cursor: not-allowed;
 }
 
-/* Modal Styles */
+/* ==================== MODAL PARTS ==================== */
 .modal-header {
     padding: 20px;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -577,6 +640,7 @@ body.modal-open {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 12px 12px 0 0;
 }
 
 .modal-header h5,
@@ -588,6 +652,10 @@ body.modal-open {
 .modal-body {
     padding: 25px 20px;
     text-align: center;
+}
+
+.modal-body.text-left {
+    text-align: left;
 }
 
 .modal-body h4 {
@@ -610,18 +678,53 @@ body.modal-open {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    border-radius: 0 0 12px 12px;
 }
 
-/* Create Notification Modal */
-#createNotificationModal .modal-dialog {
-    max-width: 95%;
+/* ==================== FORM CONTROLS ==================== */
+.form-label {
+    display: block;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
 }
 
-#createNotificationModal .modal-body {
-    padding: 25px;
-    text-align: left;
+.form-input {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #d1d3e2;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+    box-sizing: border-box;
 }
 
+.form-input:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+    outline: none;
+}
+
+.form-input[readonly] {
+    background-color: #f8f9fc !important;
+    opacity: 1;
+    cursor: not-allowed;
+    color: #6c757d !important;
+}
+
+.form-input[readonly]:focus {
+    box-shadow: none !important;
+    border-color: #d1d3e2 !important;
+}
+
+/* Required field indicator */
+.form-label .text-red-500 {
+    font-weight: bold;
+}
+
+/* ==================== SERVICE DETAILS SECTION ==================== */
 .service-details-section {
     border: 1px solid #e3e6f0;
     border-radius: 8px;
@@ -635,20 +738,17 @@ body.modal-open {
     margin-bottom: 20px;
 }
 
-.service-actions .btn-sm {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-}
-
-/* Services Table */
-#services-table {
+/* Services Table (trong modal tạo/sửa) */
+.services-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 0.85rem;
     background: white;
     border-radius: 6px;
     overflow: hidden;
 }
 
-#services-table thead th {
+.services-table thead th {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     padding: 12px 8px;
@@ -657,50 +757,43 @@ body.modal-open {
     border: none;
 }
 
-#services-table tbody td {
+.services-table tbody td {
     padding: 8px;
     vertical-align: middle;
-    border-color: #e3e6f0;
+    border-bottom: 1px solid #e3e6f0;
 }
 
-#services-table input.form-control {
+.services-table input.form-input,
+.services-table input[type="text"],
+.services-table input[type="number"] {
     padding: 6px 8px;
     font-size: 0.8rem;
     border: 1px solid #d1d3e2;
     border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-#services-table select.form-select {
-    padding: 6px 8px;
-    font-size: 0.8rem;
-    border: 1px solid #d1d3e2;
-    border-radius: 4px;
-}
-
-#services-table .btn-sm {
-    padding: 4px 8px;
-    font-size: 0.7rem;
+.services-table input:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.1);
+    outline: none;
 }
 
 /* Service name input trong table */
-#services-table .service-name-input {
+.services-table .service-name-input {
     min-width: 180px;
     background-color: #fff;
 }
 
-#services-table .service-name-input:focus {
-    border-color: #4e73df;
-    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.1);
-}
-
 /* Style cho empty service row */
-#services-tbody .empty-service-row {
+.services-table .empty-service-row {
     background-color: #f8f9fc;
     color: #6c757d;
     font-style: italic;
 }
 
-#services-tbody .empty-service-row td {
+.services-table .empty-service-row td {
     padding: 30px 20px;
     text-align: center;
 }
@@ -710,53 +803,50 @@ body.modal-open {
     border: 2px solid #4e73df;
 }
 
-.summary-info .d-flex {
-    margin-bottom: 8px;
+/* Utility classes dùng trong JS (tương thích với code JS cũ) */
+.fw-bold {
+    font-weight: 700;
 }
 
-.summary-info .d-flex:last-child {
-    margin-bottom: 0;
-    font-size: 1.1rem;
+.text-primary {
+    color: #4e73df;
 }
 
-/* Add Service Modal */
-#addServiceModal .modal-body .form-control,
-#addServiceModal .modal-body .form-select {
-    padding: 10px 12px;
-    border: 2px solid #d1d3e2;
-    border-radius: 6px;
+.text-muted {
+    color: #6c757d;
 }
 
-#addServiceModal .modal-body .form-control:focus,
-#addServiceModal .modal-body .form-select:focus {
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #4e73df;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d1d3e2;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
     border-color: #4e73df;
-    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
-}
-
-/* Form controls trong modal */
-.modal-body .form-control,
-.modal-body .form-select {
-    padding: 10px 12px;
-    border: 2px solid #d1d3e2;
-    border-radius: 6px;
-    font-size: 0.9rem;
-}
-
-.modal-body .form-control:focus,
-.modal-body .form-select:focus {
-    border-color: #4e73df;
-    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.1);
     outline: none;
 }
 
-.modal-body .form-label {
-    color: #2c3e50;
-    margin-bottom: 8px;
+.form-control-sm {
+    padding: 4px 6px;
+    font-size: 0.8rem;
 }
 
-/* Required field indicator */
-.form-label .text-danger {
-    font-weight: bold;
+.btn-group {
+    display: inline-flex;
+    gap: 4px;
 }
 
 /* Input number styling */
@@ -772,26 +862,26 @@ input[type="number"] {
     appearance: none;
 }
 
-/* Responsive Design */
+/* ==================== RESPONSIVE DESIGN ==================== */
 @media (max-width: 1200px) {
     .filter-row {
         flex-wrap: wrap;
     }
-    
+
     .filter-group.filter-company {
         min-width: 200px;
     }
-    
-    #createNotificationModal .modal-dialog {
+
+    .modal-container.modal-xl {
         max-width: 98%;
     }
-    
-    #services-table {
+
+    .services-table {
         font-size: 0.75rem;
     }
-    
-    #services-table thead th,
-    #services-table tbody td {
+
+    .services-table thead th,
+    .services-table tbody td {
         padding: 6px 4px;
     }
 }
@@ -800,69 +890,73 @@ input[type="number"] {
     .page-container {
         padding: 15px;
     }
-    
+
     .filter-action-section {
         padding: 20px 15px;
     }
-    
+
     .filter-row {
         flex-direction: column;
         align-items: stretch;
         gap: 15px;
     }
-    
+
     .filter-group {
         min-width: auto;
     }
-    
+
     .action-buttons {
         flex-direction: column;
     }
-    
+
     .data-table {
         font-size: 0.8rem;
     }
-    
+
     .data-table thead th,
     .data-table tbody td {
         padding: 10px 8px;
     }
-    
+
     .company-col,
     .note-col {
         max-width: 150px;
         word-break: break-word;
     }
-    
+
     .action-btn {
         padding: 4px 6px;
         font-size: 0.7rem;
     }
-    
+
     /* Company search responsive */
     .company-dropdown {
         font-size: 0.85rem;
     }
-    
+
     .company-dropdown-item {
         padding: 8px 10px;
     }
-    
+
     /* Modal responsive */
-    #createNotificationModal .modal-body {
+    .modal-overlay {
+        padding: 10px;
+    }
+
+    .modal-body {
         padding: 15px;
     }
-    
+
     .service-details-section {
         padding: 15px;
     }
-    
-    #services-table input.form-control,
-    #services-table select.form-select {
+
+    .services-table input[type="text"],
+    .services-table input[type="number"] {
         padding: 4px 6px;
         font-size: 0.75rem;
     }
-    
+
     .service-actions {
         margin-top: 10px;
     }
@@ -875,43 +969,43 @@ input[type="number"] {
         text-align: center;
         gap: 8px;
     }
-    
-    .modal-dialog {
-        width: 95%;
+
+    .modal-container {
+        width: 98%;
     }
-    
+
     .modal-body {
         padding: 20px 15px;
     }
-    
+
     .modal-footer {
         flex-direction: column;
     }
-    
-    #createNotificationModal .modal-dialog {
+
+    .modal-container.modal-xl {
         width: 98%;
         margin: 10px auto;
     }
-    
+
     .service-details-section {
         padding: 10px;
     }
-    
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .service-actions {
         width: 100%;
     }
-    
+
     .service-actions .btn-sm {
         width: 100%;
     }
-    
-    #services-table {
+
+    .services-table {
         min-width: 800px;
     }
 }
@@ -920,85 +1014,21 @@ input[type="number"] {
     .page-container {
         padding: 20px 40px;
     }
-    
+
     .filter-action-section {
         padding: 25px 35px;
     }
 }
 
-/* Read-only form fields */
-.form-control[readonly] {
-    background-color: #f8f9fc !important;
-    opacity: 1;
-    cursor: not-allowed;
-    color: #6c757d !important;
-}
-
-.form-control[readonly]:focus {
-    box-shadow: none !important;
-    border-color: #d1d3e2 !important;
-}
-
-/* Edit modal specific styles */
-#editNotificationModal .modal-dialog {
-    max-width: 95%;
-}
-
-#editNotificationModal .modal-body {
-    padding: 25px;
-    text-align: left;
-}
-
-/* Loading overlay cho modal */
-.modal-loading {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1060;
-    border-radius: 8px;
-}
-
-.modal-loading .loading-spinner {
-    text-align: center;
-}
-
-.modal-loading .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #e3e6f0;
-    border-top: 4px solid #4e73df;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 15px;
-}
-
 /* Responsive cho edit modal */
 @media (max-width: 768px) {
-    #editNotificationModal .modal-dialog {
-        max-width: 98%;
-        margin: 10px auto;
-    }
-    
-    #editNotificationModal .modal-body {
-        padding: 15px;
-    }
-    
-    #editNotificationModal .service-details-section {
-        padding: 15px;
-    }
-    
-    #editNotificationModal #edit-services-table {
+    #editNotificationModal .services-table {
         font-size: 0.75rem;
         min-width: 800px;
     }
-    
-    #editNotificationModal #edit-services-table input.form-control {
+
+    #editNotificationModal .services-table input[type="text"],
+    #editNotificationModal .services-table input[type="number"] {
         padding: 4px 6px;
         font-size: 0.75rem;
     }
@@ -1008,4 +1038,3 @@ input[type="number"] {
 .btn:disabled .fas.fa-spinner {
     animation: spin 1s linear infinite;
 }
-

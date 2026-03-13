@@ -6,13 +6,58 @@ document.addEventListener('DOMContentLoaded', function() {
     let totalPages = 1;
     let selectedNotifications = [];
     let notifications = []; // Sẽ được load từ API
-    let createNotificationModal;
-    let addServiceModal;
     let availableServices = [];
     let serviceCounter = 0;
     let currentServices = [];
-    let editNotificationModal;
     let currentEditingNotification = null;
+
+    // ==================== CUSTOM MODAL SYSTEM (thay thế Bootstrap Modal) ====================
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+    }
+
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.add('hidden');
+        // Chỉ bỏ modal-open nếu không còn modal nào đang mở
+        const openModals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+        if (openModals.length === 0) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    function isModalOpen(modalId) {
+        const modal = document.getElementById(modalId);
+        return modal && !modal.classList.contains('hidden');
+    }
+
+    // Khởi tạo event listeners cho modal dismiss buttons và click outside
+    function initModalSystem() {
+        // Dismiss buttons
+        document.querySelectorAll('[data-modal-dismiss]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modalId = this.getAttribute('data-modal-dismiss');
+                hideModal(modalId);
+            });
+        });
+
+        // Click outside modal-container để đóng
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    const openModals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+                    if (openModals.length === 0) {
+                        document.body.classList.remove('modal-open');
+                    }
+                }
+            });
+        });
+    }
 
     // DOM elements
     const notificationsTable = document.getElementById('notifications-table');
@@ -42,12 +87,12 @@ document.addEventListener('DOMContentLoaded', function() {
     init();
 
     function init() {
+        initModalSystem();
         setupEventListeners();
-        setupTooltips();
         loadCompanies();
         loadNotifications();
         initializeFilters();
-        initializeModals(); 
+        initializeCreateForm();
         loadAllServices();
     }
 
@@ -105,10 +150,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
     }
 
-    function setupTooltips() {
-        // Initialize Bootstrap tooltips
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    function initializeCreateForm() {
+        // Set current period as default
+        const now = new Date();
+        const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const periodElement = document.getElementById('create-period');
+        if (periodElement) {
+            periodElement.value = currentDate;
+        }
+
+        setupCreateNotificationEventListeners();
     }
 
     function initializeFilters() {
@@ -131,88 +182,11 @@ document.addEventListener('DOMContentLoaded', function() {
         populateYearFilter();
     }
 
-    function initializeModals() {
-        // Kiểm tra Bootstrap có sẵn không
-        if (typeof bootstrap === 'undefined') {
-            console.error('Bootstrap chưa được load');
-            return;
-        }
-        
-        // Kiểm tra modal elements tồn tại
-        const createModalElement = document.getElementById('createNotificationModal');
-        const addServiceModalElement = document.getElementById('addServiceModal');
-        const editModalElement = document.getElementById('editNotificationModal');
-        
-        if (!createModalElement || !addServiceModalElement) {
-            console.error('Modal elements không tồn tại');
-            return;
-        }
-        
-        try {
-            createNotificationModal = new bootstrap.Modal(createModalElement);
-            addServiceModal = new bootstrap.Modal(addServiceModalElement);
-            
-            if (editModalElement) {
-                editNotificationModal = new bootstrap.Modal(editModalElement);
-            }
-            
-            //console.log('Modals initialized successfully');
-        } catch (error) {
-            console.error('Lỗi khi khởi tạo modals:', error);
-            return;
-        }
-        
-        // Set current period as default
-        const now = new Date();
-        const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const periodElement = document.getElementById('create-period');
-        if (periodElement) {
-            periodElement.value = currentDate;
-        }
-        
-        setupCreateNotificationEventListeners();
-        setupModalEventListeners(); // Thêm function mới này
-    }
+    // initializeFilters đã được giữ nguyên ở trên, không cần initializeModals nữa
 
     function setupModalEventListeners() {
-        const addServiceModalElement = document.getElementById('addServiceModal');
-        const editModalElement = document.getElementById('editNotificationModal');
-        
-        // Xử lý khi mở add service modal từ edit modal
-        if (addServiceModalElement) {
-            addServiceModalElement.addEventListener('show.bs.modal', function(e) {
-                const editModal = document.getElementById('editNotificationModal');
-                if (editModal && editModal.classList.contains('show')) {
-                    // Thêm class để phân biệt modal nested
-                    this.classList.add('modal-nested');
-                    
-                    // Tạm ẩn backdrop của edit modal
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(backdrop => {
-                        if (!backdrop.hasAttribute('data-nested')) {
-                            backdrop.style.zIndex = '1045';
-                        }
-                    });
-                }
-            });
-            
-            addServiceModalElement.addEventListener('hidden.bs.modal', function() {
-                // Xóa class nested
-                this.classList.remove('modal-nested');
-                
-                // Khôi phục z-index của edit modal
-                const editModal = document.getElementById('editNotificationModal');
-                if (editModal && editModal.classList.contains('show')) {
-                    editModal.style.zIndex = '1050';
-                    
-                    // Khôi phục backdrop
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(backdrop => {
-                        backdrop.style.zIndex = '1040';
-                    });
-                }
-            });
-        }
+        // Không cần xử lý Bootstrap modal events nữa
+        // Custom modal system đã xử lý tất cả trong initModalSystem()
     }
 
     function setupCreateNotificationEventListeners() {
@@ -277,10 +251,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadNotifications() {
         showLoading(true);
         
+        // Trim và normalize company filter value
+        const companyValue = filterCompany.value ? filterCompany.value.trim().replace(/\s+/g, ' ') : '';
+        
         const params = new URLSearchParams({
             month: filterMonth.value || '',
             year: filterYear.value || '',
-            company: filterCompany.value || '',
+            company: companyValue || '',
             page: currentPage,
             per_page: 10
         });
@@ -297,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     notifications = data.data;
                     totalPages = data.pagination.total_pages;
                     
-                    // XÓA LOGIC CŨ, THÊM LOGIC MỚI:
                     // Luôn clear tbody trước
                     notificationsTbody.innerHTML = '';
                     
@@ -470,19 +446,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <td class="currency text-end fw-bold">${formatCurrency(item.tongtiensauthue)}</td>
             <td class="text-center">
                 <div class="btn-group" role="group">
-                    <button type="button" class="action-btn btn-view" 
-                            onclick="viewNotification(${item.id})" 
-                            data-bs-toggle="tooltip" title="Xem chi tiết">
+                    <button type="button" class="action-btn btn-view"
+                            onclick="viewNotification(${item.id})"
+                            title="Xem chi tiết">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button type="button" class="action-btn btn-download" 
-                            onclick="downloadNotification(${item.id})" 
-                            data-bs-toggle="tooltip" title="Tải xuống PDF">
+                    <button type="button" class="action-btn btn-download"
+                            onclick="downloadNotification(${item.id})"
+                            title="Tải xuống PDF">
                         <i class="fas fa-download"></i>
                     </button>
-                    <button type="button" class="action-btn btn-delete" 
-                            onclick="deleteNotification(${item.id})" 
-                            data-bs-toggle="tooltip" title="Xóa thông báo">
+                    <button type="button" class="action-btn btn-delete"
+                            onclick="deleteNotification(${item.id})"
+                            title="Xóa thông báo">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -588,24 +564,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleCreateNew() {
-        if (!createNotificationModal) {
-            console.error('createNotificationModal chưa được khởi tạo');
-            initializeModals();
-            if (!createNotificationModal) {
-                alert('Lỗi: Không thể mở modal. Vui lòng refresh trang.');
-                return;
-            }
-        }
-        
         resetCreateForm();
         loadAvailableCompanies();
-        
-        try {
-            createNotificationModal.show();
-        } catch (error) {
-            console.error('Lỗi khi show modal:', error);
-            alert('Lỗi khi mở modal: ' + error.message);
-        }
+        showModal('createNotificationModal');
     }
 
     function resetCreateForm() {
@@ -1005,7 +966,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showAddServiceModal() {
         resetAddServiceForm();
-        addServiceModal.show();
+        // Nếu mở từ edit modal, thêm class nested
+        if (isModalOpen('editNotificationModal')) {
+            document.getElementById('addServiceModal').classList.add('modal-nested');
+        }
+        showModal('addServiceModal');
     }
 
     function confirmAddService() {
@@ -1047,12 +1012,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         currentServices.push(newService);
         
-        const editModalElement = document.getElementById('editNotificationModal');
-        const createModalElement = document.getElementById('createNotificationModal');
-        
-        const isEditModalOpen = editModalElement && editModalElement.classList.contains('show');
-        const isCreateModalOpen = createModalElement && createModalElement.classList.contains('show');
-        
+        const isEditModalOpen = isModalOpen('editNotificationModal');
+        const isCreateModalOpen = isModalOpen('createNotificationModal');
+
         if (isEditModalOpen) {
             renderEditServicesTable();
             calculateEditTotals();
@@ -1067,8 +1029,9 @@ document.addEventListener('DOMContentLoaded', function() {
             renderServicesTable();
             calculateTotals();
         }
-        
-        addServiceModal.hide();
+
+        hideModal('addServiceModal');
+        document.getElementById('addServiceModal').classList.remove('modal-nested');
     }
 
 
@@ -1199,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     resetCreateForm();
                     loadAvailableCompanies();
                 } else {
-                    createNotificationModal.hide();
+                    hideModal('createNotificationModal');
                     loadNotifications();
                 }
             } else {
@@ -1218,11 +1181,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadNotificationDetails(id) {
-        if (!editNotificationModal) {
-            showError('Modal chưa được khởi tạo');
-            return;
-        }
-        
         // Show loading
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'modal-loading';
@@ -1232,16 +1190,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p>Đang tải thông tin...</p>
             </div>
         `;
-        document.getElementById('editNotificationModal').querySelector('.modal-content').style.position = 'relative';
-        document.getElementById('editNotificationModal').querySelector('.modal-content').appendChild(loadingDiv);
-        
+
+        // Mở modal trước, sau đó load data
+        showModal('editNotificationModal');
+        const modalContent = document.getElementById('editNotificationModal').querySelector('.modal-container');
+        modalContent.style.position = 'relative';
+        modalContent.appendChild(loadingDiv);
+
         fetch(`/dichvudiennuoc/api/chi-tiet-thong-bao/${id}/`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     currentEditingNotification = data.notification;
                     populateEditForm(data.notification);
-                    editNotificationModal.show();
                 } else {
                     showError('Có lỗi xảy ra: ' + data.error);
                 }
@@ -1468,13 +1429,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // THÊM FUNCTION MỚI - showEditAddServiceModal()
     function showEditAddServiceModal() {
         resetAddServiceForm();
-        
-        if (!addServiceModal) {
-            console.error('addServiceModal not initialized');
-            return;
-        }
-        
-        addServiceModal.show();
+        // Thêm class nested vì mở từ edit modal
+        document.getElementById('addServiceModal').classList.add('modal-nested');
+        showModal('addServiceModal');
     }
 
     // THÊM FUNCTION MỚI - saveEditNotification()
@@ -1539,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(result => {
             if (result.success) {
                 showSuccessMessage('Thông báo đã được cập nhật thành công!');
-                editNotificationModal.hide();
+                hideModal('editNotificationModal');
                 loadNotifications();
             } else {
                 showError('Có lỗi xảy ra: ' + result.error);
@@ -1656,9 +1613,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Hide modal
-            const modal = bootstrap.Modal.getInstance(deleteModal);
-            modal.hide();
-            
+            hideModal('deleteModal');
+
             currentDeleteId = null;
         })
         .catch(error => {
@@ -1852,8 +1808,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalBody.textContent = `Bạn có chắc chắn muốn xóa thông báo "${notification.sotbdv}" của ${notification.tencongty} không?`;
             
             // Show modal
-            const modal = new bootstrap.Modal(deleteModal);
-            modal.show();
+            showModal('deleteModal');
         }
     };
 

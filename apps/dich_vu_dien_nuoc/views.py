@@ -322,10 +322,17 @@ def api_danh_sach_thong_bao(request):
             queryset = queryset.filter(thoigiantao__year=int(year))
             
         if company:
-            # Tìm theo tên công ty trong bảng HopDong
-            queryset = queryset.filter(
-                id_hopdong__tencongty__icontains=company
-            )
+            # Trim và normalize whitespace trước khi tìm kiếm
+            company_search = company.strip()
+            if company_search:
+                # Tách thành các từ và tìm kiếm từng từ để xử lý trường hợp thừa dấu cách
+                company_words = company_search.split()
+                company_filter = Q()
+                for word in company_words:
+                    word = word.strip()
+                    if word:
+                        company_filter &= Q(id_hopdong__tencongty__icontains=word)
+                queryset = queryset.filter(company_filter)
         
         # Sắp xếp theo thời gian tạo từ mới đến cũ
         queryset = queryset.order_by('-thoigiantao')
@@ -627,7 +634,21 @@ def api_tao_moi_thong_bao(request):
         
         # SỬA: Parse full_date thay vì year/month riêng lẻ
         try:
-            thoigian_tao = datetime.strptime(period['full_date'], '%Y-%m-%d')
+            # Parse date string thành các thành phần ngày tháng
+            date_parts = period['full_date'].split('-')
+            p_year = int(date_parts[0])
+            p_month = int(date_parts[1])
+            p_day = int(date_parts[2])
+            
+            # Tạo datetime với timezone local để tránh lệch ngày do UTC conversion
+            from django.utils import timezone as tz
+            
+            # Tạo naive datetime rồi make_aware với timezone hiện tại
+            naive_dt = datetime(p_year, p_month, p_day, 12, 0, 0)  # Đặt 12:00 trưa để tránh lệch ngày
+            if hasattr(tz, 'make_aware') and tz.is_naive(naive_dt):
+                thoigian_tao = tz.make_aware(naive_dt)
+            else:
+                thoigian_tao = naive_dt
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -975,28 +996,28 @@ def api_in_thong_bao(request, notification_id):
         final_amount = total_after_tax_calc - discount_amount
         
         # Chuyển đổi tiền thành chữ
-        amount_in_words = num2words(int(final_amount), lang='vi').capitalize() + " đồng"
+        amount_in_words = num2words(int(round(final_amount)), lang='vi').capitalize() + " đồng"
         
         # Đọc template HTML
         
         
         context = {
-            'day': day,
-            'month': month,
-            'year': year,
-            'period_month': created_date.month,
-            'period_year': created_date.year,
-            'payment_day': payment_day,
-            'payment_month': payment_month,
-            'payment_year': payment_year,
+            'day': str(day),
+            'month': str(month),
+            'year': str(year),
+            'period_month': str(created_date.month),
+            'period_year': str(created_date.year),
+            'payment_day': str(payment_day),
+            'payment_month': str(payment_month),
+            'payment_year': str(payment_year),
             'company_name': company_name,
             'suggested_filename': suggested_filename,  # Tên file có tháng/năm
             'services_rows': services_rows,
-            'total_before_tax': format_number_vn(total_before_tax_calc),
-            'tax_amount': format_number_vn(total_tax_calc),
-            'total_after_tax': format_number_vn(total_after_tax_calc),
-            'discount_amount': format_number_vn(discount_amount) if discount_amount > 0 else "0.00",
-            'final_amount': format_number_vn(final_amount),
+            'total_before_tax': format_number_vn(total_before_tax_calc, decimals=0),
+            'tax_amount': format_number_vn(total_tax_calc, decimals=0),
+            'total_after_tax': format_number_vn(total_after_tax_calc, decimals=0),
+            'discount_amount': format_number_vn(discount_amount, decimals=0) if discount_amount > 0 else "0",
+            'final_amount': format_number_vn(final_amount, decimals=0),
             'amount_in_words': amount_in_words
         }
         
@@ -1053,27 +1074,41 @@ def api_in_nhieu_thong_bao(request):
             'error': str(e)
         }, status=500)
 
-def format_number_vn(number):
-    """Format số theo chuẩn: phẩy cho hàng nghìn, chấm cho thập phân"""
-    if number is None or number == 0:
-        return "0.00"
+def format_number_vn(number, decimals=2):
+    """Format số theo chuẩn: phẩy cho hàng nghìn, chấm cho thập phân.
+    decimals: số chữ số thập phân (mặc định 2). Nếu decimals == 0 thì trả về số nguyên (không có phần thập phân).
+    """
+    if number is None:
+        return "0" if decimals == 0 else "0.00"
     
-    # Làm tròn đến 1 chữ số thập phân
-    number = round(float(number), 2)
+    try:
+        number = float(number)
+    except Exception:
+        return str(number)
     
-    # Tách phần nguyên và phần thập phân
-    integer_part = int(number)
-    decimal_part = number - integer_part
-    
-    # Format phần nguyên với dấu phẩy cho hàng nghìn (giữ nguyên dấu phẩy mặc định)
-    formatted_integer = f"{integer_part:,}"
-    
-    # Nếu có phần thập phân và != 0
-    if decimal_part > 0:
-        decimal_str = f"{decimal_part:.2f}"[2:]  # Lấy phần sau dấu chấm
-        return f"{formatted_integer}.{decimal_str}"  # Dùng chấm cho thập phân
+    if decimals == 0:
+        # Làm tròn tới số nguyên gần nhất và format với dấu phẩy nhóm nghìn
+        rounded = int(round(number))
+        return f"{rounded:,}"
     else:
-        return formatted_integer
+        # Làm tròn tới decimals chữ số thập phân
+        rounded = round(number, decimals)
+        integer_part = int(abs(rounded))
+        decimal_part = abs(rounded) - integer_part
+        formatted_integer = f"{integer_part:,}"
+        # Lấy phần thập phân theo decimals
+        if decimal_part > 0:
+            # đảm bảo luôn có đúng `decimals` chữ số sau dấu chấm
+            decimal_str = f"{decimal_part:.{decimals}f}"[2:]
+            sign = "-" if rounded < 0 else ""
+            return f"{sign}{formatted_integer}.{decimal_str}"
+        else:
+            sign = "-" if rounded < 0 else ""
+            # không có phần thập phân khác 0, nhưng vẫn hiển thị .00 nếu decimals>0 ban đầu bạn muốn
+            if decimals > 0:
+                return f"{sign}{formatted_integer}." + ("0" * decimals)
+            else:
+                return f"{sign}{formatted_integer}"
     
 def view_quan_ly_loai_dich_vu (request):
     """Hiển thị danh sách loại dịch vụ"""
