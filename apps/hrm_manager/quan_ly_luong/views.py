@@ -2098,12 +2098,6 @@ def api_bang_luong_create(request):
     
     try:
         che_do_luong_id = data.get('che_do_luong_id')
-        
-        # Tính số nhân viên từ chế độ lương
-        so_nhan_vien = 0
-        if che_do_luong_id:
-            so_nhan_vien = BangLuongService.count_employees_in_che_do(che_do_luong_id)
-
         bang_luong = BangLuongService.create({
             'ten_bang_luong': data.get('ten_bang_luong', ''),
             'ky_luong_id': data.get('ky_luong_id'),

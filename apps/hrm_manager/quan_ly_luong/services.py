@@ -126,25 +126,17 @@ class CheDoLuongService:
         """
         today = date.today()
         
-        # Tìm kỳ lương đang chạy (ngày hiện tại nằm trong khoảng)
-        current_ky_luong = Kyluong.objects.filter(
-            ngaybatdau__lte=today,
-            ngayketthuc__gte=today
-        ).first()
-        
-        if not current_ky_luong:
-            return (False, None)
-        
-        # Kiểm tra có bảng lương của chế độ này trong kỳ đang pending/processing
-        has_active_payroll = Bangluong.objects.filter(
+        # Tìm kỳ lương chưa finalized mà có bảng lương của chế độ này
+        # (bao gồm kỳ đang chạy VÀ kỳ đã kết thúc chưa chốt)
+        active_bang_luong = Bangluong.objects.filter(
             chedoluong=che_do,
-            kyluong=current_ky_luong,
-            trangthai__in=['pending', 'processing', 'calculated']
-        ).exists()
-        
-        if has_active_payroll:
-            return (True, current_ky_luong)
-        
+            trangthai__in=['draft', 'processing', 'calculated', 'approved'],
+            kyluong__trangthai__in=['draft', 'open', 'pending', 'processing', 'calculated']
+        ).select_related('kyluong').first()
+
+        if active_bang_luong:
+            return (True, active_bang_luong.kyluong)
+
         return (False, None)
     
     @classmethod
@@ -398,21 +390,21 @@ class CheDoLuongService:
             result['reason'] = f"Chế độ đang trong kỳ lương {ky_luong.thang}/{ky_luong.ngaybatdau.year}.Vui lòng chờ chốt kỳ."
             return result
         
-        # STEP 2: Kiểm tra có bảng lương không
-        has_payrolls = cls.has_payroll_history(che_do)
-        if has_payrolls:
-            result['can_delete'] = True
-            result['delete_type'] = 'soft'
-            result['reason'] = 'Đã có bảng lương lịch sử - chỉ có thể xóa mềm'
-            return result
-        
-        # STEP 3: Kiểm tra có nhân viên/phòng ban đang dùng
+        # STEP 2: Kiểm tra có nhân viên/phòng ban đang dùng
         emp_count, dept_count = cls.get_active_counts(che_do)
         total_active = emp_count + dept_count
         
         if total_active > 0:
             result['reason'] = f'Vui lòng chuyển {total_active} nhân viên/phòng ban sang chế độ khác trước khi xóa'
             result['details'] = {'emp_count': emp_count, 'dept_count': dept_count}
+            return result
+        
+        # STEP 3: Kiểm tra có bảng lương không 
+        has_payrolls = cls.has_payroll_history(che_do)
+        if has_payrolls:
+            result['can_delete'] = True
+            result['delete_type'] = 'soft'
+            result['reason'] = 'Đã có bảng lương lịch sử - chỉ có thể xóa mềm'
             return result
         
         # STEP 4: Kiểm tra có công thức không
@@ -1691,9 +1683,7 @@ class BangLuongService:
         return NhanvienChedoluong.objects.filter(
             chedoluong_id=che_do_luong_id,
             trangthai='active',
-            # Bổ sung: Chỉ đếm nhân viên đang active (chưa nghỉ việc) để số liệu chính xác hơn
-            nhanvien__trangthai='active' 
-        ).count()
+        ).values('nhanvien_id').distinct().count()
     
     @classmethod
     @transaction.atomic
@@ -1743,13 +1733,14 @@ class BangLuongService:
         
         # Generate mã bảng lương
         ma_bang_luong = cls.generate_ma_bang_luong(ky_luong, che_do_luong)
+        so_nhan_vien = cls.count_employees_in_che_do(che_do_luong_id)
         
         bang_luong = Bangluong.objects.create(
             mabangluong=ma_bang_luong,
             tenbangluong=ten_bang_luong,
             kyluong=ky_luong,
             chedoluong=che_do_luong,
-            tongsoluongnhanvien=0,
+            tongsoluongnhanvien=so_nhan_vien,
             tongtienluong=0,
             ngaytao=date.today(),
             nguoitao=data.get('nguoi_tao', ''),
@@ -1769,46 +1760,59 @@ class BangLuongService:
         can_edit, msg = cls.can_edit(bang_luong)
         if not can_edit:
             raise ValueError(msg)
-        
+
         ten_bang_luong = data.get('ten_bang_luong', '').strip()
         ky_luong_id = data.get('ky_luong_id')
         che_do_luong_id = data.get('che_do_luong_id')
-        
+
         # Validate required
         if not ten_bang_luong:
             raise ValueError("Tên bảng lương không được để trống")
-        
+
+        # Cờ theo dõi thay đổi để chỉ cập nhật số nhân viên khi thực sự đổi chế độ lương
+        che_do_changed = False
+
         # Nếu thay đổi kỳ lương hoặc chế độ lương -> check duplicate
         if ky_luong_id and che_do_luong_id:
-            if (int(ky_luong_id) != (bang_luong.kyluong_id or 0) or 
-                int(che_do_luong_id) != (bang_luong.chedoluong_id or 0)):
-                
-                # ✅ BỔ SUNG #5: Không cho đổi kỳ/chế độ lương nếu đã có phiếu lương
+            new_ky_id = int(ky_luong_id)
+            new_che_do_id = int(che_do_luong_id)
+            old_ky_id = bang_luong.kyluong_id or 0
+            old_che_do_id = bang_luong.chedoluong_id or 0
+
+            if new_ky_id != old_ky_id or new_che_do_id != old_che_do_id:
+                # Không cho đổi kỳ/chế độ lương nếu đã có phiếu lương
                 has_payslips = Phieuluong.objects.filter(bangluong=bang_luong).exists()
                 if has_payslips:
                     raise ValueError("Bảng lương đã có phiếu lương, không thể thay đổi kỳ lương hoặc chế độ lương")
-                
+
                 is_duplicate, msg = cls.check_duplicate(
                     ky_luong_id, che_do_luong_id, exclude_id=bang_luong.id
                 )
                 if is_duplicate:
                     raise ValueError(msg)
-                
+
                 # Update foreign keys
                 try:
                     bang_luong.kyluong = Kyluong.objects.get(id=ky_luong_id)
                 except Kyluong.DoesNotExist:
                     raise ValueError("Kỳ lương không tồn tại")
-                
+
                 try:
                     bang_luong.chedoluong = Chedoluong.objects.get(id=che_do_luong_id)
                 except Chedoluong.DoesNotExist:
                     raise ValueError("Chế độ lương không tồn tại")
-        
+
+                # Nếu đổi chế độ lương thì cập nhật lại số nhân viên cache
+                che_do_changed = (new_che_do_id != old_che_do_id)
+
         bang_luong.tenbangluong = ten_bang_luong
+
+        if che_do_changed:
+            bang_luong.tongsoluongnhanvien = cls.count_employees_in_che_do(bang_luong.chedoluong_id)
+
         bang_luong.updated_at = timezone.now()
         bang_luong.save()
-        
+
         return bang_luong
     
     @classmethod
@@ -1868,7 +1872,7 @@ class BangLuongService:
         computed_status = cls.get_computed_status(bang_luong)
         so_nhan_vien = 0
     
-        is_locked = computed_status in [cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]
+        is_locked = computed_status in [cls.STATUS_CALCULATED, cls.STATUS_APPROVED, cls.STATUS_PAID, cls.STATUS_CANCELLED]
         
         if is_locked:
             # Dùng cached value (đã chốt)
