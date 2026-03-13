@@ -14,6 +14,23 @@ from pathlib import Path
 import os, sys
 from dotenv import load_dotenv
 
+
+def get_bool_env(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def get_list_env(name, default=''):
+    raw = os.getenv(name, default)
+    values = []
+    for item in raw.split(','):
+        cleaned = item.strip().strip('"').strip("'")
+        if cleaned:
+            values.append(cleaned)
+    return values
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,9 +44,9 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-CHANGE-THIS-IN-PRODUCTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = get_bool_env('DEBUG', True)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost')
 
 # Application definition
 
@@ -103,7 +120,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DB_SCHEMAS = [s.strip() for s in os.getenv('DB_SCHEMA', 'public').split(',') if s.strip()]
+DB_SCHEMAS = get_list_env('DB_SCHEMA', 'public')
 PG_SEARCH_PATH = ','.join(DB_SCHEMAS)
 
 DATABASES = {
@@ -117,6 +134,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'require',
             'options': f"-c search_path={PG_SEARCH_PATH}",
+            'connect_timeout': 10,
         },
         'CONN_MAX_AGE': 600,
 
@@ -187,17 +205,17 @@ STATICFILES_FINDERS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings - Tùy chỉnh theo nhu cầu
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS','http://localhost:8000,http://127.0.0.1:8000').split(',')  
+CORS_ALLOWED_ORIGINS = get_list_env('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Protection
-CSRF_TRUSTED_ORIGINS = os.getenv(
+CSRF_TRUSTED_ORIGINS = get_list_env(
     'CSRF_TRUSTED_ORIGINS',
     'http://localhost:8000,http://127.0.0.1:8000,https://tanphong-manager-project.onrender.com'
-).split(',')  
+)
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_USE_SESSIONS = True
+CSRF_USE_SESSIONS = get_bool_env('CSRF_USE_SESSIONS', False)
 CSRF_COOKIE_NAME = 'csrftoken'
 
 # Session Security

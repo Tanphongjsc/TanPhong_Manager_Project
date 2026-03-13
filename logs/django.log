@@ -36570,3 +36570,5 @@ WARNING 2026-03-13 11:11:13,457 log 15264 12704 Not Found: /.well-known/appspeci
 WARNING 2026-03-13 11:11:13,458 basehttp 15264 12704 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-03-13 11:13:51,631 log 15264 12704 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-03-13 11:13:51,632 basehttp 15264 12704 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-13 16:03:38,918 log 15420 21924 Not Found: /favicon.ico
+WARNING 2026-03-13 16:03:38,919 basehttp 15420 21924 "GET /favicon.ico HTTP/1.1" 404 3131
