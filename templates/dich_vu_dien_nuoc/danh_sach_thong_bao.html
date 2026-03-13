@@ -5,7 +5,6 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{% static 'css/dichvudiennuoc_danhsachthongbao.css' %}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -144,9 +143,9 @@
         </div>
         <div class="modal-body">
             <div class="text-center">
-                <i class="fas fa-exclamation-triangle text-amber-500 mb-3" style="font-size: 3rem;"></i>
-                <h4 class="text-lg font-semibold text-gray-800">Bạn có chắc chắn muốn xóa thông báo này không?</h4>
-                <p id="delete-message" class="text-gray-600 mt-2">Thông báo sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
+                <i class="fas fa-exclamation-triangle" style="color: #f6c23e; font-size: 3rem; margin-bottom: 12px; display: block;"></i>
+                <h4>Bạn có chắc chắn muốn xóa thông báo này không?</h4>
+                <p id="delete-message">Thông báo sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
             </div>
         </div>
         <div class="modal-footer">
@@ -158,7 +157,7 @@
     </div>
 </div>
 
-<!-- Create Notification Modal -->
+<!-- Modal tạo thông báo mới -->
 <div class="modal-overlay hidden" id="createNotificationModal">
     <div class="modal-container modal-xl">
         <div class="modal-header">
@@ -170,9 +169,9 @@
         <div class="modal-body text-left">
             <form id="create-notification-form">
                 <!-- Thông tin cơ bản -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <label class="form-label font-bold">Tên công ty <span class="text-red-500">*</span></label>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Tên công ty <span class="text-red-500">*</span></label>
                         <div class="company-search-wrapper">
                             <input type="text" class="form-input company-search-input" id="create-company"
                                 placeholder="Tìm kiếm công ty..." autocomplete="off">
@@ -181,20 +180,20 @@
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="form-label font-bold">Kỳ thanh toán <span class="text-red-500">*</span></label>
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Kỳ thanh toán <span class="text-red-500">*</span></label>
                         <input type="date" class="form-input" id="create-period" required>
                     </div>
-                    <div>
-                        <label class="form-label font-bold">Số TBDV</label>
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Số TBDV</label>
                         <input type="text" class="form-input" id="create-sotbdv" placeholder="Sẽ tự động tạo...">
                     </div>
                 </div>
 
                 <!-- Chi tiết dịch vụ -->
-                <div class="service-details-section">
-                    <div class="section-header flex justify-between items-center mb-3">
-                        <h6 class="mb-0 font-bold text-base">
+                <div class="service-details-section mt-4">
+                    <div class="section-header flex justify-between items-center">
+                        <h6 class="fw-bold" style="margin: 0;">
                             <i class="fas fa-list"></i> Chi tiết dịch vụ
                         </h6>
                         <div class="service-actions">
@@ -228,27 +227,27 @@
                     </div>
 
                     <!-- Giảm trừ và tổng kết -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label class="form-label font-bold">Phần trăm giảm trừ (%)</label>
+                    <div class="form-grid-2 mt-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">Phần trăm giảm trừ (%)</label>
                             <input type="number" class="form-input" id="create-discount" value="0" min="0" max="100" step="0.1">
                         </div>
-                        <div>
-                            <div class="summary-info p-3 bg-gray-50 rounded-lg">
-                                <div class="flex justify-between mb-2">
+                        <div class="form-group">
+                            <div class="summary-info p-3">
+                                <div class="summary-row">
                                     <span>Tổng tiền trước thuế:</span>
                                     <strong id="total-before-tax">0 VNĐ</strong>
                                 </div>
-                                <div class="flex justify-between mb-2">
+                                <div class="summary-row">
                                     <span>Tổng tiền sau thuế:</span>
-                                    <strong id="total-after-tax" class="text-blue-600">0 VNĐ</strong>
+                                    <strong id="total-after-tax" class="text-primary">0 VNĐ</strong>
                                 </div>
-                                <div class="flex justify-between mb-2 text-amber-600">
+                                <div class="summary-row text-warning">
                                     <span>Tiền giảm trừ:</span>
                                     <strong id="discount-amount">0 VND</strong>
                                 </div>
-                                <hr class="my-2 border-gray-300">
-                                <div class="flex justify-between text-green-600 text-lg">
+                                <hr style="margin: 8px 0;">
+                                <div class="summary-row text-success" style="font-size: 1.1rem;">
                                     <span><strong>Tiền cần thanh toán:</strong></span>
                                     <strong id="final-amount">0 VND</strong>
                                 </div>
@@ -282,16 +281,16 @@
             <button type="button" class="modal-close-btn" data-modal-dismiss="addServiceModal">&times;</button>
         </div>
         <div class="modal-body text-left">
-            <div class="mb-4">
-                <label class="form-label font-bold">Chọn dịch vụ</label>
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Chọn dịch vụ</label>
                 <input type="text" class="form-input" id="service-select-input"
                     list="add-services-datalist" placeholder="Tìm kiếm dịch vụ...">
                 <datalist id="add-services-datalist">
                     <!-- Options sẽ được load bằng JS -->
                 </datalist>
             </div>
-            <div class="mb-4">
-                <label class="form-label font-bold">Đơn vị tính</label>
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Đơn vị tính</label>
                 <input type="text" class="form-input" id="service-unit"
                     list="add-units-datalist" placeholder="Chọn hoặc nhập đơn vị tính...">
                 <datalist id="add-units-datalist">
@@ -305,16 +304,16 @@
                     <option value="m">m</option>
                 </datalist>
             </div>
-            <div class="mb-4">
-                <label class="form-label font-bold">Đơn giá</label>
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Đơn giá</label>
                 <input type="number" class="form-input" id="service-price" min="0" step="0.01" placeholder="Nhập đơn giá...">
             </div>
-            <div class="mb-4">
-                <label class="form-label font-bold">Hệ số</label>
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Hệ số</label>
                 <input type="number" class="form-input" id="service-factor" value="1" min="0" step="0.1">
             </div>
-            <div class="mb-4">
-                <label class="form-label font-bold">Thuế (%)</label>
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Thuế (%)</label>
                 <input type="number" class="form-input" id="service-tax" value="8" min="0" max="100" step="0.1">
             </div>
         </div>
@@ -337,25 +336,25 @@
         <div class="modal-body text-left">
             <form id="edit-notification-form">
                 <!-- Thông tin cơ bản (Read-only) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <label class="form-label font-bold">Tên công ty</label>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Tên công ty</label>
                         <input type="text" class="form-input" id="edit-company" readonly>
                     </div>
-                    <div>
-                        <label class="form-label font-bold">Kỳ thanh toán</label>
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Kỳ thanh toán</label>
                         <input type="text" class="form-input" id="edit-period" readonly>
                     </div>
-                    <div>
-                        <label class="form-label font-bold">Số TBDV</label>
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Số TBDV</label>
                         <input type="text" class="form-input" id="edit-sotbdv" readonly>
                     </div>
                 </div>
 
                 <!-- Chi tiết dịch vụ (Có thể chỉnh sửa) -->
-                <div class="service-details-section">
-                    <div class="section-header flex justify-between items-center mb-3">
-                        <h6 class="mb-0 font-bold text-base">
+                <div class="service-details-section mt-4">
+                    <div class="section-header flex justify-between items-center">
+                        <h6 class="fw-bold" style="margin: 0;">
                             <i class="fas fa-list"></i> Chi tiết dịch vụ
                         </h6>
                         <div class="service-actions">
@@ -389,27 +388,27 @@
                     </div>
 
                     <!-- Giảm trừ và tổng kết -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label class="form-label font-bold">Phần trăm giảm trừ (%)</label>
+                    <div class="form-grid-2 mt-3">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">Phần trăm giảm trừ (%)</label>
                             <input type="number" class="form-input" id="edit-discount" value="0" min="0" max="100" step="0.1">
                         </div>
-                        <div>
-                            <div class="summary-info p-3 bg-gray-50 rounded-lg">
-                                <div class="flex justify-between mb-2">
+                        <div class="form-group">
+                            <div class="summary-info p-3">
+                                <div class="summary-row">
                                     <span>Tổng tiền trước thuế:</span>
                                     <strong id="edit-total-before-tax">0 VND</strong>
                                 </div>
-                                <div class="flex justify-between mb-2">
+                                <div class="summary-row">
                                     <span>Tổng tiền sau thuế:</span>
-                                    <strong id="edit-total-after-tax" class="text-blue-600">0 VND</strong>
+                                    <strong id="edit-total-after-tax" class="text-primary">0 VND</strong>
                                 </div>
-                                <div class="flex justify-between mb-2 text-amber-600">
+                                <div class="summary-row text-warning">
                                     <span>Tiền giảm trừ:</span>
                                     <strong id="edit-discount-amount">0 VND</strong>
                                 </div>
-                                <hr class="my-2 border-gray-300">
-                                <div class="flex justify-between text-green-600 text-lg">
+                                <hr style="margin: 8px 0;">
+                                <div class="summary-row text-success" style="font-size: 1.1rem;">
                                     <span><strong>Tiền cần thanh toán:</strong></span>
                                     <strong id="edit-final-amount">0 VND</strong>
                                 </div>
@@ -432,6 +431,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 <script src="{% static 'js/dichvudiennuoc_danhsachthongbao.js' %}"></script>
 {% endblock %}

@@ -36565,3 +36565,8 @@ WARNING 2026-03-11 14:48:44,462 log 16336 15888 Bad Request: /hrm/quan-ly-luong/
 WARNING 2026-03-11 14:48:44,463 basehttp 16336 15888 "POST /hrm/quan-ly-luong/api/phan-tu-luong/1/toggle-status/ HTTP/1.1" 400 236
 WARNING 2026-03-11 14:48:49,844 log 16336 15888 Bad Request: /hrm/quan-ly-luong/api/phan-tu-luong/3/toggle-status/
 WARNING 2026-03-11 14:48:49,845 basehttp 16336 15888 "POST /hrm/quan-ly-luong/api/phan-tu-luong/3/toggle-status/ HTTP/1.1" 400 236
+WARNING 2026-03-13 11:10:14,354 basehttp 15264 13656 "GET /static/css/dist/output.css HTTP/1.1" 404 1984
+WARNING 2026-03-13 11:11:13,457 log 15264 12704 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-13 11:11:13,458 basehttp 15264 12704 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
+WARNING 2026-03-13 11:13:51,631 log 15264 12704 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-13 11:13:51,632 basehttp 15264 12704 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
