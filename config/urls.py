@@ -20,16 +20,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from django.http import JsonResponse
+from django.http import HttpResponse
+from django.shortcuts import redirect
 
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
 
+def root_entry(request):
+    # Render thường gọi HEAD / để health probe; trả 200 để tránh timeout.
+    if request.method == 'HEAD':
+        return HttpResponse(status=200)
+    return redirect('/dashboard/')
+
+
 urlpatterns = [
     path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(url='dashboard/')),
+    path('', root_entry, name='root_entry'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('dichvudiennuoc/', include('apps.dich_vu_dien_nuoc.urls')),
