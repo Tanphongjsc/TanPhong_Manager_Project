@@ -12,7 +12,6 @@ urlpatterns = [
     path("cay-nhan-su/", views.view_cay_nhan_su_index, name="cay_nhan_su_index"),
     path("cay-nhan-su/nhan-vien/<int:id>/", views.view_nhan_vien_index, name="cay_nhan_su_nhan_vien_index"),
     path("bao-cao/", views.view_bao_cao_index, name="bao_cao_index"),
-    path("chuc-vu/", views.view_chuc_vu_index, name="chuc_vu_index"),
     path("danh-muc/", views.view_danh_muc_index, name="danh_muc_index"),
     path("quan-ly/boi-thuong/", views.view_bo_thuong_index, name="quan_ly_boi_thuong_index"),
     path("quan-ly/tam-ung/", views.view_tam_ung_index, name="quan_ly_tam_ung_index"),
@@ -50,6 +49,7 @@ urlpatterns = [
     path("danh-muc/bao-hiem/", views.view_dmht_baohiem_list, name="dmht_baohiem"),
     path("danh-muc/loai-nhan-vien/", views.view_dmht_loainhanvien_list, name="dmht_loainhanvien"),
     path("danh-muc/cong-viec/", views.view_dmht_congviec_list, name="dmht_congviec"),
+    path("danh-muc/chuc-vu/", views.view_chuc_vu_index, name="chuc_vu_index"),
 
     # API URLS - DANH SÁCH VIEWS
     # ========================================================================

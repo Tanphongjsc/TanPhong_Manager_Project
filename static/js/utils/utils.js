@@ -1138,11 +1138,33 @@ const AppUtils = (() => {
     // FORMULA VALIDATOR - Kiểm tra cú pháp biểu thức
     // ============================================================
     const Formula = (() => {
+        const toNumber = (v) => {
+            const n = Number(v);
+            if (Number.isNaN(n)) throw new Error('Giá trị không phải số hợp lệ');
+            return n;
+        };
+
+        const sumValues = (...args) => {
+            if (!args.length) throw new Error('SUM cần ít nhất 1 tham số');
+            return args.reduce((acc, cur) => acc + toNumber(cur), 0);
+        };
+
+        const avgValues = (...args) => {
+            if (!args.length) throw new Error('AVG cần ít nhất 1 tham số');
+            return sumValues(...args) / args.length;
+        };
+
+        const countValues = (...args) => {
+            if (!args.length) throw new Error('COUNT cần ít nhất 1 tham số');
+            return args.filter(v => v !== null && v !== undefined && v !== '').length;
+        };
+
         // 1. Định nghĩa Context tĩnh (Chỉ khởi tạo 1 lần)
         const CTX = {
             IF: (c, t, f) => c ? t : f,
             MAX: Math.max, MIN: Math.min, ROUND: Math.round,
-            ABS: Math.abs, POW: Math.pow, CEIL: Math.ceil, FLOOR: Math.floor
+            ABS: Math.abs, POW: Math.pow, CEIL: Math.ceil, FLOOR: Math.floor,
+            SUM: sumValues, COUNT: countValues, AVG: avgValues
         };
 
         return {
@@ -1164,7 +1186,11 @@ const AppUtils = (() => {
                         'Invalid or unexpected': 'Chứa ký tự lạ không hợp lệ',
                         'Unexpected end of input': 'Công thức chưa hoàn thiện (thiếu dấu ngoặc?)',
                         'missing )': 'Thiếu dấu ngoặc đóng )',
-                        'Assignment to constant': 'Không được gán giá trị cho hằng số'
+                        'Assignment to constant': 'Không được gán giá trị cho hằng số',
+                        'SUM cần ít nhất 1 tham số': 'Hàm SUM cần ít nhất 1 tham số',
+                        'COUNT cần ít nhất 1 tham số': 'Hàm COUNT cần ít nhất 1 tham số',
+                        'AVG cần ít nhất 1 tham số': 'Hàm AVG cần ít nhất 1 tham số',
+                        'Giá trị không phải số hợp lệ': 'Tham số của hàm tính toán phải là số hợp lệ'
                     };
                     const key = Object.keys(map).find(k => e.message.includes(k));
                     return { ok: false, msg: key ? map[key] : e.message };

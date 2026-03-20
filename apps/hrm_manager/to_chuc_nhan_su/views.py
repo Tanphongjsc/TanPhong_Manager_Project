@@ -1060,6 +1060,7 @@ def view_chuc_vu_index(request):
     context = {
         'breadcrumbs': [
             {'title': 'Quản lý nhân sự', 'url': '#'},
+            {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
             {'title': 'Chức vụ', 'url': None},
         ],
         'status_list': [
