@@ -122,6 +122,14 @@ def api_cong_ty_list(request):
         try:
             data = loads(request.body)
 
+            # Validate mã công ty phải duy nhất trong toàn hệ thống
+            ma_congty = data.get('macongty')
+            if Congty.objects.filter(macongty=ma_congty).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Mã công ty đã tồn tại. Vui lòng chọn mã khác.'
+                }, status=400)
+
             cong_ty = Congty.objects.create(
                 macongty=data.get('macongty'),
                 tencongty_vi=data.get('tencongty_vi'),
@@ -262,6 +270,16 @@ def api_phong_ban_list(request):
         # Tạo mới phòng ban
         try:
             data = loads(request.body)
+            
+            # Validate mã phòng ban phải duy nhất trong toàn hệ thống
+            ma_phongban = data.get('maphongban')
+            if Phongban.objects.filter(maphongban=ma_phongban).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Mã phòng ban đã tồn tại. Vui lòng chọn mã khác.'
+                }, status=400)
+
+            # Lấy phòng ban cha nếu có, để xác định level
             phongbancha_id = data.get('phongbancha_id', "") if data.get('phongbancha_id') else None
             phong_ban_cha = Phongban.objects.filter(id=phongbancha_id).first()
 
@@ -1070,7 +1088,7 @@ def view_chuc_vu_index(request):
         
     }
 
-    return render(request, "hrm_manager/quan_ly_nhan_su/chucvu.html", context=context)
+    return render(request, "hrm_manager/quan_ly_nhan_su/dmht_chucvu.html", context=context)
 
 
 # ==================== API CHỨC VỤ ====================

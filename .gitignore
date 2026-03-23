@@ -8,6 +8,7 @@ __pycache__/
 env/
 logs/
 .github/
+**/__init__.py
 
 # Thư mục Node
 node_modules/

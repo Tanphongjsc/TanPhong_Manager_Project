@@ -18,6 +18,10 @@
     .custom-scroll::-webkit-scrollbar { width: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+    /* Keep tree chevron visible even when global sidebar styles hide .fa-chevron-down */
+    .tree-toggle i { transition: transform 0.2s ease; }
+    .tree-toggle.is-open i { transform: rotate(90deg); }
 </style>
 {% endblock %}
 

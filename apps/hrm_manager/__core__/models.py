@@ -572,7 +572,7 @@ class Loainhanvien(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'LoaiNhanVien'
+        db_table = '"hrm"."LoaiNhanVien"'
         db_table_comment = 'Danh muc Loai Nhan vien'
 
 
@@ -612,7 +612,7 @@ class Nganhang(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'NganHang'
+        db_table = '"hrm"."NganHang"'
         db_table_comment = 'Danh muc Ngan hang'
 
 

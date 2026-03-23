@@ -66,9 +66,8 @@ class TreeManager {
                     toggle.onclick = (e) => {
                         e.stopPropagation();
                         childrenUl.classList.toggle('hidden');
-                        const icon = toggle.querySelector('i');
-                        icon.classList.toggle('fa-chevron-right');
-                        icon.classList.toggle('fa-chevron-down');
+                        const isExpanded = !childrenUl.classList.contains('hidden');
+                        toggle.classList.toggle('is-open', isExpanded);
                     };
                     build(children, childrenUl);
                 }
