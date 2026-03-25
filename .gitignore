@@ -8,7 +8,6 @@ __pycache__/
 env/
 logs/
 .github/
-**/__init__.py
 **/migrations/
 *.md
 *.log
