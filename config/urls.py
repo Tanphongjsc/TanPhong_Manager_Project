@@ -25,7 +25,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-from config.authz import get_first_allowed_url
+from config.authz.ui import get_first_allowed_url
 
 
 def health_check(request):
