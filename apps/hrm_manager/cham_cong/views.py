@@ -17,6 +17,7 @@ from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import Bangchamcong, Khunggionghitrua, Phongban, Lichlamviecthucte, Calamviec, Lichsucongtac
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
+from apps.hrm_manager.utils.permissions import require_api_permission, require_view_permission
 from apps.hrm_manager.utils.view_helpers import diff_minutes, parse_time_to_minutes, parse_minutes_to_time, calculate_work_minutes_with_overnight, tinh_phut_nghi_trua_trong_khoang, serialize_time_value
 from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 
@@ -580,6 +581,7 @@ def view_tong_hop_lam_them(request):
 # ============================================================
 
 @login_required
+@require_view_permission('access_control.view_cham_cong')
 def view_bang_cham_cong(request):
     """Bảng chấm công"""
     context = {
@@ -596,6 +598,7 @@ def view_bang_cham_cong(request):
     return render(request, "hrm_manager/cham_cong/bang_cham_cong.html", context)
 
 @login_required
+@require_view_permission('access_control.view_cham_cong')
 def view_tong_hop_cham_cong(request):
     """Tổng hợp chấm công"""
     context = {
@@ -614,6 +617,7 @@ def view_tong_hop_cham_cong(request):
 
 # ================ API CHO BẢNG CHẤM CÔNG ================
 @login_required
+@require_api_permission('access_control.write_cham_cong')
 @require_http_methods(["POST", "PUT"])
 @transaction.atomic
 def api_bang_cham_cong_list(request):
@@ -672,7 +676,8 @@ def api_bang_cham_cong_list(request):
         return JsonResponse({'success': False, 'message': f'Lỗi: {str(e)}'}, status=400)
 
 
-# @login_required
+@login_required
+@require_api_permission('access_control.view_cham_cong')
 @require_http_methods(["GET"])
 def api_bang_cham_cong_nhan_vien_list(request):
     # Xử lý đầu vào
@@ -693,7 +698,8 @@ def api_bang_cham_cong_nhan_vien_list(request):
     return JsonResponse({'success': True, 'data': data}, status=200)
 
 
-# @login_required
+@login_required
+@require_api_permission('access_control.view_cham_cong')
 @require_http_methods(["GET"])
 def api_tong_hop_cham_cong_thang(request):
     """API Tổng hợp chấm công tháng cho nhân viên"""
@@ -791,7 +797,8 @@ def api_tong_hop_cham_cong_thang(request):
     return JsonResponse({'success': True, 'data': merge_ds_nv, 'total': len(merge_ds_nv)}, status=200)
 
 
-# @login_required
+@login_required
+@require_api_permission('access_control.view_cham_cong')
 @require_http_methods(["GET"])
 def api_check_cham_cong(request):
     """API lấy danh sách nhân viên đã hoặc chưa chấm công trong ngày."""
@@ -811,8 +818,12 @@ def api_check_cham_cong(request):
 # VIEWS: ĐƠN BÁO & BÁO CÁO
 # ============================================================
 
+@login_required
+@require_view_permission('access_control.view_don_bao')
 def view_don_bao(request):
     return render(request, "hrm_manager/cham_cong/don_bao.html", {})
 
+@login_required
+@require_view_permission('access_control.view_cham_cong')
 def view_bao_cao(request):
     return render(request, "hrm_manager/cham_cong/bao_cao.html", {})

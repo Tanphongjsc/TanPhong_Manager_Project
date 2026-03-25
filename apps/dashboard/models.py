@@ -6,7 +6,7 @@ class AuthGroup(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_group'
+        db_table = '"public"."auth_group"'
 
 
 class AuthGroupPermissions(models.Model):
@@ -16,7 +16,7 @@ class AuthGroupPermissions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_group_permissions'
+        db_table = '"public"."auth_group_permissions"'
         unique_together = (('group', 'permission'),)
 
 
@@ -27,7 +27,7 @@ class AuthPermission(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_permission'
+        db_table = '"public"."auth_permission"'
         unique_together = (('content_type', 'codename'),)
 
 
@@ -45,7 +45,7 @@ class AuthUser(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user'
+        db_table = '"public"."auth_user"'
 
 
 class AuthUserGroups(models.Model):
@@ -55,7 +55,7 @@ class AuthUserGroups(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_groups'
+        db_table = '"public"."auth_user_groups"'
         unique_together = (('user', 'group'),)
 
 
@@ -66,7 +66,7 @@ class AuthUserUserPermissions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_user_permissions'
+        db_table = '"public"."auth_user_user_permissions"'
         unique_together = (('user', 'permission'),)
 
 
@@ -81,7 +81,7 @@ class DjangoAdminLog(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_admin_log'
+        db_table = '"public"."django_admin_log"'
 
 
 class DjangoContentType(models.Model):
@@ -90,7 +90,7 @@ class DjangoContentType(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_content_type'
+        db_table = '"public"."django_content_type"'
         unique_together = (('app_label', 'model'),)
 
 
@@ -102,7 +102,7 @@ class DjangoMigrations(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_migrations'
+        db_table = '"public"."django_migrations"'
 
 
 class DjangoSession(models.Model):
@@ -112,4 +112,4 @@ class DjangoSession(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_session'
+        db_table = '"public"."django_session"'

@@ -86,6 +86,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'config.middleware.access_control.AccessControlMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
@@ -109,6 +110,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config.authz.ui.access_control_context',
             ],
         },
     },
@@ -174,7 +176,7 @@ USE_I18N = True
 USE_TZ = True
 
 # Authentication Settings
-LOGIN_REDIRECT_URL = 'dashboard:dashboard' # Chuyển hướng sau khi login thành công
+LOGIN_REDIRECT_URL = 'post_login_redirect' # Chuyển hướng sau khi login thành công
 LOGIN_URL = 'login' # Đường dẫn đến trang login
 LOGOUT_REDIRECT_URL = 'login' # Chuyển hướng sau khi logout
 

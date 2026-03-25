@@ -22,6 +22,10 @@ from django.views.generic import RedirectView
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+from config.authz import get_first_allowed_url
 
 
 def health_check(request):
@@ -32,18 +36,41 @@ def root_entry(request):
     # Render thường gọi HEAD / để health probe; trả 200 để tránh timeout.
     if request.method == 'HEAD':
         return HttpResponse(status=200)
-    return redirect('/dashboard/')
+
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    destination = get_first_allowed_url(request.user)
+    if destination:
+        return redirect(destination)
+
+    return render(request, 'registration/403.html', status=403)
+
+
+@login_required
+def post_login_redirect(request):
+    destination = get_first_allowed_url(request.user)
+    if destination:
+        return redirect(destination)
+    return render(request, 'registration/403.html', status=403)
+
+
+def permission_denied_view(request, exception=None):
+    return render(request, 'registration/403.html', status=403)
 
 
 urlpatterns = [
     path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('', root_entry, name='root_entry'),
+    path('accounts/post-login/', post_login_redirect, name='post_login_redirect'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('dichvudiennuoc/', include('apps.dich_vu_dien_nuoc.urls')),
     path('hrm/', include('apps.hrm_manager.urls')),
 ]
+
+handler403 = 'config.urls.permission_denied_view'
 
 # 🆕 THÊM DÒNG NÀY CHO DEVELOPMENT
 if settings.DEBUG:
