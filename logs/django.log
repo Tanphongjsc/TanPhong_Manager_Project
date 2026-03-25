@@ -36572,3 +36572,120 @@ WARNING 2026-03-13 11:13:51,631 log 15264 12704 Not Found: /.well-known/appspeci
 WARNING 2026-03-13 11:13:51,632 basehttp 15264 12704 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3242
 WARNING 2026-03-13 16:03:38,918 log 15420 21924 Not Found: /favicon.ico
 WARNING 2026-03-13 16:03:38,919 basehttp 15420 21924 "GET /favicon.ico HTTP/1.1" 404 3131
+WARNING 2026-03-17 10:50:21,687 log 23620 14076 Not Found: /favicon.ico
+WARNING 2026-03-17 10:50:21,688 basehttp 23620 14076 "GET /favicon.ico HTTP/1.1" 404 3321
+WARNING 2026-03-17 10:59:55,774 log 23620 11548 Bad Request: /hrm/quan-ly-luong/api/phieu-luong/list
+WARNING 2026-03-17 10:59:55,774 basehttp 23620 11548 "GET /hrm/quan-ly-luong/api/phieu-luong/list?bangluong_id=13 HTTP/1.1" 400 187
+WARNING 2026-03-17 11:28:45,256 log 23620 22464 Bad Request: /hrm/to-chuc-nhan-su/api/v1/cong-ty/10/
+WARNING 2026-03-17 11:28:45,256 basehttp 23620 22464 "DELETE /hrm/to-chuc-nhan-su/api/v1/cong-ty/10/ HTTP/1.1" 400 176
+WARNING 2026-03-17 11:29:09,724 log 23620 22464 Bad Request: /hrm/to-chuc-nhan-su/api/v1/cong-ty/10/
+WARNING 2026-03-17 11:29:09,725 basehttp 23620 22464 "DELETE /hrm/to-chuc-nhan-su/api/v1/cong-ty/10/ HTTP/1.1" 400 176
+ERROR 2026-03-17 11:32:22,602 log 23620 22464 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-17 11:32:22,604 basehttp 23620 22464 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93881
+ERROR 2026-03-17 11:32:43,310 log 23620 22464 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-17 11:32:43,316 basehttp 23620 22464 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93881
+ERROR 2026-03-17 11:34:08,348 log 23620 22464 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-17 11:34:08,350 basehttp 23620 22464 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93881
+ERROR 2026-03-17 11:34:30,443 log 23620 22464 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-17 11:34:30,444 basehttp 23620 22464 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93881
+ERROR 2026-03-17 11:34:38,412 log 23620 22464 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 153, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-17 11:34:38,413 basehttp 23620 22464 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 93881
+WARNING 2026-03-17 11:38:08,653 log 23620 17360 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-17 11:38:08,655 basehttp 23620 17360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 14:51:43,882 log 6692 15140 Not Found: /favicon.ico
+WARNING 2026-03-23 14:51:43,883 basehttp 6692 15140 "GET /favicon.ico HTTP/1.1" 404 3321
