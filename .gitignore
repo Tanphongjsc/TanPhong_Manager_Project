@@ -9,6 +9,9 @@ env/
 logs/
 .github/
 **/__init__.py
+**/migrations/
+*.md
+*.log
 
 # Thư mục Node
 node_modules/
