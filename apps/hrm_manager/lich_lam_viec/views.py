@@ -64,6 +64,7 @@ def view_ca_lam_viec(request):
         ],
         'tabs': get_thiet_ke_lich_tabs(),
         'filter_options': filter_options,
+        'page_title': 'Quản lý ca làm việc',
     }
     return render(request, "hrm_manager/lich_lam_viec/ca_lam_viec.html", context)
 
@@ -109,6 +110,7 @@ def view_lich_lam_viec(request):
         ],
         'tabs': get_thiet_ke_lich_tabs(),
         'filter_options': filter_options,
+        'page_title': 'Quản lý lịch làm việc',
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_lam_viec.html", context)
 
@@ -149,6 +151,7 @@ def view_tong_hop_lich(request):
             {'title': 'Tổng hợp lịch', 'url': None},
         ],
         'tabs': get_thiet_ke_lich_tabs(),
+        'page_title': 'Quản lý lịch làm việc',
     }
     return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
 
@@ -162,6 +165,7 @@ def view_lich_nghi(request):
             {'title': 'Thiết kế lịch nghỉ', 'url': None},
         ],
         'tabs': get_thiet_ke_nghi_tabs(),
+        'page_title': 'Quản lý lịch nghỉ',
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
 
@@ -173,6 +177,7 @@ def view_quy_nghi(request):
             {'title': 'Quỹ nghỉ', 'url': None},
         ],
         'tabs': get_thiet_ke_nghi_tabs(),
+        'page_title': 'Quản lý lịch nghỉ',
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/quy_nghi.html", context)
 
@@ -184,6 +189,7 @@ def view_tong_hop_nghi(request):
             {'title': 'Tổng hợp nghỉ', 'url': None},
         ],
         'tabs': get_thiet_ke_nghi_tabs(),
+        'page_title': 'Quản lý lịch nghỉ',
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/tong_hop_nghi.html", context)
 

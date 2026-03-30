@@ -255,13 +255,13 @@ class BaseCRUDManager {
             create: {
                 title: this.config.texts.createTitle,
                 btnText: 'Thêm',
-                btnColor: 'bg-green-600 hover:bg-green-700',
+                btnColor: 'bg-blue-600 hover:bg-blue-700',
                 loadData: false
             },
             edit: {
                 title: this.config.texts.editTitle,
                 btnText: 'Lưu',
-                btnColor: 'bg-green-600 hover:bg-green-700',
+                btnColor: 'bg-blue-600 hover:bg-blue-700',
                 loadData: true
             }
         };
@@ -272,9 +272,9 @@ class BaseCRUDManager {
 
         if (this.elements.submitBtn) {
             this.elements.submitBtn.textContent = uiConfig.btnText;
-            
+
             if (this.config.uiMode === 'sidebar') {
-                this.elements.submitBtn.className = `px-6 py-2 text-white rounded-lg transition-colors ${uiConfig.btnColor}`;
+                this.elements.submitBtn.className = `px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${uiConfig.btnColor}`;
             }
         }
 

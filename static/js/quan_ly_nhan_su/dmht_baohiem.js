@@ -52,15 +52,15 @@ class BaoHiemManager extends BaseCRUDManager {
             onRenderRow: (item) => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition-colors';
-                
-                // HTML Status Toggle
+
+                // HTML Status Toggle (Màu xanh dương theo quy chuẩn)
                 const statusHtml = `
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" 
-                               class="sr-only peer status-toggle" 
-                               data-id="${item.id}" 
+                        <input type="checkbox"
+                               class="sr-only peer status-toggle"
+                               data-id="${item.id}"
                                ${item.trangthai === 'active' ? 'checked' : ''}>
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 `;
 
@@ -69,7 +69,7 @@ class BaoHiemManager extends BaseCRUDManager {
                         <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}">
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <a href="javascript:void(0);" onclick="window.BaoHiemManager.openSidebar('edit', ${item.id})" class="text-sm font-medium text-green-600 hover:text-green-700">
+                        <a href="javascript:void(0);" onclick="window.BaoHiemManager.openSidebar('edit', ${item.id})" class="text-sm font-medium text-blue-600 hover:text-blue-700">
                             ${item.tenbaohiem}
                         </a>
                     </td>

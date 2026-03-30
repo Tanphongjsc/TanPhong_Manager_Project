@@ -72,10 +72,10 @@ class LichLamViecController {
         const isDefault = item.IsDefault || item.MaNhom === 'NHOMMACDINH' || item.MaNhom === 'NHOM_MAC_DINH';
 
         // --- SỬA: Gom Tên và Badge vào 1 chuỗi HTML để xử lý layout ---
-        let nameContent = `<span class="text-sm font-medium text-slate-900">${item.TenNhom || 'Chưa đặt tên'}</span>`;
+        let nameContent = `<span class="text-sm font-medium text-blue-600">${item.TenNhom || 'Chưa đặt tên'}</span>`;
         if (isDefault) {
             // Badge nằm cùng dòng
-            nameContent += `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200 uppercase whitespace-nowrap">Mặc định</span>`;
+            nameContent += `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">Mặc định</span>`;
         }
 
         // Render cột Ca làm việc
@@ -103,24 +103,24 @@ class LichLamViecController {
 
         tr.innerHTML = `
             ${checkboxHtml}
-            <td class="px-6 py-4 align-top">
+            <td class="px-6 py-4">
                 <div class="flex items-center">
-                    <a href="${editUrl}" class="hover:text-blue-600 transition-colors flex items-center">
+                    <a href="${editUrl}" class="hover:text-blue-700 transition-colors flex items-center">
                         ${nameContent}
                     </a>
                 </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-mono align-top pt-4">${item.MaNhom}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 align-top pt-4">${item.LoaiCa || '-'}</td>
-            <td class="px-6 py-4 align-top">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-mono">${item.MaNhom}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${item.LoaiCa || '-'}</td>
+            <td class="px-6 py-4">
                 ${caHtml}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-center text-sm align-top pt-4">
+            <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.SoNhanVien > 0 ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-500'}">
                     ${item.SoNhanVien}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-top pt-4">
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end gap-2">
                     <a href="${editUrl}" class="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50" title="Sửa">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

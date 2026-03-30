@@ -36689,3 +36689,90 @@ WARNING 2026-03-17 11:38:08,653 log 23620 17360 Not Found: /.well-known/appspeci
 WARNING 2026-03-17 11:38:08,655 basehttp 23620 17360 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
 WARNING 2026-03-23 14:51:43,882 log 6692 15140 Not Found: /favicon.ico
 WARNING 2026-03-23 14:51:43,883 basehttp 6692 15140 "GET /favicon.ico HTTP/1.1" 404 3321
+WARNING 2026-03-23 16:58:58,337 log 21304 20260 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 16:58:58,339 basehttp 21304 20260 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 16:59:13,412 log 22884 21596 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 16:59:13,412 basehttp 22884 21596 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 16:59:15,642 log 22884 24788 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 16:59:15,643 basehttp 22884 24788 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 16:59:16,563 log 22884 24788 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 16:59:16,564 basehttp 22884 24788 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 17:03:49,319 log 22884 21596 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 17:03:49,324 basehttp 22884 21596 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 17:03:51,019 log 22884 24788 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 17:03:51,019 basehttp 22884 24788 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-23 17:03:51,964 log 22884 24788 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-23 17:03:51,965 basehttp 22884 24788 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3432
+WARNING 2026-03-27 10:43:23,189 log 21552 10568 Not Found: /favicon.ico
+WARNING 2026-03-27 10:43:23,189 basehttp 21552 10568 "GET /favicon.ico HTTP/1.1" 404 3321
+WARNING 2026-03-27 11:08:32,517 log 21552 23400 Not Found: /favicon.ico
+WARNING 2026-03-27 11:08:32,518 basehttp 21552 23400 "GET /favicon.ico HTTP/1.1" 404 3321
+ERROR 2026-03-27 16:10:14,711 log 13364 19344 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 155, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-27 16:10:14,714 basehttp 13364 19344 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 94184
+WARNING 2026-03-27 17:47:18,347 log 18716 11284 Not Found: /favicon.ico
+WARNING 2026-03-27 17:47:18,347 basehttp 18716 11284 "GET /favicon.ico HTTP/1.1" 404 3321
+ERROR 2026-03-27 17:48:05,615 log 18716 11284 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 168, in view_lich_nghi
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html
+ERROR 2026-03-27 17:48:05,617 basehttp 18716 11284 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 94365
+WARNING 2026-03-27 17:48:05,856 log 18716 11284 Not Found: /favicon.ico
+WARNING 2026-03-27 17:48:05,866 basehttp 18716 11284 "GET /favicon.ico HTTP/1.1" 404 3321
+WARNING 2026-03-27 17:49:05,011 log 18716 14088 Not Found: /favicon.ico
+WARNING 2026-03-27 17:49:05,012 basehttp 18716 14088 "GET /favicon.ico HTTP/1.1" 404 3321
+ERROR 2026-03-27 18:02:08,097 log 7796 20016 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 156, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-27 18:02:08,097 basehttp 7796 20016 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 94425
