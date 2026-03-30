@@ -4,12 +4,14 @@ from django.shortcuts import render
 from django.db.models import Q, Count, Prefetch, Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from apps.hrm_manager.__core__.models import *
 import json
 from django.utils import timezone
 from django.db import transaction
 from .services import CaLamViecService, LichLamViecService, ConflictException
+from apps.hrm_manager.utils.permissions import require_api_permission, require_view_permission
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context, 
@@ -44,6 +46,8 @@ def get_thiet_ke_nghi_tabs():
 
 # --- 1.VIEWS: THIẾT KẾ LỊCH LÀM VIỆC ---
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_ca_lam_viec(request):
     
     # Query: Lấy tất cả các giá trị 'loaichamcong' đã từng nhập, loại bỏ trùng lặp
@@ -69,6 +73,8 @@ def view_ca_lam_viec(request):
     return render(request, "hrm_manager/lich_lam_viec/ca_lam_viec.html", context)
 
 
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
 def view_ca_lam_viec_create(request):
     """Màn hình Thêm mới Ca"""
     breadcrumbs = [
@@ -82,6 +88,8 @@ def view_ca_lam_viec_create(request):
         'cancel_url': reverse('hrm:lich_lam_viec:thiet_ke_ca')
     })
 
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
 def view_ca_lam_viec_update(request, pk):
     """Màn hình Cập nhật Ca"""
     breadcrumbs = [
@@ -96,6 +104,8 @@ def view_ca_lam_viec_update(request, pk):
         'cancel_url': reverse('hrm:lich_lam_viec:thiet_ke_ca')
     })
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_lich_lam_viec(request):
     
     # Lấy danh sách loại kịch bản để làm bộ lọc
@@ -114,6 +124,8 @@ def view_lich_lam_viec(request):
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_lam_viec.html", context)
 
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
 def view_lich_lam_viec_create(request):
     """Màn hình Thêm mới Ca"""
     breadcrumbs = [
@@ -128,6 +140,8 @@ def view_lich_lam_viec_create(request):
         'is_update': False
     })
 
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
 def view_lich_lam_viec_update(request, pk):
     """Màn hình Cập nhật Lịch làm việc"""
     context = {
@@ -143,6 +157,8 @@ def view_lich_lam_viec_update(request, pk):
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_form_page.html", context)
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_tong_hop_lich(request):
     context = {
         'breadcrumbs': [
@@ -157,6 +173,8 @@ def view_tong_hop_lich(request):
 
 # --- 2.VIEWS: THIẾT KẾ LỊCH NGHỈ ---
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_lich_nghi(request):
     context = {
         'breadcrumbs': [
@@ -169,6 +187,8 @@ def view_lich_nghi(request):
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_quy_nghi(request):
     context = {
         'breadcrumbs': [
@@ -181,6 +201,8 @@ def view_quy_nghi(request):
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/quy_nghi.html", context)
 
+@login_required
+@require_view_permission('access_control.view_lich_lam_viec')
 def view_tong_hop_nghi(request):
     context = {
         'breadcrumbs': [
@@ -198,6 +220,8 @@ def view_tong_hop_nghi(request):
 #==================== CA LÀM VIỆC =======================
 #========================================================
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_calamviec_list(request):
@@ -259,6 +283,8 @@ def api_calamviec_list(request):
     )
 
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_calamviec_detail(request, pk):
@@ -316,6 +342,8 @@ def api_calamviec_detail(request, pk):
     return json_success('Lấy chi tiết thành công', data=data)
 
 
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_calamviec_create(request):
@@ -343,6 +371,8 @@ def api_calamviec_create(request):
         return json_error(f"Lỗi khi lưu: {str(e)}")
 
 
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["PUT", "POST"])
 @handle_exceptions
 def api_calamviec_update(request, pk):
@@ -369,6 +399,8 @@ def api_calamviec_update(request, pk):
         return json_error(f"Lỗi khi lưu: {str(e)}")
 
 
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["POST", "DELETE"])
 @handle_exceptions
 def api_calamviec_delete(request, pk):
@@ -392,6 +424,8 @@ def api_calamviec_delete(request, pk):
 #==================== API LỊCH LÀM VIỆC =======================
 #==============================================================
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_lichlamviec_list(request):
@@ -450,6 +484,8 @@ def api_lichlamviec_list(request):
         }
     )
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_lichlamviec_detail(request, pk):
@@ -555,6 +591,8 @@ def api_lichlamviec_detail(request, pk):
     
     return json_success("Thành công", data=data)
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_check_schedule_conflicts(request):
@@ -594,6 +632,8 @@ def api_check_schedule_conflicts(request):
         return json_error(str(e))
 
 
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_validate_employee_selection(request):
@@ -634,6 +674,8 @@ def api_validate_employee_selection(request):
         return json_error(str(e))
     
 
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_lichlamviec_create(request):
@@ -689,6 +731,8 @@ def api_lichlamviec_create(request):
         return json_error(f"Lỗi khi lưu dữ liệu: {str(e)}")
     
     
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["PUT", "POST"])
 @handle_exceptions
 def api_lichlamviec_update(request, pk):
@@ -750,6 +794,8 @@ def api_lichlamviec_update(request, pk):
         return json_error(f"Lỗi khi lưu dữ liệu:  {str(e)}")
 
 
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["POST", "DELETE"])
 @handle_exceptions
 def api_lichlamviec_delete(request, pk):
@@ -768,6 +814,8 @@ def api_lichlamviec_delete(request, pk):
     else:
         return json_error(message)
     
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_generate_next_month_schedules(request):
