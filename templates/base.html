@@ -322,7 +322,7 @@
                     <div class="py-2 overflow-y-auto max-h-[60vh]">
                         {% if acl.can_view_lich_lam_viec %}
                         <div class="px-4 pb-1 pt-2 text-xs font-bold text-blue-600 uppercase tracking-wider">Quản lý Lịch làm việc</div>
-                        <a href="{% url 'hrm:lich_lam_viec:thiet_ke_ca' %}" class="tooltip-link pl-6" data-title="Quản lý lịch làm việc"><i class="fas fa-calendar-days me-2"></i>Lịch làm việc</a>
+                        <a href="{% url 'hrm:lich_lam_viec:thiet_ke_lich' %}" class="tooltip-link pl-6" data-title="Quản lý lịch làm việc"><i class="fas fa-calendar-days me-2"></i>Lịch làm việc</a>
                         <a href="{% url 'hrm:lich_lam_viec:thiet_ke_lich_nghi' %}" class="tooltip-link pl-6"><i class="fas fa-umbrella-beach me-2"></i>Lịch nghỉ</a>
 
                         <div class="my-2 border-t border-gray-200"></div>
@@ -358,7 +358,7 @@
                         <div class="px-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider sidebar-text">
                             Quản lý Lịch làm việc
                         </div>
-                        <a href="{% url 'hrm:lich_lam_viec:thiet_ke_ca' %}" class="sub-link pl-6" data-title="Quản lý lịch làm việc">
+                        <a href="{% url 'hrm:lich_lam_viec:thiet_ke_lich' %}" class="sub-link pl-6" data-title="Quản lý lịch làm việc">
                             <i class="fas fa-calendar-days w-6 text-gray-400"></i><span class="sidebar-text">Lịch làm việc</span>
                         </a>
                         <a href="{% url 'hrm:lich_lam_viec:thiet_ke_lich_nghi' %}" class="sub-link pl-6" data-title="Lịch nghỉ">
@@ -668,15 +668,36 @@
         const initActiveFromLocation = () => {
             const path = location.pathname;
             const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)').map(a => a.getAttribute('href')).filter(h => h && h !== '#');
-            const best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
+            let best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
+
+            // Nếu không tìm thấy exact match, tìm link có chung base path
+            if (!best) {
+                const pathParts = path.split('/').filter(x => x);
+                for (let len = pathParts.length - 1; len >= 2; len--) {
+                    const basePath = '/' + pathParts.slice(0, len).join('/') + '/';
+                    const matches = links.filter(link => link.startsWith(basePath));
+                    if (matches.length > 0) {
+                        best = matches[0];
+                        break;
+                    }
+                }
+            }
+
             clearActive();
             if (best) {
                 markActiveByHref(best);
                 const normalEl = qs(`#sidebar-nav a[href="${best}"]:not(.tooltip-link)`);
                 const tipEl = qs(`.submenu-tooltip a[href="${best}"]`);
                 const title = (normalEl?.dataset?.title || normalEl?.textContent?.trim() || tipEl?.dataset?.title || tipEl?.textContent?.trim() || 'Dashboard');
-                updateTitle(title);
-            } else updateTitle('Dashboard');
+
+                // Ưu tiên lấy page_title từ context nếu có
+                const contextTitle = '{{ page_title|default:""|escapejs }}'.trim();
+                updateTitle(contextTitle ? contextTitle : title);
+            } else {
+                // Nếu vẫn không tìm thấy, ưu tiên dùng contextTitle
+                const contextTitle = '{{ page_title|default:""|escapejs }}'.trim();
+                updateTitle(contextTitle ? contextTitle : 'Dashboard');
+            }
         };
         document.addEventListener('click', (e) => {
             const link = e.target.closest('.tooltip-link');

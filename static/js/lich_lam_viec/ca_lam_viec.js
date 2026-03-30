@@ -46,9 +46,9 @@ class CaLamViecController {
         const isSystemDefault = item.MaCa === 'CAHANHCHINH';
 
         // Tên + Badge
-        let nameHtml = `<span class="text-sm font-medium text-slate-900">${item.TenCa || 'Chưa đặt tên'}</span>`;
+        let nameHtml = `<span class="text-sm font-medium text-blue-600">${item.TenCa || 'Chưa đặt tên'}</span>`;
         if (isSystemDefault) {
-            nameHtml += `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">Mặc định</span>`;
+            nameHtml += `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">Mặc định</span>`;
         }
 
         // Khung giờ
@@ -78,10 +78,10 @@ class CaLamViecController {
         tr.innerHTML = `
             <td class="px-6 py-4 text-center w-10">${checkboxHtml}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <a href="${editUrl}" class="text-slate-900 hover:text-blue-600 font-medium transition-colors">${nameHtml}</a>
+                <a href="${editUrl}" class="hover:text-blue-700 transition-colors">${nameHtml}</a>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-mono">${item.MaCa}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${item.LoaiCa || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${item.LoaiCa || '-'}</td>
             <td class="px-6 py-4">${timeSlotsHtml}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end">

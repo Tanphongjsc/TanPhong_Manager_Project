@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
-from django.db.models import OuterRef, Subquery, Q, Prefetch
+from django.db.models import OuterRef, Subquery, Q, Prefetch, Case, When, Value, IntegerField
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
@@ -1301,6 +1301,7 @@ def view_dmht_nganhang_list(request):
             {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
             {'title': 'Danh mục ngân hàng', 'url': None},
         ],
+        'page_title': 'Danh mục ngân hàng',
         'status_list': STATUS_LIST  # <--- Truyền biến này sang HTML
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_nganhang.html", context)
@@ -1313,6 +1314,7 @@ def view_dmht_baohiem_list(request):
             {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
             {'title': 'Danh mục bảo hiểm', 'url': None},
         ],
+        'page_title': 'Danh mục bảo hiểm',
         'status_list': STATUS_LIST # <--- Truyền biến này
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_baohiem.html", context)
@@ -1325,6 +1327,7 @@ def view_dmht_loainhanvien_list(request):
             {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
             {'title': 'Danh mục loại nhân viên', 'url': None},
         ],
+        'page_title': 'Danh mục loại nhân viên',
         'status_list': STATUS_LIST # <--- Truyền biến này
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_loainhanvien.html", context)
@@ -1438,17 +1441,24 @@ def api_baohiem_list(request):
 @handle_exceptions
 def api_loainhanvien_list(request):
     """API lấy danh sách loại nhân viên (JSON) hỗ trợ search, filter, pagination"""
-    queryset = Loainhanvien.objects.all()
-    
+    # Annotate để đưa loại nhân viên mặc định lên đầu
+    queryset = Loainhanvien.objects.annotate(
+        is_default=Case(
+            When(maloainv='NV', then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField()
+        )
+    ).order_by('is_default', '-created_at')
+
     context = get_list_context(
         request,
         queryset,
         search_fields=['tenloainv', 'maloainv'],
         filter_field=('trangthai', 'status'),
         page_size=20,
-        order_by='-created_at'
+        order_by=None  # Đã order custom ở trên
     )
-    
+
     page_obj = context['page_obj']
     paginator = context['paginator']
 
@@ -1461,16 +1471,16 @@ def api_loainhanvien_list(request):
             'GhiChu': item.ghichu or '',
             'trangthai': item.trangthai,
         })
-    
+
     pagination_data = {
         'page': page_obj.number,
-        'page_size': paginator.per_page, 
+        'page_size': paginator.per_page,
         'total': paginator.count,
         'total_pages': paginator.num_pages,
         'has_next': page_obj.has_next(),
         'has_prev': page_obj.has_previous()
     }
-    
+
     return json_success(
         'Lấy danh sách loại nhân viên thành công',
         data=items_list,

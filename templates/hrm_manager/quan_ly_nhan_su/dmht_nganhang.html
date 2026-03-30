@@ -9,14 +9,13 @@
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
     <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">Danh mục ngân hàng</h1>
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
         {# Toolbar #}
-        {# Chỉ cần truyền biến status_list đã được gửi từ view.py #}
-        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm..." create_text="Thêm ngân hàng" create_onclick="window.NganHangManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" %}  
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm theo tên hoặc mã..." show_add_btn=True create_text="Thêm ngân hàng" create_onclick="window.NganHangManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" btn_color="blue" %}
 
         {# Table Wrapper theo phong cách chức vụ html #}
-        {% with headers='<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên đầy đủ</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã ngân hàng</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên viết tắt</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Địa chỉ</th><th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>' %}
+        {% with headers='<th scope="col" class="px-6 py-1.5 text-left uppercase tracking-wider">Tên đầy đủ</th><th scope="col" class="px-6 py-1.5 text-left uppercase tracking-wider">Mã ngân hàng</th><th scope="col" class="px-6 py-1.5 text-left uppercase tracking-wider">Tên viết tắt</th><th scope="col" class="px-6 py-1.5 text-left uppercase tracking-wider">Địa chỉ</th><th scope="col" class="px-6 py-1.5 text-left uppercase tracking-wider">Trạng thái</th>' %}
             {% include "components/table_wrapper.html" with table_id="nganhang-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
         {% endwith %}
 
