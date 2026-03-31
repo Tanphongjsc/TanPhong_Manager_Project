@@ -375,11 +375,11 @@ class LichFormController extends BaseFormManager {
                 
                 let classes = 'py-2 text-[11px] rounded transition-colors ';
                 if (isSelected) {
-                    classes += 'bg-green-500 text-white font-bold';
+                    classes += 'bg-blue-500 text-white font-bold';
                 } else if (isCurrentMonth) {
-                    classes += 'bg-green-100 text-green-700 font-medium ring-1 ring-green-300';
+                    classes += 'bg-blue-100 text-blue-700 font-medium ring-1 ring-blue-300';
                 } else {
-                    classes += 'hover:bg-green-50 hover:text-green-600';
+                    classes += 'hover:bg-blue-50 hover:text-blue-600';
                 }
                 
                 return `<button type="button" class="${classes}" data-month="${month}">
@@ -491,7 +491,7 @@ class LichFormController extends BaseFormManager {
         if (toggle) {
             if (data.KhongCanCheckout) {
                 toggle.classList.remove('bg-slate-200');
-                toggle.classList.add('bg-green-500');
+                toggle.classList.add('bg-blue-500');
                 toggle.querySelector('div').classList.add('translate-x-4');
             } else {
                 toggle.classList.add('bg-slate-200');
@@ -503,7 +503,7 @@ class LichFormController extends BaseFormManager {
         const header = `
             <div class="bg-slate-50 border border-slate-100 rounded p-3 mb-3 text-sm">
                 <span class="text-slate-600">Tổng thời gian làm việc của ca: </span> 
-                <span class="text-green-600 font-bold ml-1">${totalTimeStr}</span>
+                <span class="text-blue-600 font-bold ml-1">${totalTimeStr}</span>
             </div>`;
         framesContainer.insertAdjacentHTML('beforeend', header);
 
@@ -514,7 +514,7 @@ class LichFormController extends BaseFormManager {
                 
                 let inner = `
                     <div class="flex items-center mb-1">
-                        <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-green-200 mr-2">KHUNG GIỜ</span>
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-200 mr-2">KHUNG GIỜ</span>
                         <span class="font-bold text-slate-800 text-sm">${f.GioBatDau} - ${f.GioKetThuc}</span>
                     </div>`;
 
@@ -552,7 +552,7 @@ class LichFormController extends BaseFormManager {
                 lunchDiv.innerHTML = `
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-medium text-slate-700">Nghỉ giữa giờ</span>
-                        <div class="w-8 h-4 bg-green-500 rounded-full relative">
+                        <div class="w-8 h-4 bg-blue-500 rounded-full relative">
                             <div class="w-4 h-4 bg-white rounded-full absolute right-0 shadow"></div>
                         </div>
                     </div>
@@ -667,11 +667,11 @@ class LichFormController extends BaseFormManager {
                 <p class="text-sm font-medium text-slate-700 mb-2">Chọn ngày bắt đầu áp dụng lịch mới:</p>
                 <div class="flex gap-4">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="confirm_effective_date" value="today" checked class="text-green-600 focus:ring-green-500">
+                        <input type="radio" name="confirm_effective_date" value="today" checked class="text-blue-600 focus:ring-blue-500">
                         <span class="text-sm">Hôm nay (${formatDate(today)})</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="confirm_effective_date" value="tomorrow" class="text-green-600 focus:ring-green-500">
+                        <input type="radio" name="confirm_effective_date" value="tomorrow" class="text-blue-600 focus:ring-blue-500">
                         <span class="text-sm">Ngày mai (${formatDate(tomorrow)})</span>
                     </label>
                 </div>
@@ -771,7 +771,7 @@ class LichFormController extends BaseFormManager {
                         <button type="button" id="conflict-cancel-btn" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                             ${cancelText}
                         </button>
-                        <button type="button" id="conflict-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        <button type="button" id="conflict-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                             ${confirmText}
                         </button>
                     </div>
@@ -958,7 +958,7 @@ class LichFormController extends BaseFormManager {
                             ...ct,
                             TenCa: shiftInfo?.TenCa || ct.TenCa,
                             KhungGio: shiftInfo?.KhungGio || ct.KhungGio || [],
-                            colorClass: shiftInfo?.colorClass || 'bg-green-500 text-white'
+                            colorClass: shiftInfo?.colorClass || 'bg-blue-500 text-white'
                         };
                     }
                     return ct;

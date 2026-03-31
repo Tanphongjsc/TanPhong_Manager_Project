@@ -80,10 +80,10 @@ class ShiftSelectorController {
 
                 if (e.target.checked) {
                     this.state.selectedShifts.set(idStr, shiftData);
-                    row.classList.add('bg-green-50');
+                    row.classList.add('bg-blue-50');
                 } else {
                     this.state.selectedShifts.delete(idStr);
-                    row.classList.remove('bg-green-50');
+                    row.classList.remove('bg-blue-50');
                 }
             }
         });
@@ -153,23 +153,23 @@ class ShiftSelectorController {
             const dataStr = encodeURIComponent(JSON.stringify(item));
             
             const framesHtml = (item.KhungGio || []).map(f => 
-                `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isChecked ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-600 border-slate-200'} border mr-1 whitespace-nowrap">${f}</span>`
+                `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isChecked ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-600 border-slate-200'} border mr-1 whitespace-nowrap">${f}</span>`
             ).join('');
 
             // ✅ FIX:  Thêm class bg trực tiếp vào mỗi td + thêm td trống cho cột Actions
-            const cellBgClass = isChecked ?  'bg-green-50' : '';
+            const cellBgClass = isChecked ?  'bg-blue-50' : '';
             const rowHoverClass = isChecked ? '' :  'hover:bg-slate-50';
-            const textClass = isChecked ? 'text-green-700 font-semibold' : 'text-slate-900 group-hover:text-green-700';
+            const textClass = isChecked ? 'text-blue-700 font-semibold' : 'text-slate-900 group-hover:text-blue-700';
 
             return `
                 <tr class="${rowHoverClass} transition-colors border-b border-slate-100 cursor-pointer group" data-shift="${dataStr}">
                     <td class="px-4 py-3 text-center w-12 ${cellBgClass}">
-                        <input type="checkbox" class="shift-checkbox w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer" ${isChecked ? 'checked' : ''}>
+                        <input type="checkbox" class="shift-checkbox w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer" ${isChecked ? 'checked' : ''}>
                     </td>
                     <td class="px-4 py-3 align-middle ${cellBgClass}">
                         <div class="flex items-center">
                             <span class="text-sm ${textClass} transition-colors">${item.TenCa}</span>
-                            ${isDefault ? `<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200 uppercase">Mặc định</span>` : ''}
+                            ${isDefault ? `<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase">Mặc định</span>` : ''}
                         </div>
                     </td>
                     <td class="px-4 py-3 align-middle ${cellBgClass}">

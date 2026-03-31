@@ -36776,3 +36776,81 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
 ERROR 2026-03-27 18:02:08,097 basehttp 7796 20016 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 94425
+WARNING 2026-03-31 09:17:34,821 log 17492 19136 Not Found: /favicon.ico
+WARNING 2026-03-31 09:17:34,821 basehttp 17492 19136 "GET /favicon.ico HTTP/1.1" 404 3512
+ERROR 2026-03-31 09:36:10,773 log 17492 13348 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 28, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 188, in view_lich_nghi
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html
+ERROR 2026-03-31 09:36:10,778 basehttp 17492 13348 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/ HTTP/1.1" 500 104153
+WARNING 2026-03-31 10:19:19,689 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:19:19,690 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:19:22,544 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:19:22,547 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:19:58,388 log 17492 9248 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:19:58,390 basehttp 17492 9248 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:20:17,129 log 17492 19300 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:20:17,130 basehttp 17492 19300 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:20:25,589 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:20:25,590 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:21:53,719 log 17492 19300 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:21:53,719 basehttp 17492 19300 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:24:41,233 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:24:41,234 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:28:54,423 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:28:54,424 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:29:11,295 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:29:11,296 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-03-31 10:29:13,500 log 17492 22268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-03-31 10:29:13,500 basehttp 17492 22268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+ERROR 2026-03-31 11:25:35,780 log 17492 7216 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 28, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 172, in view_tong_hop_lich
+    return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_hop_lich.html
+ERROR 2026-03-31 11:25:35,782 basehttp 17492 7216 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 104146
+WARNING 2026-03-31 14:41:43,646 log 10356 8264 Not Found: /favicon.ico
+WARNING 2026-03-31 14:41:43,647 basehttp 10356 8264 "GET /favicon.ico HTTP/1.1" 404 3512

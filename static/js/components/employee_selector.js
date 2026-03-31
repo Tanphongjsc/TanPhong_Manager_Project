@@ -119,10 +119,10 @@ class EmployeeSelectorController {
             tab.addEventListener('click', (e) => {
                 const target = e.target.dataset.tab;
                 this.els.tabs.forEach(t => { 
-                    t.classList.remove('active', 'border-green-600', 'text-green-600'); 
+                    t.classList.remove('active', 'border-blue-600', 'text-blue-600'); 
                     t.classList.add('border-transparent', 'text-slate-500'); 
                 });
-                e.target.classList.add('active', 'border-green-600', 'text-green-600');
+                e.target.classList.add('active', 'border-blue-600', 'text-blue-600');
                 e.target.classList.remove('border-transparent', 'text-slate-500');
                 this.els.panes.forEach(p => p.classList.add('hidden'));
                 document.getElementById(`tab-content-${target}`).classList.remove('hidden');
@@ -583,7 +583,7 @@ class EmployeeSelectorController {
                 if (isMain) {
                     const isChecked = isDept && this.state.selectedDepts.has(id);
                     const checkbox = isDept 
-                        ? `<input type="checkbox" class="dept-checkbox w-4 h-4 text-green-600 rounded border-slate-300 focus:ring-green-500 cursor-pointer mr-2" data-id="${id}" ${isChecked ? 'checked' : ''}>` 
+                        ? `<input type="checkbox" class="dept-checkbox w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer mr-2" data-id="${id}" ${isChecked ? 'checked' : ''}>` 
                         : `<i class="fas fa-building text-slate-300 mr-2 text-xs"></i>`;
                     const labelClass = isDept 
                         ? 'node-label cursor-pointer text-sm font-medium text-slate-700' 
@@ -592,9 +592,9 @@ class EmployeeSelectorController {
                 } else {
                     const isSelected = this.state.deptFilterId === id;
                     const rowClass = isDept 
-                        ? `filter-tree-item cursor-pointer hover:bg-green-50 hover:text-green-700 ${isSelected ? 'bg-green-100 text-green-700 font-bold' : ''}` 
+                        ? `filter-tree-item cursor-pointer hover:bg-blue-50 hover:text-blue-700 ${isSelected ? 'bg-blue-100 text-blue-700 font-bold' : ''}` 
                         : 'text-slate-400 font-bold uppercase text-[10px] select-none pl-1';
-                    contentHtml = `<div class="flex items-center py-1.5 rounded pl-${level * 3} ${rowClass}" data-id="${id}" data-name="${node.tenphongban}">${toggleBtn}<span class="text-xs truncate">${node.tenphongban || node.tencongty_vi}</span>${isSelected ? '<i class="fas fa-check ml-auto mr-2 text-green-600"></i>' : ''}</div>`;
+                    contentHtml = `<div class="flex items-center py-1.5 rounded pl-${level * 3} ${rowClass}" data-id="${id}" data-name="${node.tenphongban}">${toggleBtn}<span class="text-xs truncate">${node.tenphongban || node.tencongty_vi}</span>${isSelected ? '<i class="fas fa-check ml-auto mr-2 text-blue-600"></i>' : ''}</div>`;
                 }
 
                 return `<div class="${visible ? 'block' : 'hidden'}">${contentHtml}<div id="children-${expandKey}" class="${isExpanded ? '' : 'hidden'} ml-1 border-l border-slate-100">${buildHtml(children, level + 1, isExpanded)}</div></div>`;
@@ -603,7 +603,7 @@ class EmployeeSelectorController {
 
         let finalHtml = '';
         if (! isMain) {
-            finalHtml += `<div class="filter-tree-item py-2 px-3 hover:bg-green-50 cursor-pointer rounded flex items-center ${this.state.deptFilterId === '' ? 'bg-green-100 text-green-700 font-bold' : 'text-slate-600'}" data-id="" data-name="Tất cả bộ phận"><span class="text-xs">★ Tất cả bộ phận</span></div><div class="border-b border-slate-100 my-1"></div>`;
+            finalHtml += `<div class="filter-tree-item py-2 px-3 hover:bg-blue-50 cursor-pointer rounded flex items-center ${this.state.deptFilterId === '' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-slate-600'}" data-id="" data-name="Tất cả bộ phận"><span class="text-xs">★ Tất cả bộ phận</span></div><div class="border-b border-slate-100 my-1"></div>`;
         }
         finalHtml += buildHtml(this.state.treeData);
         container.innerHTML = finalHtml;
@@ -731,7 +731,7 @@ class EmployeeSelectorController {
             const checkboxDisabled = isInDept ? 'disabled' : '';
             const checkboxClass = isInDept 
                 ? 'emp-checkbox w-3.5 h-3.5 text-slate-300 rounded border-slate-200 cursor-not-allowed' 
-                : 'emp-checkbox w-3.5 h-3.5 text-green-600 rounded border-slate-300 focus:ring-green-500 cursor-pointer';
+                : 'emp-checkbox w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer';
 
             return `
                 <tr class="${rowClass} border-b border-slate-50 transition-colors group" 
@@ -750,7 +750,7 @@ class EmployeeSelectorController {
                     </td>
                     <td class="py-2 px-2">
                         <div class="flex items-center">
-                            <span class="employee-name text-xs font-bold ${isInDept ? 'text-slate-400' : 'text-slate-700 group-hover:text-green-700'}">
+                            <span class="employee-name text-xs font-bold ${isInDept ? 'text-slate-400' : 'text-slate-700 group-hover:text-blue-700'}">
                                 ${emp.hovaten}
                             </span>
                         </div>
@@ -796,9 +796,9 @@ class EmployeeSelectorController {
         // Render Phòng ban
         consolidatedDepts.forEach(d => {
             html += `
-                <div class="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm group hover:border-green-300 transition-all">
+                <div class="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm group hover:border-blue-300 transition-all">
                     <div class="flex items-center gap-3 overflow-hidden">
-                        <span class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-[10px] font-bold shrink-0 border border-green-200">BP</span>
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0 border border-blue-200">BP</span>
                         <span class="text-xs font-medium text-slate-700 truncate" title="${d.name}">${d.name}</span>
                     </div>
                     <button type="button" class="remove-btn text-slate-300 hover:text-red-500 transition-colors p-1" data-type="dept" data-id="${d.id}">
@@ -858,7 +858,7 @@ class EmployeeSelectorController {
             if (isInDept) {
                 cb.checked = false;
                 cb.classList.add('text-slate-300', 'cursor-not-allowed');
-                cb.classList.remove('text-green-600');
+                cb.classList.remove('text-blue-600');
                 if (row) {
                     row.classList.add('bg-slate-50', 'opacity-60', 'cursor-not-allowed');
                     row.classList.remove('hover:bg-slate-50', 'cursor-pointer');
@@ -866,12 +866,12 @@ class EmployeeSelectorController {
                 }
                 if (nameEl) {
                     nameEl.classList.add('text-slate-400');
-                    nameEl.classList.remove('text-slate-700', 'group-hover:text-green-700');
+                    nameEl.classList.remove('text-slate-700', 'group-hover:text-blue-700');
                 }
             } else {
                 cb.checked = this.state.selectedEmps.has(empId);
                 cb.classList.remove('text-slate-300', 'cursor-not-allowed');
-                cb.classList.add('text-green-600');
+                cb.classList.add('text-blue-600');
                 if (row) {
                     row.classList.remove('bg-slate-50', 'opacity-60', 'cursor-not-allowed');
                     row.classList.add('hover:bg-slate-50', 'cursor-pointer');
@@ -879,7 +879,7 @@ class EmployeeSelectorController {
                 }
                 if (nameEl) {
                     nameEl.classList.remove('text-slate-400');
-                    nameEl.classList.add('text-slate-700', 'group-hover:text-green-700');
+                    nameEl.classList.add('text-slate-700', 'group-hover:text-blue-700');
                 }
             }
         });
@@ -1007,7 +1007,7 @@ class EmployeeSelectorController {
                     
                     <!-- Actions -->
                     <div class="flex justify-end">
-                        <button type="button" id="warning-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover: transition-colors shadow-sm">
+                        <button type="button" id="warning-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover: transition-colors shadow-sm">
                             ${confirmText}
                         </button>
                     </div>

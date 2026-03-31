@@ -24,7 +24,7 @@ class CustomTimePicker {
         hourCol.className = 'flex-1 overflow-y-auto custom-scrollbar border-r border-slate-100';
         for(let i=0; i<24; i++) {
             const div = document.createElement('div');
-            div.className = 'px-2 py-2 hover:bg-green-50 cursor-pointer text-center text-slate-700 hover:text-green-700 transition-colors';
+            div.className = 'px-2 py-2 hover:bg-blue-50 cursor-pointer text-center text-slate-700 hover:text-blue-700 transition-colors';
             div.textContent = i.toString(). padStart(2, '0');
             div.onmousedown = (e) => { e.preventDefault(); this.selectHour(div.textContent); };
             hourCol.appendChild(div);
@@ -35,7 +35,7 @@ class CustomTimePicker {
         minCol.className = 'flex-1 overflow-y-auto custom-scrollbar';
         for(let i=0; i<60; i++) { 
             const div = document.createElement('div');
-            div.className = 'px-2 py-2 hover:bg-green-50 cursor-pointer text-center text-slate-700 hover:text-green-700 transition-colors';
+            div.className = 'px-2 py-2 hover:bg-blue-50 cursor-pointer text-center text-slate-700 hover:text-blue-700 transition-colors';
             div.textContent = i.toString().padStart(2, '0');
             div.onmousedown = (e) => { e.preventDefault(); this.selectMinute(div. textContent); };
             minCol.appendChild(div);

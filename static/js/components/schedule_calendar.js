@@ -148,7 +148,7 @@ class ScheduleCalendar {
             let dayClass = isSunday ? 'text-red-500' : 'text-slate-700';
             
             if (isToday) {
-                headerClass += 'bg-green-500 text-white';
+                headerClass += 'bg-blue-500 text-white';
                 dayClass = 'text-white font-bold';
             } else if (isPast) {
                 headerClass += 'bg-slate-200';
@@ -224,12 +224,12 @@ class ScheduleCalendar {
                         cellContent = '<span class="text-slate-300">-</span>';
                     }
                 } else {
-                    cellClass += 'cursor-pointer hover:bg-green-50 group';
+                    cellClass += 'cursor-pointer hover:bg-blue-50 group';
                     
                     if (dayShifts.length > 0) {
                         cellContent = dayShifts.map(s => this.renderShiftBadge(s, false)).join('');
                     } else {
-                        cellContent = `<div class="h-6 w-full rounded border border-dashed border-slate-200 group-hover:border-green-400 transition-all"></div>`;
+                        cellContent = `<div class="h-6 w-full rounded border border-dashed border-slate-200 group-hover:border-blue-400 transition-all"></div>`;
                     }
                 }
                 
@@ -279,7 +279,7 @@ class ScheduleCalendar {
         
         const tooltipText = khungGio ? `${shiftName} | ${khungGio}` : shiftName;
         
-        let colorClass = shiftData.colorClass || 'bg-green-500 text-white';
+        let colorClass = shiftData.colorClass || 'bg-blue-500 text-white';
         
         if (isPast) {
             colorClass = 'bg-slate-200 text-slate-500';
@@ -370,7 +370,7 @@ class ScheduleCalendar {
         let shiftsHtml = '';
         if (shifts.length > 0) {
             shiftsHtml = shifts.map(s => {
-                const colorClass = s.colorClass || 'bg-green-500';
+                const colorClass = s.colorClass || 'bg-blue-500';
                 const isSelected = currentShifts.some(cs => cs.id === s.id);
                 const khungGio = (s.KhungGio || []).join(', ');
                 const displayText = khungGio ? `${s.TenCa} | ${khungGio}` : s.TenCa;
@@ -381,13 +381,13 @@ class ScheduleCalendar {
                 }).replace(/'/g, "&#39;");
                 
                 return `
-                    <div class="popover-shift-item px-3 py-2 cursor-pointer hover:bg-slate-50 flex items-center gap-2 ${isSelected ? 'ring-2 ring-green-400 ring-inset bg-green-50' : ''}" 
+                    <div class="popover-shift-item px-3 py-2 cursor-pointer hover:bg-slate-50 flex items-center gap-2 ${isSelected ? 'ring-2 ring-blue-400 ring-inset bg-blue-50' : ''}" 
                         data-shift-id="${s.id}" 
                         data-shift='${shiftDataStr}'
                         data-color="${colorClass}">
                         <span class="w-3 h-3 rounded shrink-0 ${colorClass}"></span>
                         <span class="text-sm flex-1 truncate" title="${this.escapeHtml(displayText)}">${this.escapeHtml(displayText)}</span>
-                        ${isSelected ? '<i class="fas fa-check text-green-500 text-xs shrink-0"></i>' : ''}
+                        ${isSelected ? '<i class="fas fa-check text-blue-500 text-xs shrink-0"></i>' : ''}
                     </div>
                 `;
             }).join('');
@@ -429,7 +429,7 @@ class ScheduleCalendar {
 
         return `
             <div class="popover-tabs flex border-b border-slate-200">
-                <button type="button" class="popover-tab flex-1 px-3 py-2 text-sm font-medium text-green-600 border-b-2 border-green-500" data-tab="shifts">Ca</button>
+                <button type="button" class="popover-tab flex-1 px-3 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-500" data-tab="shifts">Ca</button>
                 <button type="button" class="popover-tab flex-1 px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700" data-tab="cycles">Chu kỳ</button>
             </div>
             <div class="popover-content max-h-[200px] overflow-y-auto">
@@ -447,10 +447,10 @@ class ScheduleCalendar {
                 const tabName = tab.dataset.tab;
                 
                 popover.querySelectorAll('.popover-tab').forEach(t => {
-                    t.classList.remove('text-green-600', 'border-b-2', 'border-green-500');
+                    t.classList.remove('text-blue-600', 'border-b-2', 'border-blue-500');
                     t.classList.add('text-slate-500');
                 });
-                tab.classList.add('text-green-600', 'border-b-2', 'border-green-500');
+                tab.classList.add('text-blue-600', 'border-b-2', 'border-blue-500');
                 tab.classList.remove('text-slate-500');
                 
                 popover.querySelectorAll('.popover-tab-content').forEach(content => {
@@ -565,7 +565,7 @@ class ScheduleCalendar {
                         id: d.CaID,
                         TenCa: shiftInfo?.TenCa || d.TenCa || `Ca #${d.CaID}`,
                         KhungGio: shiftInfo?.KhungGio || [],
-                        colorClass: shiftInfo?.colorClass || 'bg-green-500 text-white'
+                        colorClass: shiftInfo?.colorClass || 'bg-blue-500 text-white'
                     };
                 });
             
@@ -616,7 +616,7 @@ class ScheduleCalendar {
             if (dayShifts.length > 0) {
                 cellContent = dayShifts.map(s => this.renderShiftBadge(s, false)).join('');
             } else {
-                cellContent = `<div class="h-6 w-full rounded border border-dashed border-slate-200 group-hover: border-green-400 transition-all"></div>`;
+                cellContent = `<div class="h-6 w-full rounded border border-dashed border-slate-200 group-hover: border-blue-400 transition-all"></div>`;
             }
         }
         
@@ -635,7 +635,7 @@ class ScheduleCalendar {
                 id: shiftData.id,
                 TenCa: storedShift.TenCa || shiftData.TenCa,
                 KhungGio:  storedShift.KhungGio || shiftData.KhungGio || [],
-                colorClass: storedShift.colorClass || 'bg-green-500 text-white'
+                colorClass: storedShift.colorClass || 'bg-blue-500 text-white'
             };
         }
         
@@ -652,7 +652,7 @@ class ScheduleCalendar {
             id: shiftData.id,
             TenCa: shiftData.TenCa || `Ca #${shiftData.id}`,
             KhungGio: shiftData.KhungGio || [],
-            colorClass: shiftData.colorClass || 'bg-green-500 text-white'
+            colorClass: shiftData.colorClass || 'bg-blue-500 text-white'
         };
     }
 
@@ -742,7 +742,7 @@ class ScheduleCalendar {
                     id: s.id,
                     TenCa: storedShift?.TenCa || s.TenCa,
                     KhungGio: storedShift?.KhungGio || s.KhungGio || [],
-                    colorClass: storedShift?.colorClass || (s.id === 0 ? 'bg-slate-400 text-white' : 'bg-green-500 text-white')
+                    colorClass: storedShift?.colorClass || (s.id === 0 ? 'bg-slate-400 text-white' : 'bg-blue-500 text-white')
                 };
             });
             

@@ -198,7 +198,7 @@ class CycleManager {
                 const khungGio = (s.KhungGio || []).join(', ');
                 const displayText = khungGio ? `${s.TenCa} | ${khungGio}` : s.TenCa;
                 return `
-                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-xs font-medium">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-medium">
                         <span class="truncate max-w-[400px]" title="${this.escapeHtml(displayText)}">${this.escapeHtml(displayText)}</span>
                         <button type="button" class="btn-remove-cycle-shift shrink-0 hover:text-red-500 transition-colors" data-day="${dayIndex}" data-shift-id="${s.id}">
                             <i class="fas fa-times"></i>
@@ -233,7 +233,7 @@ class CycleManager {
                 const displayText = khungGio ? `${s.TenCa} | ${khungGio}` : s.TenCa;
                 const isSelected = selectedIds.includes(s.id);
                 const itemClass = isSelected 
-                    ? 'bg-green-50 text-green-700 font-medium' 
+                    ? 'bg-blue-50 text-blue-700 font-medium' 
                     :  'hover:bg-slate-50 text-slate-700';
                 
                 const shiftDataObj = {
@@ -251,7 +251,7 @@ class CycleManager {
                         data-selected="${isSelected}"
                         data-is-rest-day="false">
                         <div class="flex items-center gap-2">
-                            ${isSelected ? '<i class="fas fa-check text-green-600 text-xs w-4"></i>' : '<span class="w-4"></span>'}
+                            ${isSelected ? '<i class="fas fa-check text-blue-600 text-xs w-4"></i>' : '<span class="w-4"></span>'}
                             <span class="flex-1" title="${this.escapeHtml(displayText)}">${this.escapeHtml(displayText)}</span>
                         </div>
                     </div>`;
@@ -264,7 +264,7 @@ class CycleManager {
             <div class="cycle-day-row flex items-start gap-4" data-day-index="${dayIndex}">
                 <label class="text-sm font-medium text-slate-600 text-right pt-2 w-16 shrink-0">Ngày ${dayIndex}: </label>
                 <div class="flex-1 min-w-0">
-                    <div class="cycle-day-container min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg bg-white flex items-center flex-wrap gap-2 cursor-pointer hover:border-green-500 transition-all"
+                    <div class="cycle-day-container min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg bg-white flex items-center flex-wrap gap-2 cursor-pointer hover:border-blue-500 transition-all"
                         data-day="${dayIndex}">
                         <div class="flex-1 flex items-center flex-wrap gap-2 min-w-0">
                             ${badgesHtml}

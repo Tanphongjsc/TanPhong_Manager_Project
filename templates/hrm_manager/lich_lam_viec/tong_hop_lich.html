@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tổng hợp Lịch làm việc{% endblock %}
+
+{% block styles %}
+<style>
+    .table-scroll-x::-webkit-scrollbar { height: 8px; }
+    .table-scroll-x::-webkit-scrollbar-track { background: #f1f5f9; }
+    .table-scroll-x::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .table-scroll-x::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .sticky-col-l1 {
+        position: sticky;
+        left: 0;
+        z-index: 25;
+        background-color: white;
+        border-right: 2px solid #e2e8f0;
+    }
+
+    #tong-hop-lich-head {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+    }
+
+    .table-scroll-x thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8fafc;
+        z-index: 30;
+    }
+
+    .table-scroll-x thead th.sticky-col-l1 {
+        background-color: #f8fafc;
+        z-index: 70;
+    }
+
+    .table-scroll-x tbody td.sticky-col-l1 {
+        z-index: 35;
+    }
+
+    #dept-filter-wrapper {
+        z-index: 80;
+    }
+
+    #filter-dept-dropdown {
+        z-index: 90;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4 min-h-0">
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg min-h-0">
+        {% include "components/tab_nav.html" with tabs=tabs %}
+
+        {% include "components/toolbar.html" with search_id="search-tong-hop" search_placeholder="Tìm tên hoặc mã nhân viên..." show_add_btn=False filter_form_id="filter-tong-hop" filter_template="hrm_manager/lich_lam_viec/partials/tong_hop_lich_extra_filter.html" %}
+
+        <div class="flex-1 relative min-h-0">
+            <div class="overflow-auto table-scroll-x relative h-full border border-slate-200 rounded-lg">
+                <table id="tong-hop-lich-table" class="min-w-full divide-y divide-slate-200 border-separate border-spacing-0">
+                    <thead id="tong-hop-lich-head" class="bg-slate-50 sticky top-0 z-20"></thead>
+                    <tbody id="tong-hop-lich-body" class="divide-y divide-slate-200 bg-white"></tbody>
+                </table>
+            </div>
+        </div>
+
+        {% include "components/pagination.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/lich_lam_viec/tong_hop_lich.js' %}"></script>
+{% endblock %}

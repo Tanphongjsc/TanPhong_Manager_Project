@@ -156,7 +156,7 @@ class CaFormController extends BaseFormManager {
         for (let i = 1; i <= count; i++) {
             const html = `
                 <div class="border border-slate-200 rounded-lg p-6 bg-white relative shadow-sm animate-fade-in mb-4">
-                    <div class="absolute -top-3 left-3 bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded uppercase border border-green-200">
+                    <div class="absolute -top-3 left-3 bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded uppercase border border-blue-200">
                         Khung giờ ${i}
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 mt-2">
@@ -164,22 +164,22 @@ class CaFormController extends BaseFormManager {
                             <div class="flex items-center justify-between">
                                 <label class="text-sm font-bold text-slate-700 w-32">Giờ bắt đầu <span class="text-red-500">*</span></label>
                                 <div class="w-36 relative">
-                                    <input type="text" name="segment_${i}_start" required class="time-input w-full pl-3 pr-20 py-2 border border-slate-300 rounded-lg text-left font-medium bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 shadow-sm" placeholder="08:00">
+                                    <input type="text" name="segment_${i}_start" required class="time-input w-full pl-3 pr-20 py-2 border border-slate-300 rounded-lg text-left font-medium bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm" placeholder="08:00">
                                 </div>
                             </div>
                             <div class="pl-4 border-l-2 border-slate-100 space-y-3">
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Thời gian cho phép đến muộn (phút)</span>
-                                    <input type="number" name="segment_${i}_late_grace" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-green-500 focus:ring-1 focus:ring-green-500 text-right shadow-sm" placeholder="0">
+                                    <input type="number" name="segment_${i}_late_grace" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right shadow-sm" placeholder="0">
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Không ghi nhận công nếu muộn hơn (phút)</span>
-                                    <input type="number" name="segment_${i}_late_cutoff" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-green-500 focus:ring-1 focus:ring-green-500 text-right shadow-sm" placeholder="∞">
+                                    <input type="number" name="segment_${i}_late_cutoff" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right shadow-sm" placeholder="∞">
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Check-in sớm nhất${reqHtml}</span>
                                     <div class="w-24 relative">
-                                        <input type="text" name="segment_${i}_early_in" class="time-input w-full px-2 py-1 text-sm border border-slate-300 rounded text-center bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 shadow-sm" placeholder="--:--">
+                                        <input type="text" name="segment_${i}_early_in" class="time-input w-full px-2 py-1 text-sm border border-slate-300 rounded text-center bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm" placeholder="--:--">
                                     </div>
                                 </div>
                             </div>
@@ -189,22 +189,22 @@ class CaFormController extends BaseFormManager {
                             <div class="flex items-center justify-between">
                                 <label class="text-sm font-bold text-slate-700 w-32">Giờ kết thúc <span class="text-red-500">*</span></label>
                                 <div class="w-36 relative">
-                                    <input type="text" name="segment_${i}_end" required class="time-input w-full pl-3 pr-20 py-2 border border-slate-300 rounded-lg text-left font-medium bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 shadow-sm" placeholder="17:00">
+                                    <input type="text" name="segment_${i}_end" required class="time-input w-full pl-3 pr-20 py-2 border border-slate-300 rounded-lg text-left font-medium bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm" placeholder="17:00">
                                 </div>
                             </div>
                             <div class="pl-4 border-l-2 border-slate-100 space-y-3">
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Thời gian cho phép về sớm nhất (phút)</span>
-                                    <input type="number" name="segment_${i}_early_out_grace" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-green-500 focus:ring-1 focus:ring-green-500 text-right shadow-sm" placeholder="0">
+                                    <input type="number" name="segment_${i}_early_out_grace" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right shadow-sm" placeholder="0">
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Không ghi nhận công nếu về sớm hơn (phút)</span>
-                                    <input type="number" name="segment_${i}_early_cutoff" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-green-500 focus:ring-1 focus:ring-green-500 text-right shadow-sm" placeholder="∞">
+                                    <input type="number" name="segment_${i}_early_cutoff" class="w-24 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right shadow-sm" placeholder="∞">
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-slate-600">Check-out muộn nhất${reqHtml}</span>
                                     <div class="w-24 relative">
-                                        <input type="text" name="segment_${i}_late_out" class="time-input w-full px-2 py-1 text-sm border border-slate-300 rounded text-center bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 shadow-sm" placeholder="--:--">
+                                        <input type="text" name="segment_${i}_late_out" class="time-input w-full px-2 py-1 text-sm border border-slate-300 rounded text-center bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm" placeholder="--:--">
                                     </div>
                                 </div>
                             </div>
@@ -213,7 +213,7 @@ class CaFormController extends BaseFormManager {
                     ${count > 1 ? `
                     <div class="mt-4 border-t border-slate-100 pt-3 flex justify-end items-center gap-4">
                         <label class="text-sm font-bold text-slate-700">Công của khung giờ ${i} <span class="text-red-500">*</span></label>
-                        <input type="number" step="0.1" required name="segment_${i}_workday" class="segment-workday w-24 px-3 py-1.5 rounded border border-slate-300 text-right font-bold text-green-700" placeholder="0.5">
+                        <input type="number" step="0.1" required name="segment_${i}_workday" class="segment-workday w-24 px-3 py-1.5 rounded border border-slate-300 text-right font-bold text-blue-700" placeholder="0.5">
                     </div>` : ''}
                 </div>
             `;
@@ -241,14 +241,14 @@ class CaFormController extends BaseFormManager {
 
         let html = `
             <label class="inline-flex items-center cursor-pointer">
-                <input type="radio" name="solanchamcong" value="1" checked class="text-green-600 focus:ring-green-500 w-4 h-4">
+                <input type="radio" name="solanchamcong" value="1" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                 <span class="ml-2 text-sm text-slate-700">1 lần</span>
             </label>
         `;
         if (segmentCount >= 2) {
             html += `
                 <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="solanchamcong" value="2" class="text-green-600 focus:ring-green-500 w-4 h-4">
+                    <input type="radio" name="solanchamcong" value="2" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                     <span class="ml-2 text-sm text-slate-700">2 lần</span>
                 </label>
             `;
@@ -256,11 +256,11 @@ class CaFormController extends BaseFormManager {
         if (segmentCount === 3) {
              html = `
                 <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="solanchamcong" value="1" checked class="text-green-600 focus:ring-green-500 w-4 h-4">
+                    <input type="radio" name="solanchamcong" value="1" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                     <span class="ml-2 text-sm text-slate-700">1 lần</span>
                 </label>
                 <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="solanchamcong" value="3" class="text-green-600 focus:ring-green-500 w-4 h-4">
+                    <input type="radio" name="solanchamcong" value="3" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                     <span class="ml-2 text-sm text-slate-700">3 lần</span>
                 </label>
             `;
@@ -438,17 +438,17 @@ class CaFormController extends BaseFormManager {
                 if (!badge) {
                     badge = document.createElement('span');
                     // Style mặc định (Xanh)
-                    badge.className = 'next-day-badge absolute top-1/2 -translate-y-1/2 right-2 bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-200 uppercase tracking-tight pointer-events-none z-10';
+                    badge.className = 'next-day-badge absolute top-1/2 -translate-y-1/2 right-2 bg-blue-100 text-blue-700 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-200 uppercase tracking-tight pointer-events-none z-10';
                     wrapper.appendChild(badge);
                 }
                 
                 // Cập nhật style nếu là lỗi (Đỏ)
                 if (isError) {
-                    badge.classList.remove('bg-green-100', 'text-green-700', 'border-green-200');
+                    badge.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
                     badge.classList.add('bg-red-100', 'text-red-700', 'border-red-200');
                 } else {
                     badge.classList.remove('bg-red-100', 'text-red-700', 'border-red-200');
-                    badge.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+                    badge.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
                 }
                 
                 badge.innerText = text;

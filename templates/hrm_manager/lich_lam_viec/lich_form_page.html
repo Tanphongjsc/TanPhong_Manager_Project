@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Nhân viên áp dụng <span class="text-red-500"></span></label>
-                    <div id="btn-open-selector" class="w-full min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 cursor-pointer bg-white flex items-center flex-wrap gap-2 hover:border-slate-400 transition-colors group">
+                    <div id="btn-open-selector" class="w-full min-h-[42px] px-3 py-2 border border-slate-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 cursor-pointer bg-white flex items-center flex-wrap gap-2 hover:border-slate-400 transition-colors group">
                         <span class="text-slate-400 select-none text-sm group-hover:text-slate-500 transition-colors" id="emp-placeholder">
                             <i class="fas fa-plus-circle mr-1"></i>Bộ phận và Nhân viên...
                         </span>
@@ -48,11 +48,11 @@
                     <div class="flex flex-col gap-1">
                         <div class="flex gap-6 items-center h-9">
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="loaikichban" value="CO_DINH" checked class="text-green-600 focus:ring-green-500 w-4 h-4">
+                                <input type="radio" name="loaikichban" value="CO_DINH" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                                 <span class="ml-2 text-sm text-slate-700 font-medium">Cố định</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="loaikichban" value="LICH_TRINH" class="text-green-600 focus:ring-green-500 w-4 h-4">
+                                <input type="radio" name="loaikichban" value="LICH_TRINH" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
                                 <span class="ml-2 text-sm text-slate-700 font-medium">Lịch trình</span>
                             </label>
                         </div>
@@ -86,7 +86,7 @@
                                     <thead class="bg-slate-50 border-b border-slate-200">
                                         <tr>
                                             <th class="w-12 py-3 px-4 text-center">
-                                                <input type="checkbox" id="check-all-days" class="rounded text-green-600 focus:ring-green-500 cursor-pointer w-4 h-4 shadow-sm border-slate-300">
+                                                <input type="checkbox" id="check-all-days" class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4 shadow-sm border-slate-300">
                                             </th>
                                             <th class="py-3 px-4 text-sm font-bold text-slate-700 w-40">Ngày làm việc</th>
                                             <th class="py-3 px-4 text-sm font-bold text-slate-700">Ca làm việc</th>
@@ -116,7 +116,7 @@
                                 {# Chu kỳ ca #}
                                 <label class="text-sm font-bold text-slate-700 text-right pr-6 pt-2">Chu kỳ ca</label>
                                 <div class="space-y-3">
-                                    <button type="button" id="btn-add-cycle" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                                    <button type="button" id="btn-add-cycle" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                                         <i class="fas fa-plus mr-1.5"></i> Thêm chu kỳ
                                     </button>
                                     
@@ -134,7 +134,7 @@
                                         <div class="p-2 mb-2">
                                             <div class="relative z-40">
                                                 {# BUTTON: Đã xóa class 'shadow-sm' -> Giờ nó sẽ phẳng lỳ như ô Search #}
-                                                <button type="button" id="lt-date-trigger" class="flex items-center justify-between gap-3 px-3 py-1 border border-slate-300 rounded-md bg-white hover:border-green-500 transition-colors text-xs font-medium h-[26px] min-w-[110px]">
+                                                <button type="button" id="lt-date-trigger" class="flex items-center justify-between gap-3 px-3 py-1 border border-slate-300 rounded-md bg-white hover:border-blue-500 transition-colors text-xs font-medium h-[26px] min-w-[110px]">
                                                     <span id="lt-display-date" class="text-slate-700">2026-01</span>
                                                     <i class="far fa-calendar-alt text-slate-400"></i>
                                                 </button>

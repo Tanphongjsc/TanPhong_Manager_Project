@@ -2,16 +2,19 @@ from calendar import monthrange
 from datetime import date, timedelta
 from django.shortcuts import render
 from django.db.models import Q, Count, Prefetch, Case, When, Value, IntegerField
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from apps.hrm_manager.__core__.models import *
 import json
+from collections import defaultdict
 from django.utils import timezone
 from django.db import transaction
 from .services import CaLamViecService, LichLamViecService, ConflictException
 from apps.hrm_manager.utils.permissions import require_api_permission, require_view_permission
+from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context, 
@@ -43,6 +46,53 @@ def get_thiet_ke_nghi_tabs():
         {'label': 'Thiết kế Quỹ nghỉ', 'url_name': 'thiet_ke_quy_nghi', 'url': reverse('hrm:lich_lam_viec:thiet_ke_quy_nghi')},
         {'label': 'Tổng hợp Ngày nghỉ', 'url_name': 'tong_hop_nghi', 'url': reverse('hrm:lich_lam_viec:tong_hop_nghi')},
     ]
+
+def _normalize_summary_date_range(start_raw, end_raw):
+    """Chuẩn hóa khoảng ngày cho tab tổng hợp lịch (tối đa 31 ngày)."""
+    today = date.today()
+
+    if start_raw and end_raw:
+        start_date = date.fromisoformat(start_raw)
+        end_date = date.fromisoformat(end_raw)
+    elif start_raw:
+        start_date = date.fromisoformat(start_raw)
+        end_date = start_date + timedelta(days=6)
+    elif end_raw:
+        end_date = date.fromisoformat(end_raw)
+        start_date = end_date - timedelta(days=6)
+    else:
+        start_date = today
+        end_date = today + timedelta(days=6)
+
+    if start_date > end_date:
+        raise ValueError("Ngày bắt đầu không được lớn hơn ngày kết thúc")
+
+    range_days = (end_date - start_date).days + 1
+    if range_days > 31:
+        raise ValueError("Khoảng ngày tối đa là 31 ngày")
+
+    return start_date, end_date, range_days
+
+
+def _parse_positive_int(raw_value, default_value, min_value=1, max_value=None):
+    """Parse số nguyên dương với giới hạn biên an toàn."""
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        value = default_value
+
+    if value < min_value:
+        value = min_value
+    if max_value is not None and value > max_value:
+        value = max_value
+
+    return value
+
+
+def _format_time_range(start_time, end_time):
+    if not start_time or not end_time:
+        return ""
+    return f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
 
 # --- 1.VIEWS: THIẾT KẾ LỊCH LÀM VIỆC ---
 
@@ -481,6 +531,193 @@ def api_lichlamviec_list(request):
             'total_pages': context['paginator'].num_pages,
             'has_next': page_obj.has_next(),
             'has_prev': page_obj.has_previous()
+        }
+    )
+
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_lichlamviec_options(request):
+    """API trả về danh sách nhóm lịch để dùng trong bộ lọc."""
+    queryset = Lichlamviec.objects.filter(
+        Q(is_deleted=False) | Q(is_deleted__isnull=True)
+    ).values('id', 'tenlichlamviec', 'malichlamviec').order_by('tenlichlamviec')
+
+    options = [
+        {
+            'id': item['id'],
+            'TenNhom': item['tenlichlamviec'],
+            'MaNhom': item['malichlamviec'],
+        }
+        for item in queryset
+    ]
+
+    return json_success('Thành công', data=options)
+
+
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_tong_hop_lichlamviec(request):
+    """API tổng hợp lịch làm việc theo khoảng ngày với filter lịch sử."""
+    try:
+        start_date, end_date, range_days = _normalize_summary_date_range(
+            request.GET.get('start_date'),
+            request.GET.get('end_date')
+        )
+    except ValueError as exc:
+        return json_error(str(exc))
+
+    page = _parse_positive_int(request.GET.get('page'), default_value=1, min_value=1)
+    page_size = _parse_positive_int(request.GET.get('page_size'), default_value=20, min_value=1, max_value=200)
+    search_query = (request.GET.get('search') or '').strip()
+
+    schedule_filter_raw = request.GET.get('lichlamviec_id')
+    schedule_filter_id = None
+    if schedule_filter_raw:
+        try:
+            schedule_filter_id = int(schedule_filter_raw)
+        except ValueError:
+            return json_error('Nhóm lịch không hợp lệ')
+
+    dept_filter_raw = request.GET.get('phongban_id')
+    dept_ids = set()
+    if dept_filter_raw:
+        try:
+            dept_ids = set(get_all_child_department_ids(int(dept_filter_raw), isnclude_root=True))
+        except ValueError:
+            return json_error('Phòng ban không hợp lệ')
+
+    # Danh sách nhân viên chuẩn theo lịch sử công tác active (khớp api_phong_ban_nhan_vien).
+    history_qs = Lichsucongtac.objects.filter(
+        trangthai='active',
+        nhanvien_id__isnull=False
+    )
+
+    if dept_ids:
+        history_qs = history_qs.filter(phongban_id__in=dept_ids)
+
+    if search_query:
+        history_qs = history_qs.filter(
+            Q(nhanvien__hovaten__icontains=search_query) |
+            Q(nhanvien__manhanvien__icontains=search_query)
+        )
+
+    history_employee_ids = set(history_qs.values_list('nhanvien_id', flat=True).distinct())
+
+    schedule_employee_ids = None
+    if schedule_filter_id:
+        schedule_employee_ids = set(
+            Lichlamviecthucte.objects.filter(
+                lichlamviec_id=schedule_filter_id,
+                ngaylamviec__gte=start_date,
+                ngaylamviec__lte=end_date
+            ).filter(
+                Q(is_deleted=False) | Q(is_deleted__isnull=True)
+            ).values_list('nhanvien_id', flat=True).distinct()
+        )
+
+    if schedule_filter_id:
+        final_employee_ids = history_employee_ids.intersection(schedule_employee_ids)
+    else:
+        final_employee_ids = history_employee_ids
+
+    employees_qs = Nhanvien.objects.filter(id__in=final_employee_ids) if final_employee_ids else Nhanvien.objects.none()
+
+    employees_qs = employees_qs.order_by('hovaten', 'manhanvien', 'id')
+
+    paginator = Paginator(employees_qs, page_size)
+    page_obj = paginator.get_page(page)
+    page_employees = list(page_obj.object_list)
+    page_employee_ids = [emp.id for emp in page_employees]
+
+    # Lấy phòng ban theo lịch sử công tác active cho từng nhân viên ở page hiện tại.
+    dept_history_qs = Lichsucongtac.objects.filter(
+        nhanvien_id__in=page_employee_ids,
+        trangthai='active'
+    ).select_related('phongban').order_by('nhanvien_id', '-updated_at', '-id')
+
+    dept_map = {}
+    for rel in dept_history_qs:
+        if rel.nhanvien_id in dept_map:
+            continue
+        dept_map[rel.nhanvien_id] = {
+            'id': rel.phongban_id,
+            'name': rel.phongban.tenphongban if rel.phongban else ''
+        }
+
+    schedule_qs = Lichlamviecthucte.objects.filter(
+        nhanvien_id__in=page_employee_ids,
+        ngaylamviec__gte=start_date,
+        ngaylamviec__lte=end_date
+    ).filter(
+        Q(is_deleted=False) | Q(is_deleted__isnull=True)
+    ).select_related(
+        'calamviec',
+        'lichlamviec'
+    ).prefetch_related(
+        Prefetch('calamviec__khunggiolamviec_set', queryset=Khunggiolamviec.objects.order_by('id'))
+    ).order_by('nhanvien_id', 'ngaylamviec', 'id')
+
+    if schedule_filter_id:
+        schedule_qs = schedule_qs.filter(lichlamviec_id=schedule_filter_id)
+
+    schedule_map = defaultdict(lambda: defaultdict(list))
+    for item in schedule_qs:
+        if not item.ngaylamviec:
+            continue
+
+        date_key = item.ngaylamviec.isoformat()
+        khung_gio = []
+        ten_ca = 'Ngày nghỉ'
+
+        if item.calamviec:
+            ten_ca = item.calamviec.tencalamviec or 'Ca làm việc'
+            for frame in item.calamviec.khunggiolamviec_set.all():
+                display = _format_time_range(frame.thoigianbatdau, frame.thoigianketthuc)
+                if display:
+                    khung_gio.append(display)
+
+        schedule_map[item.nhanvien_id][date_key].append({
+            'ca_id': item.calamviec_id,
+            'ten_ca': ten_ca,
+            'khung_gio': khung_gio,
+            'is_day_off': bool(item.cophaingaynghi or item.calamviec_id is None),
+            'lich_id': item.lichlamviec_id,
+            'ten_lich': item.lichlamviec.tenlichlamviec if item.lichlamviec else ''
+        })
+
+    rows = []
+    for emp in page_employees:
+        emp_schedule_map = schedule_map.get(emp.id, {})
+        rows.append({
+            'nhanvien_id': emp.id,
+            'ten_nv': emp.hovaten,
+            'ma_nv': emp.manhanvien,
+            'phongban_id': dept_map.get(emp.id, {}).get('id'),
+            'ten_phong_ban': dept_map.get(emp.id, {}).get('name', ''),
+            'schedule_map': {k: v for k, v in emp_schedule_map.items()}
+        })
+
+    return json_success(
+        'Thành công',
+        data=rows,
+        pagination={
+            'page': page_obj.number,
+            'page_size': page_size,
+            'total': paginator.count,
+            'total_pages': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous(),
+        },
+        filters={
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'range_days': range_days,
+            'lichlamviec_id': schedule_filter_id,
+            'phongban_id': int(dept_filter_raw) if dept_filter_raw else None,
         }
     )
 

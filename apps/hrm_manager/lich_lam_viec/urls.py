@@ -27,6 +27,8 @@ urlpatterns = [
 
     #API LICH LAM VIEC
     path('api/lich-lam-viec/list/', views.api_lichlamviec_list, name='api_lichlamviec_list'),
+    path('api/lich-lam-viec/options/', views.api_lichlamviec_options, name='api_lichlamviec_options'),
+    path('api/lich-lam-viec/tong-hop/', views.api_tong_hop_lichlamviec, name='api_tong_hop_lichlamviec'),
     path('api/check-conflicts/', views.api_check_schedule_conflicts, name='api_check_schedule_conflicts'),
     path('api/lich-lam-viec/create/', views.api_lichlamviec_create, name='api_lichlamviec_create'),
     path('api/lich-lam-viec/<int:pk>/update/', views.api_lichlamviec_update, name='api_lichlamviec_update'),

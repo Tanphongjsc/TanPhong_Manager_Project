@@ -171,7 +171,7 @@ class FixedScheduleManager {
                             <span class="font-medium">${s.TenCa}</span>:  
                             <span class="text-xs text-slate-500 font-mono">${timeStr}</span>
                         </div>
-                        <button type="button" class="btn-view-master-shift text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100 transition-colors shrink-0" data-id="${s.id}" title="Xem chi tiết">
+                        <button type="button" class="btn-view-master-shift text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-100 transition-colors shrink-0" data-id="${s.id}" title="Xem chi tiết">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>`;
@@ -216,7 +216,7 @@ class FixedScheduleManager {
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-slate-700 text-sm whitespace-nowrap">${s.TenCa}</span>
                                 <span class="text-xs text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${timeStr}</span>
-                                <button type="button" class="btn-view-day text-green-600 hover: text-green-800 p-1 rounded hover:bg-green-100 transition-colors ml-1" title="Xem chi tiết" data-id="${s.id}">
+                                <button type="button" class="btn-view-day text-blue-600 hover: text-blue-800 p-1 rounded hover:bg-blue-100 transition-colors ml-1" title="Xem chi tiết" data-id="${s.id}">
                                     <i class="fas fa-eye text-xs"></i>
                                 </button>
                             </div>`;
@@ -227,9 +227,9 @@ class FixedScheduleManager {
             return `
                 <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50" data-index="${day.dayIndex}">
                     <td class="px-4 py-3 text-center align-top pt-4">
-                        <input type="checkbox" class="day-checkbox rounded text-green-600 focus:ring-green-500 cursor-pointer w-4 h-4" ${day.isChecked ? 'checked' : ''}>
+                        <input type="checkbox" class="day-checkbox rounded text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4" ${day.isChecked ? 'checked' : ''}>
                     </td>
-                    <td class="px-4 py-3 text-sm font-medium align-top pt-4 ${day.isChecked ? 'text-green-700' : 'text-slate-500'}">${day.dayName}</td>
+                    <td class="px-4 py-3 text-sm font-medium align-top pt-4 ${day.isChecked ? 'text-blue-700' : 'text-slate-500'}">${day.dayName}</td>
                     <td class="px-4 py-3 text-sm align-top pt-3">${displayStr}</td>
                     <td class="px-4 py-3 text-right align-top pt-3">
                         <div class="flex items-center justify-end gap-2 ${isOff ? 'invisible' : ''}">
