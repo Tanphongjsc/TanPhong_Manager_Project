@@ -21,6 +21,7 @@ class ChamCongManager {
         this.debouncedDateChange = AppUtils.Helper.debounce((val) => { this.currentDate = val; this.loadDailyData(); }, 500);
         this.validator = window.ChamCongTimeValidator || null;
         this.render$ = window.ChamCongRenderHelper || null;
+        this.timeParamKeyCache = new Map();
     }
 
     init() {
@@ -139,6 +140,7 @@ class ChamCongManager {
             this.departmentMap = this.departments.reduce((acc, d) => ({ ...acc, [d.id]: d.tenphongban }), {});
             this.initDeptFilter();
             this.jobs = jobRes.data || [];
+            this.timeParamKeyCache.clear();
             this.initMasterSelect();
             if (typeRes.data?.length) {
                 const key = AppUtils.Helper.removeAccents('Công nhân').toLowerCase();
@@ -186,6 +188,69 @@ class ChamCongManager {
             ...source,
             congcuakhunggio: Number.isFinite(parsedCong) ? parsedCong : null
         };
+    }
+
+    getAutoWorkHoursValue(emp) {
+        const currentMinutes = emp?.uiState?.workHours?.actualMinutes;
+        if (!Number.isFinite(currentMinutes) || currentMinutes < 0) return '';
+        return (Math.round((currentMinutes / 60) * 100) / 100).toString();
+    }
+
+    isEmptyValue(value) {
+        return value === '' || value === null || value === undefined;
+    }
+
+    getTimeParamKeyForJob(jobId) {
+        if (!jobId) return null;
+        const cacheKey = String(jobId);
+        if (this.timeParamKeyCache.has(cacheKey)) return this.timeParamKeyCache.get(cacheKey);
+
+        const jobDef = this.jobs.find(j => String(j.id) === cacheKey);
+        const params = this.render$.parseParams(jobDef?.danhsachthamso);
+        const key = value => AppUtils.Helper.generateCode(String(value || ''));
+        const timeParamDef = params.find(def => {
+            if (key(def?.ma) === 'THOI_GIAN') return true;
+            return [def?.ten, def?.tenthamso, def?.ten_tham_so, def?.label, def?.name].some(name => key(name) === 'THOI_GIAN');
+        });
+
+        const timeKey = timeParamDef?.ma || null;
+        this.timeParamKeyCache.set(cacheKey, timeKey);
+        return timeKey;
+    }
+
+    setTimeParamForJob(jobItem, hourValue, options = {}) {
+        const { overwrite = true, clearWhenEmpty = false } = options;
+        const timeKey = this.getTimeParamKeyForJob(jobItem?.jobId);
+        if (!timeKey) return null;
+
+        if (!jobItem.params || typeof jobItem.params !== 'object') jobItem.params = {};
+        const currentValue = jobItem.params[timeKey];
+        const canWrite = overwrite || this.isEmptyValue(currentValue);
+        if (!canWrite) return timeKey;
+
+        if (hourValue) jobItem.params[timeKey] = hourValue;
+        else if (clearWhenEmpty) jobItem.params[timeKey] = '';
+        return timeKey;
+    }
+
+    syncTimeParamWithWorkHours(emp, options = {}) {
+        const { clearWhenEmpty = false, tr = null } = options;
+        if (!emp?.uiState?.jobs?.length) return;
+        const hourValue = this.getAutoWorkHoursValue(emp);
+
+        emp.uiState.jobs.forEach((jobItem, index) => {
+            const timeKey = this.setTimeParamForJob(jobItem, hourValue, { overwrite: true, clearWhenEmpty });
+            if (!tr || !timeKey) return;
+            const input = tr.querySelector(`.param-val[data-index="${index}"][data-key="${timeKey}"]`);
+            if (input) input.value = jobItem.params?.[timeKey] ?? '';
+        });
+    }
+
+    applyAutoTimeParam(jobItem, emp, options = {}) {
+        const { overwrite = true } = options;
+        if (!jobItem?.jobId || !emp) return;
+        const hourValue = this.getAutoWorkHoursValue(emp);
+        this.setTimeParamForJob(jobItem, hourValue, { overwrite, clearWhenEmpty: false });
     }
 
     handleFilter() { this.state.filters.search = AppUtils.Helper.removeAccents(this.elements.searchInput.value).toLowerCase(); this.render(); }
@@ -258,7 +323,15 @@ class ChamCongManager {
             emp.uiState.ot = target.checked; emp.uiState.otMinutes = target.checked ? this.computeOtMinutes(emp, emp.uiState.out) : '';
             const otInp = tr.querySelector('.ot-minutes'); if (otInp) { otInp.disabled = !target.checked; otInp.value = target.checked ? (emp.uiState.otMinutes || '') : ''; }
         }
-        else if (cls.contains('job-select')) { const idx = parseInt(target.dataset.index); if (emp.uiState.jobs[idx]) { emp.uiState.jobs[idx] = { jobId: target.value, params: {} }; this.refreshRow(tr, emp); } }
+        else if (cls.contains('job-select')) {
+            const idx = parseInt(target.dataset.index, 10);
+            if (emp.uiState.jobs[idx]) {
+                const selectedJob = { jobId: target.value, params: {} };
+                this.applyAutoTimeParam(selectedJob, emp, { overwrite: true });
+                emp.uiState.jobs[idx] = selectedJob;
+                this.refreshRow(tr, emp);
+            }
+        }
         else if (cls.contains('param-val')) { const { index, key } = target.dataset; if (emp.uiState.jobs[index]) emp.uiState.jobs[index].params[key] = target.value; }
         else if (cls.contains('ot-minutes')) { emp.uiState.otMinutes = target.value; }
         else if (cls.contains('note-input')) { emp.uiState.note = target.value; }
@@ -358,7 +431,16 @@ class ChamCongManager {
         const workHours = this.validator?.calculateActualWorkHours({ checkIn: inVal, checkOut: outVal, schedule, requiresCheckout: emp.cocancheckout === true, lunchBreaks: emp.khunggionghitrua || [] });
 
         if (emp.uiState.ot) { emp.uiState.otMinutes = this.computeOtMinutes(emp, outVal); if (otInp) otInp.value = emp.uiState.otMinutes || ''; }
-        if (workHoursEl && workHours) { workHoursEl.textContent = workHours.formatted; workHoursEl.className = `work-hours-display text-[12px] font-mono px-1.5 py-0.5 rounded ${workHours.displayClass}`; emp.uiState.workHours = workHours; }
+        emp.uiState.workHours = workHours || null;
+        if (workHoursEl && workHours) {
+            workHoursEl.textContent = workHours.formatted;
+            workHoursEl.className = `work-hours-display text-[12px] font-mono px-1.5 py-0.5 rounded ${workHours.displayClass}`;
+        } else if (workHoursEl) {
+            workHoursEl.textContent = '-';
+            workHoursEl.className = 'work-hours-display text-[12px] font-mono px-1.5 py-0.5 rounded text-slate-400';
+        }
+
+        this.syncTimeParamWithWorkHours(emp, { clearWhenEmpty: true, tr });
         if (res) res.innerHTML = !analysis ? '<span class="text-[10px] text-slate-300">-</span>' : this.render$.renderCompactAnalysis(analysis);
 
         const hasViolations = analysis?.violations?.length > 0, hasWarnings = analysis?.warnings?.length > 0;
@@ -395,6 +477,7 @@ class ChamCongManager {
             if (masterJob) {
                 const emptyIdx = emp.uiState.jobs.findIndex(j => !j.jobId);
                 const newJob = JSON.parse(JSON.stringify(masterJob));
+                this.applyAutoTimeParam(newJob, emp, { overwrite: false });
                 emptyIdx !== -1 ? emp.uiState.jobs[emptyIdx] = newJob : emp.uiState.jobs.push(newJob);
             }
             count++;
