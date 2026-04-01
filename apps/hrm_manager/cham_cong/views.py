@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q
+from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q, Exists
 from django.db.models.functions import Cast, Coalesce
 from django.db import transaction
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -257,21 +257,24 @@ def calculate_bang_cham_cong_objects(data_list):
             if tg_lam_viec == 0 and tg_lam_them == 0:
                 # Không có công và cũng không có OT thì ép về 0 để tránh ghi nhận sai.
                 tong_tien_cuoi_cung = 0
+
+            # Build Tham số tính lương
+            # Nhiều công việc: lưu cấu trúc tổng hợp để truy vết từng công việc con.
+            final_thamsotinhluong = {
+                'mode': 'multi_task' if len(sub_items) > 1 else 'single_task',
+                'details': [
+                    {
+                        'congviec_id': sub.get('congviec_id'),
+                        'tencongviec': sub.get('tencongviec'),
+                        'thamsotinhluong': sub.get('thamsotinhluong')
+                    } for sub in sub_items
+                ]
+            }
+
         else:
             # Nghỉ làm thì không tính tiền.
             tong_tien_cuoi_cung = 0
-
-        # Nhiều công việc: lưu cấu trúc tổng hợp để truy vết từng công việc con.
-        final_thamsotinhluong = {
-            'mode': 'multi_task' if len(sub_items) > 1 else 'single_task',
-            'details': [
-                {
-                    'congviec_id': sub.get('congviec_id'),
-                    'tencongviec': sub.get('tencongviec'),
-                    'thamsotinhluong': sub.get('thamsotinhluong')
-                } for sub in sub_items
-            ]
-        }
+            final_thamsotinhluong = {}
 
         # Tạo object Bangchamcong để bulk_create ở tầng API.
         objs_bang_cham_cong.append(Bangchamcong(
@@ -520,6 +523,13 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         cnt=Count('id')
     ).values('cnt')
 
+    # Nếu đã có ít nhất một bản ghi codilam=False thì coi như nhân viên đã được xử lý theo chế độ nghỉ.
+    sq_ton_tai_ban_ghi_nghi = Bangchamcong.objects.filter(
+        ngaylamviec=ngay_lam_viec,
+        nhanvien=OuterRef('nhanvien_id'),
+        codilam=False
+    )
+
     # Main Query: Lấy lịch làm việc thực tế
     qs_lich_lam_viec = Lichlamviecthucte.objects.filter(
         ngaylamviec=ngay_lam_viec,
@@ -527,6 +537,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     ).annotate(
         # Gắn số lần đã chấm công vào mỗi dòng
         total_cham_cong=Coalesce(Subquery(sq_dem_so_lan_cham_cong, output_field=IntegerField()), 0),
+        has_leave_record=Exists(sq_ton_tai_ban_ghi_nghi),
         
         # Alias các trường dữ liệu cần dùng để code ngắn gọn hơn
         solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
@@ -558,9 +569,14 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     )
 
     if da_cham_cong == 'True':
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__gte=F('solanchamcongtrongngay'))
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(
+            Q(has_leave_record=True) | Q(total_cham_cong__gte=F('solanchamcongtrongngay'))
+        )
     else:
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__lt=F('solanchamcongtrongngay'))
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(
+            has_leave_record=False,
+            total_cham_cong__lt=F('solanchamcongtrongngay')
+        )
 
     qs_lich_lam_viec = qs_lich_lam_viec.values(
         "nhanvien_id", "calamviec_id", "cophaingaynghi",
@@ -730,10 +746,8 @@ def api_bang_cham_cong_list(request):
 
         if request.method == 'PUT':
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.filter(
-                nhanvien_id__in=nhan_vien_set,
-                ngaylamviec__in=ngay_lam_viec_set
-            ).delete()
+            
+            Bangchamcong.objects.filter(nhanvien_id__in=nhan_vien_set, ngaylamviec__in=ngay_lam_viec_set).delete()
             Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({
