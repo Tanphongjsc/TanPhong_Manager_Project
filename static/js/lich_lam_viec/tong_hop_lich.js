@@ -18,6 +18,7 @@ class TongHopLichController {
         };
 
         this.tableManager = null;
+        this.customDatePickers = {};
     }
 
     init() {
@@ -26,6 +27,7 @@ class TongHopLichController {
             return;
         }
 
+        this.initCustomDatePickers();
         this.initDefaultDateRange();
         this.bindFilterEvents();
         this.initTable();
@@ -55,6 +57,45 @@ class TongHopLichController {
             deptDropdown: document.getElementById('filter-dept-dropdown'),
             deptTree: document.getElementById('filter-dept-tree')
         };
+    }
+
+    initCustomDatePickers() {
+        const pickerLib = window.CustomDateComponents?.CustomDatePicker;
+        if (!pickerLib) {
+            return;
+        }
+
+        if (this.els.startDateInput) {
+            this.customDatePickers.start = new pickerLib({
+                inputId: this.els.startDateInput,
+                compact: true,
+                showIcon: false,
+                placeholder: 'Từ ngày',
+                triggerClass: 'min-w-[88px] text-left',
+                popoverClass: 'w-72'
+            });
+        }
+
+        if (this.els.endDateInput) {
+            this.customDatePickers.end = new pickerLib({
+                inputId: this.els.endDateInput,
+                compact: true,
+                showIcon: false,
+                placeholder: 'Đến ngày',
+                triggerClass: 'min-w-[88px] text-left',
+                popoverClass: 'w-72'
+            });
+        }
+
+        this.syncCustomDatePickers();
+    }
+
+    syncCustomDatePickers() {
+        Object.values(this.customDatePickers).forEach((picker) => {
+            if (picker && typeof picker.syncFromInput === 'function') {
+                picker.syncFromInput();
+            }
+        });
     }
 
     initDefaultDateRange() {
@@ -165,7 +206,7 @@ class TongHopLichController {
                 this.els.scheduleSelect.appendChild(option);
             });
         } catch (error) {
-            console.error('Khong tai duoc danh sach nhom lich:', error);
+            console.error('Không tải được danh sách nhóm lịch:', error);
         }
     }
 
@@ -185,8 +226,8 @@ class TongHopLichController {
 
             this.renderDepartmentTree();
         } catch (error) {
-            console.error('Khong tai duoc cay bo phan:', error);
-            this.els.deptTree.innerHTML = '<div class="text-xs text-red-500 p-2">Khong tai duoc du lieu bo phan</div>';
+            console.error('Không tải được cây bộ phận:', error);
+            this.els.deptTree.innerHTML = '<div class="text-xs text-red-500 p-2">Không tải được dữ liệu bộ phận</div>';
         }
     }
 
@@ -223,7 +264,7 @@ class TongHopLichController {
         }
 
         if (this.els.deptText) {
-            this.els.deptText.textContent = deptName || 'Tat ca bo phan';
+            this.els.deptText.textContent = deptName || 'Tất cả bộ phận';
         }
 
         this.renderDepartmentTree();
@@ -311,6 +352,8 @@ class TongHopLichController {
             this.els.endDateInput.value = this.toDateKey(end);
         }
 
+        this.syncCustomDatePickers();
+
         this.renderHeader();
 
         if (triggerRefresh) {
@@ -352,6 +395,8 @@ class TongHopLichController {
             this.els.endDateInput.value = this.toDateKey(normalizedEnd);
         }
 
+        this.syncCustomDatePickers();
+
         this.renderHeader();
         return true;
     }
@@ -385,7 +430,7 @@ class TongHopLichController {
 
         let html = `
             <tr>
-                <th class="sticky-col-l1 px-3 py-2 text-left text-sm font-bold text-slate-700 min-w-[240px]">Nhân viên</th>
+                <th class="sticky-col-l1 px-3 py-2 text-left text-sm font-bold text-slate-700 min-w-60">Nhân viên</th>
         `;
 
         if (dateRange.length === 0) {
@@ -463,22 +508,36 @@ class TongHopLichController {
         }
 
         const badges = shifts.map((shift) => {
-            const tenCa = this.escapeHtml(shift.ten_ca || 'Ca lam viec');
+            const tenCa = this.escapeHtml(shift.ten_ca || 'Ca làm việc');
             const isDayOff = Boolean(shift.is_day_off);
             const khungGio = Array.isArray(shift.khung_gio) ? shift.khung_gio : [];
-            const tooltipText = [
-                shift.ten_lich || '',
-                khungGio.join(' | ')
-            ].filter(Boolean).join(' | ');
+            const tenLich = this.escapeHtml(shift.ten_lich || 'Chưa gán lịch làm việc');
+
+            const khungGioHtml = khungGio.length > 0
+                ? khungGio
+                    .map((item) => `<div class="text-[10px] text-slate-300">- ${this.escapeHtml(item)}</div>`)
+                    .join('')
+                : '<div class="text-[10px] text-slate-400">Không có khung giờ</div>';
 
             const badgeClass = isDayOff
                 ? 'bg-slate-100 text-slate-500 border-slate-200'
                 : 'bg-blue-50 text-blue-700 border-blue-200';
 
             return `
-                <span class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[12px] font-semibold border ${badgeClass}" title="${this.escapeHtml(tooltipText)}">
-                    ${tenCa}
-                </span>
+                <div class="relative group">
+                    <span class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[12px] font-semibold border ${badgeClass} cursor-default">
+                        ${tenCa}
+                    </span>
+
+                    <div class="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1.5 w-56 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 pointer-events-none">
+                        <div class="bg-slate-800 text-white text-xs rounded-lg shadow-xl p-2.5 text-left leading-relaxed border border-slate-600 relative">
+                            <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600 rotate-45"></div>
+                            <div class="font-bold text-emerald-400 mb-1 text-[11px]">${tenCa}</div>
+                            <div class="text-[11px] text-slate-200 mb-1.5 border-b border-slate-600 pb-1">Lịch làm việc: ${tenLich}</div>
+                            ${khungGioHtml}
+                        </div>
+                    </div>
+                </div>
             `;
         }).join('');
 

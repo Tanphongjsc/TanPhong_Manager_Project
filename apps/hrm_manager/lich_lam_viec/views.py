@@ -214,10 +214,10 @@ def view_tong_hop_lich(request):
         'breadcrumbs': [
             {'title': 'Chấm công', 'url': '#'},
             {'title': 'Quản lý lịch làm việc', 'url': None},
-            {'title': 'Tổng hợp lịch', 'url': None},
+            {'title': 'Tổng hợp lịch làm việc', 'url': None},
         ],
         'tabs': get_thiet_ke_lich_tabs(),
-        'page_title': 'Quản lý lịch làm việc',
+        'page_title': 'Tổng hợp lịch làm việc',
     }
     return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
 

@@ -41,12 +41,15 @@ class KyLuongManager extends BaseCRUDManager {
         this.selectedYear = null;
         this.periodDays = 30; // Default
         this.dateConstraints = null; // Store min/max dates
+        this.monthYearPicker = null;
+        this.customDatePickers = {};
     }
 
     init() {
         super.init();
         this.initTable();
         this.initMonthYearPicker();
+        this.initCustomDatePickers();
         this.initDateSync();
     }
 
@@ -177,98 +180,79 @@ class KyLuongManager extends BaseCRUDManager {
     // MONTH-YEAR PICKER
     // ============================================================
     initMonthYearPicker() {
-        const trigger = document.getElementById('month-year-trigger');
-        const popover = document.getElementById('month-year-popover');
-        const display = document.getElementById('month-year-display');
-        const pickerYear = document.getElementById('picker-year');
-        const monthGrid = document.getElementById('month-grid');
-        
-        if (!trigger || !popover) return;
-        
-        const currentDate = new Date();
-        let displayYear = currentDate.getFullYear();
-        
-        const renderMonthGrid = () => {
-            const currentMonth = currentDate.getMonth() + 1;
-            const currentYear = currentDate.getFullYear();
-            const isCurrentYear = displayYear === currentYear;
-            
-            monthGrid.innerHTML = Array.from({ length: 12 }).map((_, i) => {
-                const month = i + 1;
-                const isCurrentMonth = isCurrentYear && month === currentMonth;
-                const isSelected = displayYear === this.selectedYear && month === this.selectedMonth;
-                
-                let classes = 'py-2 text-sm rounded transition-colors cursor-pointer ';
-                if (isSelected) {
-                    classes += 'bg-green-500 text-white font-bold';
-                } else if (isCurrentMonth) {
-                    classes += 'bg-green-100 text-green-700 font-medium ring-1 ring-green-300';
-                } else {
-                    classes += 'hover:bg-green-50 hover:text-green-600 text-slate-700';
-                }
-                
-                return `<button type="button" class="${classes}" data-month="${month}">
-                    Thg ${month.toString().padStart(2, '0')}
-                </button>`;
-            }).join('');
-            
-            pickerYear.textContent = displayYear;
-        };
-        
-        // Show/hide popover
-        this.eventManager.add(trigger, 'click', (e) => {
-            e.stopPropagation();
-            
-            // ✅ MỚI: Không cho mở picker khi edit
-            if (this.state.currentMode === 'edit') {
+        const pickerLib = window.CustomDateComponents?.CustomMonthYearPicker;
+        if (!pickerLib) return;
+
+        this.monthYearPicker = new pickerLib({
+            triggerId: 'month-year-trigger',
+            popoverId: 'month-year-popover',
+            displayId: 'month-year-display',
+            pickerYearId: 'picker-year',
+            prevYearId: 'prev-year',
+            nextYearId: 'next-year',
+            monthGridId: 'month-grid',
+            selectedYear: this.selectedYear,
+            selectedMonth: this.selectedMonth,
+            monthGridColumns: 4,
+            placeholder: '-- Chọn tháng --',
+            displayFormatter: (year, month) => `${String(month).padStart(2, '0')}/${year}`,
+            selectedClass: 'bg-green-500 text-white font-bold',
+            currentClass: 'bg-green-100 text-green-700 font-medium ring-1 ring-green-300',
+            defaultClass: 'hover:bg-green-50 hover:text-green-600 text-slate-700',
+            canOpen: () => this.state.currentMode !== 'edit',
+            onOpenDenied: () => {
                 AppUtils.Notify.warning('Không thể thay đổi tháng khi chỉnh sửa');
-                return;
-            }
-            
-            popover.classList.toggle('hidden');
-            if (!popover.classList.contains('hidden')) {
-                renderMonthGrid();
-            }
-        });
-        
-        // Month selection
-        this.eventManager.add(monthGrid, 'click', (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            
-            this.selectedMonth = parseInt(btn.dataset.month);
-            this.selectedYear = displayYear;
-            
-            display.textContent = `${this.selectedMonth.toString().padStart(2, '0')}/${this.selectedYear}`;
-            
-            document.getElementById('input-thang').value = this.selectedMonth;
-            document.getElementById('input-nam').value = this.selectedYear;
-            
-            popover.classList.add('hidden');
-            
-            // Load defaults for selected month
-            this.loadDefaults();
-        });
-        
-        // Year navigation
-        document.getElementById('prev-year')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            displayYear--;
-            renderMonthGrid();
-        });
-        
-        document.getElementById('next-year')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            displayYear++;
-            renderMonthGrid();
-        });
-        
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!trigger.contains(e.target) && !popover.contains(e.target)) {
-                popover.classList.add('hidden');
+            },
+            onChange: ({ year, month }) => {
+                if (!year || !month) return;
+
+                this.selectedMonth = month;
+                this.selectedYear = year;
+
+                document.getElementById('input-thang').value = this.selectedMonth;
+                document.getElementById('input-nam').value = this.selectedYear;
+
+                this.loadDefaults();
             }
         });
+    }
+
+    initCustomDatePickers() {
+        const pickerLib = window.CustomDateComponents?.CustomDatePicker;
+        if (!pickerLib) return;
+
+        const dateInputIds = [
+            'input-ngay-bat-dau',
+            'input-ngay-ket-thuc',
+            'input-ngay-chot-luong'
+        ];
+
+        dateInputIds.forEach((id) => {
+            this.customDatePickers[id] = new pickerLib({
+                inputId: id,
+                placeholder: 'Chọn ngày',
+                selectedDayClass: 'bg-green-500 text-white border-green-500',
+                todayDayClass: 'border-green-300 text-green-700',
+                normalDayClass: 'text-slate-700 hover:bg-green-50 hover:border-green-200'
+            });
+        });
+
+        this.syncCustomDatePickers();
+    }
+
+    syncCustomDatePickers() {
+        Object.values(this.customDatePickers).forEach((picker) => {
+            if (picker && typeof picker.syncFromInput === 'function') {
+                picker.syncFromInput();
+            }
+        });
+    }
+
+    syncCustomDatePickerById(inputId) {
+        const picker = this.customDatePickers[inputId];
+        if (picker && typeof picker.syncFromInput === 'function') {
+            picker.syncFromInput();
+        }
     }
 
     // ============================================================
@@ -290,6 +274,7 @@ class KyLuongManager extends BaseCRUDManager {
             endDate.setDate(endDate.getDate() + 29);
             
             endInput.value = this.formatDateForInput(endDate);
+            this.syncCustomDatePickerById('input-ngay-ket-thuc');
             
             // Update ngày chốt
             this.updateClosingDateConstraints();
@@ -305,6 +290,7 @@ class KyLuongManager extends BaseCRUDManager {
             startDate.setDate(startDate.getDate() - 29);
             
             startInput.value = this.formatDateForInput(startDate);
+            this.syncCustomDatePickerById('input-ngay-bat-dau');
             
             // Update ngày chốt
             this.updateClosingDateConstraints();
@@ -340,6 +326,8 @@ class KyLuongManager extends BaseCRUDManager {
         if (!currentClosing || currentClosing < minDate || currentClosing > maxDate) {
             closingInput.value = this.formatDateForInput(defaultDate);
         }
+
+        this.syncCustomDatePickerById('input-ngay-chot-luong');
     }
 
     // ============================================================
@@ -382,6 +370,8 @@ class KyLuongManager extends BaseCRUDManager {
                     closingInput.min = data.min_ngay_chot;
                     closingInput.max = data.max_ngay_chot;
                 }
+
+                this.syncCustomDatePickers();
             }
         } catch (err) {
             console.error('Error loading defaults:', err);
@@ -441,9 +431,13 @@ class KyLuongManager extends BaseCRUDManager {
         this.selectedMonth = null;
         this.selectedYear = null;
         this.dateConstraints = null;
-        
-        const display = document.getElementById('month-year-display');
-        if (display) display.textContent = '-- Chọn tháng --';
+
+        document.getElementById('input-thang').value = '';
+        document.getElementById('input-nam').value = '';
+
+        if (this.monthYearPicker && typeof this.monthYearPicker.clear === 'function') {
+            this.monthYearPicker.clear({ silent: true });
+        }
         
         const repeatCheckbox = document.getElementById('checkbox-lap-theo-thang');
         if (repeatCheckbox) repeatCheckbox.checked = false;
@@ -459,6 +453,8 @@ class KyLuongManager extends BaseCRUDManager {
                 input.removeAttribute('max');
             }
         });
+
+        this.syncCustomDatePickers();
         
         // Re-enable month picker
         const monthTrigger = document.getElementById('month-year-trigger');
@@ -470,16 +466,15 @@ class KyLuongManager extends BaseCRUDManager {
 
     fillFormData(data) {
         // Set month/year (readonly on edit)
-        this.selectedMonth = data.thang;
-        this.selectedYear = data.nam;
-        
-        const display = document.getElementById('month-year-display');
-        if (display) {
-            display.textContent = data.thang_display || `${this.selectedMonth}/${this.selectedYear}`;
+        this.selectedMonth = Number.parseInt(data.thang, 10) || null;
+        this.selectedYear = Number.parseInt(data.nam, 10) || null;
+
+        if (this.monthYearPicker && typeof this.monthYearPicker.setValue === 'function') {
+            this.monthYearPicker.setValue(this.selectedYear, this.selectedMonth, { silent: true });
         }
         
-        document.getElementById('input-thang').value = this.selectedMonth;
-        document.getElementById('input-nam').value = this.selectedYear;
+        document.getElementById('input-thang').value = this.selectedMonth || '';
+        document.getElementById('input-nam').value = this.selectedYear || '';
         
         // ✅ MỚI: Apply constraints from API response
         if (data.min_ngay_bat_dau) {
@@ -499,6 +494,7 @@ class KyLuongManager extends BaseCRUDManager {
         
         // Update closing constraints
         this.updateClosingDateConstraints();
+        this.syncCustomDatePickers();
     }
 
     getFormData(form) {
