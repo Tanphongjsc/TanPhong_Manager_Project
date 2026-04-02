@@ -86,7 +86,7 @@ class CongViecManager extends BaseCRUDManager {
                 if (row && e.target.classList.contains('thamso-ten')) {
                     const v = e.target.value.trim();
                     // Tự động tạo mã từ tên
-                    if (v) row.querySelector('.thamso-ma').value = AppUtils.Helper.removeAccents(v).toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,20);
+                    if (v) row.querySelector('.thamso-ma').value = AppUtils.Helper.removeAccents(v).toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'_');
                 }
                 sync();
             });
@@ -101,7 +101,26 @@ class CongViecManager extends BaseCRUDManager {
     }
 
     // Hiển thị/ẩn section công thức
-    toggleFormula(show) { this.el.section?.classList.toggle('hidden', !show); }
+    toggleFormula(show) {
+        this.el.section?.classList.toggle('hidden', !show);
+        if (show) this.ensureDefaultTimeParam();
+    }
+
+    // Thêm tham số thời gian mặc định khi bật công thức (nếu chưa có)
+    ensureDefaultTimeParam() {
+        const hasDefaultTime = this.params.some(p => (p?.ma || '').toLowerCase() === 'thoi_gian');
+        if (hasDefaultTime) return;
+
+        this.params.push({
+            ten: 'Thời gian',
+            ma: 'thoi_gian',
+            donvi: 'Giờ',
+            kieu: 'number',
+            giatri_macdinh: ''
+        });
+        this.renderParams();
+        this.updateJson();
+    }
     
     // Reset công thức về trạng thái ban đầu
     resetFormula() {

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q
+from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q, Exists
 from django.db.models.functions import Cast, Coalesce
 from django.db import transaction
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -76,28 +76,35 @@ def calculate_bang_cham_cong_objects(data_list):
     Dùng chung cho cả thêm mới và cập nhật chấm công.
     Trả về danh sách instance Bangchamcong đã tính toán đầy đủ số liệu.
     """
+    # Tính trước tiền lương gốc theo danh sách đầu vào, dùng lại cho từng nhân viên.
     ket_qua_thanh_tien = tinh_luong_cham_cong(data_list)
     objs_bang_cham_cong = []
 
+    # Gom dữ liệu theo nhân viên để hợp nhất các công việc của cùng 1 người trong ngày.
     grouped_data = {}
     for item in data_list:
+        # Key gom nhóm là nhân viên, để mỗi nhân viên tạo đúng 1 dòng kết quả cuối.
         nv_id = item['nhanvien_id']
         if nv_id not in grouped_data:
             grouped_data[nv_id] = {'main_item': item, 'sub_items': []}
         grouped_data[nv_id]['sub_items'].append(item)
 
     for nv_id, group in grouped_data.items():
+        # main_item dùng làm mốc thông tin chấm công, sub_items dùng để gộp tên công việc/tham số lương.
         item = group['main_item']
         sub_items = group['sub_items']
 
+        # Nhiều công việc trong ngày sẽ gộp tên để hiển thị 1 dòng trong bảng chấm công.
         combined_ten_cv = ", ".join([sub.get('tencongviec', '') for sub in sub_items if sub.get('tencongviec')])
 
+        # Sao chép khung giờ để tránh mutate dữ liệu gốc từ payload khi cần điều chỉnh ở ca linh động.
         khung_gio = item.get("khunggiolamviec", {}).copy()
         tg_vao = item.get("thoigianchamcongvao")
         tg_ra = item.get("thoigianchamcongra")
         loai_calamviec = item.get("loaicalamviec", "CO_DINH")
         codilam = item.get("codilam", False)
 
+        # Reset các biến tích lũy cho từng nhân viên trước khi tính.
         thoigiandimuon = 0
         thoigianvesom = 0
         thoigiandisom = 0
@@ -107,9 +114,11 @@ def calculate_bang_cham_cong_objects(data_list):
         so_cong_thuc_te = 0
 
         if codilam == True:
+            # Sai lệch giờ vào (dương: đi muộn, âm: đi sớm).
             khoang_tg_cham_cong_vao = diff_minutes(khung_gio.get("thoigianbatdau"), tg_vao)
 
             if not item.get("cocancheckout", True):
+                # Ca không cần checkout thì mặc định giờ ra theo khung giờ kết thúc.
                 tg_ra = khung_gio.get("thoigianketthuc")
                 item['thoigianchamcongra'] = tg_ra
 
@@ -118,6 +127,8 @@ def calculate_bang_cham_cong_objects(data_list):
             start_minutes = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
             end_minutes = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
 
+            # tg_lam_viec_thuc: phút làm việc theo checkin/checkout thực tế.
+            # tg_lam_viec_chuan_ca: phút chuẩn của ca (khung giờ kế hoạch).
             tg_lam_viec_thuc = calculate_work_minutes_with_overnight(
                 in_minutes, out_minutes, start_minutes, end_minutes
             )
@@ -125,6 +136,7 @@ def calculate_bang_cham_cong_objects(data_list):
                 start_minutes, end_minutes, start_minutes, end_minutes
             )
 
+            # Trừ thời gian nghỉ trưa thực tế/chuẩn ra khỏi tổng phút làm việc.
             ds_nghi_trua = item.get('khunggionghitrua', [])
             tong_phut_nghi_trua_thuc = tinh_phut_nghi_trua_trong_khoang(in_minutes, out_minutes, ds_nghi_trua)
             tong_phut_nghi_trua_chuan = tinh_phut_nghi_trua_trong_khoang(start_minutes, end_minutes, ds_nghi_trua)
@@ -132,9 +144,11 @@ def calculate_bang_cham_cong_objects(data_list):
             tg_lam_viec_chuan_ca = tg_lam_viec_chuan_ca - tong_phut_nghi_trua_chuan
 
             if khoang_tg_cham_cong_vao > 0:
+                # Đi muộn nhưng có cắt qua nghỉ trưa thì trừ phần nghỉ trưa để không phạt sai.
                 khoang_tg_cham_cong_vao -= tinh_phut_nghi_trua_trong_khoang(start_minutes, in_minutes, ds_nghi_trua)
 
             if loai_calamviec == "CO_DINH":
+                # CA CỐ ĐỊNH: so với chuẩn ca, có ngưỡng cho phép đi muộn/về sớm.
                 limit_di_muon = khung_gio.get("thoigianchophepdenmuon", 0)
                 limit_ve_som = khung_gio.get("thoigianchophepvesomnhat", 0)
 
@@ -145,6 +159,7 @@ def calculate_bang_cham_cong_objects(data_list):
 
                 khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
                 if khoang_tg_cham_cong_ra > 0:
+                    # Về sớm có thể cắt qua nghỉ trưa nên cần loại trừ phút nghỉ trưa khỏi phần phạt.
                     khoang_tg_cham_cong_ra -= tinh_phut_nghi_trua_trong_khoang(out_minutes, end_minutes, ds_nghi_trua)
 
                 if khoang_tg_cham_cong_ra > limit_ve_som:
@@ -152,9 +167,11 @@ def calculate_bang_cham_cong_objects(data_list):
                 elif khoang_tg_cham_cong_ra < 0:
                     thoigianvemuon = abs(khoang_tg_cham_cong_ra)
 
+                # Công thực tế của ca cố định = công chuẩn trừ đi muộn/về sớm.
                 tg_lam_viec = tg_lam_viec_chuan_ca - thoigiandimuon - thoigianvesom
 
             elif loai_calamviec == "LINH_DONG":
+                # CA LINH ĐỘNG: cho phép dịch giờ vào trong biên độ, khi hợp lệ sẽ dời giờ kết thúc tương ứng.
                 phut_den_muon_cho_phep = khung_gio.get("sophutdenmuon", 0)
                 phut_den_som_cho_phep = khung_gio.get("sophutdensom", 0)
 
@@ -165,10 +182,12 @@ def calculate_bang_cham_cong_objects(data_list):
                     is_linh_dong_hop_le = True
 
                 if is_linh_dong_hop_le:
+                    # Dời giờ kết thúc để giữ nguyên tổng thời lượng ca khi nhân viên vào lệch trong ngưỡng cho phép.
                     khung_gio['thoigianketthuc'] = parse_minutes_to_time(
                         parse_time_to_minutes(khung_gio.get("thoigianketthuc")) + khoang_tg_cham_cong_vao
                     )
                 else:
+                    # Ngoài ngưỡng linh động: tính thành đi muộn/đi sớm như bình thường.
                     if khoang_tg_cham_cong_vao > phut_den_muon_cho_phep:
                         thoigiandimuon = khoang_tg_cham_cong_vao
                     elif khoang_tg_cham_cong_vao < 0:
@@ -176,6 +195,7 @@ def calculate_bang_cham_cong_objects(data_list):
 
                 khoang_tg_cham_cong_ra = diff_minutes(tg_ra, khung_gio.get("thoigianketthuc"))
                 if khoang_tg_cham_cong_ra > 0:
+                    # Sau khi dời giờ kết thúc, tiếp tục trừ nghỉ trưa để tính phần về sớm chính xác.
                     end_minutes_hien_tai = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
                     khoang_tg_cham_cong_ra -= tinh_phut_nghi_trua_trong_khoang(out_minutes, end_minutes_hien_tai, ds_nghi_trua)
 
@@ -184,9 +204,11 @@ def calculate_bang_cham_cong_objects(data_list):
                 elif khoang_tg_cham_cong_ra < 0:
                     thoigianvemuon = abs(khoang_tg_cham_cong_ra)
 
+                # Với ca linh động hợp lệ có thể dời giờ kết thúc tương ứng giờ vào.
                 tg_lam_viec = tg_lam_viec_chuan_ca - thoigiandimuon - thoigianvesom
 
             elif loai_calamviec == "TU_DO":
+                # CA TỰ DO: không ép công thức chuẩn theo khung, dùng thời gian thực tế sau khi trừ nghỉ trưa.
                 if khoang_tg_cham_cong_vao < 0:
                     thoigiandisom = abs(khoang_tg_cham_cong_vao)
 
@@ -197,18 +219,22 @@ def calculate_bang_cham_cong_objects(data_list):
                 tg_lam_viec = tg_lam_viec_thuc
 
             if item.get('cotinhlamthem', False) and thoigianvemuon > 0:
+                # Chỉ tính OT khi có cấu hình tính OT và có thời gian về muộn.
                 tg_lam_them = item.get("sophutot", 0)
 
             limit_vesom_0_cong = khung_gio.get("thoigianvesomkhongtinhchamcong", 0)
             limit_dimuon_0_cong = khung_gio.get("thoigiandimuonkhongtinhchamcong", 0)
 
+            # Vi phạm ngưỡng nặng (đi muộn/về sớm quá mức) thì hạ về 0 công.
             if (limit_vesom_0_cong > 0 and thoigianvesom > limit_vesom_0_cong) or \
             (limit_dimuon_0_cong > 0 and thoigiandimuon > limit_dimuon_0_cong):
                 tg_lam_viec = 0
 
+            # Không đạt ngưỡng phút tối thiểu của khung giờ thì cũng không tính công.
             if tg_lam_viec < khung_gio.get("thoigianlamviectoithieu", 0):
                 tg_lam_viec = 0
 
+            # Quy đổi phút làm việc sang số công theo công chuẩn của khung giờ.
             so_cong_chuan = khung_gio.get("congcuakhunggio", 0) or 0
             if tg_lam_viec_chuan_ca > 0 and so_cong_chuan > 0:
                 so_cong_thuc_te = round((tg_lam_viec / tg_lam_viec_chuan_ca) * so_cong_chuan, 2)
@@ -220,18 +246,22 @@ def calculate_bang_cham_cong_objects(data_list):
 
             tien_ot = 0
             if tg_lam_them > 0:
-                don_gia_phut = luong_goc / tg_lam_viec_chuan_ca if tg_lam_viec_chuan_ca > 0 else 0
-                tien_ot = don_gia_phut * tg_lam_them * 1.5
+                # Tiền OT cộng thêm theo đơn giá phút và hệ số 0.5. Hệ số OT là 1.5, 
+                # tức mỗi giờ làm thêm người lao động được trả thêm 0.5 lần đơn giá so với giờ làm bình thường
+                # vì phần 1.0 đã nằm trong mức lương cơ bản luong_goc.
+                don_gia_phut = luong_goc / tg_lam_viec_thuc if tg_lam_viec_thuc > 0 else 0
+                tien_ot = don_gia_phut * tg_lam_them * 0.5
 
+            # Thành tiền cuối = lương gốc + phụ trội OT.
             tong_tien_cuoi_cung = luong_goc + tien_ot
             if tg_lam_viec == 0 and tg_lam_them == 0:
+                # Không có công và cũng không có OT thì ép về 0 để tránh ghi nhận sai.
                 tong_tien_cuoi_cung = 0
-        else:
-            tong_tien_cuoi_cung = 0
 
-        if len(sub_items) > 1:
+            # Build Tham số tính lương
+            # Nhiều công việc: lưu cấu trúc tổng hợp để truy vết từng công việc con.
             final_thamsotinhluong = {
-                'mode': 'multi_task',
+                'mode': 'multi_task' if len(sub_items) > 1 else 'single_task',
                 'details': [
                     {
                         'congviec_id': sub.get('congviec_id'),
@@ -240,9 +270,13 @@ def calculate_bang_cham_cong_objects(data_list):
                     } for sub in sub_items
                 ]
             }
-        else:
-            final_thamsotinhluong = item.get('thamsotinhluong', {})
 
+        else:
+            # Nghỉ làm thì không tính tiền.
+            tong_tien_cuoi_cung = 0
+            final_thamsotinhluong = {}
+
+        # Tạo object Bangchamcong để bulk_create ở tầng API.
         objs_bang_cham_cong.append(Bangchamcong(
             created_at = timezone.now(),
             thoigianchamcongvao = tg_vao,
@@ -359,11 +393,30 @@ def _resolve_khung_gio_lam_viec(item, list_khung_gio, idx_lan_cham):
 
     return list_khung_gio[idx_lan_cham]
 
+def _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio):
+    """
+    Nếu ca làm việc có nhiều khung giờ và chỉ chấm công 1 lần, 
+    khoảng thời gian giữa các khung giờ sẽ tự động được ghi nhận là giờ nghỉ trưa.
+    """
+    if item.get('sokhunggiotrongca', 0) > 1 and item.get('solanchamcongtrongngay', 0) == 1:
+        # Sắp xếp các khung giờ theo thời gian bắt đầu để đảm bảo tính liên tục (phòng trường hợp DB trả sai thứ tự)
+        sorted_kg = sorted([k for k in list_khung_gio if k.get('thoigianbatdau')], key=lambda x: str(x['thoigianbatdau']))
+        
+        # Gộp khoảng thời gian giữa khung trước (kết thúc) và khung sau (bắt đầu)
+        for f, s in zip(sorted_kg, sorted_kg[1:]):
+            t_end, t_start = f.get('thoigianketthuc'), s.get('thoigianbatdau')
+            if t_end and t_start:
+                nghi_trua = {'giobatdau': t_end, 'gioketthuc': t_start}
+                # Tránh thêm trùng lặp nếu người dùng đã tình cờ khai báo trong cơ sở dữ liệu
+                if nghi_trua not in item.setdefault('khunggionghitrua', []):
+                    item['khunggionghitrua'].append(nghi_trua)
+
 def build_cham_cong_data_for_update(ngay_lam_viec):
     """
     Lấy dữ liệu chấm công đã lưu để phục vụ chỉnh sửa (mode=update).
     Trả đầy đủ từng dòng chấm công theo ngày, bao gồm nhiều bản ghi/nhân viên nếu có.
     """
+    # 1) Lấy toàn bộ bản ghi chấm công đã lưu trong ngày và join thêm metadata cần cho màn hình update.
     qs_cham_cong = Bangchamcong.objects.filter(
         ngaylamviec=ngay_lam_viec
     ).annotate(
@@ -385,50 +438,69 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
         'codilam', 'loaichamcong', 'tencongviec', 'congviec_id', 'thamsotinhluong', 'ghichu'
     ).order_by('nhanvien_id', 'id')
 
+    # Materialize queryset để xử lý Python nhiều bước bên dưới.
     ds_cham_cong = list(qs_cham_cong)
     if not ds_cham_cong:
         return []
 
+    # 2) Chuẩn bị danh sách id để tải dữ liệu phụ trợ theo batch (tránh query lặp trong vòng for).
     list_nhanvien_id = list({item['nhanvien_id'] for item in ds_cham_cong})
     set_calamviec_id = {item['calamviec_id'] for item in ds_cham_cong if item.get('calamviec_id')}
 
+    # Map phòng ban hiện tại của nhân viên và metadata ca làm (khung giờ + nghỉ trưa).
     map_nhan_vien_phong_ban = _get_department_map(list_nhanvien_id)
     map_ca_lam = _get_calamviec_meta(set_calamviec_id, include_khung_gio=True)
 
+    # row_index_by_emp dùng để xác định bản ghi thứ mấy của mỗi nhân viên,từ đó map đúng khung giờ tương ứng trong ca nhiều khung giờ.
     row_index_by_emp = defaultdict(int)
     final_data = []
     for item in ds_cham_cong:
         nhanvien_id = item['nhanvien_id']
         calamviec_id = item.get('calamviec_id')
+
+        # 3) Gắn phòng ban hiện tại cho từng dòng dữ liệu.
         item['phongban_id'] = map_nhan_vien_phong_ban.get(nhanvien_id)
 
+        # Lấy metadata ca làm đã gom sẵn theo calamviec_id.
         shift_meta = map_ca_lam.get(calamviec_id, {})
         list_khung_gio = shift_meta.get('list_khung_gio', [])
         item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
 
+        # 4) Xác định khung giờ làm việc tương ứng với "lần chấm" hiện tại của nhân viên.
         idx = row_index_by_emp[nhanvien_id]
         khung_gio_lam_viec = _resolve_khung_gio_lam_viec(item, list_khung_gio, idx)
         if khung_gio_lam_viec is None:
+            # Dữ liệu ca thiếu hoặc index không hợp lệ thì bỏ qua bản ghi này,
+            # nhưng vẫn tăng index để giữ đúng nhịp bản ghi theo nhân viên.
             row_index_by_emp[nhanvien_id] += 1
             continue
 
         item['khunggiolamviec'] = khung_gio_lam_viec
+
+        # Bô sung thêm thông tin nghỉ trưa giữa các khung giờ nếu ca có nhiều khung và chỉ chấm 1 lần.
+        _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio)
+
+        # Sau mỗi bản ghi xử lý xong thì tăng chỉ số lần chấm cho nhân viên đó.
         row_index_by_emp[nhanvien_id] += 1
 
+        # 5) Chuẩn hóa dữ liệu trả về để frontend dùng trực tiếp.
         item['sophutot'] = item.get('thoigianlamthem') or 0
         item['ngaylamviec'] = ngay_lam_viec.isoformat()
         item['thoigianchamcongvao'] = serialize_time_value(item.get('thoigianchamcongvao'))
         item['thoigianchamcongra'] = serialize_time_value(item.get('thoigianchamcongra'))
 
+        # Parse JSON tham số tính lương nếu dữ liệu trong DB đang lưu dưới dạng string.
         thamsotinhluong = item.get('thamsotinhluong')
         if isinstance(thamsotinhluong, str):
             try:
                 item['thamsotinhluong'] = loads(thamsotinhluong)
             except Exception:
+                # Nếu JSON lỗi định dạng thì giữ nguyên giá trị gốc để tránh làm hỏng response.
                 pass
 
         final_data.append(item)
 
+    # Danh sách cuối cùng đã đủ thông tin để render form update chấm công.
     return final_data
 
 def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='create'):
@@ -451,6 +523,13 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         cnt=Count('id')
     ).values('cnt')
 
+    # Nếu đã có ít nhất một bản ghi codilam=False thì coi như nhân viên đã được xử lý theo chế độ nghỉ.
+    sq_ton_tai_ban_ghi_nghi = Bangchamcong.objects.filter(
+        ngaylamviec=ngay_lam_viec,
+        nhanvien=OuterRef('nhanvien_id'),
+        codilam=False
+    )
+
     # Main Query: Lấy lịch làm việc thực tế
     qs_lich_lam_viec = Lichlamviecthucte.objects.filter(
         ngaylamviec=ngay_lam_viec,
@@ -458,6 +537,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     ).annotate(
         # Gắn số lần đã chấm công vào mỗi dòng
         total_cham_cong=Coalesce(Subquery(sq_dem_so_lan_cham_cong, output_field=IntegerField()), 0),
+        has_leave_record=Exists(sq_ton_tai_ban_ghi_nghi),
         
         # Alias các trường dữ liệu cần dùng để code ngắn gọn hơn
         solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
@@ -489,9 +569,14 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     )
 
     if da_cham_cong == 'True':
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__gte=F('solanchamcongtrongngay'))
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(
+            Q(has_leave_record=True) | Q(total_cham_cong__gte=F('solanchamcongtrongngay'))
+        )
     else:
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(total_cham_cong__lt=F('solanchamcongtrongngay'))
+        qs_lich_lam_viec = qs_lich_lam_viec.filter(
+            has_leave_record=False,
+            total_cham_cong__lt=F('solanchamcongtrongngay')
+        )
 
     qs_lich_lam_viec = qs_lich_lam_viec.values(
         "nhanvien_id", "calamviec_id", "cophaingaynghi",
@@ -534,6 +619,9 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_khung_gio, idx_lan_cham)
         if item['khunggiolamviec'] is None:
             continue
+        
+        # Bổ sung tự động khung giờ nghỉ trưa nếu ca có nhiều khung giờ nhưng chỉ chấm công 1 lần
+        _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio)
 
         nhanvien_id = item['nhanvien_id']
         item['da_cham_cong'] = da_cham_cong
@@ -658,10 +746,8 @@ def api_bang_cham_cong_list(request):
 
         if request.method == 'PUT':
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.filter(
-                nhanvien_id__in=nhan_vien_set,
-                ngaylamviec__in=ngay_lam_viec_set
-            ).delete()
+            
+            Bangchamcong.objects.filter(nhanvien_id__in=nhan_vien_set, ngaylamviec__in=ngay_lam_viec_set).delete()
             Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({

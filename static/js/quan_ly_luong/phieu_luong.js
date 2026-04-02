@@ -192,11 +192,19 @@ class PayrollDetailManager {
         
         const modal = document.getElementById('detail-modal');
         if (modal) {
+            this.modal = modal;
             this.eventManager.add(modal, 'click', (e) => {
-                if (e.target === modal) this.toggleModal(false);
+                if (e.target === modal) AppUtils.Modal.close(modal);
             });
             const closeBtns = modal.querySelectorAll('[data-modal-close]');
-            closeBtns.forEach(btn => this.eventManager.add(btn, 'click', () => this.toggleModal(false)));
+            closeBtns.forEach(btn => this.eventManager.add(btn, 'click', () => AppUtils.Modal.close(modal)));
+            
+            // ESC key to close
+            this.eventManager.add(document, 'keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    AppUtils.Modal.close(modal);
+                }
+            });
         }
 
         // --- EXPORT EVENTS ---
@@ -307,8 +315,7 @@ class PayrollDetailManager {
         const timesheetSheetData = [];
         timesheetSheetData.push(['Mã NV', 'Họ tên', 'Ngày', 'Loại công', 'Vào', 'Ra', 'Giờ công (giờ)', 'Số công', 'Tham số công việc', 'Công việc']);
 
-        const formatWorkParams = (timesheet) => {
-            const params = timesheet?.thamsotinhluong?.tham_so;
+        const formatWorkParams = (params) => {
             if (!params || typeof params !== 'object' || Array.isArray(params) || Object.keys(params).length === 0) {
                 return '';
             }
@@ -321,18 +328,35 @@ class PayrollDetailManager {
             const timesheets = emp.extra_data?.ngaychamcong || [];
             if (timesheets.length > 0) {
                 timesheets.forEach(ts => {
-                    timesheetSheetData.push([
-                        emp.manhanvien,
-                        emp.hovaten,
-                        AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM/yyyy'),
-                        ts.loaichamcong || '',
-                        ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '',
-                        ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '',
-                        Number((Number(ts.thoigianlamviec || 0) / 60).toFixed(2)),
-                        Number(ts.conglamviec || 0),
-                        formatWorkParams(ts),
-                        ts.tencongviec || ''
-                    ]);
+                    const tsConfig = ts?.thamsotinhluong || {};
+                    let details = tsConfig.details || [];
+
+                    // Fallback for flat structure
+                    if (details.length === 0) {
+                        details = [{
+                            tencongviec: ts.tencongviec,
+                            tham_so: tsConfig.tham_so || {}
+                        }];
+                    }
+
+                    details.forEach((detail, index) => {
+                        const jName = detail.tencongviec || ts.tencongviec || '';
+                        const params = detail.thamsotinhluong?.tham_so || detail.tham_so || tsConfig.tham_so || {};
+                        const hoursStr = detail.thoigian ? ` (${Number(detail.thoigian).toFixed(1)}h)` : '';
+
+                        timesheetSheetData.push([
+                            index === 0 ? emp.manhanvien : '',
+                            index === 0 ? emp.hovaten : '',
+                            index === 0 ? AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM/yyyy') : '',
+                            index === 0 ? (ts.loaichamcong || '') : '',
+                            index === 0 ? AppUtils.TimeUtils.normalize(ts.thoigianchamcongvao, '') : '',
+                            index === 0 ? AppUtils.TimeUtils.normalize(ts.thoigianchamcongra, '') : '',
+                            index === 0 ? Number((Number(ts.thoigianlamviec || 0) / 60).toFixed(2)) : '',
+                            index === 0 ? Number(ts.conglamviec || 0) : '',
+                            formatWorkParams(params),
+                            jName + hoursStr
+                        ]);
+                    });
                 });
             } else {
                 timesheetSheetData.push([emp.manhanvien, emp.hovaten, 'Không có dữ liệu', '', '', '', '', '', '', '']);
@@ -446,35 +470,16 @@ class PayrollDetailManager {
 
         this.renderTimesheetTable(extraData.ngaychamcong);
         this.renderSalaryDetailList(row);
-        this.toggleModal(true);
-    }
-    
-    toggleModal(show) {
-        const modal = this.modal || document.getElementById('detail-modal');
-        if (!modal) return;
-        if (show) {
-            this.lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-            modal.inert = false;
-            modal.setAttribute('aria-hidden', 'false');
-            AppUtils.Modal.open(modal);
-            document.body.classList.add('overflow-hidden');
-        } else {
-            modal.setAttribute('aria-hidden', 'true');
-            modal.inert = true;
-            AppUtils.Modal.close(modal);
-            document.body.classList.remove('overflow-hidden');
-            if (this.lastFocusedElement) this.lastFocusedElement.focus();
-        }
+        AppUtils.Modal.open(this.modal);
     }
 
     renderTimesheetTable(timesheets) {
         const tbody = document.getElementById('modal-timesheet-body');
         const summaryEl = document.getElementById('modal-summary-work');
         if (!tbody) return;
-        tbody.innerHTML = '';
 
-        if (!timesheets || !Array.isArray(timesheets) || timesheets.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 italic text-sm">Chưa có dữ liệu chấm công chi tiết</td></tr>`;
+        if (!Array.isArray(timesheets) || timesheets.length === 0) {
+            AppUtils.UI.renderEmptyState(tbody, { message: 'Chưa có dữ liệu chấm công chi tiết', colspan: 5 });
             if (summaryEl) summaryEl.textContent = '';
             return;
         }
@@ -482,53 +487,86 @@ class PayrollDetailManager {
         let totalHours = 0;
         let totalCong = 0;
 
-        timesheets.forEach(ts => {
-            const date = new Date(ts.ngaylamviec).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-            const inTime = ts.thoigianchamcongvao ? ts.thoigianchamcongvao.slice(0, 5) : '--:--';
-            const outTime = ts.thoigianchamcongra ? ts.thoigianchamcongra.slice(0, 5) : '--:--';
+        tbody.innerHTML = timesheets.map(ts => {
             const hoursValue = Number(ts.thoigianlamviec || 0) / 60;
             const congValue = Number(ts.conglamviec || 0);
-            const hours = hoursValue.toFixed(1);
-            const jobName = ts.tencongviec || '-';
-            const workParams = ts?.thamsotinhluong?.tham_so;
-            const workParamsHtml = (workParams && typeof workParams === 'object' && !Array.isArray(workParams) && Object.keys(workParams).length > 0)
-                ? Object.entries(workParams)
-                    .map(([paramName, paramValue]) => `
-                        <div class="flex items-center justify-between gap-2 py-0.5 border-b border-dashed border-slate-100 last:border-0">
-                            <span class="text-[11px] text-slate-500 font-mono">${paramName}</span>
-                            <span class="text-[11px] text-slate-700 font-semibold">${this.formatNumber(paramValue)}</span>
-                        </div>
-                    `).join('')
-                : `<span class="text-[11px] text-slate-400 italic">Không có tham số</span>`;
 
             totalHours += hoursValue;
             totalCong += congValue;
 
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors';
-            tr.innerHTML = `
-                <td class="px-3 py-2.5 whitespace-nowrap text-slate-700">${date}</td>
-                <td class="px-3 py-2.5 text-center text-xs">
-                    <span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-medium">${ts.loaichamcong || '-'}</span>
-                </td>
-                <td class="px-3 py-2.5 text-center font-mono text-xs text-slate-500">${inTime} - ${outTime}</td>
-                <td class="px-3 py-2.5 text-right font-medium text-slate-700">
-                    <div>${hours}h</div>
-                    <div class="text-[11px] text-slate-400">${this.formatNumber(congValue)} công</div>
-                </td>
-                <td class="px-3 py-2.5 align-top min-w-[190px]">
-                    <div class="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-                        ${workParamsHtml}
+            const date = AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM');
+            const inTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongvao, '--:--');
+            const outTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongra, '--:--');
+            
+            let details = ts?.thamsotinhluong?.details || [];
+            if (details.length === 0) {
+                details = [{ tencongviec: ts.tencongviec, tham_so: ts?.thamsotinhluong?.tham_so || {} }];
+            }
+
+            const rowCount = details.length;
+            const caLoai = (ts.loaichamcong || '').toUpperCase();
+            const colors = { 'VP': 'blue', 'SX': 'emerald' };
+            const color = colors[caLoai] || 'orange';
+            const caBadgeClass = `bg-${color}-50 text-${color}-600 border-${color}-200`;
+
+            const sharedHtml = `
+                <td rowspan="${rowCount}" class="px-4 py-3 align-top border-b border-slate-100 bg-slate-50/30">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-medium text-slate-700 text-[13px] whitespace-nowrap">${date}</span>
+                            <span class="px-1.5 py-0.5 rounded shadow-sm text-[10px] font-bold ${caBadgeClass} border whitespace-nowrap">${ts.loaichamcong || '-'}</span>
+                        </div>
+                        <div class="inline-flex items-center text-[11px] font-mono text-slate-600 bg-white border border-slate-200 rounded px-1.5 py-0.5 w-fit shadow-sm whitespace-nowrap">
+                            <i class="far fa-clock text-slate-400 mr-1.5"></i>
+                            <span class="tracking-wide whitespace-nowrap">${inTime} - ${outTime}</span>
+                        </div>
                     </div>
                 </td>
-                <td class="px-3 py-2.5 text-left text-slate-600 truncate max-w-[150px]" title="${jobName}">${jobName}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+                <td rowspan="${rowCount}" class="px-3 py-3 text-right align-top border-b border-slate-100 bg-slate-50/30">
+                    <div class="flex flex-col gap-0.5 items-end">
+                        <span class="font-bold text-slate-700 text-sm whitespace-nowrap">${hoursValue.toFixed(1)}h</span>
+                        <span class="text-[11px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap border border-slate-200">${AppUtils.Helper.formatNumber(congValue)} công</span>
+                    </div>
+                </td>`;
 
-        if (summaryEl) {
-            summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h • ${this.formatNumber(totalCong)} công</span>`;
-        }
+            return details.map((detail, index) => {
+                const borderClass = index === rowCount - 1 ? 'border-b border-slate-100' : 'border-b border-dashed border-slate-100';
+                const jName = detail.tencongviec || ts.tencongviec || '-';
+                const params = detail.thamsotinhluong?.tham_so || detail.tham_so || ts?.thamsotinhluong?.tham_so || {};
+                const thanhTien = Number(detail.thanhtien ?? ts.thanhtien ?? 0);
+                const hoursStr = detail.thoigian ? `<span class="ml-1.5 text-[11px] font-mono text-slate-500 font-medium px-1.5 py-0.5 rounded shadow-sm bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">${Number(detail.thoigian).toFixed(1)}h</span>` : '';
+
+                const paramsHtml = Object.keys(params).length > 0 ? `
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1.5 sm:overflow-x-auto sm:overflow-y-hidden custom-scrollbar sm:pr-1">
+                    ${Object.entries(params).map(([k, v]) => `
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded shadow-sm border border-slate-200 bg-white whitespace-nowrap shrink-0">
+                            <span class="text-[11px] text-slate-600 font-medium">${k}:</span>
+                            <span class="text-[11px] text-blue-700 font-mono font-bold">${AppUtils.Helper.formatNumber(v)}</span>
+                        </div>`).join('')}
+                    </div>` : `<div class="mt-1 text-[11px] text-slate-400 italic">Không có tham số</div>`;
+
+                return `
+                <tr class="hover:bg-blue-50/30 transition-colors ${borderClass}">
+                    ${index === 0 ? sharedHtml : ''}
+                    <td class="px-4 py-3 align-top leading-relaxed">
+                        <div class="flex flex-col w-full group">
+                            <div class="font-medium text-slate-800 text-[13px] group-hover:text-blue-700 transition-colors flex items-center flex-wrap sm:flex-nowrap gap-1.5">
+                                <span>${jName}</span>${hoursStr}
+                            </div>
+                            ${paramsHtml}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 align-top text-right min-w-[140px] whitespace-nowrap">
+                        <div class="font-bold text-[13px] ${thanhTien > 0 ? 'text-emerald-600' : 'text-slate-400'}">
+                            ${AppUtils.Helper.formatNumber(thanhTien)} <span class="text-[10px] text-slate-400 font-normal">đ</span>
+                        </div>
+                    </td>
+                    <td class="px-2 py-3 w-20 min-w-[5rem]"></td>
+                </tr>`;
+            }).join('');
+        }).join('');
+
+        if (summaryEl) summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h • ${AppUtils.Helper.formatNumber(totalCong)} công</span>`;
     }
 
     renderSalaryDetailList(row) {
@@ -574,7 +612,7 @@ class PayrollDetailManager {
                         </div>
                         ${showFormula && i.meta?.formula ? `<span class="text-[11px] text-slate-500">Công thức: <span class="font-mono text-slate-600">${i.meta.formula}</span></span>` : ''}
                     </div>
-                    <span class="font-mono font-medium text-sm ${colorClass}">${this.formatNumber(i.value)}</span>
+                    <span class="font-mono font-medium text-sm ${colorClass}">${AppUtils.Helper.formatNumber(i.value)}</span>
                 </div>
             `).join('');
 
@@ -582,7 +620,7 @@ class PayrollDetailManager {
                 <div class="mb-4">
                     <div class="flex justify-between items-end mb-2 px-3">
                         <span class="font-medium text-xs uppercase text-slate-500 tracking-wider">${title}</span>
-                        <span class="font-bold text-sm ${colorClass}">${this.formatNumber(singleValue ? Number(items[0]?.value || 0) : total)}</span>
+                        <span class="font-bold text-sm ${colorClass}">${AppUtils.Helper.formatNumber(singleValue ? Number(items[0]?.value || 0) : total)}</span>
                     </div>
                     <div class="bg-white border ${borderClass} rounded-lg shadow-sm overflow-hidden">
                         ${rows}
@@ -615,18 +653,13 @@ class PayrollDetailManager {
              finalSalary = inc - ded;
         }
 
-        if (totalEl) totalEl.innerHTML = `${this.formatNumber(finalSalary)} <span class="text-sm text-slate-400 font-normal">VNĐ</span>`;
+        if (totalEl) totalEl.innerHTML = `${AppUtils.Helper.formatNumber(finalSalary)} <span class="text-sm text-slate-400 font-normal">VNĐ</span>`;
     }
 
     // --- UTILS ---
     flashHighlight(element) {
         element.classList.add('bg-green-100');
         setTimeout(() => element.classList.remove('bg-green-100'), 500);
-    }
-
-    formatNumber(value) {
-        const num = Number(value) || 0;
-        return new Intl.NumberFormat('vi-VN').format(num);
     }
 
     buildFormulaMappings(columnIds, rows, valuesMap) {
@@ -672,7 +705,6 @@ class PayrollDetailManager {
         if (!Array.isArray(columnIds)) return [];
         return columnIds.map(id => {
             const meta = this.elementMap.get(Number(id));
-            const isDeduction = meta?.type === 'KHAU_TRU';
             return {
                 key: `salary_values.${id}`,
                 title: meta ? meta.name : `Phần tử ${id}`,
@@ -680,15 +712,7 @@ class PayrollDetailManager {
                 width: 120,
                 align: 'right',
                 type: 'input',
-                elementId: id,
-                render: (item) => {
-                    const val = item.salary_values?.[id] || 0;
-                    const metaStatus = item.salary_meta?.[id]?.status;
-                    const displayVal = this.formatNumber(val);
-                    const textColor = isDeduction ? 'text-red-600' : 'text-slate-700';
-                    const bgStyle = metaStatus === 'calculated' ? '' : 'bg-red-50 text-red-700';
-                    return `<div class="w-full text-right px-2 py-1.5 ${bgStyle} ${textColor} font-medium rounded-sm">${displayVal}</div>`;
-                }
+                elementId: id
             };
         });
     }
@@ -767,7 +791,7 @@ class PayrollDetailManager {
             rowData.salary_values[changedId] = newValue;
             const cellInput = tableBody.querySelector(`input[data-row="${rowIndex}"][data-key="salary_values.${changedId}"]`);
             if (cellInput) {
-                cellInput.value = this.formatNumber(newValue);
+                cellInput.value = AppUtils.Helper.formatNumber(newValue);
                 this.flashHighlight(cellInput.closest('td') || cellInput);
             }
         });

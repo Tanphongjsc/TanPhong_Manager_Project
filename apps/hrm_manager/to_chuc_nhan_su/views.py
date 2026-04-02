@@ -688,7 +688,7 @@ def api_nhan_vien_list(request):
                 ngaysinh=data.get('ngaysinh'),
                 socccd=data.get('socccd'),
                 ngayvaolam=data.get('ngayvaolam') if data.get('ngayvaolam') else None,
-                loainv_id=data.get('loainv'),
+                loainv_id=data.get('loainv_id') or data.get('loainv'),
                 trangthainv=data.get('trangthainv') if data.get('trangthainv') else 'Đang làm việc',
                 nganhang_id=data.get('nganhang'),
                 sotknganhang=data.get('sotknganhang'),
@@ -810,13 +810,18 @@ def api_nhan_vien_detail(request, id):
         # Lấy chi tiết nhân viên
         return JsonResponse({
             'success': True,
-            'data': model_to_dict(nhan_vien)
+            'data': {
+                **model_to_dict(nhan_vien),
+                'loainv_id': nhan_vien.loainv_id,
+                'nganhang_id': nhan_vien.nganhang_id,
+            }
         })
     
     elif request.method == "PUT":
         # Cập nhật nhân viên
         try:
             data = loads(request.body)
+            data['loainv'] = data.get('loainv_id', data.get('loainv'))
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
