@@ -247,11 +247,11 @@ class TimekeepingSummaryManager {
         // KHẮC PHỤC LỖI 1: Thêm Checkbox vào Header
         let html = `
             <tr>
-                <th class="sticky-col-left px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[250px] shadow-sm flex items-center gap-3">
-                    <div class="flex items-center h-full">
-                        <input type="checkbox" id="select-all-summary" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                <th class="sticky-col-left px-4 text-left shadow-sm min-w-[250px] h-full align-middle">
+                    <div class="flex items-center gap-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        <input type="checkbox" id="select-all-summary" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-0.5">
+                        <span>NHÂN VIÊN</span>
                     </div>
-                    <span>NHÂN VIÊN</span>
                 </th>
         `;
 

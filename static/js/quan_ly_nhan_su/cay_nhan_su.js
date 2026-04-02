@@ -157,7 +157,7 @@ class EmployeeManager extends BaseCRUDManager {
             onResetForm: () => this._resetCustomState()
         });
 
-        this.lookupData = { chucvu: [], nganhang: [], phongban: [] };
+        this.lookupData = { chucvu: [], nganhang: [], phongban: [], loainv: [] };
         this.phongbanDropdown = { isOpen: false, selectedId: null, selectedText: '' };
         this.currentCongTac = null;
         this.eventManager = AppUtils.EventManager.create();
@@ -173,20 +173,27 @@ class EmployeeManager extends BaseCRUDManager {
 
     async loadLookupData() {
         try {
-            const [cv, nh, pb] = await Promise.all([
+            const [cv, nh, pb, lnv] = await Promise.all([
                 AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/chuc-vu/'),
                 AppUtils.API.get('/hrm/to-chuc-nhan-su/api/ngan-hang/list/'),
-                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/phong-ban/')
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/phong-ban/'),
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/?page=1&page_size=9990')
             ]);
-            this.lookupData = { chucvu: cv.data || [], nganhang: nh.data || [], phongban: pb.data || [] };
+            const loaiNhanVienData = lnv?.data?.data || lnv?.data || [];
+            this.lookupData = { chucvu: cv.data || [], nganhang: nh.data || [], phongban: pb.data || [], loainv: loaiNhanVienData };
             
             // Render basic selects
             const fillSelect = (id, items, valK, textK) => {
                 const el = document.getElementById(id);
-                if(el) el.innerHTML = '<option value="">-- Chọn --</option>' + items.map(i => `<option value="${i[valK]}">${i[textK] || i[valK]}</option>`).join('');
+                if (el) {
+                    const selectedValue = el.value;
+                    el.innerHTML = '<option value="">-- Chọn --</option>' + items.map(i => `<option value="${i[valK]}">${i[textK] || i[valK]}</option>`).join('');
+                    if (selectedValue) el.value = selectedValue;
+                }
             };
             fillSelect('chucvu', this.lookupData.chucvu, 'id', 'tenvitricongviec');
             fillSelect('nganhang', this.lookupData.nganhang, 'id', 'TenNganHang');
+            fillSelect('loainv_id', this.lookupData.loainv, 'id', 'TenLoaiNV');
             
             this._initPhongbanDropdown();
         } catch (e) { console.error('Lookup Data Error', e); }
@@ -431,6 +438,9 @@ class EmployeeManager extends BaseCRUDManager {
 
     _fillEmployeeForm(data) {
         AppUtils.Form.setData(this.elements.form, data);
+        const loaiNvId = data.loainv_id ?? data.loainv ?? '';
+        const loaiNvEl = this.elements.form.querySelector('[name="loainv_id"]');
+        if (loaiNvEl) loaiNvEl.value = loaiNvId || '';
         if (data.nganhang) {
             const nhId = typeof data.nganhang === 'object' ? data.nganhang.id : data.nganhang;
             const el = this.elements.form.querySelector('[name="nganhang"]');
@@ -457,6 +467,8 @@ class EmployeeManager extends BaseCRUDManager {
         this.currentCongTac = null;
         const cv = this.elements.form.querySelector('[name="chucvu"]');
         if(cv) cv.value = '';
+        const loaiNv = this.elements.form.querySelector('[name="loainv_id"]');
+        if (loaiNv) loaiNv.value = '';
     }
 
     // --- MAIN SUBMIT LOGIC (Refactored) ---
@@ -466,9 +478,11 @@ class EmployeeManager extends BaseCRUDManager {
 
         // 1. Validate
         const cvVal = form.querySelector('[name="chucvu"]')?.value;
+        const loaiNvVal = form.querySelector('[name="loainv_id"]')?.value;
         const pbVal = form.querySelector('[name="phongban"]')?.value;
         
         if (!AppUtils.Validation.required(cvVal)) return AppUtils.Notify.warning('Vui lòng chọn chức vụ');
+        if (!AppUtils.Validation.required(loaiNvVal)) return AppUtils.Notify.warning('Vui lòng chọn loại nhân viên');
         if (!AppUtils.Validation.required(pbVal)) return AppUtils.Notify.warning('Vui lòng chọn phòng ban');
 
         // 2. Button Loading Helper
