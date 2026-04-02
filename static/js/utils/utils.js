@@ -923,6 +923,11 @@ const AppUtils = (() => {
             };
         },
 
+        formatNumber(amount) {
+            const num = Number(amount) || 0;
+            return new Intl.NumberFormat('vi-VN').format(num);
+        },
+
         formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',

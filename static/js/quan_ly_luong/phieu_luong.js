@@ -477,10 +477,9 @@ class PayrollDetailManager {
         const tbody = document.getElementById('modal-timesheet-body');
         const summaryEl = document.getElementById('modal-summary-work');
         if (!tbody) return;
-        tbody.innerHTML = '';
 
-        if (!timesheets || !Array.isArray(timesheets) || timesheets.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 italic text-sm">Chưa có dữ liệu chấm công chi tiết</td></tr>`;
+        if (!Array.isArray(timesheets) || timesheets.length === 0) {
+            AppUtils.UI.renderEmptyState(tbody, { message: 'Chưa có dữ liệu chấm công chi tiết', colspan: 5 });
             if (summaryEl) summaryEl.textContent = '';
             return;
         }
@@ -488,79 +487,86 @@ class PayrollDetailManager {
         let totalHours = 0;
         let totalCong = 0;
 
-        timesheets.forEach(ts => {
-            const date = AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM');
-            const inTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongvao, '--:--');
-            const outTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongra, '--:--');
+        tbody.innerHTML = timesheets.map(ts => {
             const hoursValue = Number(ts.thoigianlamviec || 0) / 60;
             const congValue = Number(ts.conglamviec || 0);
-            const hours = hoursValue.toFixed(1);
 
             totalHours += hoursValue;
             totalCong += congValue;
 
-            const tsConfig = ts?.thamsotinhluong || {};
-            let details = tsConfig.details || [];
-
-            // Fallback for flat structure
+            const date = AppUtils.DateUtils.format(ts.ngaylamviec, 'dd/MM');
+            const inTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongvao, '--:--');
+            const outTime = AppUtils.TimeUtils.normalize(ts.thoigianchamcongra, '--:--');
+            
+            let details = ts?.thamsotinhluong?.details || [];
             if (details.length === 0) {
-                details = [{
-                    tencongviec: ts.tencongviec,
-                    tham_so: tsConfig.tham_so || {}
-                }];
+                details = [{ tencongviec: ts.tencongviec, tham_so: ts?.thamsotinhluong?.tham_so || {} }];
             }
 
             const rowCount = details.length;
+            const caLoai = (ts.loaichamcong || '').toUpperCase();
+            const colors = { 'VP': 'blue', 'SX': 'emerald' };
+            const color = colors[caLoai] || 'orange';
+            const caBadgeClass = `bg-${color}-50 text-${color}-600 border-${color}-200`;
 
             const sharedHtml = `
-                <td rowspan="${rowCount}" class="px-3 py-2.5 whitespace-nowrap text-slate-700 align-middle border-b border-slate-100">${date}</td>
-                <td rowspan="${rowCount}" class="px-3 py-2.5 text-center text-xs align-middle border-b border-slate-100">
-                    <span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-medium">${ts.loaichamcong || '-'}</span>
+                <td rowspan="${rowCount}" class="px-4 py-3 align-top border-b border-slate-100 bg-slate-50/30">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-medium text-slate-700 text-[13px] whitespace-nowrap">${date}</span>
+                            <span class="px-1.5 py-0.5 rounded shadow-sm text-[10px] font-bold ${caBadgeClass} border whitespace-nowrap">${ts.loaichamcong || '-'}</span>
+                        </div>
+                        <div class="inline-flex items-center text-[11px] font-mono text-slate-600 bg-white border border-slate-200 rounded px-1.5 py-0.5 w-fit shadow-sm whitespace-nowrap">
+                            <i class="far fa-clock text-slate-400 mr-1.5"></i>
+                            <span class="tracking-wide whitespace-nowrap">${inTime} - ${outTime}</span>
+                        </div>
+                    </div>
                 </td>
-                <td rowspan="${rowCount}" class="px-3 py-2.5 text-center font-mono text-xs text-slate-500 align-middle border-b border-slate-100">${inTime} - ${outTime}</td>
-                <td rowspan="${rowCount}" class="px-3 py-2.5 text-right font-medium text-slate-700 align-middle border-b border-slate-100">
-                    <div>${hours}h</div>
-                    <div class="text-[11px] text-slate-400">${this.formatNumber(congValue)} công</div>
+                <td rowspan="${rowCount}" class="px-3 py-3 text-right align-top border-b border-slate-100 bg-slate-50/30">
+                    <div class="flex flex-col gap-0.5 items-end">
+                        <span class="font-bold text-slate-700 text-sm whitespace-nowrap">${hoursValue.toFixed(1)}h</span>
+                        <span class="text-[11px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap border border-slate-200">${AppUtils.Helper.formatNumber(congValue)} công</span>
+                    </div>
                 </td>`;
 
-            details.forEach((detail, index) => {
-                const tr = document.createElement('tr');
-                const isLast = index === rowCount - 1;
-                tr.className = `hover:bg-slate-50 transition-colors ${isLast ? 'border-b border-slate-100' : 'border-b border-dashed border-slate-100'}`;
-
+            return details.map((detail, index) => {
+                const borderClass = index === rowCount - 1 ? 'border-b border-slate-100' : 'border-b border-dashed border-slate-100';
                 const jName = detail.tencongviec || ts.tencongviec || '-';
-                const params = detail.thamsotinhluong?.tham_so || detail.tham_so || tsConfig.tham_so || {};
-                const hoursStr = detail.thoigian ? `<span class="ml-1 text-slate-400 font-normal">(${Number(detail.thoigian).toFixed(1)}h)</span>` : '';
+                const params = detail.thamsotinhluong?.tham_so || detail.tham_so || ts?.thamsotinhluong?.tham_so || {};
+                const thanhTien = Number(detail.thanhtien ?? ts.thanhtien ?? 0);
+                const hoursStr = detail.thoigian ? `<span class="ml-1.5 text-[11px] font-mono text-slate-500 font-medium px-1.5 py-0.5 rounded shadow-sm bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">${Number(detail.thoigian).toFixed(1)}h</span>` : '';
 
-                let paramsHtml = `<span class="text-[11px] text-slate-400 italic">Không có tham số</span>`;
-                if (params && Object.keys(params).length > 0) {
-                    paramsHtml = Object.entries(params)
-                        .map(([paramName, paramValue]) => `
-                            <div class="flex items-center justify-between gap-3 py-0.5 border-b border-dashed border-slate-100 last:border-0">
-                                <span class="text-[11px] text-slate-500 font-mono">${paramName}</span>
-                                <span class="text-[11px] text-slate-700 font-semibold">${this.formatNumber(paramValue)}</span>
+                const paramsHtml = Object.keys(params).length > 0 ? `
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1.5 sm:overflow-x-auto sm:overflow-y-hidden custom-scrollbar sm:pr-1">
+                    ${Object.entries(params).map(([k, v]) => `
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded shadow-sm border border-slate-200 bg-white whitespace-nowrap shrink-0">
+                            <span class="text-[11px] text-slate-600 font-medium">${k}:</span>
+                            <span class="text-[11px] text-blue-700 font-mono font-bold">${AppUtils.Helper.formatNumber(v)}</span>
+                        </div>`).join('')}
+                    </div>` : `<div class="mt-1 text-[11px] text-slate-400 italic">Không có tham số</div>`;
+
+                return `
+                <tr class="hover:bg-blue-50/30 transition-colors ${borderClass}">
+                    ${index === 0 ? sharedHtml : ''}
+                    <td class="px-4 py-3 align-top leading-relaxed">
+                        <div class="flex flex-col w-full group">
+                            <div class="font-medium text-slate-800 text-[13px] group-hover:text-blue-700 transition-colors flex items-center flex-wrap sm:flex-nowrap gap-1.5">
+                                <span>${jName}</span>${hoursStr}
                             </div>
-                        `).join('');
-                }
-
-                const detailHtml = `
-                    <td class="px-3 py-2.5 align-top min-w-[200px]">
-                        <div class="rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 w-full">
                             ${paramsHtml}
                         </div>
                     </td>
-                    <td class="px-3 py-2.5 align-top text-left text-slate-600">
-                        <div class="font-medium text-slate-700 whitespace-normal min-w-[150px] leading-relaxed">${jName}${hoursStr}</div>
-                    </td>`;
+                    <td class="px-4 py-3 align-top text-right min-w-[140px] whitespace-nowrap">
+                        <div class="font-bold text-[13px] ${thanhTien > 0 ? 'text-emerald-600' : 'text-slate-400'}">
+                            ${AppUtils.Helper.formatNumber(thanhTien)} <span class="text-[10px] text-slate-400 font-normal">đ</span>
+                        </div>
+                    </td>
+                    <td class="px-2 py-3 w-20 min-w-[5rem]"></td>
+                </tr>`;
+            }).join('');
+        }).join('');
 
-                tr.innerHTML = (index === 0 ? sharedHtml : '') + detailHtml;
-                tbody.appendChild(tr);
-            });
-        });
-
-        if (summaryEl) {
-            summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h • ${this.formatNumber(totalCong)} công</span>`;
-        }
+        if (summaryEl) summaryEl.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">Tổng: ${totalHours.toFixed(1)}h • ${AppUtils.Helper.formatNumber(totalCong)} công</span>`;
     }
 
     renderSalaryDetailList(row) {
@@ -606,7 +612,7 @@ class PayrollDetailManager {
                         </div>
                         ${showFormula && i.meta?.formula ? `<span class="text-[11px] text-slate-500">Công thức: <span class="font-mono text-slate-600">${i.meta.formula}</span></span>` : ''}
                     </div>
-                    <span class="font-mono font-medium text-sm ${colorClass}">${this.formatNumber(i.value)}</span>
+                    <span class="font-mono font-medium text-sm ${colorClass}">${AppUtils.Helper.formatNumber(i.value)}</span>
                 </div>
             `).join('');
 
@@ -614,7 +620,7 @@ class PayrollDetailManager {
                 <div class="mb-4">
                     <div class="flex justify-between items-end mb-2 px-3">
                         <span class="font-medium text-xs uppercase text-slate-500 tracking-wider">${title}</span>
-                        <span class="font-bold text-sm ${colorClass}">${this.formatNumber(singleValue ? Number(items[0]?.value || 0) : total)}</span>
+                        <span class="font-bold text-sm ${colorClass}">${AppUtils.Helper.formatNumber(singleValue ? Number(items[0]?.value || 0) : total)}</span>
                     </div>
                     <div class="bg-white border ${borderClass} rounded-lg shadow-sm overflow-hidden">
                         ${rows}
@@ -647,18 +653,13 @@ class PayrollDetailManager {
              finalSalary = inc - ded;
         }
 
-        if (totalEl) totalEl.innerHTML = `${this.formatNumber(finalSalary)} <span class="text-sm text-slate-400 font-normal">VNĐ</span>`;
+        if (totalEl) totalEl.innerHTML = `${AppUtils.Helper.formatNumber(finalSalary)} <span class="text-sm text-slate-400 font-normal">VNĐ</span>`;
     }
 
     // --- UTILS ---
     flashHighlight(element) {
         element.classList.add('bg-green-100');
         setTimeout(() => element.classList.remove('bg-green-100'), 500);
-    }
-
-    formatNumber(value) {
-        const num = Number(value) || 0;
-        return new Intl.NumberFormat('vi-VN').format(num);
     }
 
     buildFormulaMappings(columnIds, rows, valuesMap) {
@@ -790,7 +791,7 @@ class PayrollDetailManager {
             rowData.salary_values[changedId] = newValue;
             const cellInput = tableBody.querySelector(`input[data-row="${rowIndex}"][data-key="salary_values.${changedId}"]`);
             if (cellInput) {
-                cellInput.value = this.formatNumber(newValue);
+                cellInput.value = AppUtils.Helper.formatNumber(newValue);
                 this.flashHighlight(cellInput.closest('td') || cellInput);
             }
         });
