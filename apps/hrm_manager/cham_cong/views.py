@@ -518,15 +518,17 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     # Subquery: Đếm số lần nhân viên đã chấm công trong ngày
     sq_dem_so_lan_cham_cong = Bangchamcong.objects.filter(
         ngaylamviec=ngay_lam_viec,
-        nhanvien=OuterRef('nhanvien_id')
-    ).values('nhanvien').annotate(
+        nhanvien=OuterRef('nhanvien_id'),
+        calamviec=OuterRef('calamviec_id')
+    ).values('nhanvien', 'calamviec').annotate(
         cnt=Count('id')
     ).values('cnt')
 
-    # Nếu đã có ít nhất một bản ghi codilam=False thì coi như nhân viên đã được xử lý theo chế độ nghỉ.
+    # Nếu đã có ít nhất một bản ghi codilam=False cho đúng ca thì coi như ca đó đã được xử lý theo chế độ nghỉ.
     sq_ton_tai_ban_ghi_nghi = Bangchamcong.objects.filter(
         ngaylamviec=ngay_lam_viec,
         nhanvien=OuterRef('nhanvien_id'),
+        calamviec=OuterRef('calamviec_id'),
         codilam=False
     )
 
@@ -579,7 +581,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         )
 
     qs_lich_lam_viec = qs_lich_lam_viec.values(
-        "nhanvien_id", "calamviec_id", "cophaingaynghi",
+        "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
         "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca", "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
         "congtongcuaca", "list_khung_gio_json",
         hovaten=F('nhanvien__hovaten'),
@@ -599,8 +601,8 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     map_nhan_vien_phong_ban = _get_department_map(list_nhanvien_id)
     map_ca_lam = _get_calamviec_meta(set_calamviec_id, include_khung_gio=False)
 
-    # Xử lý logic gộp dữ liệu
-    final_result_map = {}
+    # Mỗi dòng lịch làm việc thực tế tương ứng một ca cần xử lý độc lập.
+    final_data_list = []
 
     for item in ds_lich_raw:
         item['phongban_id'] = map_nhan_vien_phong_ban.get(item['nhanvien_id'])
@@ -623,14 +625,10 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         # Bổ sung tự động khung giờ nghỉ trưa nếu ca có nhiều khung giờ nhưng chỉ chấm công 1 lần
         _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio)
 
-        nhanvien_id = item['nhanvien_id']
-        item['da_cham_cong'] = da_cham_cong
+        item['da_cham_cong'] = da_cham_cong == 'True'
+        item['lichlamviecthucte_id'] = item.pop('id', None)
+        final_data_list.append(item)
 
-        # Chỉ giữ lại 1 ca per nhân viên (ca đầu tiên tìm được theo số lần chấm công)
-        if nhanvien_id not in final_result_map:
-            final_result_map[nhanvien_id] = item
-
-    final_data_list = list(final_result_map.values())
     return final_data_list
 
 
@@ -736,7 +734,7 @@ def api_bang_cham_cong_list(request):
             #     }, status=400)
 
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
+            # Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({
                 'success': True,
