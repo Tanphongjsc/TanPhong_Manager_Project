@@ -569,7 +569,8 @@ class Loainhanvien(models.Model):
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
-
+    phuongthuctinhluong = models.CharField(db_column='PhuongThucTinhLuong', blank=True, null=True)  # Field name made lowercase.     
+    
     class Meta:
         managed = False
         db_table = '"hrm"."LoaiNhanVien"'
