@@ -107,6 +107,7 @@ class ChamCongContextMenu {
         if (!data) return;
         const emp = this.manager.getEmpById(parseInt(tr.dataset.id));
         if (!emp) return;
+
         const copiedOtMinutes = data.ot ? (data.otMinutes || '') : '';
         emp.uiState = {
             ...emp.uiState,
@@ -117,6 +118,8 @@ class ChamCongContextMenu {
             otMinutes: copiedOtMinutes,
             jobs: JSON.parse(JSON.stringify(data.jobs || []))
         };
+        if (!emp.uiState.jobs.length) emp.uiState.jobs.push({ jobId: '', params: {} });
+
         this.manager.refreshRow(tr, emp);
         const newTr = document.querySelector(`tr[data-id="${emp.rowId}"]`);
         if (newTr) { newTr.classList.add('bg-green-50'); setTimeout(() => newTr.classList.remove('bg-green-50'), 500); }

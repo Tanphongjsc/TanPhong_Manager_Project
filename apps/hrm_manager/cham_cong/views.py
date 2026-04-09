@@ -76,8 +76,17 @@ def calculate_bang_cham_cong_objects(data_list):
     Dùng chung cho cả thêm mới và cập nhật chấm công.
     Trả về danh sách instance Bangchamcong đã tính toán đầy đủ số liệu.
     """
+    base_data_list = []
+    extra_data_list = []
+    for item in data_list:
+        if item.get('pay_role') == 'extra':
+            extra_data_list.append(item)
+        else:
+            base_data_list.append(item)
+            
     # Tính trước tiền lương gốc theo danh sách đầu vào, dùng lại cho từng nhân viên.
-    ket_qua_thanh_tien = tinh_luong_cham_cong(data_list)
+    ket_qua_tien_base = tinh_luong_cham_cong(base_data_list)
+    ket_qua_tien_extra = tinh_luong_cham_cong(extra_data_list)
     objs_bang_cham_cong = []
 
     # Gom dữ liệu theo nhân viên để hợp nhất các công việc của cùng 1 người trong ngày.
@@ -86,16 +95,28 @@ def calculate_bang_cham_cong_objects(data_list):
         # Key gom nhóm là nhân viên, để mỗi nhân viên tạo đúng 1 dòng kết quả cuối.
         nv_id = item['nhanvien_id']
         if nv_id not in grouped_data:
-            grouped_data[nv_id] = {'main_item': item, 'sub_items': []}
-        grouped_data[nv_id]['sub_items'].append(item)
+            grouped_data[nv_id] = {'main_item': None, 'sub_items': [], 'extra_items': []}
+        
+        if item.get('pay_role') == 'extra':
+            grouped_data[nv_id]['extra_items'].append(item)
+        else:
+            if grouped_data[nv_id]['main_item'] is None:
+                grouped_data[nv_id]['main_item'] = item
+            grouped_data[nv_id]['sub_items'].append(item)
 
     for nv_id, group in grouped_data.items():
-        # main_item dùng làm mốc thông tin chấm công, sub_items dùng để gộp tên công việc/tham số lương.
         item = group['main_item']
+        if not item:
+            item = group['extra_items'][0] if group.get('extra_items') else None
+        if not item: continue
+        
         sub_items = group['sub_items']
+        extra_items = group['extra_items']
+        phuongthuctinhluong = item.get('phuongthuctinhluong', 'daily')
 
         # Nhiều công việc trong ngày sẽ gộp tên để hiển thị 1 dòng trong bảng chấm công.
-        combined_ten_cv = ", ".join([sub.get('tencongviec', '') for sub in sub_items if sub.get('tencongviec')])
+        danh_sach_cong_viec = sub_items if phuongthuctinhluong == 'daily' else extra_items
+        combined_ten_cv = ", ".join([sub.get('tencongviec', '') for sub in danh_sach_cong_viec if sub.get('tencongviec')])
 
         # Sao chép khung giờ để tránh mutate dữ liệu gốc từ payload khi cần điều chỉnh ở ca linh động.
         khung_gio = item.get("khunggiolamviec", {}).copy()
@@ -112,6 +133,13 @@ def calculate_bang_cham_cong_objects(data_list):
         tg_lam_viec = 0
         tg_lam_them = 0
         so_cong_thuc_te = 0
+
+        tien_base = 0
+        tien_extra = 0
+        tien_ot = 0
+        tong_tien_cuoi_cung = 0
+        final_thamsotinhluong = {}
+        thanhtien_thanhphan = {"tien_base": 0, "tien_ot": 0, "tien_extra": 0}
 
         if codilam == True:
             # Sai lệch giờ vào (dương: đi muộn, âm: đi sớm).
@@ -242,39 +270,41 @@ def calculate_bang_cham_cong_objects(data_list):
             else:
                 so_cong_thuc_te = 0
 
-            luong_goc = ket_qua_thanh_tien.get(item['nhanvien_id'], 0)
-
-            tien_ot = 0
-            if tg_lam_them > 0:
-                # Tiền OT cộng thêm theo đơn giá phút và hệ số 0.5. Hệ số OT là 1.5, 
-                # tức mỗi giờ làm thêm người lao động được trả thêm 0.5 lần đơn giá so với giờ làm bình thường
-                # vì phần 1.0 đã nằm trong mức lương cơ bản luong_goc.
-                don_gia_phut = luong_goc / tg_lam_viec_thuc if tg_lam_viec_thuc > 0 else 0
-                tien_ot = don_gia_phut * tg_lam_them * 0.5
-
-            # Thành tiền cuối = lương gốc + phụ trội OT.
-            tong_tien_cuoi_cung = luong_goc + tien_ot
-            if tg_lam_viec == 0 and tg_lam_them == 0:
-                # Không có công và cũng không có OT thì ép về 0 để tránh ghi nhận sai.
+            if phuongthuctinhluong == 'daily':
+                tien_base = ket_qua_tien_base.get(item['nhanvien_id'], 0)
+                tien_extra = 0
+                if tg_lam_them > 0:
+                    don_gia_phut = tien_base / tg_lam_viec_thuc if tg_lam_viec_thuc > 0 else 0
+                    tien_ot = don_gia_phut * tg_lam_them * 0.5
+            elif phuongthuctinhluong == 'monthly':
+                tien_base = 0
+                tien_extra = ket_qua_tien_extra.get(item['nhanvien_id'], 0)
+                tien_ot = 0 # Không tính OT cho VP
+            
+            tong_tien_cuoi_cung = tien_base + tien_ot + tien_extra
+            
+            if tg_lam_viec == 0 and tg_lam_them == 0 and tien_extra == 0:
                 tong_tien_cuoi_cung = 0
 
+            thanhtien_thanhphan = {
+                "tien_base": tien_base,
+                "tien_ot": tien_ot,
+                "tien_extra": tien_extra
+            }
+
             # Build Tham số tính lương
-            # Nhiều công việc: lưu cấu trúc tổng hợp để truy vết từng công việc con.
+            chi_tiet_luong = extra_items if phuongthuctinhluong == 'monthly' else sub_items
             final_thamsotinhluong = {
-                'mode': 'multi_task' if len(sub_items) > 1 else 'single_task',
+                'mode': 'multi_task' if len(chi_tiet_luong) > 1 else 'single_task',
                 'details': [
                     {
                         'congviec_id': sub.get('congviec_id'),
                         'tencongviec': sub.get('tencongviec'),
-                        'thamsotinhluong': sub.get('thamsotinhluong')
-                    } for sub in sub_items
+                        'thamsotinhluong': sub.get('thamsotinhluong'),
+                        'pay_role': sub.get('pay_role')
+                    } for sub in chi_tiet_luong
                 ]
             }
-
-        else:
-            # Nghỉ làm thì không tính tiền.
-            tong_tien_cuoi_cung = 0
-            final_thamsotinhluong = {}
 
         # Tạo object Bangchamcong để bulk_create ở tầng API.
         objs_bang_cham_cong.append(Bangchamcong(
@@ -297,6 +327,7 @@ def calculate_bang_cham_cong_objects(data_list):
             cophaingaynghi = item.get('cophaingaynghi', False),
             thamsotinhluong = dumps(final_thamsotinhluong) if isinstance(final_thamsotinhluong, dict) else final_thamsotinhluong,
             thanhtien = tong_tien_cuoi_cung if codilam == True else 0,
+            thanhtienthanhphan = dumps(thanhtien_thanhphan) if isinstance(thanhtien_thanhphan, dict) else thanhtien_thanhphan,
             ghichu = item.get('ghichu', ''),
             congviec_id = item.get('congviec_id'),
             nhanvien_id = item['nhanvien_id'],
@@ -423,6 +454,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
         hovaten=F('nhanvien__hovaten'),
         manhanvien=F('nhanvien__manhanvien'),
         loainv=F('nhanvien__loainv__id'),
+        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong'),
         solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
         sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
         cocancheckout=F('calamviec__cocancheckout'),
@@ -431,7 +463,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
         congtongcuaca=F('calamviec__congcuacalamviec'),
     ).values(
         'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi',
-        'hovaten', 'manhanvien', 'loainv',
+        'hovaten', 'manhanvien', 'loainv', 'phuongthuctinhluong',
         'solanchamcongtrongngay', 'sokhunggiotrongca', 'cocancheckout', 'loaicalamviec', 'tongthoigianlamvieccuaca',
         'congtongcuaca',
         'thoigianchamcongvao', 'thoigianchamcongra', 'coantrua', 'cotinhlamthem', 'thoigianlamthem',
@@ -515,6 +547,8 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     if normalized_mode == 'update':
         return build_cham_cong_data_for_update(ngay_lam_viec)
 
+    is_da_cham_cong = str(da_cham_cong).lower() == 'true'
+
     # Subquery: Đếm số lần nhân viên đã chấm công trong ngày
     sq_dem_so_lan_cham_cong = Bangchamcong.objects.filter(
         ngaylamviec=ngay_lam_viec,
@@ -532,20 +566,40 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         codilam=False
     )
 
-    # Main Query: Lấy lịch làm việc thực tế
-    qs_lich_lam_viec = Lichlamviecthucte.objects.filter(
+    # Base Query nhẹ để lọc đúng 1 ca làm việc cho mỗi nhân viên trước.
+    qs_lich_lam_viec_base = Lichlamviecthucte.objects.filter(
         ngaylamviec=ngay_lam_viec,
         calamviec__isnull=False
     ).annotate(
         # Gắn số lần đã chấm công vào mỗi dòng
         total_cham_cong=Coalesce(Subquery(sq_dem_so_lan_cham_cong, output_field=IntegerField()), 0),
         has_leave_record=Exists(sq_ton_tai_ban_ghi_nghi),
-        
-        # Alias các trường dữ liệu cần dùng để code ngắn gọn hơn
-        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
+        solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay')
+    )
+
+    # Lọc và sắp xếp để ưu tiên lấy đúng ca đã chấm công đủ số lần (nếu da_cham_cong=True) hoặc chưa đủ số lần (nếu da_cham_cong=False).
+    if is_da_cham_cong:
+        qs_lich_lam_viec_base = qs_lich_lam_viec_base.filter(
+            Q(has_leave_record=True) | Q(total_cham_cong__gte=F('solanchamcongtrongngay'))
+        )
+        order_by_fields = ['nhanvien_id', '-total_cham_cong', '-id']
+    else:
+        qs_lich_lam_viec_base = qs_lich_lam_viec_base.filter(
+            has_leave_record=False,
+            total_cham_cong__lt=F('solanchamcongtrongngay')
+        )
+        order_by_fields = ['nhanvien_id', '-total_cham_cong', 'id']
+
+    # Chỉ lấy 1 ca ưu tiên cho mỗi nhân viên ngay trong DB.
+    sq_selected_shift_ids = qs_lich_lam_viec_base.order_by(*order_by_fields).distinct('nhanvien_id').values('id')
+
+    # Sau khi đã rút gọn dữ liệu, mới build các annotation nặng (JSONBAgg).
+    qs_lich_lam_viec = qs_lich_lam_viec_base.filter(
+        id__in=Subquery(sq_selected_shift_ids)
+    ).annotate(
         sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
         cocancheckout=F('calamviec__cocancheckout'),
-        loaicalamviec=F('calamviec__loaichamcong'), 
+        loaicalamviec=F('calamviec__loaichamcong'),
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
 
@@ -570,24 +624,14 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         )
     )
 
-    if da_cham_cong == 'True':
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(
-            Q(has_leave_record=True) | Q(total_cham_cong__gte=F('solanchamcongtrongngay'))
-        )
-    else:
-        qs_lich_lam_viec = qs_lich_lam_viec.filter(
-            has_leave_record=False,
-            total_cham_cong__lt=F('solanchamcongtrongngay')
-        )
-
     qs_lich_lam_viec = qs_lich_lam_viec.values(
         "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
         "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca", "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
         "congtongcuaca", "list_khung_gio_json",
         hovaten=F('nhanvien__hovaten'),
         manhanvien=F('nhanvien__manhanvien'),
-        loainv=F('nhanvien__loainv__id')
-    )
+        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
+    ).order_by('nhanvien_id')
 
     # Chuyển QuerySet thành List để xử lý Python
     ds_lich_raw = list(qs_lich_lam_viec)
@@ -614,7 +658,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
 
         # Xác định khung giờ cần lấy (Index dựa trên số lần chấm công)
         idx_lan_cham = item['total_cham_cong']
-        if da_cham_cong == 'True':
+        if is_da_cham_cong:
             # Nếu đang xem danh sách ĐÃ chấm: Lấy lại thông tin của lần chấm gần nhất (lùi 1 index)
             idx_lan_cham = max(0, min(idx_lan_cham - 1, len(list_khung_gio) - 1))
 
@@ -625,7 +669,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
         # Bổ sung tự động khung giờ nghỉ trưa nếu ca có nhiều khung giờ nhưng chỉ chấm công 1 lần
         _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio)
 
-        item['da_cham_cong'] = da_cham_cong == 'True'
+        item['da_cham_cong'] = is_da_cham_cong
         item['lichlamviecthucte_id'] = item.pop('id', None)
         final_data_list.append(item)
 
@@ -734,7 +778,7 @@ def api_bang_cham_cong_list(request):
             #     }, status=400)
 
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            # Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
+            Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({
                 'success': True,

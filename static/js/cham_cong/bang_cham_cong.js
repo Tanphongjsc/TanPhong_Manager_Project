@@ -53,9 +53,9 @@ class ChamCongManager {
         return normalized || '';
     }
 
-    getJobsFromApiRecord(record) {
+    getJobsFromApiRecord(record, isExtra = false) {
         const emptyJobs = [{ jobId: '', params: {} }];
-        if (this.mode !== 'update' || record.loaichamcong !== 'SX') return emptyJobs;
+        if (this.mode !== 'update') return emptyJobs;
 
         let salaryConfig = record.thamsotinhluong;
         if (typeof salaryConfig === 'string') {
@@ -64,7 +64,13 @@ class ChamCongManager {
         }
 
         if (Array.isArray(salaryConfig?.details)) {
-            const jobs = salaryConfig.details
+            let details = salaryConfig.details;
+            if (isExtra) {
+                details = details.filter(detail => detail.pay_role === 'extra');
+            } else {
+                details = details.filter(detail => detail.pay_role !== 'extra');
+            }
+            const jobs = details
                 .filter(detail => detail?.congviec_id)
                 .map(detail => ({
                     jobId: String(detail.congviec_id),
@@ -73,11 +79,15 @@ class ChamCongManager {
             return jobs.length ? jobs : emptyJobs;
         }
 
+        // Single job case
         if (record.congviec_id) {
-            return [{
-                jobId: String(record.congviec_id),
-                params: salaryConfig?.tham_so || salaryConfig?.thamsotinhluong?.tham_so || {}
-            }];
+            const hasPayRoleExtra = salaryConfig?.pay_role === 'extra';
+            if ((isExtra && hasPayRoleExtra) || (!isExtra && !hasPayRoleExtra)) {
+                return [{
+                    jobId: String(record.congviec_id),
+                    params: salaryConfig?.tham_so || salaryConfig?.thamsotinhluong?.tham_so || {}
+                }];
+            }
         }
 
         return emptyJobs;
@@ -88,6 +98,10 @@ class ChamCongManager {
         const otMinutes = Number(record.sophutot ?? record.thoigianlamthem ?? 0);
         const isLeaveRecord = record.codilam === false;
         const defaultSelected = this.mode === 'create' && !isLeaveRecord;
+        const salaryMode = record.phuongthuctinhluong || 'daily';
+        const isMonthly = salaryMode === 'monthly';
+        const baseJobs = this.getJobsFromApiRecord(record, false);
+        const extraJobs = this.getJobsFromApiRecord(record, true);
         return {
             rowId,
             id: record.nhanvien_id,
@@ -96,6 +110,7 @@ class ChamCongManager {
             manhanvien: record.manhanvien,
             phongban_id: record.phongban_id,
             loainv: record.loainv,
+            phuongthuctinhluong: salaryMode,
             calamviec_id: record.calamviec_id,
             khunggiolamviec: this.buildKhungGioPayload(record.khunggiolamviec),
             khunggionghitrua: record.khunggionghitrua || [],
@@ -114,7 +129,8 @@ class ChamCongManager {
                 otMinutes: Number.isFinite(otMinutes) && otMinutes > 0 ? String(parseInt(otMinutes, 10)) : '',
                 isSelected: defaultSelected,
                 isLeave: isLeaveRecord,
-                jobs: this.getJobsFromApiRecord(record),
+                jobs: isMonthly ? extraJobs : baseJobs,
+                extraJobs,
                 note: record.ghichu || ''
             }
         };
@@ -308,7 +324,7 @@ class ChamCongManager {
             emp.uiState.workHours = null;
         }
 
-        tr.innerHTML = this.render$.renderCommonCells(emp, scheduleIn, scheduleOut, 'blue') + this.render$.renderHybridCells(emp.uiState, this.jobs);
+        tr.innerHTML = this.render$.renderCommonCells(emp, scheduleIn, scheduleOut, 'blue') + this.render$.renderHybridCells(emp, this.jobs);
         if (emp.uiState.isLeave) this.toggleRowInputs(tr, false);
         if (!emp.uiState.isLeave && (emp.uiState.in || !emp.cocancheckout)) this.analyzeTime(tr);
         return tr;
@@ -334,14 +350,19 @@ class ChamCongManager {
         }
         else if (cls.contains('job-select')) {
             const idx = parseInt(target.dataset.index, 10);
-            if (emp.uiState.jobs[idx]) {
-                const selectedJob = { jobId: target.value, params: {} };
-                this.applyAutoTimeParam(selectedJob, emp, { overwrite: true });
-                emp.uiState.jobs[idx] = selectedJob;
+            const targetJobs = emp.uiState.jobs;
+            if (targetJobs[idx]) {
+                const selectedJob = { jobId: target.value, params: {} };        
+                this.applyAutoTimeParam(selectedJob, emp, { overwrite: true }); 
+                targetJobs[idx] = selectedJob;
                 this.refreshRow(tr, emp);
             }
         }
-        else if (cls.contains('param-val')) { const { index, key } = target.dataset; if (emp.uiState.jobs[index]) emp.uiState.jobs[index].params[key] = target.value; }
+        else if (cls.contains('param-val')) { 
+            const { index, key } = target.dataset; 
+            const targetJobs = emp.uiState.jobs;
+            if (targetJobs[index]) targetJobs[index].params[key] = target.value; 
+        }
         else if (cls.contains('ot-minutes')) { emp.uiState.otMinutes = target.value; }
         else if (cls.contains('note-input')) { emp.uiState.note = target.value; }
     }
@@ -359,16 +380,22 @@ class ChamCongManager {
         if (!btn) return;
         const { tr, emp } = this.getRowContext(btn);
         if (!tr || !emp) return;
-        if (btn.classList.contains('btn-add-job')) { emp.uiState.jobs.push({ jobId: '', params: {} }); this.refreshRow(tr, emp); }
+        const targetJobs = emp.uiState.jobs;
+        
+        if (btn.classList.contains('btn-add-job')) { 
+            targetJobs.push({ jobId: '', params: {} }); 
+            this.refreshRow(tr, emp); 
+        }
         else if (btn.classList.contains('btn-remove-job')) {
-            const idx = parseInt(btn.dataset.index); emp.uiState.jobs.splice(idx, 1);
-            if (!emp.uiState.jobs.length) emp.uiState.jobs.push({ jobId: '', params: {} });
+            const idx = parseInt(btn.dataset.index); 
+            targetJobs.splice(idx, 1);
+            if (!targetJobs.length) targetJobs.push({ jobId: '', params: {} });
             this.refreshRow(tr, emp);
         }
     }
 
     initEmpState(emp) {
-        if (!emp.uiState) emp.uiState = { in: '', out: '', lunch: true, ot: false, otMinutes: '', isSelected: this.mode === 'create', isLeave: false, jobs: [{ jobId: '', params: {} }], note: '' };
+        if (!emp.uiState) emp.uiState = { in: '', out: '', lunch: true, ot: false, otMinutes: '', isSelected: this.mode === 'create', isLeave: false, jobs: [{ jobId: '', params: {} }], extraJobs: [], note: '' };
         emp.uiState.isLeave = emp.uiState.isLeave === true;
         if (emp.uiState.isLeave) emp.uiState.isSelected = false;
         emp.uiState.isSelected ??= (this.mode === 'create');
@@ -548,10 +575,11 @@ class ChamCongManager {
             if (timeOut && emp.cocancheckout === true) emp.uiState.out = timeOut;
             if (masterLunch !== null) emp.uiState.lunch = masterLunch;
             if (masterJob) {
-                const emptyIdx = emp.uiState.jobs.findIndex(j => !j.jobId);
+                const targetJobs = emp.uiState.jobs;
+                const emptyIdx = targetJobs.findIndex(j => !j.jobId);     
                 const newJob = JSON.parse(JSON.stringify(masterJob));
-                this.applyAutoTimeParam(newJob, emp, { overwrite: false });
-                emptyIdx !== -1 ? emp.uiState.jobs[emptyIdx] = newJob : emp.uiState.jobs.push(newJob);
+                this.applyAutoTimeParam(newJob, emp, { overwrite: false });     
+                emptyIdx !== -1 ? targetJobs[emptyIdx] = newJob : targetJobs.push(newJob);
             }
             count++;
         });
@@ -649,27 +677,68 @@ class ChamCongManager {
             const schedule = this.validator?.normalizeSchedule(emp.khunggiolamviec);
             const workHours = isActive ? this.validator?.calculateActualWorkHours({ checkIn: s.in, checkOut: s.out, schedule, requiresCheckout: emp.cocancheckout === true, lunchBreaks: emp.khunggionghitrua || [] }) : null;
             const validJobs = isActive ? (s.jobs || []).filter(jobItem => jobItem.jobId) : [];
+            const validExtraJobs = validJobs;
             const hasProductionJobs = validJobs.length > 0;
+            const isDaily = emp.phuongthuctinhluong === 'daily';
 
             const baseObj = {
-                nhanvien_id: emp.id, ngaylamviec: this.currentDate, 
-                thoigianchamcongvao: isActive ? (s.in || null) : null, 
+                nhanvien_id: emp.id, ngaylamviec: this.currentDate,
+                thoigianchamcongvao: isActive ? (s.in || null) : null,
                 thoigianchamcongra: isActive ? (s.out || null) : null,
-                cotinhlamthem: isActive ? (s.ot || false) : false, 
+                cotinhlamthem: isActive ? (s.ot || false) : false,
                 coantrua: isActive ? (s.lunch === true) : false,
                 loaicalamviec: emp.loaicalamviec || 'CO_DINH',
                 cophaingaynghi: false, id: this.mode === 'update' ? (emp.recordId || null) : null, codilam: isActive, calamviec_id: emp.calamviec_id,
                 khunggionghitrua: emp.khunggionghitrua || {}, khunggiolamviec: this.buildKhungGioPayload(emp.khunggiolamviec), cocancheckout: emp.cocancheckout === true,
-                sogiolamthucte: workHours?.actualMinutes || 0, sophutot: isActive && s.otMinutes ? parseInt(s.otMinutes, 10) || 0 : 0, tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0
+                sogiolamthucte: workHours?.actualMinutes || 0, sophutot: isActive && s.otMinutes ? parseInt(s.otMinutes, 10) || 0 : 0, tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0,
+                phuongthuctinhluong: emp.phuongthuctinhluong
             };
 
-            if (hasProductionJobs) {
-                validJobs.forEach(jobItem => {
+            if (isDaily) {
+                if (hasProductionJobs) {
+                    validJobs.forEach(jobItem => {
+                        const jobDef = this.jobs.find(j => j.id == jobItem.jobId);
+                        if (!jobDef) return;
+                        payload.push({
+                            ...baseObj,
+                            loaichamcong: 'SX',
+                            congviec_id: parseInt(jobItem.jobId),
+                            tencongviec: jobDef.tencongviec,
+                            thamsotinhluong: {
+                                tham_so: this.formatJobParams(jobItem.params, jobDef.danhsachthamso),
+                                bieu_thuc: jobDef.bieuthuctinhtoan,
+                                loaicv: jobDef.loaicongviec
+                            },
+                            ghichu: s.note || ''
+                        });
+                    });
+                } else {
+                    payload.push({
+                        ...baseObj,
+                        loaichamcong: 'SX',
+                        congviec_id: null,
+                        tencongviec: isActive ? 'Chưa giao việc' : '',
+                        thamsotinhluong: {},
+                        ghichu: s.note || ''
+                    });
+                }
+            } else { // monthly
+                payload.push({
+                    ...baseObj,
+                    loaichamcong: 'VP',
+                    congviec_id: null,
+                    tencongviec: isActive ? 'Hành chính' : '',
+                    thamsotinhluong: {},
+                    ghichu: s.note || ''
+                });
+
+                validExtraJobs.forEach(jobItem => {
                     const jobDef = this.jobs.find(j => j.id == jobItem.jobId);
                     if (!jobDef) return;
                     payload.push({
                         ...baseObj,
                         loaichamcong: 'SX',
+                        pay_role: 'extra',
                         congviec_id: parseInt(jobItem.jobId),
                         tencongviec: jobDef.tencongviec,
                         thamsotinhluong: {
@@ -679,15 +748,6 @@ class ChamCongManager {
                         },
                         ghichu: s.note || ''
                     });
-                });
-            } else {
-                payload.push({
-                    ...baseObj,
-                    loaichamcong: 'VP',
-                    congviec_id: null,
-                    tencongviec: isActive ? 'Hành chính' : '',
-                    thamsotinhluong: {},
-                    ghichu: s.note || ''
                 });
             }
         });

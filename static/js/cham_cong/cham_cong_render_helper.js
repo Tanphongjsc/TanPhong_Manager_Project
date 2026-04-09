@@ -120,11 +120,15 @@ const ChamCongRenderHelper = (() => {
             <td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
     };
 
-    const renderHybridCells = (s, jobs) => {
+    const renderHybridCells = (emp, jobs) => {
+        const s = emp.uiState;
+        const isMonthly = emp.phuongthuctinhluong === 'monthly';
+        const activeJobs = s.jobs || [];
+        
         const jobOpts = jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
-        const jobListHtml = s.jobs.map((jobItem, index) => {
+        const jobListHtml = activeJobs.map((jobItem, index) => {
             const currentOpts = jobItem.jobId ? jobOpts.replace(`value="${jobItem.jobId}"`, `value="${jobItem.jobId}" selected`) : jobOpts;
-            const showDelete = index > 0 || s.jobs.length > 1 || jobItem.jobId;
+            const showDelete = index > 0 || activeJobs.length > 1 || jobItem.jobId;
             const deleteBtn = showDelete
                 ? `<button class="btn-remove-job w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all ml-auto shrink-0" data-index="${index}" title="Xóa"><i class="fa-solid fa-xmark text-xs"></i></button>`
                 : '<div class="w-6 h-6 ml-auto shrink-0"></div>';
@@ -135,10 +139,13 @@ const ChamCongRenderHelper = (() => {
                 ${deleteBtn}</div>`;
         }).join('');
 
+        const addButtonText = isMonthly ? '+ Thêm việc phát sinh' : '+ Thêm';
+        const addButtonClass = isMonthly ? 'text-orange-500 hover:text-orange-600 font-bold' : 'text-slate-400 hover:text-blue-500 font-medium';
+
         return `
         <td class="px-2 py-1 border-r border-slate-200"><div class="analysis-result flex flex-wrap gap-0.5 min-h-[16px] mt-1"><span class="text-[10px] text-slate-300">-</span></div></td>
         <td class="p-0 border-r border-slate-200 align-top"><div class="flex flex-col w-full">${jobListHtml}
-                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs text-slate-400 hover:text-blue-500 font-medium transition-colors" title="Thêm">+ Thêm</button></div></div></td>
+                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs ${addButtonClass} transition-colors" title="${addButtonText}">${addButtonText}</button></div></div></td>
         <td class="px-2 py-1 border-r border-slate-200 align-top">
             <div class="flex flex-col items-start gap-2">
                 <div class="flex items-center min-h-[22px] w-full">
