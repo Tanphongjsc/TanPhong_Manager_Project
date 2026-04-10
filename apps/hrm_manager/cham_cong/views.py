@@ -778,7 +778,7 @@ def api_bang_cham_cong_list(request):
             #     }, status=400)
 
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
+            # Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({
                 'success': True,

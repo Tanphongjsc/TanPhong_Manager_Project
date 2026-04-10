@@ -1,0 +1,183 @@
+﻿<div class="custom-search-select relative inline-block text-left {{ wrapper_class|default:'' }}" id="css-{{ select_id }}">
+    <select name="{{ name|default:select_id }}" id="{{ select_id }}" class="hidden-select hidden {{ select_class|default:'' }}" {% if onchange %}onchange="{{ onchange }}"{% endif %} {% for k,v in extra_attrs.items %}{{ k }}="{{ v }}"{% endfor %} data-placeholder="{{ placeholder|default:'-- Chọn --' }}">
+        <option value="">{{ placeholder|default:"-- Chọn --" }}</option>
+        {{ options_html|safe }}
+    </select>
+    <div class="css-display flex items-center justify-between border border-blue-200 rounded px-2 py-1.5 bg-white cursor-pointer hover:border-blue-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-300 focus:outline-none transition-colors h-full {{ display_class|default:'' }}" tabindex="0">
+        <span class="css-text text-xs truncate font-medium text-slate-700 flex-1 min-w-0 pr-1">{{ placeholder|default:"-- Chọn --" }}</span>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] ml-1.5 flex-shrink-0"></i>
+    </div>
+    <div class="css-dropdown absolute left-0 top-full mt-1 min-w-[280px] max-w-[400px] bg-white border border-slate-200 rounded shadow-lg z-[100] hidden flex-col">
+        <div class="p-1.5 border-b border-slate-100 bg-slate-50 shrink-0">
+            <input type="text" class="css-search w-full text-[11px] px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-blue-400" placeholder="{{ search_placeholder|default:'Tìm kiếm...' }}" autocomplete="off">
+        </div>
+        <div class="css-options max-h-[250px] overflow-y-auto w-full py-1 text-[11px] bg-white">
+            <div class="css-no-results hidden px-3 py-2 text-slate-400 text-center italic">Không tìm thấy kết quả</div>
+            <!-- Options populated by JS -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-search-select .css-option { padding: 6px 12px; cursor: pointer; border-bottom: 1px solid transparent; }
+    .custom-search-select .css-option:hover { background-color: #eff6ff; color: #1d4ed8; }
+    .custom-search-select .css-option.selected { background-color: #dbeafe; color: #1e40af; font-weight: 500; }
+    /* Visual cue for disabled custom select */
+    .custom-search-select select:disabled ~ .css-display { background-color: #f8fafc; cursor: not-allowed; opacity: 0.7; }
+</style>
+
+<script>
+    window.CustomSelectManager = window.CustomSelectManager || {
+        _documentListenerAdded: false,
+        _bindEvents: function(wrapper, select, display, dropdown, search, optionsContainer, textSpan, noResults) {
+            const refreshOptions = () => {
+                const term = AppUtils.Helper.removeAccents(search.value || '').toLowerCase();
+                const allOpts = Array.from(select.options);
+                optionsContainer.querySelectorAll('.css-option').forEach(el => el.remove());
+
+                let matches = 0;
+                allOpts.forEach(opt => {
+                    const txt = opt.text;
+                    const val = opt.value;
+                    
+                    // Hide empty option only if searching, to allow deselection when clear
+                    if (val === '' && term) return;
+                    
+                    if (!term || AppUtils.Helper.removeAccents(txt).toLowerCase().includes(term)) {
+                        matches++;
+                        const div = document.createElement('div');
+                        div.className = `css-option ${val === select.value ? 'selected' : ''}`;
+                        div.textContent = txt;
+                        div.dataset.value = val;
+                        div.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            select.value = val;
+                            textSpan.textContent = txt;
+                            dropdown.classList.add('hidden');
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        optionsContainer.appendChild(div);
+                    }
+                });
+                noResults.classList.toggle('hidden', matches > 0);
+
+                if (select.value === '') {
+                    const emptyOptText = select.options.length > 0 && select.options[0].value === '' ? select.options[0].text : '-- Chọn --';
+                    textSpan.textContent = select.dataset.placeholder || emptyOptText;
+                } else {
+                    const selOpt = select.options[select.selectedIndex];
+                    if (selOpt) textSpan.textContent = selOpt.text;
+                }
+            };
+
+            display.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (select.disabled) return;
+
+                const isHidden = dropdown.classList.contains('hidden');
+                document.querySelectorAll('.css-dropdown:not(.hidden)').forEach(d => d.classList.add('hidden'));
+                
+                if (select.value !== '') {
+                    const selOpt = select.options[select.selectedIndex];
+                    if (selOpt) textSpan.textContent = selOpt.text;
+                }
+
+                if (isHidden) {
+                    dropdown.classList.remove('hidden');
+                    search.value = '';
+                    refreshOptions();
+                    search.focus();
+                } else {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            search.addEventListener('input', () => refreshOptions());
+
+            wrapper.addEventListener('click', e => e.stopPropagation());
+
+            if (!this._documentListenerAdded) {
+                document.addEventListener('click', () => { 
+                    document.querySelectorAll('.css-dropdown:not(.hidden)').forEach(d => d.classList.add('hidden'));
+                });
+                this._documentListenerAdded = true;
+            }
+
+            select.addEventListener('css-update', () => refreshOptions());
+        },
+
+        init: function(wrapperId) {
+            const wrapper = document.getElementById(wrapperId);
+            if (!wrapper) return;
+            const select = wrapper.querySelector('.hidden-select');
+            const display = wrapper.querySelector('.css-display');
+            const dropdown = wrapper.querySelector('.css-dropdown');
+            const search = wrapper.querySelector('.css-search');
+            const optionsContainer = wrapper.querySelector('.css-options');
+            const textSpan = wrapper.querySelector('.css-text');
+            const noResults = wrapper.querySelector('.css-no-results');
+
+            this._bindEvents(wrapper, select, display, dropdown, search, optionsContainer, textSpan, noResults);
+        },
+
+        transform: function(selectElement, heightClass = 'h-full', textClass = '') {
+            if (!selectElement || selectElement.closest('.custom-search-select')) return;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = `custom-search-select relative inline-block text-left w-full h-full`;
+            
+            const emptyOptText = selectElement.options.length > 0 && selectElement.options[0].value === '' ? selectElement.options[0].text : '-- Chọn --';
+            const placeholder = selectElement.getAttribute('data-placeholder') || emptyOptText;
+            
+            selectElement.parentNode.insertBefore(wrapper, selectElement);
+            wrapper.appendChild(selectElement);
+            selectElement.classList.add('hidden-select', 'hidden');
+
+            const display = document.createElement('div');
+            display.className = `css-display flex items-center justify-between border border-slate-200 rounded px-1.5 bg-white cursor-pointer hover:border-blue-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-300 focus:outline-none transition-colors w-full ${heightClass}`;
+            display.tabIndex = 0;
+            display.innerHTML = `
+                <span class="css-text truncate font-medium text-slate-700 flex-1 min-w-0 pr-1 text-left ${textClass}">${placeholder}</span>
+                <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] ml-1 flex-shrink-0"></i>
+            `;
+            wrapper.appendChild(display);
+
+            const dropdown = document.createElement('div');
+            dropdown.className = `css-dropdown absolute left-0 top-full mt-1 min-w-[280px] max-w-[400px] bg-white border border-slate-200 rounded shadow-lg z-[100] hidden flex-col`;
+            dropdown.innerHTML = `
+                <div class="p-1.5 border-b border-slate-100 bg-slate-50 shrink-0">      
+                    <input type="text" class="css-search w-full text-[11px] px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-blue-400" placeholder="Tìm kiếm..." autocomplete="off">   
+                </div>
+                <div class="css-options max-h-[250px] overflow-y-auto w-full py-1 text-[11px] bg-white">
+                    <div class="css-no-results hidden px-3 py-2 text-slate-400 text-center italic">Không tìm thấy kết quả</div>
+                </div>
+            `;
+            wrapper.appendChild(dropdown);
+
+            const search = dropdown.querySelector('.css-search');
+            const optionsContainer = dropdown.querySelector('.css-options');
+            const textSpan = display.querySelector('.css-text');
+            const noResults = dropdown.querySelector('.css-no-results');
+
+            this._bindEvents(wrapper, selectElement, display, dropdown, search, optionsContainer, textSpan, noResults);
+            
+            if (selectElement.value !== '') {
+                const selOpt = selectElement.options[selectElement.selectedIndex];
+                if (selOpt) textSpan.textContent = selOpt.text;
+            }
+        }
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('css-{{ select_id }}')) {
+                CustomSelectManager.init('css-{{ select_id }}');
+            }
+        });
+    } else {
+        setTimeout(() => {
+            if (document.getElementById('css-{{ select_id }}')) {
+                CustomSelectManager.init('css-{{ select_id }}');
+            }
+        }, 50);
+    }
+</script>

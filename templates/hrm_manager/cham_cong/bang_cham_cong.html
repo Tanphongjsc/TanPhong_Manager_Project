@@ -49,11 +49,8 @@
                     <input type="time" id="m-out" value="17:00" 
                         class="bg-white border border-blue-200 rounded px-3 py-1.5 w-28 text-center font-medium focus:ring-1 focus:ring-blue-400">
 
-                    <select id="m-job" 
-                        class="master-sx-el bg-white border border-blue-200 rounded px-2 py-1.5 max-w-[160px] font-medium focus:ring-1 focus:ring-blue-400" 
-                        onchange="window.ChamCongManager.renderMasterParams()">
-                        <option value="">-- Công việc --</option>
-                    </select>
+                    {% include "components/searchable_select.html" with select_id="m-job" placeholder="-- Công việc --" wrapper_class="master-sx-el max-w-[160px] " onchange="window.ChamCongManager.renderMasterParams()" %}
+
                     <div id="m-params" class="master-sx-el flex items-center gap-1 flex-wrap"></div>
 
                     <label class="master-sx-el inline-flex items-center gap-1.5 text-slate-600">
@@ -97,9 +94,9 @@
     .param-label { color: #64748b; font-weight: 700; margin-right: 3px; text-transform: uppercase; }
     .param-val { width: 36px; border: none; outline: none; text-align: right; font-weight: 600; color: #0f172a; background: transparent; font-size: 11px; }
     
-    tr.inactive { background: #f8fafc; }
-    tr.inactive > td:not(.note-cell):not(.employee-cell) { opacity: 0.4; }
-    tr.inactive .note-cell { opacity: 1; background: #fff; }
+    tr.inactive, tr.unselected { background: #f8fafc; }
+    tr.inactive > td:not(.note-cell), tr.unselected > td:not(.note-cell) { opacity: 0.4; }
+    tr.inactive .note-cell, tr.unselected .note-cell { opacity: 1; background: #fff; }
 
     .leave-pill {
         min-width: 56px;
