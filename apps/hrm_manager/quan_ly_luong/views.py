@@ -143,6 +143,10 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         for rule in rules_list:
             ma_qt = rule['maquytac']
             src = rule['nguondulieu'].strip().lower()
+            
+            # Nếu đã có giá trị từ chấm công hoặc thiết lập cố định thì không ghi đè, ưu tiên nguồn đó hơn là rule
+            if ma_qt in context_params:
+                continue
 
             if src == 'system':
                 if ma_qt == 'LUONG_CO_BAN':  

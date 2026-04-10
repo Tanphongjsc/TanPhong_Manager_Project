@@ -22,6 +22,7 @@ class Bangchamcong(models.Model):
     cophaingaynghi = models.BooleanField(db_column='CoPhaiNgayNghi', blank=True, null=True)  # Field name made lowercase.
     thamsotinhluong = models.TextField(db_column='ThamSoTinhLuong', blank=True, null=True)  # Field name made lowercase. This field type is a guess.
     thanhtien = models.FloatField(db_column='ThanhTien', blank=True, null=True)  # Field name made lowercase.
+    thanhtienthanhphan = models.TextField(db_column='ThanhTienThanhPhan', blank=True, null=True)  # Field name made lowercase. This field type is a guess.
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     congviec = models.ForeignKey('Congviec', models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
@@ -569,7 +570,8 @@ class Loainhanvien(models.Model):
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(blank=True, null=True)
-
+    phuongthuctinhluong = models.CharField(db_column='PhuongThucTinhLuong', blank=True, null=True)  # Field name made lowercase.     
+    
     class Meta:
         managed = False
         db_table = '"hrm"."LoaiNhanVien"'

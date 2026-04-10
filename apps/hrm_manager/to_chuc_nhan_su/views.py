@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
-from django.db.models import OuterRef, Subquery, Q, Prefetch, Case, When, Value, IntegerField
+from django.db.models import OuterRef, Subquery, Q, Prefetch
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
@@ -688,7 +688,7 @@ def api_nhan_vien_list(request):
                 ngaysinh=data.get('ngaysinh'),
                 socccd=data.get('socccd'),
                 ngayvaolam=data.get('ngayvaolam') if data.get('ngayvaolam') else None,
-                loainv_id=data.get('loainv'),
+                loainv_id=data.get('loainv_id') or data.get('loainv'),
                 trangthainv=data.get('trangthainv') if data.get('trangthainv') else 'Đang làm việc',
                 nganhang_id=data.get('nganhang'),
                 sotknganhang=data.get('sotknganhang'),
@@ -810,13 +810,18 @@ def api_nhan_vien_detail(request, id):
         # Lấy chi tiết nhân viên
         return JsonResponse({
             'success': True,
-            'data': model_to_dict(nhan_vien)
+            'data': {
+                **model_to_dict(nhan_vien),
+                'loainv_id': nhan_vien.loainv_id,
+                'nganhang_id': nhan_vien.nganhang_id,
+            }
         })
     
     elif request.method == "PUT":
         # Cập nhật nhân viên
         try:
             data = loads(request.body)
+            data['loainv'] = data.get('loainv_id', data.get('loainv'))
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
@@ -1084,7 +1089,9 @@ def view_chuc_vu_index(request):
         'status_list': [
             {'value': 'active', 'label': 'Đang hoạt động'},
             {'value': 'inactive', 'label': 'Ngừng hoạt động'}
-        ]
+        ],
+        'page_title': 'Danh mục Chức vụ',
+        'status_list': STATUS_LIST # <--- Truyền biến này
         
     }
 
@@ -1340,6 +1347,7 @@ def view_dmht_congviec_list(request):
             {'title': 'Danh mục hệ thống', 'url': reverse('hrm:to_chuc_nhan_su:danh_muc_index')},
             {'title': 'Danh mục công việc', 'url': None},
         ],
+        'page_title': 'Danh mục công việc',
         'status_list': STATUS_LIST # <--- Truyền biến này
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
@@ -1441,46 +1449,49 @@ def api_baohiem_list(request):
 @handle_exceptions
 def api_loainhanvien_list(request):
     """API lấy danh sách loại nhân viên (JSON) hỗ trợ search, filter, pagination"""
-    # Annotate để đưa loại nhân viên mặc định lên đầu
-    queryset = Loainhanvien.objects.annotate(
-        is_default=Case(
-            When(maloainv='NV', then=Value(0)),
-            default=Value(1),
-            output_field=IntegerField()
-        )
-    ).order_by('is_default', '-created_at')
-
+    queryset = Loainhanvien.objects.all()
+    
     context = get_list_context(
         request,
         queryset,
-        search_fields=['tenloainv', 'maloainv'],
+        search_fields=['tenloainv', 'maloainv', 'phuongthuctinhluong'],
         filter_field=('trangthai', 'status'),
         page_size=20,
-        order_by=None  # Đã order custom ở trên
+        order_by='-created_at'
     )
-
+    
     page_obj = context['page_obj']
     paginator = context['paginator']
 
     items_list = []
     for item in page_obj.object_list:
+        salary_method_raw = (item.phuongthuctinhluong or '').strip().lower()
+        salary_method_alias = {
+            'monthly': 'monthly',
+            'thang': 'monthly',
+            'tháng': 'monthly',
+            'daily': 'daily',
+            'ngay cong': 'daily',
+            'ngày công': 'daily',
+        }
         items_list.append({
             'id': item.id,
             'TenLoaiNV': item.tenloainv,
             'MaLoaiNV': item.maloainv,
+            'PhuongThucTinhLuong': salary_method_alias.get(salary_method_raw, ''),
             'GhiChu': item.ghichu or '',
             'trangthai': item.trangthai,
         })
-
+    
     pagination_data = {
         'page': page_obj.number,
-        'page_size': paginator.per_page,
+        'page_size': paginator.per_page, 
         'total': paginator.count,
         'total_pages': paginator.num_pages,
         'has_next': page_obj.has_next(),
         'has_prev': page_obj.has_previous()
     }
-
+    
     return json_success(
         'Lấy danh sách loại nhân viên thành công',
         data=items_list,
@@ -1766,6 +1777,16 @@ def api_loainhanvien_detail(request, pk):
     """API lấy chi tiết loại nhân viên"""
     try:
         item = get_object_or_404(Loainhanvien, pk=pk)
+        salary_method_raw = (item.phuongthuctinhluong or '').strip().lower()
+        salary_method_alias = {
+            'monthly': 'monthly',
+            'thang': 'monthly',
+            'tháng': 'monthly',
+            'daily': 'daily',
+            'ngay cong': 'daily',
+            'ngày công': 'daily',
+        }
+        salary_method = salary_method_alias.get(salary_method_raw, '')
         
         return json_response(
             success=True,
@@ -1773,9 +1794,11 @@ def api_loainhanvien_detail(request, pk):
                 'id': item.id,
                 'TenLoaiNV': item.tenloainv,
                 'MaLoaiNV': item.maloainv,
+                'PhuongThucTinhLuong': salary_method,
                 'GhiChu': item.ghichu or '',
                 'tenloainv': item.tenloainv,
                 'maloainv': item.maloainv,
+                'phuongthuctinhluong': salary_method,
                 'ghichu': item.ghichu or '',
                 'trangthai': item.trangthai,
             }
@@ -1790,6 +1813,16 @@ def api_loainhanvien_create(request):
     try:
         # SỬA LỖI: Lấy data JSON
         data = get_request_data(request)
+        salary_method_raw = (data.get('PhuongThucTinhLuong') or '').strip().lower()
+        salary_method_alias = {
+            'monthly': 'monthly',
+            'thang': 'monthly',
+            'tháng': 'monthly',
+            'daily': 'daily',
+            'ngay cong': 'daily',
+            'ngày công': 'daily',
+        }
+        salary_method = salary_method_alias.get(salary_method_raw)
 
         is_valid, missing = validate_required_fields(
             data, 
@@ -1798,6 +1831,9 @@ def api_loainhanvien_create(request):
         
         if not is_valid:
             return json_error('Vui lòng nhập đầy đủ tên và mã loại nhân viên')
+
+        if not salary_method:
+            return json_error('Phương thức tính lương chỉ được chọn: Tháng hoặc Ngày công')
         
         if not validate_unique_field(Loainhanvien, 'maloainv', data.get('MaLoaiNV')):
             return json_error('Mã loại nhân viên đã tồn tại')
@@ -1805,6 +1841,7 @@ def api_loainhanvien_create(request):
         item = Loainhanvien.objects.create(
             tenloainv=data.get('TenLoaiNV'),
             maloainv=data.get('MaLoaiNV'),
+            phuongthuctinhluong=salary_method,
             ghichu=data.get('GhiChu', ''),
             trangthai='active',
             created_at=timezone.now(),
@@ -1822,15 +1859,29 @@ def api_loainhanvien_update(request, pk):
     try:
         item = get_object_or_404(Loainhanvien, pk=pk)
         data = get_request_data(request)
+        salary_method_raw = (data.get('PhuongThucTinhLuong') or '').strip().lower()
+        salary_method_alias = {
+            'monthly': 'monthly',
+            'thang': 'monthly',
+            'tháng': 'monthly',
+            'daily': 'daily',
+            'ngay cong': 'daily',
+            'ngày công': 'daily',
+        }
+        salary_method = salary_method_alias.get(salary_method_raw)
 
         if not data.get('TenLoaiNV') or not data.get('MaLoaiNV'):
             return json_error('Vui lòng nhập đầy đủ thông tin')
+
+        if not salary_method:
+            return json_error('Phương thức tính lương chỉ được chọn: Tháng hoặc Ngày công')
             
         if not validate_unique_field(Loainhanvien, 'maloainv', data.get('MaLoaiNV'), exclude_pk=pk):
              return json_error('Mã loại nhân viên đã tồn tại')
 
         item.tenloainv = data.get('TenLoaiNV')
         item.maloainv = data.get('MaLoaiNV')
+        item.phuongthuctinhluong = salary_method
         item.ghichu = data.get('GhiChu', '')
         item.updated_at = timezone.now()
         item.save()

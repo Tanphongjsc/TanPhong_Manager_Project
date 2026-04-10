@@ -315,7 +315,7 @@ const AppUtils = (() => {
                             </div>
                             <div class="ml-4 grow">
                                 <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
-                                <p class="mt-2 text-sm text-slate-600">${message}</p>
+                                <p id="modal-message" class="mt-2 text-sm text-slate-600 leading-relaxed"></p>
                             </div>
                         </div>
                         
@@ -334,8 +334,14 @@ const AppUtils = (() => {
             document.body.appendChild(modal);
 
             const modalContent = modal.querySelector('#modal-content');
+            const messageEl = modal.querySelector('#modal-message');
             const cancelBtn = modal.querySelector('#modal-cancel');
             const confirmBtn = modal.querySelector('#modal-confirm');
+
+            if (messageEl) {
+                messageEl.textContent = String(message ?? '');
+                messageEl.style.whiteSpace = 'pre-line';
+            }
 
             requestAnimationFrame(() => {
                 modalContent.classList.remove('scale-95', 'opacity-0');
@@ -915,6 +921,11 @@ const AppUtils = (() => {
                     setTimeout(() => inThrottle = false, limit);
                 }
             };
+        },
+
+        formatNumber(amount) {
+            const num = Number(amount) || 0;
+            return new Intl.NumberFormat('vi-VN').format(num);
         },
 
         formatCurrency(amount) {

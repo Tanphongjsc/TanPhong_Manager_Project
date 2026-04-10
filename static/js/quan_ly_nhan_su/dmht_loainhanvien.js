@@ -4,6 +4,14 @@
  */
 
 class LoaiNhanVienManager extends BaseCRUDManager {
+    getSalaryMethodLabel(value) {
+        const salaryMethodMap = {
+            monthly: 'Tháng',
+            daily: 'Ngày công'
+        };
+        return salaryMethodMap[value] || '-';
+    }
+
     constructor() {
         super({
             sidebarId: 'lnv-sidebar',
@@ -27,6 +35,7 @@ class LoaiNhanVienManager extends BaseCRUDManager {
                 if (!form) return;
                 form.querySelector('[name="TenLoaiNV"]').value = data.TenLoaiNV || '';
                 form.querySelector('[name="MaLoaiNV"]').value = data.MaLoaiNV || '';
+                form.querySelector('[name="PhuongThucTinhLuong"]').value = data.PhuongThucTinhLuong || '';
                 form.querySelector('[name="GhiChu"]').value = data.GhiChu || '';
             }
         });
@@ -83,6 +92,7 @@ class LoaiNhanVienManager extends BaseCRUDManager {
                         </a>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${item.MaLoaiNV}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${this.getSalaryMethodLabel(item.PhuongThucTinhLuong)}</td>
                     <td class="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">${item.GhiChu || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap">${statusHtml}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

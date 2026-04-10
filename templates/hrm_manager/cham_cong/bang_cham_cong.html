@@ -71,7 +71,7 @@
 
         <div class="flex-1 overflow-hidden relative min-h-0">
             <div id="tab-hybrid" class="h-full flex flex-col overflow-hidden relative">
-                {% with headers='<th class="p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-hybrid" class="accent-blue-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[180px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-36 text-center sticky top-0 bg-slate-50 z-20">Giờ vào/ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-28 sticky top-0 bg-slate-50 z-20">Phân tích</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc & Tham số)</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[150px] sticky top-0 bg-slate-50 z-20 text-left">Khác</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[120px] sticky top-0 bg-slate-50 z-20 text-left">Ghi chú</th>' %}
+                {% with headers='<th class="bulk-action-header p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-hybrid" class="accent-blue-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[220px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-36 text-center sticky top-0 bg-slate-50 z-20">Giờ vào/ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-28 sticky top-0 bg-slate-50 z-20">Phân tích</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc & Tham số)</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[130px] sticky top-0 bg-slate-50 z-20 text-left">Khác</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[120px] sticky top-0 bg-slate-50 z-20 text-left">Ghi chú</th>' %}
                     {% include "components/table_wrapper.html" with table_id="hybrid-table" tbody_id="hybrid-body" headers_html=headers show_checkbox=False %}
                 {% endwith %}
             </div>
@@ -98,8 +98,13 @@
     .param-val { width: 36px; border: none; outline: none; text-align: right; font-weight: 600; color: #0f172a; background: transparent; font-size: 11px; }
     
     tr.inactive { background: #f8fafc; }
-    tr.inactive > td:not(.note-cell) { opacity: 0.4; }
+    tr.inactive > td:not(.note-cell):not(.employee-cell) { opacity: 0.4; }
     tr.inactive .note-cell { opacity: 1; background: #fff; }
+
+    .leave-pill {
+        min-width: 56px;
+        letter-spacing: 0.02em;
+    }
     
     @media (max-width: 640px) {
         .cell-input { font-size: 12px; padding: 4px; }
@@ -109,7 +114,8 @@
 
     /* Fix table wrapper để fit container - Override component styles */
     #tab-hybrid > div {
-        height: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
         margin-bottom: 0 !important;
         border: none !important;
         border-radius: 0 !important;
@@ -129,17 +135,35 @@
         background: #f1f5f9;
     }
     
-    #tab-hybrid table { min-width: 1060px; }
+    #tab-hybrid table { min-width: 1120px; }
+
+    #hybrid-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 22;
+    }
+
+    #hybrid-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 22;
+        background: #f8fafc;
+    }
+
+    #hybrid-table thead th.bulk-action-header {
+        left: 0;
+        z-index: 23;
+    }
     
     #tab-hybrid > div > div { 
-        height: 100%; 
+        flex: 1 1 auto;
+        min-height: 0;
         overflow: auto; 
         scrollbar-width: thin;
     }
 
     /* Ẩn cột Actions được tạo tự động bởi table_wrapper */
-    #hybrid-table thead tr th:last-child:empty,
-    #hybrid-table thead tr th:last-child:has(.sr-only) {
+    #hybrid-table thead tr th:last-child {
         display: none;
     }
 
