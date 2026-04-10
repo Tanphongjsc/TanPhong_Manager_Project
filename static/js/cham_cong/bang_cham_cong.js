@@ -7,7 +7,6 @@ class ChamCongManager {
         if (typeof AppUtils === 'undefined') { console.error('⛔ AppUtils is required'); return; }
         this.apiUrls = config.apiUrls || {};
         this.employees = []; this.jobs = []; this.departments = []; this.departmentMap = {};
-        this.productionTypeId = null;
         
         const urlParams = new URLSearchParams(window.location.search);
         const dateParam = urlParams.get('ngaylamviec');
@@ -155,10 +154,9 @@ class ChamCongManager {
         this.state.isLoading = true;
         try {
             const opts = { signal: this.state.loadController.signal };
-            const [deptRes, jobRes, typeRes] = await Promise.all([
+            const [deptRes, jobRes] = await Promise.all([
                 AppUtils.API.get(this.apiUrls.departments, { page_size: 1000 }, opts),
-                AppUtils.API.get(this.apiUrls.jobs, { status: 'active', page_size: 1000 }, opts),
-                AppUtils.API.get(this.apiUrls.employeeTypes, { search: 'Công nhân' }, opts)
+                AppUtils.API.get(this.apiUrls.jobs, { status: 'active', page_size: 1000 }, opts)
             ]);
             this.departments = deptRes.data || [];
             this.departmentMap = Object.fromEntries(this.departments.map(d => [d.id, d.tenphongban]));
@@ -166,11 +164,6 @@ class ChamCongManager {
             this.jobs = jobRes.data || [];
             this.timeParamKeyCache.clear();
             this.initMasterSelect();
-            if (typeRes.data?.length) {
-                const key = AppUtils.Helper.removeAccents('Công nhân').toLowerCase();
-                const factoryType = typeRes.data.find(t => AppUtils.Helper.removeAccents(t.TenLoaiNV).toLowerCase().includes(key));
-                this.productionTypeId = factoryType?.id || null;
-            }
             await this.loadDailyData(opts);
         } catch (error) {
             if (error.name !== 'AbortError') { console.error("Load Error:", error); AppUtils.Notify.error("Không thể tải dữ liệu: " + error.message); }
@@ -202,6 +195,7 @@ class ChamCongManager {
     initMasterSelect() {
         if (!this.elements.masterJobSelect) return;
         this.elements.masterJobSelect.innerHTML = '<option value="">-- Công việc --</option>' + this.jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
+        this.elements.masterJobSelect.dispatchEvent(new Event('css-update'));
     }
 
     buildKhungGioPayload(khungGio = {}) {
@@ -248,6 +242,9 @@ class ChamCongManager {
         if (!timeKey) return null;
 
         if (!jobItem.params || typeof jobItem.params !== 'object') jobItem.params = {};
+        
+        if (jobItem._manualOverrides && jobItem._manualOverrides[timeKey]) return timeKey;
+
         const currentValue = jobItem.params[timeKey];
         const canWrite = overwrite || this.isEmptyValue(currentValue);
         if (!canWrite) return timeKey;
@@ -311,6 +308,7 @@ class ChamCongManager {
         const tr = document.createElement('tr');
         tr.className = 'group hover:bg-blue-50/20 transition-colors border-b-2 border-slate-300 align-top';
         if (emp.uiState.isLeave) tr.classList.add('inactive');
+        else if (!emp.uiState.isSelected) tr.classList.add('unselected');
         const scheduleIn = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianbatdau) || '08:00';
         const scheduleOut = this.render$.formatTimeDisplay(emp.khunggiolamviec?.thoigianketthuc) || '17:00';
         tr.dataset.id = emp.rowId;
@@ -326,7 +324,14 @@ class ChamCongManager {
 
         tr.innerHTML = this.render$.renderCommonCells(emp, scheduleIn, scheduleOut, 'blue') + this.render$.renderHybridCells(emp, this.jobs);
         if (emp.uiState.isLeave) this.toggleRowInputs(tr, false);
-        if (!emp.uiState.isLeave && (emp.uiState.in || !emp.cocancheckout)) this.analyzeTime(tr);
+        if (!emp.uiState.isLeave && (emp.uiState.in || !emp.cocancheckout)) this.analyzeTime(tr, { syncJobs: false });
+        
+        tr.querySelectorAll('.job-select').forEach(select => {
+            if (window.CustomSelectManager) {
+                window.CustomSelectManager.transform(select, 'h-[26px]', 'text-xs');
+            }
+        });
+        
         return tr;
     }
 
@@ -336,7 +341,11 @@ class ChamCongManager {
         if (!tr || !emp) return;
         const cls = target.classList;
 
-        if (cls.contains('row-cb')) { emp.uiState.isSelected = target.checked; this.updateMasterCheckbox(); }
+        if (cls.contains('row-cb')) { 
+            emp.uiState.isSelected = target.checked; 
+            this.updateMasterCheckbox(); 
+            if (!emp.uiState.isLeave) tr.classList.toggle('unselected', !target.checked);
+        }
         else if (cls.contains('inp-in')) { emp.uiState.in = target.value; this.analyzeTime(tr); }
         else if (cls.contains('inp-out')) {
             emp.uiState.out = target.value;
@@ -358,10 +367,20 @@ class ChamCongManager {
                 this.refreshRow(tr, emp);
             }
         }
-        else if (cls.contains('param-val')) { 
-            const { index, key } = target.dataset; 
+        else if (cls.contains('param-val')) {
+            const { index, key } = target.dataset;
             const targetJobs = emp.uiState.jobs;
-            if (targetJobs[index]) targetJobs[index].params[key] = target.value; 
+            if (targetJobs[index]) {
+                const val = target.value;
+                targetJobs[index].params[key] = val;
+                
+                if (!targetJobs[index]._manualOverrides) targetJobs[index]._manualOverrides = {};
+                if (val === '') {
+                    targetJobs[index]._manualOverrides[key] = false;
+                } else {
+                    targetJobs[index]._manualOverrides[key] = true;
+                }
+            }
         }
         else if (cls.contains('ot-minutes')) { emp.uiState.otMinutes = target.value; }
         else if (cls.contains('note-input')) { emp.uiState.note = target.value; }
@@ -422,7 +441,11 @@ class ChamCongManager {
 
     toggleLeave(tr, emp) {
         emp.uiState.isLeave = !emp.uiState.isLeave;
-        if (emp.uiState.isLeave) emp.uiState.isSelected = false;
+        if (emp.uiState.isLeave) {
+            emp.uiState.isSelected = false;
+        } else {
+            emp.uiState.isSelected = true;
+        }
         this.refreshRow(tr, emp);
         this.updateMasterCheckbox();
     }
@@ -504,12 +527,15 @@ class ChamCongManager {
             cb.checked = isChecked;
             const tr = cb.closest('tr[data-id]');
             const emp = tr ? this.getEmpById(tr.dataset.id) : null;
-            if (emp) emp.uiState.isSelected = isChecked;
+            if (emp) {
+                emp.uiState.isSelected = isChecked;
+                if (!emp.uiState.isLeave) tr.classList.toggle('unselected', !isChecked);
+            }
         });
         this.updateMasterCheckbox();
     }
 
-    analyzeTime(tr) {
+    analyzeTime(tr, opts = {}) {
         if (!tr) return;
         const inpIn = tr.querySelector('.inp-in'), inpOut = tr.querySelector('.inp-out'), res = tr.querySelector('.analysis-result');
         const workHoursEl = tr.querySelector('.work-hours-display'), otInp = tr.querySelector('.ot-minutes');
@@ -539,7 +565,7 @@ class ChamCongManager {
             workHoursEl.className = 'work-hours-display text-[12px] font-mono px-1.5 py-0.5 rounded text-slate-400';
         }
 
-        this.syncTimeParamWithWorkHours(emp, { clearWhenEmpty: true, tr });
+        if (opts.syncJobs !== false) this.syncTimeParamWithWorkHours(emp, { clearWhenEmpty: true, tr });
         if (res) res.innerHTML = !analysis ? '<span class="text-[10px] text-slate-300">-</span>' : this.render$.renderCompactAnalysis(analysis);
 
         const hasViolations = analysis?.violations?.length > 0, hasWarnings = analysis?.warnings?.length > 0;
@@ -553,10 +579,9 @@ class ChamCongManager {
     }
 
     applyMaster() {
-        const tbody = this.elements.hybridBody;
-        if (!tbody) return;
-        const checkedRows = this.getCheckedRowCheckboxes(tbody);
-        if (!checkedRows.length) { AppUtils.Notify.warning('Chưa chọn nhân viên nào!'); return; }
+        const filteredEmployees = this.getFilteredEmployees();
+        const checkedEmployees = filteredEmployees.filter(emp => emp.uiState && emp.uiState.isSelected && !emp.uiState.isLeave);
+        if (!checkedEmployees.length) { AppUtils.Notify.warning('Chưa chọn nhân viên nào!'); return; }
 
         const timeIn = document.getElementById('m-in')?.value, timeOut = document.getElementById('m-out')?.value;
         const mLunchEl = document.getElementById('m-lunch');
@@ -568,17 +593,21 @@ class ChamCongManager {
         }
 
         let count = 0;
-        checkedRows.forEach(cb => {
-            const emp = this.getEmpById(cb.closest('tr').dataset.id); if (!emp) return;
-            if (emp.uiState.isLeave) return;
+        checkedEmployees.forEach(emp => {
             if (timeIn) emp.uiState.in = timeIn;
             if (timeOut && emp.cocancheckout === true) emp.uiState.out = timeOut;
             if (masterLunch !== null) emp.uiState.lunch = masterLunch;
             if (masterJob) {
                 const targetJobs = emp.uiState.jobs;
-                const emptyIdx = targetJobs.findIndex(j => !j.jobId);     
+                const emptyIdx = targetJobs.findIndex(j => !j.jobId);
                 const newJob = JSON.parse(JSON.stringify(masterJob));
-                this.applyAutoTimeParam(newJob, emp, { overwrite: false });     
+                this.applyAutoTimeParam(newJob, emp, { overwrite: false });
+                
+                if (!newJob._manualOverrides) newJob._manualOverrides = {};
+                for (const pk in newJob.params) {
+                    if (newJob.params[pk] !== '') newJob._manualOverrides[pk] = true;
+                }
+                
                 emptyIdx !== -1 ? targetJobs[emptyIdx] = newJob : targetJobs.push(newJob);
             }
             count++;
@@ -605,7 +634,7 @@ class ChamCongManager {
     }
 
     collectSaveStats() {
-        const rows = this.getFilteredEmployees();
+        const rows = this.employees;
         const leaveCount = rows.filter(emp => emp.uiState?.isLeave === true).length;
         const selectedCount = rows.filter(emp => emp.uiState?.isSelected === true && emp.uiState?.isLeave !== true).length;
         const skippedCount = Math.max(rows.length - leaveCount - selectedCount, 0);
@@ -627,23 +656,15 @@ class ChamCongManager {
     }
 
     prepareSavePayload() {
-        const tbody = this.elements.hybridBody;
-        if (!tbody) return [];
-        const allRows = Array.from(tbody.querySelectorAll('tr[data-id]'));
         const payload = [];
 
-        allRows.forEach(tr => {
-            const emp = this.getEmpById(tr.dataset.id); if (!emp?.uiState) return;
+        this.employees.forEach(emp => {
+            if (!emp?.uiState) return;
             const s = emp.uiState;
 
             const shouldSaveLeave = s.isLeave === true;
             const shouldSaveAttendance = s.isSelected === true && !shouldSaveLeave;
             if (!shouldSaveLeave && !shouldSaveAttendance) return;
-
-            const lunchInput = tr.querySelector('.chk-lunch');
-            const otInput = tr.querySelector('.chk-ot');
-            if (lunchInput) s.lunch = lunchInput.checked;
-            if (otInput) s.ot = otInput.checked;
 
             if (shouldSaveLeave) {
                 payload.push({
@@ -821,7 +842,7 @@ class ChamCongManager {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.ChamCongManager = new ChamCongManager({
-        apiUrls: { employees: '/hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/', departments: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/', jobs: '/hrm/to-chuc-nhan-su/api/cong-viec/list/', employeeTypes: '/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/', saveChamCong: '/hrm/cham-cong/api/bang-cham-cong/list/' }
+        apiUrls: { employees: '/hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/', departments: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/', jobs: '/hrm/to-chuc-nhan-su/api/cong-viec/list/', saveChamCong: '/hrm/cham-cong/api/bang-cham-cong/list/' }
     });
     window.ChamCongManager.init();
 });
