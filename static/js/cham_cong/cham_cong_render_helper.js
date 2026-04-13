@@ -38,6 +38,10 @@ const ChamCongRenderHelper = (() => {
         const outPlaceholder = emp.cocancheckout === false ? scheduleOut : '';
         const workHoursDisplay = s.workHours?.formatted || '-';
         const workHoursClass = s.workHours?.displayClass || 'text-slate-400';
+        const shiftTypeOpts = `<select class="shift-type-select text-[11px] font-bold border rounded shadow-sm px-1.5 py-0.5 outline-none cursor-pointer transition-all hover:brightness-95 ${s.shiftType === 'SX' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-1 focus:ring-emerald-300' : 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-1 focus:ring-blue-300'}" title="Loại chấm công" style="height: 22px;">
+                                <option value="VP" ${s.shiftType === 'VP' ? 'selected' : ''}>VP</option>
+                                <option value="SX" ${s.shiftType === 'SX' ? 'selected' : ''}>SX</option>
+                            </select>`;
 
         return `<td class="p-1 border-r border-slate-200 text-center sticky left-0 bg-white z-20 shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
                 <input type="checkbox" ${isChecked} ${selectDisabled} class="row-cb row-checkbox accent-${accent}-600 w-3.5 h-3.5 mt-1.5 ${selectExtraClass}" title="Chọn để lưu chấm công"></td>
@@ -45,10 +49,11 @@ const ChamCongRenderHelper = (() => {
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0 flex-1">
                         <div class="font-bold text-slate-700 text-[13px] truncate max-w-[170px]">${emp.hovaten}</div>
-                        <div class="text-[11px] truncate flex items-center mt-0.5">
-                            <span class="bg-slate-100 px-1 rounded border border-slate-200 text-slate-600 text-[11px]">${emp.manhanvien || '?'}</span>
+                        <div class="text-[11px] truncate flex items-center mt-0.5 gap-1">
+                            ${shiftTypeOpts}
+                            <span class="bg-slate-100 px-1 rounded border border-slate-200 text-slate-600 text-[11px] leading-[18px]">${emp.manhanvien || '?'}</span>
                             <span class="text-slate-400 mx-0.5">|</span>
-                            <span class="font-mono text-blue-600 font-semibold text-[11px]" title="Ca làm việc">${scheduleIn} - ${scheduleOut}</span>
+                            <span class="font-mono text-blue-600 font-semibold text-[11px] leading-[18px]" title="Ca làm việc">${scheduleIn} - ${scheduleOut}</span>
                         </div>
                     </div>
                     <button type="button" class="leave-pill inline-flex items-center justify-center h-6 px-2.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-colors ${s.isLeave ? 'bg-rose-600 border-rose-600 text-white shadow-sm' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'}" title="Đánh dấu nghỉ" aria-pressed="${s.isLeave ? 'true' : 'false'}">
@@ -86,9 +91,10 @@ const ChamCongRenderHelper = (() => {
         if (!jobDef) return '';
         return parseParams(jobDef.danhsachthamso).map(p => {
             const val = jobItem.params[p.ma] !== undefined ? jobItem.params[p.ma] : (p.giatri_macdinh || '');
+            const baseWidth = Math.max(String(val).length + 1, 3);
             return `<div class="flex items-center bg-white border border-slate-200 rounded overflow-hidden h-[24px] shadow-sm hover:border-blue-300 transition-colors">
                 <div class="bg-slate-50 text-[9px] text-slate-500 font-bold px-1.5 h-full flex items-center border-r border-slate-100 uppercase tracking-wider select-none">${p.ma}</div>
-                <input type="text" class="param-val w-11 text-center text-xs font-semibold text-slate-700 bg-transparent border-none outline-none h-full focus:bg-blue-50 px-1" data-index="${index}" data-key="${p.ma}" value="${val}">
+                <input type="text" class="param-val text-center text-xs font-semibold text-slate-700 bg-transparent border-none outline-none h-full focus:bg-blue-50 px-1" style="min-width: 2.5rem; max-width: 15rem; width: ${baseWidth}ch;" data-index="${index}" data-key="${p.ma}" value="${val}" oninput="this.style.width = Math.max(this.value.length + 0.5, 3) + 'ch'">
             </div>`;
         }).join('');
     };
@@ -122,7 +128,7 @@ const ChamCongRenderHelper = (() => {
 
     const renderHybridCells = (emp, jobs) => {
         const s = emp.uiState;
-        const isMonthly = emp.phuongthuctinhluong === 'monthly';
+        const isVP = s.shiftType === 'VP';
         const activeJobs = s.jobs || [];
         
         const jobOpts = jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
@@ -139,8 +145,8 @@ const ChamCongRenderHelper = (() => {
                 ${deleteBtn}</div>`;
         }).join('');
 
-        const addButtonText = isMonthly ? '+ Thêm việc phát sinh' : '+ Thêm';
-        const addButtonClass = isMonthly ? 'text-orange-500 hover:text-orange-600 font-bold' : 'text-slate-400 hover:text-blue-500 font-medium';
+        const addButtonText = isVP ? '+ Thêm việc phát sinh' : '+ Thêm';
+        const addButtonClass = isVP ? 'text-orange-500 hover:text-orange-600 font-bold' : 'text-slate-400 hover:text-blue-500 font-medium';
 
         return `
         <td class="px-2 py-1 border-r border-slate-200"><div class="analysis-result flex flex-wrap gap-0.5 min-h-[16px] mt-1"><span class="text-[10px] text-slate-300">-</span></div></td>
