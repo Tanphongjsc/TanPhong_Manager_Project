@@ -659,7 +659,7 @@ class ChamCongManager {
             const response = await requestFn(this.apiUrls.saveChamCong, payload);
             if (response.success || response.id || Array.isArray(response)) {
                 AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
-                // await this.loadDailyData();
+                await this.loadDailyData();
             }
             else throw new Error(response.message || 'Lỗi không xác định');
         } catch (error) { console.error('Save Error:', error); AppUtils.Notify.error('Lưu thất bại: ' + error.message); }
