@@ -101,6 +101,12 @@ class ChamCongManager {
         const isMonthly = salaryMode === 'monthly';
         const baseJobs = this.getJobsFromApiRecord(record, false);
         const extraJobs = this.getJobsFromApiRecord(record, true);
+        
+        let initialShiftType = record.loaichamcong;
+        if (initialShiftType !== 'VP' && initialShiftType !== 'SX') {
+            initialShiftType = isMonthly ? 'VP' : 'SX';
+        }
+
         return {
             rowId,
             id: record.nhanvien_id,
@@ -128,7 +134,8 @@ class ChamCongManager {
                 otMinutes: Number.isFinite(otMinutes) && otMinutes > 0 ? String(parseInt(otMinutes, 10)) : '',
                 isSelected: defaultSelected,
                 isLeave: isLeaveRecord,
-                jobs: isMonthly ? extraJobs : baseJobs,
+                shiftType: initialShiftType,
+                jobs: initialShiftType === 'VP' ? extraJobs : baseJobs,
                 extraJobs,
                 note: record.ghichu || ''
             }
@@ -341,10 +348,14 @@ class ChamCongManager {
         if (!tr || !emp) return;
         const cls = target.classList;
 
-        if (cls.contains('row-cb')) { 
-            emp.uiState.isSelected = target.checked; 
-            this.updateMasterCheckbox(); 
+        if (cls.contains('row-cb')) {
+            emp.uiState.isSelected = target.checked;
+            this.updateMasterCheckbox();
             if (!emp.uiState.isLeave) tr.classList.toggle('unselected', !target.checked);
+        }
+        else if (cls.contains('shift-type-select')) {
+            emp.uiState.shiftType = target.value;
+            this.refreshRow(tr, emp);
         }
         else if (cls.contains('inp-in')) { emp.uiState.in = target.value; this.analyzeTime(tr); }
         else if (cls.contains('inp-out')) {
@@ -648,7 +659,7 @@ class ChamCongManager {
             const response = await requestFn(this.apiUrls.saveChamCong, payload);
             if (response.success || response.id || Array.isArray(response)) {
                 AppUtils.Notify.success('Lưu dữ liệu chấm công thành công!');
-                await this.loadDailyData();
+                // await this.loadDailyData();
             }
             else throw new Error(response.message || 'Lỗi không xác định');
         } catch (error) { console.error('Save Error:', error); AppUtils.Notify.error('Lưu thất bại: ' + error.message); }
@@ -686,6 +697,7 @@ class ChamCongManager {
                     sophutot: 0,
                     tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0,
                     loaichamcong: 'VP',
+                    phuongthuctinhluong: 'monthly',
                     congviec_id: null,
                     tencongviec: 'Nghỉ phép',
                     thamsotinhluong: {},
@@ -700,7 +712,7 @@ class ChamCongManager {
             const validJobs = isActive ? (s.jobs || []).filter(jobItem => jobItem.jobId) : [];
             const validExtraJobs = validJobs;
             const hasProductionJobs = validJobs.length > 0;
-            const isDaily = emp.phuongthuctinhluong === 'daily';
+            const isSXMode = s.shiftType === 'SX';
 
             const baseObj = {
                 nhanvien_id: emp.id, ngaylamviec: this.currentDate,
@@ -712,10 +724,10 @@ class ChamCongManager {
                 cophaingaynghi: false, id: this.mode === 'update' ? (emp.recordId || null) : null, codilam: isActive, calamviec_id: emp.calamviec_id,
                 khunggionghitrua: emp.khunggionghitrua || {}, khunggiolamviec: this.buildKhungGioPayload(emp.khunggiolamviec), cocancheckout: emp.cocancheckout === true,
                 sogiolamthucte: workHours?.actualMinutes || 0, sophutot: isActive && s.otMinutes ? parseInt(s.otMinutes, 10) || 0 : 0, tongthoigianlamvieccuaca: emp.tongthoigianlamvieccuaca || 0,
-                phuongthuctinhluong: emp.phuongthuctinhluong
+                phuongthuctinhluong: isSXMode ? 'daily' : 'monthly'
             };
 
-            if (isDaily) {
+            if (isSXMode) {
                 if (hasProductionJobs) {
                     validJobs.forEach(jobItem => {
                         const jobDef = this.jobs.find(j => j.id == jobItem.jobId);

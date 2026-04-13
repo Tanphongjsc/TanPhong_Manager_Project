@@ -83,7 +83,7 @@ def calculate_bang_cham_cong_objects(data_list):
             extra_data_list.append(item)
         else:
             base_data_list.append(item)
-            
+
     # Tính trước tiền lương gốc theo danh sách đầu vào, dùng lại cho từng nhân viên.
     ket_qua_tien_base = tinh_luong_cham_cong(base_data_list)
     ket_qua_tien_extra = tinh_luong_cham_cong(extra_data_list)
@@ -778,7 +778,7 @@ def api_bang_cham_cong_list(request):
             #     }, status=400)
 
             objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            # Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
+            Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
 
             return JsonResponse({
                 'success': True,
