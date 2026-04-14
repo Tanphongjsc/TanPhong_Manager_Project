@@ -20,9 +20,9 @@ class Bangchamcong(models.Model):
     loaichamcong = models.CharField(db_column='LoaiChamCong', blank=True, null=True)  # Field name made lowercase.
     tencongviec = models.CharField(db_column='TenCongViec', blank=True, null=True)  # Field name made lowercase.
     cophaingaynghi = models.BooleanField(db_column='CoPhaiNgayNghi', blank=True, null=True)  # Field name made lowercase.
-    thamsotinhluong = models.TextField(db_column='ThamSoTinhLuong', blank=True, null=True)  # Field name made lowercase. This field type is a guess.
+    thamsotinhluong = models.TextField(db_column='ThamSoTinhLuong', blank=True, null=True)
     thanhtien = models.FloatField(db_column='ThanhTien', blank=True, null=True)  # Field name made lowercase.
-    thanhtienthanhphan = models.TextField(db_column='ThanhTienThanhPhan', blank=True, null=True)  # Field name made lowercase. This field type is a guess.
+    thanhtienthanhphan = models.TextField(db_column='ThanhTienThanhPhan', blank=True, null=True)
     ghichu = models.TextField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
     congviec = models.ForeignKey('Congviec', models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
