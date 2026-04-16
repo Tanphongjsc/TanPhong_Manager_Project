@@ -37014,3 +37014,12 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/bao_cao.html
 ERROR 2026-04-01 11:11:48,783 basehttp 15260 11936 "GET /hrm/cham-cong/bao-cao/ HTTP/1.1" 500 98902
+WARNING 2026-04-13 15:06:38,050 log 6044 6900 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-04-13 15:06:38,052 basehttp 6044 6900 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-04-13 15:08:24,701 log 6044 6900 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-04-13 15:08:24,701 basehttp 6044 6900 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-04-14 16:47:35,061 tasks 4344 21512 LLV task skipped: lock not acquired. period_key=2026-05
+WARNING 2026-04-14 16:51:32,898 tasks 19632 16460 LLV task skipped: lock not acquired. period_key=2026-05
+WARNING 2026-04-14 16:54:04,651 tasks 18944 22076 LLV task skipped: lock not acquired. period_key=2026-05
+WARNING 2026-04-15 10:24:58,639 log 20968 24436 Not Found: /favicon.ico
+WARNING 2026-04-15 10:24:58,640 basehttp 20968 24436 "GET /favicon.ico HTTP/1.1" 404 3512
