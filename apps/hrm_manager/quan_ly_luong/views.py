@@ -96,7 +96,7 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem'), 0.0, output_field=FloatField()) / 60.0,
         tong_cong_lamviec=Coalesce(Sum('conglamviec'), 0.0, output_field=FloatField()),
         tong_cong_vp_thucte=(Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP')), 0.0, output_field=FloatField())),
-        tong_tien_sx=Coalesce(Sum('thanhtien', filter=Q(loaichamcong='SX')), 0.0, output_field=FloatField()),
+        tong_tien_sx=Coalesce(Sum('thanhtien'), 0.0, output_field=FloatField()),
     )
     bcc_dict = {item['nhanvien']: item for item in bcc_data}
     if not bcc_dict:
@@ -144,18 +144,13 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             ma_qt = rule['maquytac']
             src = rule['nguondulieu'].strip().lower()
             
-            # Nếu đã có giá trị từ chấm công hoặc thiết lập cố định thì không ghi đè, ưu tiên nguồn đó hơn là rule
-            if ma_qt in context_params:
-                continue
-
+            # Nếu quy tắc đã tồn tại trong context_params (do trùng mã quy tắc) và nguồn dữ liệu là system nhưng không có thiết lập số liệu cố định → bỏ qua để tránh ghi đè bằng None
+            if ma_qt in context_params and nv_setup.get(rule['phantuluong']) is None:
+                continue        
+                
             if src == 'system':
-                if ma_qt == 'LUONG_CO_BAN':  
-                    luong_co_ban_thiet_lap = float(nv_setup.get(rule['phantuluong'], 0) or 0)
-
-                    context_params[ma_qt] = round(
-                        ((luong_co_ban_thiet_lap / cong_chuan_thang) * nv_bcc.get('tong_cong_vp_thucte', 0)) + nv_bcc.get('tong_tien_sx', 0),
-                        2
-                    )
+                if ma_qt == 'LUONG_KHOAN':
+                    continue
                 else:
                     context_params[ma_qt] = nv_setup.get(rule['phantuluong'], 0.0)
             elif src == 'manual':
@@ -163,6 +158,13 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             elif src == 'formula':
                 # Gán chuỗi công thức, sẽ được tính động khi cần
                 context_params[ma_qt] = rule['bieuthuctinhtoan']
+
+        # C. Tính lương khoán nếu có quy tắc, ưu tiên tính sớm để có dữ liệu cho các công thức khác nếu cần
+        luong_co_ban_thiet_lap = context_params.get("LUONG_CO_BAN")
+        context_params["LUONG_KHOAN"] = round(
+            ((luong_co_ban_thiet_lap / context_params.get('CONG_CHUAN_THANG', 1)) * nv_bcc.get('tong_cong_vp_thucte', 0)) + nv_bcc.get('tong_tien_sx', 0),
+            2
+        )
 
         # Đóng gói dữ liệu cho từng nhân viên
         data_groups_map[str(nv_id)] = [{
