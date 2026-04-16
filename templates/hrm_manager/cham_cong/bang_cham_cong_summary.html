@@ -110,7 +110,7 @@
             <div id="tab-chua-cham" class="tab-pane hidden h-full flex flex-col">
                 {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-unchecked" class="w-4 h-4 rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Trạng thái</th>' %}
                     {% include "components/table_wrapper.html" with table_id="unchecked-table" tbody_id="unchecked-table-body" headers_html=headers show_checkbox=False %}
-                {% endwith %}`
+                {% endwith %}
                 {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-unchecked" %}
             </div>
 

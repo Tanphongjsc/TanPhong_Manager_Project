@@ -32,6 +32,141 @@ def get_lam_them_tabs():
         {'label': 'Tổng hợp Làm thêm', 'url_name': 'tong_hop_lam_them', 'url': reverse('hrm:cham_cong:tong_hop_lam_them')},
     ]
 
+
+def _parse_salary_config(raw_value):
+    if isinstance(raw_value, dict):
+        return raw_value
+    if isinstance(raw_value, str):
+        try:
+            parsed = loads(raw_value)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _normalize_job_id(job_id):
+    if job_id in (None, ''):
+        return None
+    try:
+        return int(job_id)
+    except (TypeError, ValueError):
+        return job_id
+
+
+def _build_payload_rows_from_saved_record(record):
+    ngay_lam_viec = record.get('ngaylamviec')
+    if isinstance(ngay_lam_viec, dt.date):
+        ngay_lam_viec = ngay_lam_viec.isoformat()
+
+    base_item = {
+        'id': record.get('id'),
+        'nhanvien_id': record.get('nhanvien_id'),
+        'ngaylamviec': ngay_lam_viec,
+        'thoigianchamcongvao': record.get('thoigianchamcongvao'),
+        'thoigianchamcongra': record.get('thoigianchamcongra'),
+        'cotinhlamthem': record.get('cotinhlamthem', False),
+        'coantrua': record.get('coantrua', False),
+        'loaicalamviec': record.get('loaicalamviec', 'CO_DINH'),
+        'cophaingaynghi': record.get('cophaingaynghi', False),
+        'codilam': record.get('codilam', False),
+        'calamviec_id': record.get('calamviec_id'),
+        'khunggionghitrua': list(record.get('khunggionghitrua') or []),
+        'khunggiolamviec': dict(record.get('khunggiolamviec') or {}),
+        'cocancheckout': record.get('cocancheckout', True),
+        'sophutot': record.get('thoigianlamthem') or record.get('sophutot') or 0,
+        'tongthoigianlamvieccuaca': record.get('tongthoigianlamvieccuaca') or 0,
+        'phuongthuctinhluong': record.get('phuongthuctinhluong') or 'daily',
+        'ghichu': record.get('ghichu') or '',
+    }
+
+    if base_item['codilam'] is False:
+        return [{
+            **base_item,
+            'loaichamcong': record.get('loaichamcong') or 'VP',
+            'congviec_id': None,
+            'tencongviec': record.get('tencongviec') or 'Nghỉ phép',
+            'thamsotinhluong': {},
+        }]
+
+    salary_cfg = _parse_salary_config(record.get('thamsotinhluong'))
+    details = salary_cfg.get('details') if isinstance(salary_cfg.get('details'), list) else []
+    details = [
+        detail for detail in details
+        if isinstance(detail, dict) and detail.get('congviec_id') is not None
+    ]
+
+    phuong_thuc = str(base_item['phuongthuctinhluong']).lower()
+    rows = []
+
+    if phuong_thuc == 'monthly':
+        rows.append({
+            **base_item,
+            'loaichamcong': 'VP',
+            'congviec_id': None,
+            'tencongviec': 'Hành chính',
+            'thamsotinhluong': {},
+        })
+
+    for detail in details:
+        rows.append({
+            **base_item,
+            'loaichamcong': 'SX' if phuong_thuc == 'monthly' else (record.get('loaichamcong') or 'SX'),
+            'pay_role': detail.get('pay_role'),
+            'congviec_id': detail.get('congviec_id'),
+            'tencongviec': detail.get('tencongviec') or '',
+            'thamsotinhluong': detail.get('thamsotinhluong') or {},
+        })
+
+    if rows:
+        return rows
+
+    return [{
+        **base_item,
+        'loaichamcong': record.get('loaichamcong') or ('VP' if phuong_thuc == 'monthly' else 'SX'),
+        'congviec_id': None if phuong_thuc == 'monthly' else record.get('congviec_id'),
+        'tencongviec': 'Hành chính' if phuong_thuc == 'monthly' else (record.get('tencongviec') or ''),
+        'thamsotinhluong': {},
+    }]
+
+
+def _expand_update_payload_for_team_jobs(data_list, ngay_lam_viec_set):
+    team_job_ids = {
+        normalized_id
+        for item in data_list
+        for normalized_id in [_normalize_job_id(item.get('congviec_id'))]
+        if normalized_id is not None and _parse_salary_config(item.get('thamsotinhluong')).get('loaicv') == 'nhom'
+    }
+    if not team_job_ids or not ngay_lam_viec_set:
+        return data_list
+
+    expanded_payload = list(data_list)
+    existing_record_ids = {item.get('id') for item in data_list if item.get('id') is not None}
+
+    for ngay_lam_viec in ngay_lam_viec_set:
+        saved_records = build_cham_cong_data_for_update(ngay_lam_viec)
+        for record in saved_records:
+            record_id = record.get('id')
+            if record_id in existing_record_ids:
+                continue
+
+            salary_cfg = _parse_salary_config(record.get('thamsotinhluong'))
+            details = salary_cfg.get('details') if isinstance(salary_cfg.get('details'), list) else []
+            has_related_team_job = any(
+                isinstance(detail, dict)
+                and _normalize_job_id(detail.get('congviec_id')) in team_job_ids
+                and _parse_salary_config(detail.get('thamsotinhluong')).get('loaicv') == 'nhom'
+                for detail in details
+            )
+            if not has_related_team_job:
+                continue
+
+            expanded_payload.extend(_build_payload_rows_from_saved_record(record))
+            if record_id is not None:
+                existing_record_ids.add(record_id)
+
+    return expanded_payload
+
 def tinh_luong_cham_cong(data_list):
     """
     Xử lý dữ liệu & Tính lương chấm công dựa trên danh sách data đầu vào.
@@ -76,17 +211,8 @@ def calculate_bang_cham_cong_objects(data_list):
     Dùng chung cho cả thêm mới và cập nhật chấm công.
     Trả về danh sách instance Bangchamcong đã tính toán đầy đủ số liệu.
     """
-    base_data_list = []
-    extra_data_list = []
-    for item in data_list:
-        if item.get('pay_role') == 'extra':
-            extra_data_list.append(item)
-        else:
-            base_data_list.append(item)
-
-    # Tính trước tiền lương gốc theo danh sách đầu vào, dùng lại cho từng nhân viên.
-    ket_qua_tien_base = tinh_luong_cham_cong(base_data_list)
-    ket_qua_tien_extra = tinh_luong_cham_cong(extra_data_list)
+    # Tính luân tiền lương dựa trên toàn bộ data gửi lên
+    ket_qua_tien = tinh_luong_cham_cong(data_list)
     objs_bang_cham_cong = []
 
     # Gom dữ liệu theo nhân viên để hợp nhất các công việc của cùng 1 người trong ngày.
@@ -95,28 +221,18 @@ def calculate_bang_cham_cong_objects(data_list):
         # Key gom nhóm là nhân viên, để mỗi nhân viên tạo đúng 1 dòng kết quả cuối.
         nv_id = item['nhanvien_id']
         if nv_id not in grouped_data:
-            grouped_data[nv_id] = {'main_item': None, 'sub_items': [], 'extra_items': []}
-        
-        if item.get('pay_role') == 'extra':
-            grouped_data[nv_id]['extra_items'].append(item)
-        else:
-            if grouped_data[nv_id]['main_item'] is None:
-                grouped_data[nv_id]['main_item'] = item
-            grouped_data[nv_id]['sub_items'].append(item)
+            grouped_data[nv_id] = []
+        grouped_data[nv_id].append(item)
 
-    for nv_id, group in grouped_data.items():
-        item = group['main_item']
-        if not item:
-            item = group['extra_items'][0] if group.get('extra_items') else None
-        if not item: continue
+    for nv_id, items in grouped_data.items():
+        if not items: continue
+        item = items[0]
         
-        sub_items = group['sub_items']
-        extra_items = group['extra_items']
         phuongthuctinhluong = item.get('phuongthuctinhluong', 'daily')
 
         # Nhiều công việc trong ngày sẽ gộp tên để hiển thị 1 dòng trong bảng chấm công.
-        danh_sach_cong_viec = sub_items if phuongthuctinhluong == 'daily' else extra_items
-        combined_ten_cv = ", ".join([sub.get('tencongviec', '') for sub in danh_sach_cong_viec if sub.get('tencongviec')])
+        ten_cv_list = [sub.get('tencongviec', '') for sub in items if sub.get('tencongviec')]
+        combined_ten_cv = ", ".join(list(dict.fromkeys(ten_cv_list)))
 
         # Sao chép khung giờ để tránh mutate dữ liệu gốc từ payload khi cần điều chỉnh ở ca linh động.
         khung_gio = item.get("khunggiolamviec", {}).copy()
@@ -271,16 +387,16 @@ def calculate_bang_cham_cong_objects(data_list):
                 so_cong_thuc_te = 0
 
             if phuongthuctinhluong == 'daily':
-                tien_base = ket_qua_tien_base.get(item['nhanvien_id'], 0)
+                tien_base = ket_qua_tien.get(item['nhanvien_id'], 0)
                 tien_extra = 0
                 if tg_lam_them > 0:
                     don_gia_phut = tien_base / tg_lam_viec_thuc if tg_lam_viec_thuc > 0 else 0
                     tien_ot = don_gia_phut * tg_lam_them * 0.5
             elif phuongthuctinhluong == 'monthly':
                 tien_base = 0
-                tien_extra = ket_qua_tien_extra.get(item['nhanvien_id'], 0)
+                tien_extra = ket_qua_tien.get(item['nhanvien_id'], 0)
                 tien_ot = 0 # Không tính OT cho VP
-            
+
             tong_tien_cuoi_cung = tien_base + tien_ot + tien_extra
             
             if tg_lam_viec == 0 and tg_lam_them == 0 and tien_extra == 0:
@@ -292,22 +408,24 @@ def calculate_bang_cham_cong_objects(data_list):
                 "tien_extra": tien_extra
             }
 
-            # Build Tham số tính lương
-            chi_tiet_luong = extra_items if phuongthuctinhluong == 'monthly' else sub_items
+            # Build Tham số tính lương (Chỉ lấy các công việc được cấu hình pay_role='extra' hoặc có congviec_id cụ thể, để không bị lưu dư thừa công việc hành chính VP)
+            valid_details = [
+                {
+                    'congviec_id': sub.get('congviec_id'),
+                    'tencongviec': sub.get('tencongviec'),
+                    'thamsotinhluong': sub.get('thamsotinhluong'),
+                    'pay_role': sub.get('pay_role')
+                } for sub in items if sub.get('congviec_id') is not None
+            ]
+            
             final_thamsotinhluong = {
-                'mode': 'multi_task' if len(chi_tiet_luong) > 1 else 'single_task',
-                'details': [
-                    {
-                        'congviec_id': sub.get('congviec_id'),
-                        'tencongviec': sub.get('tencongviec'),
-                        'thamsotinhluong': sub.get('thamsotinhluong'),
-                        'pay_role': sub.get('pay_role')
-                    } for sub in chi_tiet_luong
-                ]
+                'mode': 'multi_task' if len(valid_details) > 1 else 'single_task',
+                'details': valid_details
             }
 
         # Tạo object Bangchamcong để bulk_create ở tầng API.
         objs_bang_cham_cong.append(Bangchamcong(
+            id = item.get('id') or None,
             created_at = timezone.now(),
             thoigianchamcongvao = tg_vao,
             thoigianchamcongra = tg_ra,
@@ -325,9 +443,9 @@ def calculate_bang_cham_cong_objects(data_list):
             loaichamcong = item.get('loaichamcong', ''),
             tencongviec = combined_ten_cv if combined_ten_cv else item.get('tencongviec', ''),
             cophaingaynghi = item.get('cophaingaynghi', False),
-            thamsotinhluong = dumps(final_thamsotinhluong) if isinstance(final_thamsotinhluong, dict) else final_thamsotinhluong,
+            thamsotinhluong = dumps(final_thamsotinhluong if isinstance(final_thamsotinhluong, dict) else _parse_salary_config(final_thamsotinhluong)),
             thanhtien = tong_tien_cuoi_cung if codilam == True else 0,
-            thanhtienthanhphan = dumps(thanhtien_thanhphan) if isinstance(thanhtien_thanhphan, dict) else thanhtien_thanhphan,
+            thanhtienthanhphan = dumps(thanhtien_thanhphan if isinstance(thanhtien_thanhphan, dict) else {}),
             ghichu = item.get('ghichu', ''),
             congviec_id = item.get('congviec_id'),
             nhanvien_id = item['nhanvien_id'],
@@ -759,14 +877,12 @@ def api_bang_cham_cong_list(request):
             return JsonResponse({'success': False, 'message': 'Dữ liệu đầu vào không hợp lệ'}, status=400)
 
         ngay_lam_viec_set = set()
-        nhan_vien_set = set()
         for item in data_list:
             ngay_raw = item.get('ngaylamviec')
             nhanvien_id = item.get('nhanvien_id')
             if not ngay_raw or not nhanvien_id:
                 return JsonResponse({'success': False, 'message': 'Thiếu thông tin ngày làm việc hoặc nhân viên'}, status=400)
             ngay_lam_viec_set.add(dt.date.fromisoformat(ngay_raw))
-            nhan_vien_set.add(nhanvien_id)
 
         if request.method == 'POST':
             # hom_nay = timezone.localdate()
@@ -787,15 +903,27 @@ def api_bang_cham_cong_list(request):
             }, status=201)
 
         if request.method == 'PUT':
-            objs_bang_cham_cong = calculate_bang_cham_cong_objects(data_list)
-            
-            Bangchamcong.objects.filter(nhanvien_id__in=nhan_vien_set, ngaylamviec__in=ngay_lam_viec_set).delete()
-            Bangchamcong.objects.bulk_create(objs_bang_cham_cong)
+            update_data_list = _expand_update_payload_for_team_jobs(data_list, ngay_lam_viec_set)
+            objs_bang_cham_cong = calculate_bang_cham_cong_objects(update_data_list)
+
+            update_objs = [obj for obj in objs_bang_cham_cong if obj.id is not None]
+            create_objs = [obj for obj in objs_bang_cham_cong if obj.id is None]
+
+            if update_objs:
+                now = timezone.now()
+                for obj in update_objs:
+                    obj.updated_at = now
+                    obj.save()
+
+            if create_objs:
+                Bangchamcong.objects.bulk_create(create_objs)
+
+            result_objs = update_objs + create_objs
 
             return JsonResponse({
                 'success': True,
                 'message': 'Cập nhật chấm công thành công',
-                'data': [model_to_dict(obj) for obj in objs_bang_cham_cong],
+                'data': [model_to_dict(obj) for obj in result_objs],
             }, status=200)
 
         return JsonResponse({'success': False, 'message': 'Phương thức không được phép'}, status=405)
