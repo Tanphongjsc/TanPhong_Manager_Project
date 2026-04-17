@@ -196,9 +196,9 @@ class KyLuongManager extends BaseCRUDManager {
             monthGridColumns: 4,
             placeholder: '-- Chọn tháng --',
             displayFormatter: (year, month) => `${String(month).padStart(2, '0')}/${year}`,
-            selectedClass: 'bg-green-500 text-white font-bold',
-            currentClass: 'bg-green-100 text-green-700 font-medium ring-1 ring-green-300',
-            defaultClass: 'hover:bg-green-50 hover:text-green-600 text-slate-700',
+            selectedClass: 'bg-blue-500 text-white font-bold',
+            currentClass: 'bg-blue-100 text-blue-700 font-medium ring-1 ring-blue-300',
+            defaultClass: 'hover:bg-blue-50 hover:text-blue-600 text-slate-700',
             canOpen: () => this.state.currentMode !== 'edit',
             onOpenDenied: () => {
                 AppUtils.Notify.warning('Không thể thay đổi tháng khi chỉnh sửa');
@@ -231,9 +231,9 @@ class KyLuongManager extends BaseCRUDManager {
             this.customDatePickers[id] = new pickerLib({
                 inputId: id,
                 placeholder: 'Chọn ngày',
-                selectedDayClass: 'bg-green-500 text-white border-green-500',
-                todayDayClass: 'border-green-300 text-green-700',
-                normalDayClass: 'text-slate-700 hover:bg-green-50 hover:border-green-200'
+                selectedDayClass: 'bg-blue-500 text-white border-blue-500',
+                todayDayClass: 'border-blue-300 text-blue-700',
+                normalDayClass: 'text-slate-700 hover:bg-blue-50 hover:border-blue-200'
             });
         });
 

@@ -8,10 +8,8 @@
     {# Breadcrumb #}
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="bg-white shadow-sm p-1 sm:p-4 rounded-lg h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-4">Chế độ lương</h1>
+    <div class="bg-white shadow-sm p-2 h-full flex flex-col">
 
-        <div class="flex-1 flex flex-col mt-2 relative overflow-x-auto">
             {# TOOLBAR #}
             {% url 'hrm:quan_ly_luong:che_do_luong_create' as create_url_val %}
             {% include "components/toolbar.html" with search_id="search-che-do-luong" search_placeholder="Tìm kiếm theo tên & mã chế độ lương" create_text="Thêm chế độ lương" create_url=create_url_val|default:'#' filter_form_id="filter-che-do-luong" %}
@@ -26,7 +24,6 @@
 
             {# BULK ACTIONS #}
             {% include "components/bulk_actions.html" with show_delete=True id="bulk-actions-che-do-luong" %}
-        </div>
     </div>
 </div>
 {% endblock %}

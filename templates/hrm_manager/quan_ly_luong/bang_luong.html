@@ -9,7 +9,6 @@
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
     <div class="bg-white shadow-sm p-2 h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">Bảng lương</h1>
 
         {# Toolbar với filters #}
         {% include "components/toolbar.html" with search_id="search-bang-luong" search_placeholder="Tìm theo tên, mã bảng lương..." create_text="Thêm bảng lương" create_onclick="window.BangLuongManager.openSidebar('create')" filter_form_id="filter-form-bang-luong" filter_template="hrm_manager/quan_ly_luong/partials/bang_luong_filters.html" %}

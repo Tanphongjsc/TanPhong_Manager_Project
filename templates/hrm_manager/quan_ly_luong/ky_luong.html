@@ -9,7 +9,6 @@
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
     <div class="bg-white shadow-sm p-2 h-full flex flex-col">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">Kỳ lương</h1>
 
         {# Toolbar #}
         {% include "components/toolbar.html" with search_id="search-ky-luong" search_placeholder="Tìm theo tháng (VD: 01/2026)..." create_text="Thêm kỳ lương" create_onclick="window.KyLuongManager.openSidebar('create')" filter_form_id="filter-form-ky-luong" %}

@@ -363,11 +363,11 @@ class CheDoLuongFormController extends BaseFormManager {
                 <p class="text-sm font-medium text-slate-700 mb-2">Chọn ngày bắt đầu áp dụng chế độ mới:</p>
                 <div class="flex gap-4">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="confirm_effective_date" value="today" checked class="text-green-600 focus:ring-green-500">
+                        <input type="radio" name="confirm_effective_date" value="today" checked class="text-blue-600 focus:ring-blue-500">
                         <span class="text-sm">Hôm nay (${formatDate(today)})</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="confirm_effective_date" value="tomorrow" class="text-green-600 focus:ring-green-500">
+                        <input type="radio" name="confirm_effective_date" value="tomorrow" class="text-blue-600 focus:ring-blue-500">
                         <span class="text-sm">Ngày mai (${formatDate(tomorrow)})</span>
                     </label>
                 </div>
@@ -474,7 +474,7 @@ class CheDoLuongFormController extends BaseFormManager {
                         <button type="button" id="conflict-cancel-btn" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                             ${cancelText}
                         </button>
-                        <button type="button" id="conflict-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        <button type="button" id="conflict-confirm-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                             ${confirmText}
                         </button>
                     </div>
