@@ -1,6 +1,6 @@
 /**
  * ChamCongContextMenu - Context Menu (Chuột phải) cho Bảng Chấm Công
- * Tối ưu: Tận dụng AppUtils, gọn gàng DOM và events
+ * Optimized: EventManager cho scroll, gọn hóa DOM & events
  */
 class ChamCongContextMenu {
     constructor(manager) {
@@ -8,7 +8,6 @@ class ChamCongContextMenu {
         this.manager = manager;
         this.menu = null; this.overlay = null; this.activeRow = null;
         this.eventManager = AppUtils.EventManager.create();
-        this._handleScroll = this.hide.bind(this);
         this.init();
     }
 
@@ -17,22 +16,28 @@ class ChamCongContextMenu {
     createDOM() {
         this.overlay = document.createElement('div');
         this.overlay.className = 'fixed inset-0 z-[49] hidden';
-        
+
+        const fillSection = dir => {
+            const isUp = dir === 'up';
+            const color = isUp ? 'blue' : 'orange';
+            return `
+            <div class="p-2 hover:bg-slate-50 transition-colors flex items-center gap-2 group ${!isUp ? 'border-t border-slate-100' : ''} cursor-pointer" id="ctx-btn-${dir}">
+                <div class="w-8 h-8 rounded bg-${color}-50 text-${color}-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-arrow-${dir}"></i></div>
+                <div class="flex-1">
+                    <div class="text-slate-700 font-medium text-xs mb-1">Điền ${isUp ? 'lên trên' : 'xuống dưới'}</div>
+                    <div class="flex gap-1" onclick="event.stopPropagation()">
+                        <input type="number" min="1" value="1" id="ctx-fill-${dir}-val" class="w-full text-xs border border-slate-300 rounded px-1 py-0.5 focus:border-${color}-500 outline-none">
+                        <button id="btn-fill-${dir}" class="px-2 py-0.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded text-xs">OK</button>
+                    </div>
+                </div>
+            </div>`;
+        };
+
         this.menu = document.createElement('div');
         this.menu.className = 'fixed z-[50] bg-white rounded-lg shadow-xl border border-slate-200 w-64 hidden py-1 text-sm font-sans animation-fade-in';
         this.menu.innerHTML = `
             <div class="px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-lg"><span class="text-xs font-bold text-slate-500 uppercase">Thao tác nhanh</span></div>
-            ${['up', 'down'].map(dir => `
-            <div class="p-2 hover:bg-slate-50 transition-colors flex items-center gap-2 group ${dir === 'down' ? 'border-t border-slate-100' : ''} cursor-pointer" id="ctx-btn-${dir}">
-                <div class="w-8 h-8 rounded ${dir === 'up' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'} flex items-center justify-center shrink-0"><i class="fa-solid fa-arrow-${dir}"></i></div>
-                <div class="flex-1">
-                    <div class="text-slate-700 font-medium text-xs mb-1">Điền ${dir === 'up' ? 'lên trên' : 'xuống dưới'}</div>
-                    <div class="flex gap-1" onclick="event.stopPropagation()">
-                        <input type="number" min="1" value="1" id="ctx-fill-${dir}-val" class="w-full text-xs border border-slate-300 rounded px-1 py-0.5 focus:border-${dir === 'up' ? 'blue' : 'orange'}-500 outline-none">
-                        <button id="btn-fill-${dir}" class="px-2 py-0.5 ${dir === 'up' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'} text-white rounded text-xs">OK</button>
-                    </div>
-                </div>
-            </div>`).join('')}`;
+            ${fillSection('up')}${fillSection('down')}`;
 
         document.body.appendChild(this.overlay);
         document.body.appendChild(this.menu);
@@ -55,16 +60,16 @@ class ChamCongContextMenu {
                 e.preventDefault(); this.show(e.pageX, e.pageY, row);
             }
         });
-        document.addEventListener('scroll', this._handleScroll, true);
+        this.eventManager.add(document, 'scroll', () => this.hide(), true);
     }
 
     show(x, y, row) {
         this.activeRow = row;
-        this.activeRow.classList.add('bg-blue-100');
+        row.classList.add('bg-blue-100');
         this.overlay.classList.remove('hidden');
         this.menu.classList.remove('hidden');
-        
-        const winW = window.innerWidth, winH = window.innerHeight, rect = this.menu.getBoundingClientRect();
+        const { innerWidth: winW, innerHeight: winH } = window;
+        const rect = this.menu.getBoundingClientRect();
         this.menu.style.left = `${x + rect.width > winW ? x - rect.width : x}px`;
         this.menu.style.top = `${y + rect.height > winH ? y - rect.height : y}px`;
         setTimeout(() => this.menu.querySelector('#ctx-fill-down-val')?.focus(), 50);
@@ -85,16 +90,18 @@ class ChamCongContextMenu {
         if (!sourceData) { AppUtils.Notify.error("Không thể đọc dữ liệu dòng hiện tại"); return; }
 
         const allRows = Array.from(this.activeRow.parentElement.children);
-        const currentIndex = allRows.indexOf(this.activeRow);
-        const targetRows = direction === 'up' ? allRows.slice(Math.max(0, currentIndex - count), currentIndex) : allRows.slice(currentIndex + 1, currentIndex + 1 + count);
+        const idx = allRows.indexOf(this.activeRow);
+        const targetRows = direction === 'up'
+            ? allRows.slice(Math.max(0, idx - count), idx)
+            : allRows.slice(idx + 1, idx + 1 + count);
 
-        let successCount = 0;
-        targetRows.forEach(targetRow => {
-            const checkbox = targetRow.querySelector('.row-cb');
-            if (checkbox?.checked) { this.applyDataToRow(targetRow, sourceData); successCount++; }
+        let ok = 0;
+        targetRows.forEach(tr => {
+            const cb = tr.querySelector('.row-cb');
+            if (cb?.checked) { this.applyDataToRow(tr, sourceData); ok++; }
         });
 
-        successCount > 0 ? AppUtils.Notify.success(`Đã sao chép dữ liệu cho ${successCount} dòng!`) : AppUtils.Notify.info("Không có dòng nào được chọn (checked) để điền.");
+        ok > 0 ? AppUtils.Notify.success(`Đã sao chép dữ liệu cho ${ok} dòng!`) : AppUtils.Notify.info("Không có dòng nào được chọn (checked) để điền.");
         this.hide();
     }
 
@@ -108,14 +115,10 @@ class ChamCongContextMenu {
         const emp = this.manager.getEmpById(parseInt(tr.dataset.id));
         if (!emp) return;
 
-        const copiedOtMinutes = data.ot ? (data.otMinutes || '') : '';
         emp.uiState = {
             ...emp.uiState,
-            in: data.in,
-            out: data.out,
-            lunch: data.lunch,
-            ot: data.ot,
-            otMinutes: copiedOtMinutes,
+            in: data.in, out: data.out, lunch: data.lunch,
+            ot: data.ot, otMinutes: data.ot ? (data.otMinutes || '') : '',
             jobs: JSON.parse(JSON.stringify(data.jobs || []))
         };
         if (!emp.uiState.jobs.length) emp.uiState.jobs.push({ jobId: '', params: {} });
@@ -127,7 +130,6 @@ class ChamCongContextMenu {
 
     destroy() {
         this.menu?.remove(); this.overlay?.remove();
-        document.removeEventListener('scroll', this._handleScroll, true);
         this.eventManager.removeAll();
         this.manager = null; this.activeRow = null;
     }
