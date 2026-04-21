@@ -4,8 +4,8 @@
  */
 class QuyTacManager {
     static FIXED_ELEMENT_CODE = 'THUC_LINH';
-    static DEFAULT_SYSTEM_SOURCE = 'fixed_setup';
-    static DEFAULT_SYSTEM_SOURCE_LUONG_THUC_TE = 'salary_base_prorated';
+    static DEFAULT_SYSTEM_SOURCE = 'thietlapsolieucodinh.giatrimacdinh';
+    static DEFAULT_SYSTEM_SOURCE_LUONG_THUC_TE = 'bangluong.luong_thuc_te_phan_bo';
 
     constructor(options = {}) {
         this.options = {
@@ -34,19 +34,19 @@ class QuyTacManager {
         ];
 
         this.systemNguonDuLieuOptions = [
-            { value: 'fixed_setup', label: 'Thiết lập số liệu cố định' },
-            { value: 'salary_base_prorated', label: 'Lương thực tế phân bổ công VP + SX' },
-            { value: 'attendance.work_day', label: 'Bảng công - Tổng công làm việc' },
-            { value: 'attendance.work_hour', label: 'Bảng công - Tổng giờ làm việc' },
-            { value: 'attendance.overtime_hour', label: 'Bảng công - Tổng giờ làm thêm' },
-            { value: 'attendance.meal_count', label: 'Bảng công - Số suất ăn' },
-            { value: 'attendance.late_minutes', label: 'Bảng công - Tổng phút đi muộn' },
-            { value: 'attendance.early_leave_minutes', label: 'Bảng công - Tổng phút về sớm' },
-            { value: 'attendance.absent_day', label: 'Bảng công - Số ngày vắng' },
-            { value: 'attendance.vp_day', label: 'Bảng công - Công VP thực tế' },
-            { value: 'attendance.sx_amount', label: 'Bảng công - Thành tiền sản xuất' },
-            { value: 'schedule.standard_day', label: 'Lịch thực tế - Công chuẩn tháng' },
-            { value: 'schedule.standard_hour', label: 'Lịch thực tế - Giờ chuẩn tháng' }
+            { value: 'thietlapsolieucodinh.giatrimacdinh', label: 'Thiết lập số liệu cố định' },
+            { value: 'bangluong.luong_thuc_te_phan_bo', label: 'Lương thực tế phân bổ công VP + SX' },
+            { value: 'bangchamcong.tong_cong_lamviec', label: 'Bảng công - Tổng công làm việc' },
+            { value: 'bangchamcong.tong_thoigian_lamviec', label: 'Bảng công - Tổng giờ làm việc' },
+            { value: 'bangchamcong.tong_thoigian_lamthem', label: 'Bảng công - Tổng giờ làm thêm' },
+            { value: 'bangchamcong.tong_so_luong_an', label: 'Bảng công - Số suất ăn' },
+            { value: 'bangchamcong.tong_di_muon_phut', label: 'Bảng công - Tổng phút đi muộn' },
+            { value: 'bangchamcong.tong_ve_som_phut', label: 'Bảng công - Tổng phút về sớm' },
+            { value: 'bangchamcong.tong_ngay_vang', label: 'Bảng công - Số ngày vắng' },
+            { value: 'bangchamcong.tong_cong_vp_thucte', label: 'Bảng công - Công VP thực tế' },
+            { value: 'bangchamcong.tong_tien_sx', label: 'Bảng công - Thành tiền sản xuất' },
+            { value: 'lichlamviecthucte.tong_cong_lamviec_thucte', label: 'Lịch thực tế - Công chuẩn tháng' },
+            { value: 'lichlamviecthucte.tong_gio_lamviec_chuan', label: 'Lịch thực tế - Giờ chuẩn tháng' }
         ];
 
         this.init();
@@ -109,6 +109,12 @@ class QuyTacManager {
         return this.isLuongThucTe(item)
             ? QuyTacManager.DEFAULT_SYSTEM_SOURCE_LUONG_THUC_TE
             : QuyTacManager.DEFAULT_SYSTEM_SOURCE;
+    }
+
+    static normalizeSystemSourceKey(sourceKey) {
+        const normalized = String(sourceKey || '').trim().toLowerCase();
+        if (!normalized) return '';
+        return normalized;
     }
 
     isLuongThucTe(item) {
@@ -204,10 +210,10 @@ class QuyTacManager {
         )).join('');
 
         const selectedSystemSource = isSystem
-            ? (item.nguondulieu_chitiet || this.getDefaultSystemSource(item))
+            ? (QuyTacManager.normalizeSystemSourceKey(item.nguondulieu_chitiet) || this.getDefaultSystemSource(item))
             : '';
 
-        if (isSystem && !item.nguondulieu_chitiet) {
+        if (isSystem && item.nguondulieu_chitiet !== selectedSystemSource) {
             item.nguondulieu_chitiet = selectedSystemSource;
         }
 
@@ -627,7 +633,7 @@ class QuyTacManager {
                 tenphantu: item.tenphantu,
                 maphantu: item.maphantu,
                 nguondulieu,
-                nguondulieu_chitiet: String(item.nguondulieu_chitiet || item.nguondulieuchitiet || '').toLowerCase(),
+                nguondulieu_chitiet: QuyTacManager.normalizeSystemSourceKey(item.nguondulieu_chitiet || item.nguondulieuchitiet || ''),
                 bieuthuc: item.bieuthuc || '',
                 mota: item.mota || '',
                 thutuhienthi,

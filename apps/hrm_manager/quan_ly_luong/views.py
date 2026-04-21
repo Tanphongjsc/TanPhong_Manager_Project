@@ -46,19 +46,19 @@ from .services import (
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
-SYSTEM_SOURCE_FIXED_SETUP = 'fixed_setup'
-SYSTEM_SOURCE_SALARY_BASE_PRORATED = 'salary_base_prorated'
-SYSTEM_SOURCE_ATTENDANCE_WORK_DAY = 'attendance.work_day'
-SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR = 'attendance.work_hour'
-SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR = 'attendance.overtime_hour'
-SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT = 'attendance.meal_count'
-SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES = 'attendance.late_minutes'
-SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES = 'attendance.early_leave_minutes'
-SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY = 'attendance.absent_day'
-SYSTEM_SOURCE_ATTENDANCE_VP_DAY = 'attendance.vp_day'
-SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT = 'attendance.sx_amount'
-SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY = 'schedule.standard_day'
-SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR = 'schedule.standard_hour'
+SYSTEM_SOURCE_FIXED_SETUP = 'thietlapsolieucodinh.giatrimacdinh'
+SYSTEM_SOURCE_SALARY_BASE_PRORATED = 'bangluong.luong_thuc_te_phan_bo'
+SYSTEM_SOURCE_ATTENDANCE_WORK_DAY = 'bangchamcong.tong_cong_lamviec'
+SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR = 'bangchamcong.tong_thoigian_lamviec'
+SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR = 'bangchamcong.tong_thoigian_lamthem'
+SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT = 'bangchamcong.tong_so_luong_an'
+SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES = 'bangchamcong.tong_di_muon_phut'
+SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES = 'bangchamcong.tong_ve_som_phut'
+SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY = 'bangchamcong.tong_ngay_vang'
+SYSTEM_SOURCE_ATTENDANCE_VP_DAY = 'bangchamcong.tong_cong_vp_thucte'
+SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT = 'bangchamcong.tong_tien_sx'
+SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY = 'lichlamviecthucte.tong_cong_lamviec_thucte'
+SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR = 'lichlamviecthucte.tong_gio_lamviec_chuan'
 
 SYSTEM_SOURCE_KEYS = {
     SYSTEM_SOURCE_FIXED_SETUP,
@@ -96,12 +96,19 @@ def _safe_float(value, default=0.0):
         return default
 
 
+def _normalize_system_source_key(source_key):
+    normalized_key = str(source_key or '').strip().lower()
+    if not normalized_key:
+        return ''
+    return normalized_key
+
+
 def _normalize_rule_source(rule):
     source = str(rule.get('nguondulieu') or 'manual').strip().lower()
     if source not in {'manual', 'system', 'formula'}:
         source = 'manual'
 
-    source_key = str(rule.get('nguondulieuchitiet') or '').strip().lower()
+    source_key = _normalize_system_source_key(rule.get('nguondulieuchitiet'))
     rule_code = str(rule.get('maquytac') or '').strip().upper()
 
     if source == 'system':
@@ -1074,8 +1081,9 @@ def api_phieu_luong_list(request):
 
                 loai_phan_tu = quy_tac.get('loai_phan_tu', '')
                 nguon_du_lieu = quy_tac.get('nguondulieu', '')
-                if nguon_du_lieu == 'system' and quy_tac.get('nguondulieuchitiet'):
-                    nguon_du_lieu = f"system:{quy_tac.get('nguondulieuchitiet')}"
+                nguon_du_lieu_chitiet = _normalize_system_source_key(quy_tac.get('nguondulieuchitiet'))
+                if nguon_du_lieu == 'system' and nguon_du_lieu_chitiet:
+                    nguon_du_lieu = f"system:{nguon_du_lieu_chitiet}"
 
                 try:
                     thu_tu_hien_thi = int(quy_tac.get('thutuhienthi')) if quy_tac.get('thutuhienthi') is not None else i
@@ -1341,7 +1349,7 @@ def api_che_do_luong_detail(request, pk):
             'tenphantu': qt['phantuluong__tenphantu'],
             'maphantu': qt['phantuluong__maphantu'],
             'nguondulieu': qt['nguondulieu'] or 'manual',
-            'nguondulieu_chitiet': qt['nguondulieuchitiet'] or '',
+            'nguondulieu_chitiet': _normalize_system_source_key(qt['nguondulieuchitiet'] or ''),
             'bieuthuc': qt['bieuthuctinhtoan'] or '',
             'mota': qt['mota'] or '',
             'thutuhienthi': qt['thutuhienthi'] or 0,
@@ -1813,9 +1821,9 @@ def _save_quy_tac(che_do, quy_tac_list):
         if nguondulieu not in {'manual', 'system', 'formula'}:
             nguondulieu = 'manual'
 
-        nguondulieu_chitiet = str(
+        nguondulieu_chitiet = _normalize_system_source_key(
             qt.get('nguondulieu_chitiet') or qt.get('nguondulieuchitiet') or ''
-        ).strip().lower()
+        )
 
         if nguondulieu == 'system':
             if not nguondulieu_chitiet:
