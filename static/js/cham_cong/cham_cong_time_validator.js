@@ -1,28 +1,20 @@
 /**
  * ChamCongTimeValidator - Module xử lý ràng buộc giờ vào/ra cho Bảng Chấm Công
- * Tối ưu: Tận dụng AppUtils.TimeUtils, giảm code trùng lặp
+ * Optimized: Gọn hóa violation creation, analysis details, renderViolationsModal
  */
 class ChamCongTimeValidator {
     constructor() {
         this.VIOLATION_TYPES = {
-            CHECK_IN_TOO_EARLY: 'check_in_too_early',
-            CHECK_IN_TOO_LATE: 'check_in_too_late',
-            CHECK_OUT_TOO_EARLY: 'check_out_too_early',
-            CHECK_OUT_TOO_LATE: 'check_out_too_late',
-            MISSING_CHECK_IN: 'missing_check_in',
-            MISSING_CHECK_OUT: 'missing_check_out',
-            INVALID_TIME_FORMAT: 'invalid_time_format',
-            WORK_TIME_TOO_SHORT: 'work_time_too_short'
+            CHECK_IN_TOO_EARLY: 'check_in_too_early', CHECK_IN_TOO_LATE: 'check_in_too_late',
+            CHECK_OUT_TOO_EARLY: 'check_out_too_early', CHECK_OUT_TOO_LATE: 'check_out_too_late',
+            MISSING_CHECK_IN: 'missing_check_in', MISSING_CHECK_OUT: 'missing_check_out',
+            INVALID_TIME_FORMAT: 'invalid_time_format', WORK_TIME_TOO_SHORT: 'work_time_too_short'
         };
         this.VIOLATION_LABELS = {
-            check_in_too_early: 'Vào ca quá sớm',
-            check_in_too_late: 'Vào ca quá muộn',
-            check_out_too_early: 'Ra ca quá sớm',
-            check_out_too_late: 'Ra ca quá muộn',
-            missing_check_in: 'Thiếu giờ vào',
-            missing_check_out: 'Thiếu giờ ra',
-            invalid_time_format: 'Định dạng giờ không hợp lệ',
-            work_time_too_short: 'Thời gian làm việc chưa đủ'
+            check_in_too_early: 'Vào ca quá sớm', check_in_too_late: 'Vào ca quá muộn',
+            check_out_too_early: 'Ra ca quá sớm', check_out_too_late: 'Ra ca quá muộn',
+            missing_check_in: 'Thiếu giờ vào', missing_check_out: 'Thiếu giờ ra',
+            invalid_time_format: 'Định dạng giờ không hợp lệ', work_time_too_short: 'Thời gian làm việc chưa đủ'
         };
     }
 
@@ -30,7 +22,6 @@ class ChamCongTimeValidator {
     toMinutes(t) { return AppUtils.TimeUtils.toMinutesSafe(t); }
     toTimeString(m) { return AppUtils.TimeUtils.toTimeString(m); }
     _parseMinutes(v) { const n = parseInt(v, 10); return isNaN(n) ? null : n; }
-
     isOvernightShift(s) { return s && s.endTime !== null && s.startTime !== null && s.endTime < s.startTime; }
 
     normalizeTimeForOvernight(mins, schedule, type) {
@@ -42,32 +33,28 @@ class ChamCongTimeValidator {
         if (!kglv) return null;
         const startTime = this.toMinutes(kglv.thoigianbatdau);
         const endTime = this.toMinutes(kglv.thoigianketthuc);
-        const earliestCheckIn = this.toMinutes(kglv.thoigianchophepchamcongsomnhat);
-        const lateGraceMinutes = this._parseMinutes(kglv.thoigianchophepdenmuon);
-        const invalidLateInMinutes = this._parseMinutes(kglv.thoigiandimuonkhongtinhchamcong);
         const latestCheckOut = this.toMinutes(kglv.thoigianchophepvemuonnhat);
-        const earlyGraceMinutes = this._parseMinutes(kglv.thoigianchophepvesomnhat);
-        const invalidEarlyOutMinutes = this._parseMinutes(kglv.thoigianvesomkhongtinhchamcong);
-        let allowedLateOutMinutes = null;
-        if (latestCheckOut !== null && endTime !== null) {
-            allowedLateOutMinutes = Math.max(0, latestCheckOut - endTime);
-        }
         return {
-            startTime, endTime, earliestCheckIn, lateGraceMinutes, invalidLateInMinutes,
-            latestCheckOut, earlyGraceMinutes, invalidEarlyOutMinutes, allowedLateOutMinutes,
-            minWorkTime: this._parseMinutes(kglv.thoigianlamviectoithieu), raw: kglv
+            startTime, endTime,
+            earliestCheckIn: this.toMinutes(kglv.thoigianchophepchamcongsomnhat),
+            lateGraceMinutes: this._parseMinutes(kglv.thoigianchophepdenmuon),
+            invalidLateInMinutes: this._parseMinutes(kglv.thoigiandimuonkhongtinhchamcong),
+            latestCheckOut,
+            earlyGraceMinutes: this._parseMinutes(kglv.thoigianchophepvesomnhat),
+            invalidEarlyOutMinutes: this._parseMinutes(kglv.thoigianvesomkhongtinhchamcong),
+            allowedLateOutMinutes: (latestCheckOut !== null && endTime !== null) ? Math.max(0, latestCheckOut - endTime) : null,
+            minWorkTime: this._parseMinutes(kglv.thoigianlamviectoithieu),
+            raw: kglv
         };
     }
 
     validateMissingCheckTimes({ checkIn, checkOut, employee }) {
-        const violations = [];
-        if (!checkIn) violations.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_IN, employee, {}));
-        if (!checkOut && employee?.cocancheckout === true) 
-            violations.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_OUT, employee, {}));
-        return violations;
+        const v = [];
+        if (!checkIn) v.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_IN, employee, {}));
+        if (!checkOut && employee?.cocancheckout === true) v.push(this._createViolation(this.VIOLATION_TYPES.MISSING_CHECK_OUT, employee, {}));
+        return v;
     }
 
-    // Tính thời gian nghỉ trưa giao với khoảng làm việc
     _calcLunchMinutes(inMin, outMin, lunchBreaks, schedule) {
         if (!Array.isArray(lunchBreaks)) return 0;
         const isOvernight = this.isOvernightShift(schedule);
@@ -84,36 +71,41 @@ class ChamCongTimeValidator {
         }, 0);
     }
 
+    _normalizeInOut(checkIn, checkOut, schedule) {
+        let inMin = this.toMinutes(checkIn), outMin = this.toMinutes(checkOut);
+        if (this.isOvernightShift(schedule)) {
+            inMin = this.normalizeTimeForOvernight(inMin, schedule, 'checkIn');
+            outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
+        }
+        return { inMin, outMin };
+    }
+
     validate({ checkIn, checkOut, schedule, employee }) {
         const violations = [];
         if (!schedule) return { isValid: true, violations };
 
-        let inMin = this.toMinutes(checkIn), outMin = this.toMinutes(checkOut);
-        const isOvernight = this.isOvernightShift(schedule);
-        if (isOvernight) {
-            inMin = this.normalizeTimeForOvernight(inMin, schedule, 'checkIn');
-            outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
-        }
+        const { inMin, outMin } = this._normalizeInOut(checkIn, checkOut, schedule);
+        const VT = this.VIOLATION_TYPES;
 
         // Check giờ vào
         if (checkIn) {
             if (inMin === null) {
-                violations.push(this._createViolation(this.VIOLATION_TYPES.INVALID_TIME_FORMAT, employee, { field: 'checkIn', value: checkIn }));
+                violations.push(this._createViolation(VT.INVALID_TIME_FORMAT, employee, { field: 'checkIn', value: checkIn }));
             } else {
                 if (schedule.earliestCheckIn !== null && inMin < schedule.earliestCheckIn) {
                     const early = schedule.earliestCheckIn - inMin;
-                    violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_IN_TOO_EARLY, employee, {
+                    violations.push(this._createViolation(VT.CHECK_IN_TOO_EARLY, employee, {
                         value: checkIn, limit: this.toTimeString(schedule.earliestCheckIn), diff: early, suggestion: this.toTimeString(schedule.earliestCheckIn)
                     }));
                 }
                 if (schedule.startTime !== null && schedule.invalidLateInMinutes !== null) {
-                    const lateFromStart = inMin - schedule.startTime;
-                    if (lateFromStart > schedule.invalidLateInMinutes) {
-                        violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_IN_TOO_LATE, employee, {
+                    const late = inMin - schedule.startTime;
+                    if (late > schedule.invalidLateInMinutes) {
+                        violations.push(this._createViolation(VT.CHECK_IN_TOO_LATE, employee, {
                             value: checkIn, scheduleStart: this.toTimeString(schedule.startTime), limit: schedule.invalidLateInMinutes,
-                            diff: lateFromStart, rawLate: lateFromStart, graceMinutes: schedule.lateGraceMinutes,
+                            diff: late, rawLate: late, graceMinutes: schedule.lateGraceMinutes,
                             suggestion: this.toTimeString(schedule.startTime + schedule.invalidLateInMinutes),
-                            note: `Đi muộn ${lateFromStart}p (vượt ngưỡng ${schedule.invalidLateInMinutes}p)`
+                            note: `Đi muộn ${late}p (vượt ngưỡng ${schedule.invalidLateInMinutes}p)`
                         }));
                     }
                 }
@@ -123,22 +115,22 @@ class ChamCongTimeValidator {
         // Check giờ ra
         if (checkOut) {
             if (outMin === null) {
-                violations.push(this._createViolation(this.VIOLATION_TYPES.INVALID_TIME_FORMAT, employee, { field: 'checkOut', value: checkOut }));
+                violations.push(this._createViolation(VT.INVALID_TIME_FORMAT, employee, { field: 'checkOut', value: checkOut }));
             } else {
                 if (schedule.endTime !== null && schedule.invalidEarlyOutMinutes !== null) {
-                    const earlyFromEnd = schedule.endTime - outMin;
-                    if (earlyFromEnd > schedule.invalidEarlyOutMinutes) {
-                        violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_EARLY, employee, {
+                    const early = schedule.endTime - outMin;
+                    if (early > schedule.invalidEarlyOutMinutes) {
+                        violations.push(this._createViolation(VT.CHECK_OUT_TOO_EARLY, employee, {
                             value: checkOut, scheduleEnd: this.toTimeString(schedule.endTime), limit: schedule.invalidEarlyOutMinutes,
-                            diff: earlyFromEnd, rawEarly: earlyFromEnd, graceMinutes: schedule.earlyGraceMinutes,
+                            diff: early, rawEarly: early, graceMinutes: schedule.earlyGraceMinutes,
                             suggestion: this.toTimeString(schedule.endTime - schedule.invalidEarlyOutMinutes),
-                            note: `Về sớm ${earlyFromEnd}p (vượt ngưỡng ${schedule.invalidEarlyOutMinutes}p)`
+                            note: `Về sớm ${early}p (vượt ngưỡng ${schedule.invalidEarlyOutMinutes}p)`
                         }));
                     }
                 }
                 if (schedule.latestCheckOut !== null && outMin > schedule.latestCheckOut) {
                     const exceed = outMin - schedule.latestCheckOut;
-                    violations.push(this._createViolation(this.VIOLATION_TYPES.CHECK_OUT_TOO_LATE, employee, {
+                    violations.push(this._createViolation(VT.CHECK_OUT_TOO_LATE, employee, {
                         value: checkOut, scheduleEnd: this.toTimeString(schedule.endTime), latestAllowed: this.toTimeString(schedule.latestCheckOut),
                         diff: exceed, suggestion: this.toTimeString(schedule.latestCheckOut), note: `Về muộn ${exceed}p (sau ${this.toTimeString(schedule.latestCheckOut)})`
                     }));
@@ -149,14 +141,14 @@ class ChamCongTimeValidator {
         // Check thời gian làm việc tối thiểu
         if (checkIn && schedule.minWorkTime !== null && schedule.minWorkTime > 0) {
             let effectiveOutMin = (!employee?.cocancheckout || outMin === null) ? schedule.endTime : outMin;
-            if (isOvernight) effectiveOutMin = this.normalizeTimeForOvernight(effectiveOutMin, schedule, 'checkOut');
+            if (this.isOvernightShift(schedule)) effectiveOutMin = this.normalizeTimeForOvernight(effectiveOutMin, schedule, 'checkOut');
             if (inMin !== null && effectiveOutMin !== null) {
-                const lunchMinutes = this._calcLunchMinutes(inMin, effectiveOutMin, employee?.khunggionghitrua, schedule);
-                const actualWorkMinutes = Math.max(0, effectiveOutMin - inMin - lunchMinutes);
-                if (actualWorkMinutes < schedule.minWorkTime) {
+                const lunchMin = this._calcLunchMinutes(inMin, effectiveOutMin, employee?.khunggionghitrua, schedule);
+                const actual = Math.max(0, effectiveOutMin - inMin - lunchMin);
+                if (actual < schedule.minWorkTime) {
                     violations.push(this._createViolation('work_time_too_short', employee, {
-                        actual: actualWorkMinutes, required: schedule.minWorkTime, diff: schedule.minWorkTime - actualWorkMinutes,
-                        note: `Thời gian làm việc ${actualWorkMinutes}p < tối thiểu ${schedule.minWorkTime}p`
+                        actual, required: schedule.minWorkTime, diff: schedule.minWorkTime - actual,
+                        note: `Thời gian làm việc ${actual}p < tối thiểu ${schedule.minWorkTime}p`
                     }));
                 }
             }
@@ -171,10 +163,10 @@ class ChamCongTimeValidator {
         records.forEach((record, index) => {
             const schedule = this.normalizeSchedule(record.employee?.khunggiolamviec);
             const emp = { ...record.employee, rowIndex: index };
-            const missingViolations = this.validateMissingCheckTimes({ checkIn: record.checkIn, checkOut: record.checkOut, employee: emp });
-            allViolations.push(...missingViolations);
+            const missing = this.validateMissingCheckTimes({ checkIn: record.checkIn, checkOut: record.checkOut, employee: emp });
+            allViolations.push(...missing);
             const result = this.validate({ checkIn: record.checkIn, checkOut: record.checkOut, schedule, employee: emp });
-            result.isValid && missingViolations.length === 0 ? validCount++ : invalidCount++;
+            result.isValid && missing.length === 0 ? validCount++ : invalidCount++;
             allViolations.push(...result.violations);
         });
         return { isValid: allViolations.length === 0, validCount, invalidCount, violations: allViolations, summary: this._generateSummary(allViolations) };
@@ -182,14 +174,9 @@ class ChamCongTimeValidator {
 
     getAnalysisDetails({ checkIn, checkOut, schedule, employee }) {
         const analysis = { violations: [], warnings: [], info: [], isValid: true };
-        let inMin = this.toMinutes(checkIn), outMin = this.toMinutes(checkOut);
-        const isOvernight = this.isOvernightShift(schedule);
-        if (isOvernight && schedule) {
-            inMin = this.normalizeTimeForOvernight(inMin, schedule, 'checkIn');
-            outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
-        }
         if (!schedule) return analysis;
 
+        let { inMin, outMin } = this._normalizeInOut(checkIn, checkOut, schedule);
         const addV = (type, label) => { analysis.violations.push({ type, label }); analysis.isValid = false; };
         const addW = (label, info) => analysis.warnings.push({ label, info });
         const addI = (label) => analysis.info.push({ label });
@@ -199,56 +186,51 @@ class ChamCongTimeValidator {
         if (!checkIn || (!checkOut && employee?.cocancheckout === true)) return analysis;
 
         if (!employee?.cocancheckout && outMin === null) outMin = schedule.endTime;
-        if (isOvernight && outMin !== null) outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
+        if (this.isOvernightShift(schedule) && outMin !== null) outMin = this.normalizeTimeForOvernight(outMin, schedule, 'checkOut');
 
-        // Check thời gian làm việc tối thiểu
+        // Work time check
         if (inMin !== null && outMin !== null && schedule.minWorkTime > 0) {
-            const lunchMinutes = this._calcLunchMinutes(inMin, outMin, employee?.khunggionghitrua, schedule);
-            const actualWorkMinutes = Math.max(0, outMin - inMin - lunchMinutes);
-            if (actualWorkMinutes < schedule.minWorkTime) addV('work_time_too_short', `Chưa đủ ${schedule.minWorkTime}p (hiện: ${actualWorkMinutes}p)`);
+            const lunchMin = this._calcLunchMinutes(inMin, outMin, employee?.khunggionghitrua, schedule);
+            const actual = Math.max(0, outMin - inMin - lunchMin);
+            if (actual < schedule.minWorkTime) addV('work_time_too_short', `Chưa đủ ${schedule.minWorkTime}p (hiện: ${actual}p)`);
         }
 
-        // Check giờ vào
+        // Check-in analysis
         if (inMin !== null && schedule.startTime !== null) {
             if (schedule.earliestCheckIn !== null && inMin < schedule.earliestCheckIn) {
                 addV('check_in_too_early', `Vào sớm ${schedule.earliestCheckIn - inMin}p (trước ${this.toTimeString(schedule.earliestCheckIn)})`);
             } else {
-                const lateFromStart = inMin - schedule.startTime;
-                if (lateFromStart > 0) {
+                const late = inMin - schedule.startTime;
+                if (late > 0) {
                     const grace = schedule.lateGraceMinutes || 0;
-                    const effectiveLate = Math.max(0, lateFromStart - grace);
-                    if (schedule.invalidLateInMinutes !== null && lateFromStart > schedule.invalidLateInMinutes) {
-                        addV('check_in_too_late', `Muộn ${lateFromStart}p (vượt ${schedule.invalidLateInMinutes}p)`);
-                    } else if (effectiveLate > 0) {
-                        addW(`Muộn ${effectiveLate}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
-                    }
+                    const effective = Math.max(0, late - grace);
+                    if (schedule.invalidLateInMinutes !== null && late > schedule.invalidLateInMinutes)
+                        addV('check_in_too_late', `Muộn ${late}p (vượt ${schedule.invalidLateInMinutes}p)`);
+                    else if (effective > 0) addW(`Muộn ${effective}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
                 }
             }
         }
 
-        // Check giờ ra
+        // Check-out analysis
         if (outMin !== null && schedule.endTime !== null) {
             const earlyFromEnd = schedule.endTime - outMin;
             const lateFromEnd = outMin - schedule.endTime;
             if (earlyFromEnd > 0) {
                 const grace = schedule.earlyGraceMinutes || 0;
-                const effectiveEarly = Math.max(0, earlyFromEnd - grace);
-                if (schedule.invalidEarlyOutMinutes !== null && earlyFromEnd > schedule.invalidEarlyOutMinutes) {
+                const effective = Math.max(0, earlyFromEnd - grace);
+                if (schedule.invalidEarlyOutMinutes !== null && earlyFromEnd > schedule.invalidEarlyOutMinutes)
                     addV('check_out_too_early', `Về sớm ${earlyFromEnd}p (vượt ${schedule.invalidEarlyOutMinutes}p)`);
-                } else if (effectiveEarly > 0) {
-                    addW(`Về sớm ${effectiveEarly}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
-                }
+                else if (effective > 0) addW(`Về sớm ${effective}p`, grace > 0 ? `Cho phép: ${grace}p` : null);
             }
             if (lateFromEnd > 0) {
-                if (schedule.latestCheckOut !== null && outMin > schedule.latestCheckOut) {
+                if (schedule.latestCheckOut !== null && outMin > schedule.latestCheckOut)
                     addV('check_out_too_late', `Về muộn ${outMin - schedule.latestCheckOut}p (sau ${this.toTimeString(schedule.latestCheckOut)})`);
-                } else if (schedule.allowedLateOutMinutes !== null && lateFromEnd <= schedule.allowedLateOutMinutes) {
+                else if (schedule.allowedLateOutMinutes !== null && lateFromEnd <= schedule.allowedLateOutMinutes)
                     addI(`Về muộn ${lateFromEnd}p (OK)`);
-                }
             }
         }
 
-        if (analysis.violations.length === 0 && analysis.warnings.length === 0 && analysis.info.length === 0) addI('✓ Đúng giờ');
+        if (!analysis.violations.length && !analysis.warnings.length && !analysis.info.length) addI('✓ Đúng giờ');
 
         if (checkIn) {
             analysis.workHours = this.calculateActualWorkHours({
@@ -277,21 +259,23 @@ class ChamCongTimeValidator {
     getSuggestedTimes(schedule) {
         if (!schedule) return { checkIn: null, checkOut: null };
         const s = schedule;
-        const checkInEarliest = s.earliestCheckIn !== null ? this.toTimeString(s.earliestCheckIn) : this.toTimeString(s.startTime);
-        const checkInLatest = s.invalidLateInMinutes !== null && s.startTime !== null
-            ? this.toTimeString(s.startTime + s.invalidLateInMinutes)
-            : (s.lateGraceMinutes !== null && s.startTime !== null ? this.toTimeString(s.startTime + s.lateGraceMinutes) : null);
-        const checkOutEarliest = s.invalidEarlyOutMinutes !== null && s.endTime !== null
-            ? this.toTimeString(s.endTime - s.invalidEarlyOutMinutes)
-            : (s.earlyGraceMinutes !== null && s.endTime !== null ? this.toTimeString(s.endTime - s.earlyGraceMinutes) : this.toTimeString(s.endTime));
-        const checkOutLatest = s.latestCheckOut !== null
-            ? this.toTimeString(s.latestCheckOut)
-            : (s.allowedLateOutMinutes !== null && s.endTime !== null ? this.toTimeString(s.endTime + s.allowedLateOutMinutes) : null);
+        const ts = m => this.toTimeString(m);
         return {
-            checkIn: { earliest: checkInEarliest, latest: checkInLatest, recommended: this.toTimeString(s.startTime),
-                graceEnd: s.lateGraceMinutes !== null && s.startTime !== null ? this.toTimeString(s.startTime + s.lateGraceMinutes) : null },
-            checkOut: { earliest: checkOutEarliest, latest: checkOutLatest, recommended: this.toTimeString(s.endTime),
-                graceStart: s.earlyGraceMinutes !== null && s.endTime !== null ? this.toTimeString(s.endTime - s.earlyGraceMinutes) : null }
+            checkIn: {
+                earliest: s.earliestCheckIn !== null ? ts(s.earliestCheckIn) : ts(s.startTime),
+                latest: s.invalidLateInMinutes !== null && s.startTime !== null ? ts(s.startTime + s.invalidLateInMinutes)
+                    : (s.lateGraceMinutes !== null && s.startTime !== null ? ts(s.startTime + s.lateGraceMinutes) : null),
+                recommended: ts(s.startTime),
+                graceEnd: s.lateGraceMinutes !== null && s.startTime !== null ? ts(s.startTime + s.lateGraceMinutes) : null
+            },
+            checkOut: {
+                earliest: s.invalidEarlyOutMinutes !== null && s.endTime !== null ? ts(s.endTime - s.invalidEarlyOutMinutes)
+                    : (s.earlyGraceMinutes !== null && s.endTime !== null ? ts(s.endTime - s.earlyGraceMinutes) : ts(s.endTime)),
+                latest: s.latestCheckOut !== null ? ts(s.latestCheckOut)
+                    : (s.allowedLateOutMinutes !== null && s.endTime !== null ? ts(s.endTime + s.allowedLateOutMinutes) : null),
+                recommended: ts(s.endTime),
+                graceStart: s.earlyGraceMinutes !== null && s.endTime !== null ? ts(s.endTime - s.earlyGraceMinutes) : null
+            }
         };
     }
 
@@ -315,19 +299,18 @@ class ChamCongTimeValidator {
         const actualMinutes = Math.max(0, rawWorkMinutes - lunchMinutes);
         const hours = (actualMinutes / 60).toFixed(1);
 
-        let shiftEndNorm = schedule?.endTime || 0, shiftStartNorm = schedule?.startTime || 0;
-        if (isOvernight && shiftEndNorm < shiftStartNorm) shiftEndNorm += 1440;
-        const totalShiftMinutes = Math.max(0, shiftEndNorm - shiftStartNorm);
-        const shiftLunchOverlap = this._calcLunchMinutes(shiftStartNorm, shiftEndNorm, lunchBreaks, schedule);
-        const expectedWorkMinutes = Math.max(0, totalShiftMinutes - shiftLunchOverlap);
-        const minWorkTime = schedule?.minWorkTime || 0;
+        let shiftEnd = schedule?.endTime || 0, shiftStart = schedule?.startTime || 0;
+        if (isOvernight && shiftEnd < shiftStart) shiftEnd += 1440;
+        const totalShiftMinutes = Math.max(0, shiftEnd - shiftStart);
+        const shiftLunch = this._calcLunchMinutes(shiftStart, shiftEnd, lunchBreaks, schedule);
+        const expectedWork = Math.max(0, totalShiftMinutes - shiftLunch);
+        const minWork = schedule?.minWorkTime || 0;
 
         let displayClass = 'text-green-600 font-bold';
-        if (actualMinutes === 0 || (minWorkTime > 0 && actualMinutes < minWorkTime) || (expectedWorkMinutes > 0 && actualMinutes < expectedWorkMinutes * 0.8)) {
+        if (actualMinutes === 0 || (minWork > 0 && actualMinutes < minWork) || (expectedWork > 0 && actualMinutes < expectedWork * 0.8))
             displayClass = 'text-red-600 font-bold';
-        } else if (expectedWorkMinutes > 0 && actualMinutes < expectedWorkMinutes) {
+        else if (expectedWork > 0 && actualMinutes < expectedWork)
             displayClass = 'text-amber-600 font-bold';
-        }
 
         return { actualMinutes, lunchMinutes, rawWorkMinutes, totalShiftMinutes, formatted: `${hours}h`, displayClass };
     }
@@ -353,28 +336,28 @@ class ChamCongTimeValidator {
             const hasOutErr = vio.some(v => v.type.includes('check_out') || v.type === 'missing_check_out');
             const workTimeErr = vio.find(v => v.type === 'work_time_too_short');
             const workTimeMsg = workTimeErr ? (workTimeErr.details?.note || `Thiếu ${workTimeErr.details?.diff ?? 0}p (yêu cầu ${workTimeErr.details?.required ?? 0}p)`) : null;
-            
-            const errMsgs = vio.map(v => {
-                const d = v.details?.diff || 0;
-                const msgMap = { check_in_too_early: `Vào sớm ${d}p`, check_in_too_late: `Muộn ${d}p`, check_out_too_early: `Về sớm ${d}p`, check_out_too_late: `Về muộn ${d}p`,
-                    missing_check_in: 'Thiếu vào', missing_check_out: 'Thiếu ra', work_time_too_short: workTimeMsg || 'Chưa đủ giờ tối thiểu' };
-                return msgMap[v.type] || v.label;
-            });
-            
+
+            const msgMap = { check_in_too_early: 'Vào sớm', check_in_too_late: 'Muộn', check_out_too_early: 'Về sớm', check_out_too_late: 'Về muộn',
+                missing_check_in: 'Thiếu vào', missing_check_out: 'Thiếu ra', work_time_too_short: workTimeMsg || 'Chưa đủ giờ tối thiểu' };
+            const errMsgs = vio.map(v => { const d = v.details?.diff || 0; const base = msgMap[v.type] || v.label; return d && !v.type.includes('missing') && v.type !== 'work_time_too_short' ? `${base} ${d}p` : base; });
+
             const inRange = suggested?.checkIn ? `${suggested.checkIn.earliest || '--:--'} → ${suggested.checkIn.latest || suggested.checkIn.recommended || '--:--'}` : '--:--';
             const outRange = suggested?.checkOut ? `${suggested.checkOut.earliest || suggested.checkOut.recommended || '--:--'} → ${suggested.checkOut.latest || '--:--'}` : '--:--';
-            const inCls = hasInErr ? 'text-red-600 font-bold' : 'text-slate-600';
-            const outCls = hasOutErr ? 'text-red-600 font-bold' : 'text-slate-600';
-            
+
+            const timeCell = (val, hasErr, msgs, keywords) => {
+                const cls = hasErr ? 'text-red-600 font-bold' : 'text-slate-600';
+                const filtered = msgs.filter(m => keywords.some(k => m.includes(k)));
+                return `<td class="py-2.5 px-2 text-center"><div class="font-mono text-sm ${cls}">${val || '--:--'}</div>
+                    ${hasErr && filtered.length ? `<div class="text-[10px] text-red-500 mt-0.5">${filtered.join(', ')}</div>` : ''}</td>`;
+            };
+
             return `<tr class="border-b border-slate-100 hover:bg-slate-50/50">
                 <td class="py-2.5 px-3"><div class="flex items-center gap-2">
                     <span class="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">${idx + 1}</span>
                     <div><div class="font-semibold text-slate-800 text-sm">${emp.name}</div><div class="text-[11px] text-slate-400">${emp.code}</div></div>
                 </div></td>
-                <td class="py-2.5 px-2 text-center"><div class="font-mono text-sm ${inCls}">${checkInValue || '--:--'}</div>
-                    ${hasInErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Vào') || m.includes('Muộn') || m.includes('vào')).join(', ')}</div>` : ''}</td>
-                <td class="py-2.5 px-2 text-center"><div class="font-mono text-sm ${outCls}">${checkOutValue || '--:--'}</div>
-                    ${hasOutErr ? `<div class="text-[10px] text-red-500 mt-0.5">${errMsgs.filter(m => m.includes('Về') || m.includes('ra')).join(', ')}</div>` : ''}</td>
+                ${timeCell(checkInValue, hasInErr, errMsgs, ['Vào', 'Muộn', 'vào'])}
+                ${timeCell(checkOutValue, hasOutErr, errMsgs, ['Về', 'ra'])}
                 <td class="py-2.5 px-2 text-center"><div class="text-[11px] text-slate-500 font-mono">${suggested?.checkIn?.recommended || '--:--'}</div></td>
                 <td class="py-2.5 px-2 text-center"><div class="text-[11px] text-slate-500 font-mono">${suggested?.checkOut?.recommended || '--:--'}</div></td>
                 <td class="py-2.5 px-2"><div class="flex flex-col gap-1">
