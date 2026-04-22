@@ -64,24 +64,58 @@ const ChamCongRenderHelper = (() => {
     const _noteHtml = (s) => `<td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
 
     const _jobListHtml = (activeJobs, jobs, options = {}) => {
-        const { addText = '+ Thêm', addClass = 'text-slate-400 hover:text-blue-500 font-medium' } = options;
+        // Lấy các thuộc tính từ options, thêm isVP (mặc định là false để an toàn cho các hàm khác)
+        const { addText = '+ Thêm', addClass = 'text-slate-400 hover:text-blue-500 font-medium', isVP = false } = options;
         const jobOpts = jobs.map(j => `<option value="${j.id}">${j.tencongviec}</option>`).join('');
 
+        // Khối Hành Chính mặc định (Chỉ render nếu là chế độ VP)
+        let baseJobHtml = '';
+        if (isVP) {
+            baseJobHtml = `
+            <div class="job-row flex items-center gap-2 p-1.5 border-b border-slate-200 bg-emerald-50/50 select-none">
+                <div class="min-w-[16px] h-4 px-1 inline-flex items-center justify-center bg-emerald-100 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200 shadow-sm shrink-0 leading-none" title="Công mặc định">✓</div>
+                <div class="w-[150px] shrink-0">
+                    <div class="w-full text-xs font-semibold text-emerald-700 border border-emerald-200 bg-emerald-50/80 rounded py-0.5 px-1.5 h-[26px] flex items-center justify-between cursor-not-allowed">
+                        <span>Công Hành Chính</span>
+                        <i class="fa-solid fa-building-user text-[10px] opacity-60"></i>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-wrap items-center gap-2 min-h-[26px]">
+                    <span class="text-[11px] text-slate-400 italic font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                    </span>
+                </div>
+                <div class="w-6 h-6 ml-auto shrink-0"></div>
+            </div>`;
+        }
+
+        let renderedCount = 0;
         const rows = activeJobs.map((jobItem, index) => {
+            // Ẩn job trống mặc định ở index 0 nếu là VP
+            if (isVP && index === 0 && !jobItem.jobId) return '';
+
+            renderedCount++;
             const currentOpts = jobItem.jobId ? jobOpts.replace(`value="${jobItem.jobId}"`, `value="${jobItem.jobId}" selected`) : jobOpts;
-            const showDel = index > 0 || activeJobs.length > 1 || jobItem.jobId;
+            const showDel = renderedCount > 1 || activeJobs.length > 1 || jobItem.jobId;
             const delBtn = showDel
                 ? `<button class="btn-remove-job w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all ml-auto shrink-0" data-index="${index}" title="Xóa"><i class="fa-solid fa-xmark text-xs"></i></button>`
                 : '<div class="w-6 h-6 ml-auto shrink-0"></div>';
+            
+            // Chỉnh màu sắc + thứ tự: VP là phát sinh (+1, màu cam), SX là gốc (1, màu xanh)
+            const badgeColor = isVP ? 'orange' : 'blue';
+            const indexLabel = isVP ? `+${renderedCount}` : `${renderedCount}`;
+
             return `<div class="job-row flex items-center gap-2 p-1.5 border-b border-dashed border-slate-200 last:border-0 hover:bg-blue-50/40 transition-colors group/job relative">
-                <div class="min-w-[16px] h-4 px-1 inline-flex items-center justify-center bg-orange-100 text-orange-700 text-[9px] font-bold rounded border border-orange-200 shadow-sm select-none shrink-0 leading-none">${index + 1}</div>
+                <div class="min-w-[16px] h-4 px-1 inline-flex items-center justify-center bg-${badgeColor}-100 text-${badgeColor}-700 text-[9px] font-bold rounded border border-${badgeColor}-200 shadow-sm select-none shrink-0 leading-none">${indexLabel}</div>
                 <div class="w-[150px] shrink-0"><select class="job-select w-full text-xs font-medium text-slate-700 border border-slate-200 rounded py-0.5 px-1.5 focus:border-blue-500 outline-none bg-white shadow-sm h-[26px]" data-index="${index}"><option value="">--</option>${currentOpts}</select></div>
                 <div class="flex-1 flex flex-wrap items-center gap-2 min-h-[26px]">${renderJobParams(jobItem, index, jobs)}</div>
                 ${delBtn}</div>`;
         }).join('');
 
-        return `<td class="p-0 border-r border-slate-200 align-top"><div class="flex flex-col w-full">${rows}
-                <div class="flex justify-center py-1.5"><button class="btn-add-job text-xs ${addClass} transition-colors" title="${addText}">${addText}</button></div></div></td>`;
+        return `<td class="p-0 border-r border-slate-200 align-top"><div class="flex flex-col w-full h-full bg-white">
+                ${baseJobHtml}
+                ${rows}
+                <div class="flex justify-center py-1.5 mt-auto"><button class="btn-add-job text-xs ${addClass} transition-colors" title="${addText}">${addText}</button></div></div></td>`;
     };
 
     const renderCommonCells = (emp, scheduleIn, scheduleOut, accent = 'blue') => {
@@ -158,12 +192,14 @@ const ChamCongRenderHelper = (() => {
     const renderHybridCells = (emp, jobs) => {
         const s = emp.uiState;
         const isVP = s.shiftType === 'VP';
-        const addText = isVP ? '+ Thêm việc phát sinh' : '+ Thêm';
+        
+        // Cập nhật text và style cho nút thêm
+        const addText = isVP ? '+ Thêm việc phát sinh' : '+ Thêm công việc';
         const addClass = isVP ? 'text-orange-500 hover:text-orange-600 font-bold' : 'text-slate-400 hover:text-blue-500 font-medium';
 
         return `
         <td class="px-2 py-1 border-r border-slate-200"><div class="analysis-result flex flex-wrap gap-0.5 min-h-[16px] mt-1"><span class="text-[10px] text-slate-300">-</span></div></td>
-        ${_jobListHtml(s.jobs || [], jobs, { addText, addClass })}
+        ${_jobListHtml(s.jobs || [], jobs, { addText, addClass, isVP })}
         ${_lunchOtHtml(s, 'labeled')}
         ${_noteHtml(s)}`;
     };

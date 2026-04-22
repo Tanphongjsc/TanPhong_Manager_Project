@@ -310,13 +310,10 @@ def calculate_bang_cham_cong_objects(data_list):
             # Tính thời gian làm việc thực tế và chuẩn
             tg_lam_viec_thuc = calculate_work_minutes_with_overnight(in_min, out_min, start_min, end_min)
             tg_lam_viec_chuan_ca = calculate_work_minutes_with_overnight(start_min, end_min, start_min, end_min)
-            print(tg_lam_viec_thuc, tg_lam_viec_chuan_ca)
 
             # Trừ nghỉ trưa
             tg_lam_viec_thuc -= tinh_phut_nghi_trua_trong_khoang(in_min, out_min, ds_nghi_trua)
             tg_lam_viec_chuan_ca -= tinh_phut_nghi_trua_trong_khoang(start_min, end_min, ds_nghi_trua)
-            print(tinh_phut_nghi_trua_trong_khoang(in_min, out_min, ds_nghi_trua))
-            print(tinh_phut_nghi_trua_trong_khoang(start_min, end_min, ds_nghi_trua))
 
             # Tính sai lệch giờ theo loại ca
             thoigiandimuon, thoigianvesom, thoigiandisom, thoigianvemuon, tg_lam_viec = _tinh_time_deviation(
@@ -799,7 +796,7 @@ def api_bang_cham_cong_list(request):
 
         if request.method == 'POST':
             objs = calculate_bang_cham_cong_objects(data_list)
-            # Bangchamcong.objects.bulk_create(objs)
+            Bangchamcong.objects.bulk_create(objs)
             return JsonResponse({
                 'success': True, 'message': 'Chấm công thành công',
                 'data': [model_to_dict(o) for o in objs],
