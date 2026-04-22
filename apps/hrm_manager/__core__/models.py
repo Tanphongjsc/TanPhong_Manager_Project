@@ -776,6 +776,7 @@ class Quynghi(models.Model):
     quydoingaynghithanhtien = models.BooleanField(db_column='QuyDoiNgayNghiThanhTien', blank=True, null=True)  # Field name made lowercase.
     songaytoidaduocquydoi = models.FloatField(db_column='SoNgayToiDaDuocQuyDoi', blank=True, null=True)  # Field name made lowercase.
     loaiquydoingaynghi = models.CharField(db_column='LoaiQuyDoiNgayNghi', blank=True, null=True)  # Field name made lowercase.
+    thutuchamcong = models.SmallIntegerField(db_column='ThuTuChamCong', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
         managed = False

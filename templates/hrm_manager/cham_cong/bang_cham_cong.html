@@ -36,6 +36,12 @@
                     <option value="all">Tất cả PB</option>
                 </select>
 
+                <select id="shift-filter" name="shift"
+                    class="px-2.5 py-1 text-xs border border-orange-300 rounded-md focus:ring-1 focus:ring-orange-500 bg-orange-50/50 cursor-pointer max-w-[250px] font-medium"
+                    title="Bộ lọc ca làm việc">
+                    <option value="">-- Ca làm việc --</option>
+                </select>
+
                 <div class="flex-1"></div>
 
                 {% include "hrm_manager/cham_cong/partials/bang_cham_cong_extra_actions.html" %}

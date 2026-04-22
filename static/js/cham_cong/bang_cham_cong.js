@@ -13,11 +13,11 @@ class ChamCongManager {
         this.mode = modeVal === 'update' ? 'update' : 'create';
         this.currentDate = urlParams.get('ngaylamviec') || AppUtils.DateUtils.toInputValue(new Date());
 
-        this.state = { filters: { search: '', dept: 'all' }, isLoading: false, loadController: null };
+        this.state = { filters: { search: '', dept: 'all' }, isLoading: false, loadController: null, selectedShiftId: null, availableShifts: [] };
         this.elements = {};
         this.eventManager = AppUtils.EventManager.create();
         this.debouncedFilter = AppUtils.Helper.debounce(() => this.handleFilter(), 300);
-        this.debouncedDateChange = AppUtils.Helper.debounce(val => { this.currentDate = val; this.loadDailyData(); }, 500);
+        this.debouncedDateChange = AppUtils.Helper.debounce(val => { this.currentDate = val; this.state.selectedShiftId = null; this.loadDailyData(); }, 500);
         this.validator = window.ChamCongTimeValidator || null;
         this.render$ = window.ChamCongRenderHelper || null;
         this.timeParamKeyCache = new Map();
@@ -37,7 +37,7 @@ class ChamCongManager {
         this.elements = {
             hybridBody: $('hybrid-body'), masterJobSelect: $('m-job'), dateInput: $('work-date'),
             deptSelect: $('dept-filter'), searchInput: $('search-input'),
-            checkAllHybrid: $('check-all-hybrid')
+            checkAllHybrid: $('check-all-hybrid'), shiftSelect: $('shift-filter')
         };
     }
 
@@ -114,11 +114,12 @@ class ChamCongManager {
     }
 
     setupEventListeners() {
-        const { checkAllHybrid, searchInput, deptSelect, dateInput, hybridBody } = this.elements;
+        const { checkAllHybrid, searchInput, deptSelect, dateInput, hybridBody, shiftSelect } = this.elements;
         const em = this.eventManager;
         if (checkAllHybrid) em.add(checkAllHybrid, 'change', e => this.toggleAll(e.target, 'hybrid-body'));
         if (searchInput) em.add(searchInput, 'input', this.debouncedFilter);
         if (deptSelect) em.add(deptSelect, 'change', () => { this.state.filters.dept = deptSelect.value; this.render(); });
+        if (shiftSelect) em.add(shiftSelect, 'change', () => { this.state.selectedShiftId = shiftSelect.value ? parseInt(shiftSelect.value, 10) : null; this.loadDailyData(); });
         if (dateInput) em.add(dateInput, 'change', e => this.debouncedDateChange(e.target.value));
         if (hybridBody) {
             em.add(hybridBody, 'change', e => this.handleGridInputChange(e));
@@ -157,7 +158,14 @@ class ChamCongManager {
             this.state.isLoading = true;
         }
         try {
-            const res = await AppUtils.API.get(this.apiUrls.employees, { ngaylamviec: this.currentDate, mode: this.mode, page_size: 2000 }, opts);
+            const params = { ngaylamviec: this.currentDate, mode: this.mode, page_size: 2000 };
+            if (this.state.selectedShiftId) params.calamviec_id = this.state.selectedShiftId;
+            const res = await AppUtils.API.get(this.apiUrls.employees, params, opts);
+            if (res.ds_calamviec !== undefined) {
+                this.state.availableShifts = res.ds_calamviec || [];
+                this.state.selectedShiftId = res.selected_calamviec_id || null;
+                this.initShiftFilter();
+            }
             this.employees = (res.data || []).map(e => this.mapEmployeeRecord(e));
             this.render();
         } catch (error) {
@@ -168,6 +176,20 @@ class ChamCongManager {
     initDeptFilter() {
         if (!this.elements.deptSelect) return;
         this.elements.deptSelect.innerHTML = '<option value="all">Tất cả PB</option>' + this.departments.map(d => `<option value="${d.id}">${d.tenphongban}</option>`).join('');
+    }
+
+    initShiftFilter() {
+        const el = this.elements.shiftSelect;
+        if (!el) return;
+        const shifts = this.state.availableShifts;
+        // Disable dropdown nếu không có ca
+        el.disabled = !shifts.length;
+        el.innerHTML = !shifts.length
+            ? '<option value="">Không có ca làm việc</option>'
+            : shifts.map(s => {
+                const t = s.gio_bat_dau && s.gio_ket_thuc ? ` (${s.gio_bat_dau} - ${s.gio_ket_thuc})` : '';
+                return `<option value="${s.calamviec_id}" ${s.calamviec_id === this.state.selectedShiftId ? 'selected' : ''}>${s.tencalamviec}${t} - ${s.so_nhan_vien} NV</option>`;
+            }).join('');
     }
 
     initMasterSelect() {

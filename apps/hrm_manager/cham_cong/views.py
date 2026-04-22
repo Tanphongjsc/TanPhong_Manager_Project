@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q, Exists
+from django.db.models import CharField, F, Value, Func, Count, OuterRef, Subquery, IntegerField, Q, Exists, Min, Max
 from django.db.models.functions import Cast, Coalesce
 from django.db import transaction
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -305,14 +305,18 @@ def calculate_bang_cham_cong_objects(data_list):
             start_min = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
             end_min = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
             ds_nghi_trua = item.get('khunggionghitrua', [])
+            print(ds_nghi_trua)
 
             # Tính thời gian làm việc thực tế và chuẩn
             tg_lam_viec_thuc = calculate_work_minutes_with_overnight(in_min, out_min, start_min, end_min)
             tg_lam_viec_chuan_ca = calculate_work_minutes_with_overnight(start_min, end_min, start_min, end_min)
+            print(tg_lam_viec_thuc, tg_lam_viec_chuan_ca)
 
             # Trừ nghỉ trưa
             tg_lam_viec_thuc -= tinh_phut_nghi_trua_trong_khoang(in_min, out_min, ds_nghi_trua)
             tg_lam_viec_chuan_ca -= tinh_phut_nghi_trua_trong_khoang(start_min, end_min, ds_nghi_trua)
+            print(tinh_phut_nghi_trua_trong_khoang(in_min, out_min, ds_nghi_trua))
+            print(tinh_phut_nghi_trua_trong_khoang(start_min, end_min, ds_nghi_trua))
 
             # Tính sai lệch giờ theo loại ca
             thoigiandimuon, thoigianvesom, thoigiandisom, thoigianvemuon, tg_lam_viec = _tinh_time_deviation(
@@ -504,14 +508,39 @@ def _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_khung_gio):
                 item['khunggionghitrua'].append(nghi_trua)
 
 
+def _get_shifts_for_date(ngay_lam_viec, source='schedule'):
+    """Lấy DS ca trong ngày. source='schedule' (lịch LV) | 'attendance' (đã chấm)."""
+    Model = Lichlamviecthucte if source == 'schedule' else Bangchamcong
+    # Query 1 lần: gom ca + đếm NV + lấy khung giờ qua ORM join
+    qs = Model.objects.filter(
+        ngaylamviec=ngay_lam_viec, calamviec__isnull=False
+    ).values(
+        'calamviec_id', tencalamviec=F('calamviec__tencalamviec'),
+    ).annotate(
+        so_nhan_vien=Count('nhanvien_id', distinct=True),
+        gio_bat_dau=Min('calamviec__khunggiolamviec__thoigianbatdau'),
+        gio_ket_thuc=Max('calamviec__khunggiolamviec__thoigianketthuc'),
+    ).order_by('calamviec_id')
+    # Serialize time values cho JSON response
+    return [{
+        **s,
+        'gio_bat_dau': serialize_time_value(s['gio_bat_dau']),
+        'gio_ket_thuc': serialize_time_value(s['gio_ket_thuc']),
+    } for s in qs]
+
+
+
 # ============================================================
 # DATA BUILDERS: Chấm công theo ngày
 # ============================================================
 
-def build_cham_cong_data_for_update(ngay_lam_viec):
+def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
     """Lấy dữ liệu chấm công đã lưu cho mode update."""
     # Query chấm công + join metadata nhân viên/ca
-    qs = Bangchamcong.objects.filter(ngaylamviec=ngay_lam_viec).annotate(
+    qs = Bangchamcong.objects.filter(ngaylamviec=ngay_lam_viec)
+    if calamviec_id:
+        qs = qs.filter(calamviec_id=calamviec_id)
+    qs = qs.annotate(
         hovaten=F('nhanvien__hovaten'), manhanvien=F('nhanvien__manhanvien'),
         loainv=F('nhanvien__loainv__id'), phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong'),
         solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay'),
@@ -578,7 +607,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec):
     return result
 
 
-def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='create'):
+def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='create', calamviec_id=None):
     """
     Gom dữ liệu chấm công theo trạng thái:
     - mode='update' → delegate sang build_cham_cong_data_for_update
@@ -586,7 +615,7 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     - da_cham_cong=False → còn thiếu
     """
     if (mode or 'create').lower() == 'update':
-        return build_cham_cong_data_for_update(ngay_lam_viec)
+        return build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=calamviec_id)
 
     is_da_cham = str(da_cham_cong).lower() == 'true'
 
@@ -604,7 +633,10 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     # Base query lịch làm việc thực tế
     qs_base = Lichlamviecthucte.objects.filter(
         ngaylamviec=ngay_lam_viec, calamviec__isnull=False
-    ).annotate(
+    )
+    if calamviec_id:
+        qs_base = qs_base.filter(calamviec_id=calamviec_id)
+    qs_base = qs_base.annotate(
         total_cham_cong=Coalesce(Subquery(sq_count, output_field=IntegerField()), 0),
         has_leave_record=Exists(sq_leave),
         solanchamcongtrongngay=F('calamviec__solanchamcongtrongngay')
@@ -767,7 +799,7 @@ def api_bang_cham_cong_list(request):
 
         if request.method == 'POST':
             objs = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.bulk_create(objs)
+            # Bangchamcong.objects.bulk_create(objs)
             return JsonResponse({
                 'success': True, 'message': 'Chấm công thành công',
                 'data': [model_to_dict(o) for o in objs],
@@ -800,9 +832,9 @@ def api_bang_cham_cong_list(request):
 @require_api_permission('access_control.view_cham_cong')
 @require_http_methods(["GET"])
 def api_bang_cham_cong_nhan_vien_list(request):
-    """API lấy danh sách nhân viên chấm công theo ngày & mode"""
+    """API lấy DS nhân viên chấm công theo ngày, mode & ca làm việc"""
     try:
-        ngay_lam_viec = dt.date.fromisoformat(request.GET.get("ngaylamviec"))
+        ngay = dt.date.fromisoformat(request.GET.get("ngaylamviec"))
     except (ValueError, TypeError):
         return JsonResponse({'success': False, 'message': 'Ngày không hợp lệ'}, status=400)
 
@@ -810,12 +842,17 @@ def api_bang_cham_cong_nhan_vien_list(request):
     if mode not in {'update', 'create', 'new'}:
         return JsonResponse({'success': False, 'message': 'Giá trị mode không hợp lệ (update/create/new)'}, status=400)
 
-    data = build_cham_cong_data_by_status(
-        ngay_lam_viec,
-        mode='update' if mode == 'update' else 'create',
-        da_cham_cong=False
-    )
-    return JsonResponse({'success': True, 'data': data}, status=200)
+    is_update = mode == 'update'
+    ds_ca = _get_shifts_for_date(ngay, 'attendance' if is_update else 'schedule')
+
+    # Parse calamviec_id, auto-select ca đầu tiên nếu không truyền
+    try:
+        ca_id = int(request.GET.get('calamviec_id'))
+    except (TypeError, ValueError):
+        ca_id = ds_ca[0]['calamviec_id'] if ds_ca else None
+
+    data = build_cham_cong_data_by_status(ngay, mode='update' if is_update else 'create', da_cham_cong=False, calamviec_id=ca_id)
+    return JsonResponse({'success': True, 'data': data, 'ds_calamviec': ds_ca, 'selected_calamviec_id': ca_id}, status=200)
 
 
 @login_required

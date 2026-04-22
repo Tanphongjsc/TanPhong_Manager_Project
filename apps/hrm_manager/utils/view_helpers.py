@@ -545,7 +545,7 @@ def serialize_time_value(value):
 def tinh_phut_nghi_trua_trong_khoang(bat_dau_minutes, ket_thuc_minutes, ds_nghi_trua):
     """
     Tính tổng phút nghỉ trưa giao nhau với khoảng [bat_dau, ket_thuc].
-    Chỉ trừ phần thực sự nằm trong khoảng làm việc, tránh trừ thừa.
+    Chỉ trừ phần thực sự nằm trong khoảng làm việc, tránh trừ thừa. Xử lý cả ca qua đêm.
 
     Args:
         bat_dau_minutes (int): Phút bắt đầu khoảng cần kiểm tra
@@ -557,15 +557,36 @@ def tinh_phut_nghi_trua_trong_khoang(bat_dau_minutes, ket_thuc_minutes, ds_nghi_
     """
     if bat_dau_minutes is None or ket_thuc_minutes is None:
         return 0
+        
+    is_overnight_shift_param = bat_dau_minutes > ket_thuc_minutes
+    
+    # Chuẩn hóa thời gian kết thúc ca
+    if is_overnight_shift_param:
+        ket_thuc_minutes += 1440
+        
     tong = 0
     for nghi_trua in ds_nghi_trua:
         nt_bat_dau = parse_time_to_minutes(nghi_trua.get('giobatdau'))
         nt_ket_thuc = parse_time_to_minutes(nghi_trua.get('gioketthuc'))
+        
         if nt_bat_dau is None or nt_ket_thuc is None:
             continue
+            
+        # Chuẩn hóa giờ kết thúc nghỉ
+        if nt_bat_dau > nt_ket_thuc:
+            nt_ket_thuc += 1440
+            
+        # Nếu ca là qua đêm, và thời gian bắt đầu nghỉ thuộc rạng sáng ngày hôm sau 
+        # (nhỏ hơn giờ bắt đầu ca), ta dời nó sang khung "ngày hôm sau" (+1440)
+        if is_overnight_shift_param and nt_bat_dau < bat_dau_minutes:
+            nt_bat_dau += 1440
+            nt_ket_thuc += 1440
+            
         # Phần giao nhau giữa [bat_dau, ket_thuc] và [nt_bat_dau, nt_ket_thuc]
         overlap_start = max(bat_dau_minutes, nt_bat_dau)
         overlap_end = min(ket_thuc_minutes, nt_ket_thuc)
+        
         if overlap_start < overlap_end:
             tong += (overlap_end - overlap_start)
+            
     return tong
