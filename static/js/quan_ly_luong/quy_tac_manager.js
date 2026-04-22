@@ -1,11 +1,12 @@
 /**
  * QuyTacManager - Quản lý bảng quy tắc chế độ lương
- * Version: 1.1 - Thêm phần tử cố định THUC_LINH
+ * Version: 2.0 - Bổ sung thứ tự hiển thị và danh mục nguồn dữ liệu chi tiết
  */
 class QuyTacManager {
-    // Phần tử cố định - luôn có trong chế độ lương
     static FIXED_ELEMENT_CODE = 'THUC_LINH';
-    
+    static DEFAULT_SYSTEM_SOURCE = 'thietlapsolieucodinh.giatrimacdinh';
+    static DEFAULT_SYSTEM_SOURCE_LUONG_THUC_TE = 'bangluong.luong_thuc_te_phan_bo';
+
     constructor(options = {}) {
         this.options = {
             tbodyId: 'quy-tac-tbody',
@@ -16,22 +17,36 @@ class QuyTacManager {
             ...options
         };
 
-        // State
-        this.quyTacList = []; // [{id, phantuluong_id, tenphantu, maphantu, nguondulieu, bieuthuc, ...}]
-        this.fixedElement = null; // Cache phần tử cố định
-        
-        // DOM Elements
+        this.quyTacList = [];
+        this.fixedElement = null;
+        this.draggingId = null;
+
         this.tbody = document.getElementById(this.options.tbodyId);
         this.emptyState = document.getElementById(this.options.emptyId);
         this.countEl = document.getElementById(this.options.countId);
         this.hiddenInput = document.getElementById(this.options.hiddenInputId);
         this.btnAdd = document.getElementById(this.options.btnAddId);
 
-        // Nguồn dữ liệu options
         this.nguonDuLieuOptions = [
             { value: 'manual', label: 'Tự nhập' },
             { value: 'system', label: 'Từ hệ thống' },
             { value: 'formula', label: 'Công thức' }
+        ];
+
+        this.systemNguonDuLieuOptions = [
+            { value: 'thietlapsolieucodinh.giatrimacdinh', label: 'Thiết lập số liệu cố định' },
+            { value: 'bangluong.luong_thuc_te_phan_bo', label: 'Lương thực tế phân bổ công VP + SX' },
+            { value: 'bangchamcong.tong_cong_lamviec', label: 'Bảng công - Tổng công làm việc' },
+            { value: 'bangchamcong.tong_thoigian_lamviec', label: 'Bảng công - Tổng giờ làm việc' },
+            { value: 'bangchamcong.tong_thoigian_lamthem', label: 'Bảng công - Tổng giờ làm thêm' },
+            { value: 'bangchamcong.tong_so_luong_an', label: 'Bảng công - Số suất ăn' },
+            { value: 'bangchamcong.tong_di_muon_phut', label: 'Bảng công - Tổng phút đi muộn' },
+            { value: 'bangchamcong.tong_ve_som_phut', label: 'Bảng công - Tổng phút về sớm' },
+            { value: 'bangchamcong.tong_ngay_vang', label: 'Bảng công - Số ngày vắng' },
+            { value: 'bangchamcong.tong_cong_vp_thucte', label: 'Bảng công - Công VP thực tế' },
+            { value: 'bangchamcong.tong_tien_sx', label: 'Bảng công - Thành tiền sản xuất' },
+            { value: 'lichlamviecthucte.tong_cong_lamviec_thucte', label: 'Lịch thực tế - Công chuẩn tháng' },
+            { value: 'lichlamviecthucte.tong_gio_lamviec_chuan', label: 'Lịch thực tế - Giờ chuẩn tháng' }
         ];
 
         this.init();
@@ -39,17 +54,9 @@ class QuyTacManager {
 
     init() {
         this.bindEvents();
-        // Load phần tử cố định trước khi render
         this.loadFixedElement();
     }
 
-    // ============================================================
-    // FIXED ELEMENT (THUC_LINH)
-    // ============================================================
-
-    /**
-     * Load phần tử cố định THUC_LINH từ API
-     */
     async loadFixedElement() {
         try {
             const res = await AppUtils.API.get('/hrm/quan-ly-luong/api/phan-tu-luong/list', {
@@ -57,21 +64,19 @@ class QuyTacManager {
             });
 
             if (res.success && res.data) {
-                // Tìm phần tử THUC_LINH
                 const fixedEl = res.data.find(pt => pt.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
-                
                 if (fixedEl) {
                     this.fixedElement = {
                         phantuluong_id: fixedEl.id,
                         tenphantu: fixedEl.tenphantu,
                         maphantu: fixedEl.maphantu,
-                        nguondulieu: 'formula', // Mặc định là công thức
+                        nguondulieu: 'formula',
+                        nguondulieu_chitiet: '',
                         bieuthuc: '',
                         mota: '',
-                        isFixed: true // Đánh dấu là phần tử cố định
+                        thutuhienthi: 999999,
+                        isFixed: true
                     };
-                    
-                    // Thêm vào danh sách nếu chưa có
                     this.ensureFixedElement();
                 }
             }
@@ -80,67 +85,94 @@ class QuyTacManager {
         }
     }
 
-    /**
-     * Đảm bảo phần tử cố định luôn tồn tại trong danh sách
-     */
     ensureFixedElement() {
         if (!this.fixedElement) return;
 
-        // Kiểm tra đã có trong danh sách chưa
-        const exists = this.quyTacList.some(q => q.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
-        
-        if (!exists) {
-            // Thêm phần tử cố định
+        const idx = this.quyTacList.findIndex(q => q.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
+        if (idx === -1) {
             this.quyTacList.push({ ...this.fixedElement });
+        } else {
+            this.quyTacList[idx].nguondulieu = 'formula';
+            this.quyTacList[idx].nguondulieu_chitiet = '';
+            this.quyTacList[idx].isFixed = true;
         }
-        
-        // Đảm bảo THUC_LINH ở cuối danh sách
+
         this.sortWithFixedAtEnd();
         this.render();
     }
 
-    /**
-     * Kiểm tra phần tử có phải là cố định không
-     */
     isFixedElement(maphantu) {
-        return maphantu === QuyTacManager.FIXED_ELEMENT_CODE;
+        return String(maphantu || '').toUpperCase() === QuyTacManager.FIXED_ELEMENT_CODE;
     }
 
-    /**
-     * Sắp xếp danh sách với THUC_LINH ở cuối
-     */
+    getDefaultSystemSource(item) {
+        return this.isLuongThucTe(item)
+            ? QuyTacManager.DEFAULT_SYSTEM_SOURCE_LUONG_THUC_TE
+            : QuyTacManager.DEFAULT_SYSTEM_SOURCE;
+    }
+
+    static normalizeSystemSourceKey(sourceKey) {
+        const normalized = String(sourceKey || '').trim().toLowerCase();
+        if (!normalized) return '';
+        return normalized;
+    }
+
+    isLuongThucTe(item) {
+        return String(item?.maphantu || '').trim().toUpperCase() === 'LUONG_THUC_TE';
+    }
+
+    normalizeDisplayOrder() {
+        const nonFixed = this.quyTacList.filter(q => !this.isFixedElement(q.maphantu));
+        const fixed = this.quyTacList.filter(q => this.isFixedElement(q.maphantu));
+
+        nonFixed.forEach((item, idx) => {
+            item.thutuhienthi = idx + 1;
+        });
+        fixed.forEach((item, idx) => {
+            item.thutuhienthi = nonFixed.length + idx + 1;
+        });
+
+        this.quyTacList = [...nonFixed, ...fixed];
+    }
+
     sortWithFixedAtEnd() {
         this.quyTacList.sort((a, b) => {
             const aIsFixed = this.isFixedElement(a.maphantu);
             const bIsFixed = this.isFixedElement(b.maphantu);
-            
+
             if (aIsFixed && !bIsFixed) return 1;
             if (!aIsFixed && bIsFixed) return -1;
-            return 0;
+
+            const aOrder = Number(a.thutuhienthi || 999999);
+            const bOrder = Number(b.thutuhienthi || 999999);
+            if (aOrder !== bOrder) return aOrder - bOrder;
+
+            return Number(a.phantuluong_id || 0) - Number(b.phantuluong_id || 0);
         });
+
+        this.normalizeDisplayOrder();
     }
 
     bindEvents() {
-        // Nút thêm mới
         if (this.btnAdd) {
             this.btnAdd.addEventListener('click', () => this.openPhanTuSelector());
         }
 
-        // Delegate events cho tbody
         if (this.tbody) {
             this.tbody.addEventListener('change', (e) => this.handleRowChange(e));
             this.tbody.addEventListener('click', (e) => this.handleRowClick(e));
             this.tbody.addEventListener('input', (e) => this.handleRowInput(e));
+            this.tbody.addEventListener('dragstart', (e) => this.handleDragStart(e));
+            this.tbody.addEventListener('dragover', (e) => this.handleDragOver(e));
+            this.tbody.addEventListener('drop', (e) => this.handleDrop(e));
+            this.tbody.addEventListener('dragend', () => this.handleDragEnd());
         }
     }
-
-    // ============================================================
-    // RENDER
-    // ============================================================
 
     render() {
         if (!this.tbody) return;
 
+        this.sortWithFixedAtEnd();
         this.tbody.innerHTML = '';
 
         if (this.quyTacList.length === 0) {
@@ -150,12 +182,12 @@ class QuyTacManager {
         }
 
         this.showEmpty(false);
-        
+
         const fragment = document.createDocumentFragment();
         this.quyTacList.forEach((item, index) => {
             fragment.appendChild(this.createRow(item, index));
         });
-        
+
         this.tbody.appendChild(fragment);
         this.updateCount();
         this.syncHiddenInput();
@@ -166,16 +198,65 @@ class QuyTacManager {
         tr.className = 'hover:bg-slate-50 transition-colors';
         tr.dataset.id = item.phantuluong_id;
 
-        const nguonOptions = this.nguonDuLieuOptions.map(opt => 
-            `<option value="${opt.value}" ${item.nguondulieu === opt.value ? 'selected' : ''}>${opt.label}</option>`
-        ).join('');
+        const isFixed = this.isFixedElement(item.maphantu);
+        tr.draggable = !isFixed;
 
         const isFormula = item.nguondulieu === 'formula';
         const isManual = item.nguondulieu === 'manual';
         const isSystem = item.nguondulieu === 'system';
-        const isFixed = this.isFixedElement(item.maphantu);
+
+        const nguonOptions = this.nguonDuLieuOptions.map(opt => (
+            `<option value="${opt.value}" ${item.nguondulieu === opt.value ? 'selected' : ''}>${opt.label}</option>`
+        )).join('');
+
+        const selectedSystemSource = isSystem
+            ? (QuyTacManager.normalizeSystemSourceKey(item.nguondulieu_chitiet) || this.getDefaultSystemSource(item))
+            : '';
+
+        if (isSystem && item.nguondulieu_chitiet !== selectedSystemSource) {
+            item.nguondulieu_chitiet = selectedSystemSource;
+        }
+
+        const systemSourceOptions = this.systemNguonDuLieuOptions.map(opt => (
+            `<option value="${opt.value}" ${selectedSystemSource === opt.value ? 'selected' : ''}>${opt.label}</option>`
+        )).join('');
+
+        const draggableBadge = isFixed
+            ? `
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-400" title="Phần tử bắt buộc, không thể di chuyển">
+                    <i class="fas fa-lock text-[10px]"></i>
+                </span>
+            `
+            : `
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-sm cursor-grab active:cursor-grabbing" title="Kéo để sắp xếp">
+                    +
+                </span>
+            `;
+
+        const sourceConfigCell = isSystem
+            ? `
+                <select data-field="nguondulieu_chitiet" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    ${systemSourceOptions}
+                </select>
+            `
+            : isFormula
+                ? `
+                    <input type="text"
+                        data-field="bieuthuc"
+                        value="${this.escapeHtml(item.bieuthuc || '')}"
+                        placeholder="VD: LUONG_THUC_TE + PHU_CAP - BAO_HIEM"
+                        class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm font-mono focus:ring-2 focus:ring-blue-500">
+                `
+                : `
+                    <span class="text-slate-500 text-sm italic">
+                        <i class="fas fa-keyboard mr-1"></i>Giá trị sẽ nhập thủ công khi tính lương
+                    </span>
+                `;
 
         tr.innerHTML = `
+            <td class="px-3 py-3 text-center align-middle">
+                ${draggableBadge}
+            </td>
             <td class="px-3 py-3 text-slate-600 text-center align-middle">${index + 1}</td>
             <td class="px-3 py-3 align-middle">
                 <span class="font-medium text-slate-800">${this.escapeHtml(item.tenphantu)}</span>
@@ -185,32 +266,16 @@ class QuyTacManager {
                 <code class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">${this.escapeHtml(item.maphantu)}</code>
             </td>
             <td class="px-3 py-3 align-middle">
-                <select data-field="nguondulieu" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select data-field="nguondulieu" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isFixed ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : ''}" ${isFixed ? 'disabled' : ''}>
                     ${nguonOptions}
                 </select>
             </td>
             <td class="px-3 py-3 align-middle">
-                <div class="value-container">
-                    ${isFormula ? `
-                        <input type="text" 
-                            data-field="bieuthuc" 
-                            value="${this.escapeHtml(item.bieuthuc || '')}"
-                            placeholder="VD: LUONG_CO_BAN * TKPI004"
-                            class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm font-mono focus:ring-2 focus:ring-blue-500">
-                    ` : isManual ? `
-                        <span class="text-slate-500 text-sm italic">
-                            <i class="fas fa-keyboard mr-1"></i>Giá trị nhập thủ công khi tính lương
-                        </span>
-                    ` : `
-                        <span class="text-slate-500 text-sm italic">
-                            <i class="fas fa-database mr-1"></i>Lấy từ Thiết lập số liệu cố định
-                        </span>
-                    `}
-                </div>
+                ${sourceConfigCell}
             </td>
             <td class="px-3 py-3 align-middle">
-                <input type="text" 
-                    data-field="mota" 
+                <input type="text"
+                    data-field="mota"
                     value="${this.escapeHtml(item.mota || '')}"
                     placeholder="Nhập mô tả..."
                     class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -259,10 +324,6 @@ class QuyTacManager {
         }
     }
 
-    // ============================================================
-    // EVENT HANDLERS
-    // ============================================================
-
     handleRowChange(e) {
         const target = e.target;
         const row = target.closest('tr');
@@ -273,6 +334,12 @@ class QuyTacManager {
 
         if (field === 'nguondulieu') {
             this.updateNguonDuLieu(id, target.value);
+            return;
+        }
+
+        if (field === 'nguondulieu_chitiet') {
+            this.updateFieldValue(id, field, target.value);
+            return;
         }
     }
 
@@ -304,69 +371,215 @@ class QuyTacManager {
             case 'test':
                 this.testFormula(id);
                 break;
+            default:
+                break;
         }
     }
 
-    // ============================================================
-    // CRUD OPERATIONS
-    // ============================================================
+    handleDragStart(e) {
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const id = row.dataset.id;
+        const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(id));
+        if (!item || this.isFixedElement(item.maphantu)) {
+            e.preventDefault();
+            return;
+        }
+
+        this.draggingId = String(id);
+        row.style.opacity = '0.6';
+
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.draggingId);
+        }
+    }
+
+    handleDragOver(e) {
+        if (!this.draggingId) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const targetId = String(row.dataset.id || '');
+        if (!targetId || targetId === this.draggingId) return;
+
+        e.preventDefault();
+
+        const rect = row.getBoundingClientRect();
+        const isAfter = (e.clientY - rect.top) > (rect.height / 2);
+
+        this.clearDropIndicators();
+        row.dataset.dropPosition = isAfter ? 'after' : 'before';
+        row.style.backgroundColor = '#eff6ff';
+        if (isAfter) {
+            row.style.borderBottom = '2px solid #3b82f6';
+            row.style.borderTop = '';
+        } else {
+            row.style.borderTop = '2px solid #3b82f6';
+            row.style.borderBottom = '';
+        }
+    }
+
+    handleDrop(e) {
+        if (!this.draggingId) return;
+        e.preventDefault();
+
+        const row = e.target.closest('tr');
+        if (!row) {
+            this.handleDragEnd();
+            return;
+        }
+
+        const targetId = String(row.dataset.id || '');
+        if (!targetId || targetId === this.draggingId) {
+            this.handleDragEnd();
+            return;
+        }
+
+        const isAfter = row.dataset.dropPosition === 'after';
+        this.reorderByDrag(this.draggingId, targetId, isAfter);
+        this.handleDragEnd();
+        this.render();
+    }
+
+    handleDragEnd() {
+        this.clearDropIndicators();
+
+        const draggingRow = this.tbody?.querySelector(`tr[data-id="${this.draggingId}"]`);
+        if (draggingRow) {
+            draggingRow.style.opacity = '';
+        }
+
+        this.draggingId = null;
+    }
+
+    clearDropIndicators() {
+        if (!this.tbody) return;
+
+        this.tbody.querySelectorAll('tr').forEach(row => {
+            row.style.borderTop = '';
+            row.style.borderBottom = '';
+            if (String(row.dataset.id || '') !== this.draggingId) {
+                row.style.backgroundColor = '';
+            }
+            delete row.dataset.dropPosition;
+        });
+    }
+
+    reorderByDrag(draggedId, targetId, isAfter) {
+        const draggedIndex = this.quyTacList.findIndex(q => String(q.phantuluong_id) === String(draggedId));
+        const targetIndex = this.quyTacList.findIndex(q => String(q.phantuluong_id) === String(targetId));
+
+        if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) {
+            return;
+        }
+
+        const [draggedItem] = this.quyTacList.splice(draggedIndex, 1);
+
+        let insertIndex = targetIndex;
+        if (draggedIndex < targetIndex) {
+            insertIndex -= 1;
+        }
+        if (isAfter) {
+            insertIndex += 1;
+        }
+
+        const fixedIndex = this.quyTacList.findIndex(item => this.isFixedElement(item.maphantu));
+        if (fixedIndex >= 0) {
+            insertIndex = Math.min(insertIndex, fixedIndex);
+        }
+
+        if (insertIndex < 0) {
+            insertIndex = 0;
+        }
+
+        this.quyTacList.splice(insertIndex, 0, draggedItem);
+        this.normalizeDisplayOrder();
+    }
 
     addQuyTac(phanTuList) {
-        // phanTuList: [{id, tenphantu, maphantu, loaiphantu, nhomphantu_ten}]
         phanTuList.forEach(pt => {
-            // Kiểm tra đã tồn tại chưa
-            const exists = this.quyTacList.some(q => q.phantuluong_id === pt.id);
+            const exists = this.quyTacList.some(q => Number(q.phantuluong_id) === Number(pt.id));
             if (exists) return;
-            
-            // Không cho thêm phần tử cố định (đã có sẵn)
+
             if (this.isFixedElement(pt.maphantu)) return;
 
             this.quyTacList.push({
                 phantuluong_id: pt.id,
                 tenphantu: pt.tenphantu,
                 maphantu: pt.maphantu,
-                nguondulieu: 'manual', // Mặc định
+                nguondulieu: 'manual',
+                nguondulieu_chitiet: '',
                 bieuthuc: '',
-                giatri: null
+                mota: '',
+                thutuhienthi: this.quyTacList.length + 1,
+                isFixed: false
             });
         });
 
-        // Sắp xếp lại để THUC_LINH ở cuối
         this.sortWithFixedAtEnd();
         this.render();
     }
 
     removeQuyTac(phantuluongId) {
-        // Tìm phần tử cần xóa
         const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(phantuluongId));
-        
-        // Không cho xóa phần tử cố định
         if (item && this.isFixedElement(item.maphantu)) {
             AppUtils.Notify.warning('Không thể xóa phần tử bắt buộc "Thực lĩnh"');
             return;
         }
-        
+
         this.quyTacList = this.quyTacList.filter(q => String(q.phantuluong_id) !== String(phantuluongId));
+        this.sortWithFixedAtEnd();
+        this.render();
+    }
+
+    updateDisplayOrder(phantuluongId, value) {
+        const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(phantuluongId));
+        if (!item || this.isFixedElement(item.maphantu)) return;
+
+        const next = Number(value);
+        if (Number.isFinite(next) && next > 0) {
+            item.thutuhienthi = next;
+        }
+
+        this.sortWithFixedAtEnd();
         this.render();
     }
 
     updateNguonDuLieu(phantuluongId, value) {
         const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(phantuluongId));
-        if (item) {
-            item.nguondulieu = value;
-            // Reset giá trị khi đổi nguồn
-            item.bieuthuc = '';
-            
-            this.render(); // Re-render để đổi input type
+        if (!item) return;
+
+        if (this.isFixedElement(item.maphantu)) {
+            item.nguondulieu = 'formula';
+            item.nguondulieu_chitiet = '';
+            this.render();
+            return;
         }
+
+        item.nguondulieu = value;
+
+        if (value === 'system') {
+            item.nguondulieu_chitiet = item.nguondulieu_chitiet || this.getDefaultSystemSource(item);
+            item.bieuthuc = '';
+        } else if (value === 'formula') {
+            item.nguondulieu_chitiet = '';
+        } else {
+            item.nguondulieu_chitiet = '';
+            item.bieuthuc = '';
+        }
+
+        this.render();
     }
 
     updateFieldValue(phantuluongId, field, value) {
         const item = this.quyTacList.find(q => String(q.phantuluong_id) === String(phantuluongId));
-        if (item) {
-            item[field] = value;
-            this.syncHiddenInput();
-        }
+        if (!item) return;
+
+        item[field] = value;
+        this.syncHiddenInput();
     }
 
     testFormula(phantuluongId) {
@@ -376,7 +589,6 @@ class QuyTacManager {
             return;
         }
 
-        // Lấy danh sách mã phần tử làm biến
         const vars = this.quyTacList.map(q => q.maphantu);
         const result = AppUtils.Formula.validate(item.bieuthuc, vars);
 
@@ -387,42 +599,71 @@ class QuyTacManager {
         }
     }
 
-    // ============================================================
-    // PHẦN TỬ SELECTOR
-    // ============================================================
-
     openPhanTuSelector() {
-        // Trigger event để PhanTuSelectorController xử lý
-        // Loại trừ cả phần tử đã chọn và phần tử cố định
         const event = new CustomEvent('openPhanTuSelector', {
             detail: {
                 excludeIds: this.getExcludeIds(),
-                fixedElementCode: QuyTacManager.FIXED_ELEMENT_CODE, // Truyền mã phần tử cố định
+                fixedElementCode: QuyTacManager.FIXED_ELEMENT_CODE,
                 onConfirm: (selected) => this.addQuyTac(selected)
             }
         });
         document.dispatchEvent(event);
     }
 
-    // ============================================================
-    // DATA METHODS
-    // ============================================================
-
     getData() {
         return this.quyTacList;
     }
 
     setData(data) {
-        this.quyTacList = data || [];
-        
-        // Đảm bảo phần tử cố định luôn có
+        const raw = Array.isArray(data) ? data : [];
+
+        this.quyTacList = raw.map((item, index) => {
+            let nguondulieu = String(item.nguondulieu || 'manual').toLowerCase();
+            if (!['manual', 'system', 'formula'].includes(nguondulieu)) {
+                nguondulieu = 'manual';
+            }
+
+            let thutuhienthi = Number(item.thutuhienthi);
+            if (!Number.isFinite(thutuhienthi) || thutuhienthi <= 0) {
+                thutuhienthi = index + 1;
+            }
+
+            const normalized = {
+                phantuluong_id: item.phantuluong_id,
+                tenphantu: item.tenphantu,
+                maphantu: item.maphantu,
+                nguondulieu,
+                nguondulieu_chitiet: QuyTacManager.normalizeSystemSourceKey(item.nguondulieu_chitiet || item.nguondulieuchitiet || ''),
+                bieuthuc: item.bieuthuc || '',
+                mota: item.mota || '',
+                thutuhienthi,
+                isFixed: this.isFixedElement(item.maphantu)
+            };
+
+            if (normalized.nguondulieu === 'system' && !normalized.nguondulieu_chitiet) {
+                normalized.nguondulieu_chitiet = this.getDefaultSystemSource(normalized);
+            }
+
+            if (normalized.nguondulieu !== 'system') {
+                normalized.nguondulieu_chitiet = '';
+            }
+
+            if (normalized.isFixed) {
+                normalized.nguondulieu = 'formula';
+                normalized.nguondulieu_chitiet = '';
+            }
+
+            return normalized;
+        });
+
         if (this.fixedElement) {
             this.ensureFixedElement();
         } else {
-            // Nếu fixedElement chưa load xong, đánh dấu từ data
-            const fixedInData = this.quyTacList.find(q => q.maphantu === QuyTacManager.FIXED_ELEMENT_CODE);
+            const fixedInData = this.quyTacList.find(q => this.isFixedElement(q.maphantu));
             if (fixedInData) {
                 fixedInData.isFixed = true;
+                fixedInData.nguondulieu = 'formula';
+                fixedInData.nguondulieu_chitiet = '';
             }
             this.sortWithFixedAtEnd();
             this.render();
@@ -430,22 +671,15 @@ class QuyTacManager {
     }
 
     clear() {
-        // Giữ lại phần tử cố định khi clear
         const fixedItem = this.quyTacList.find(q => this.isFixedElement(q.maphantu));
-        this.quyTacList = fixedItem ? [fixedItem] : [];
+        this.quyTacList = fixedItem ? [{ ...fixedItem }] : [];
+        this.sortWithFixedAtEnd();
         this.render();
     }
 
-    /**
-     * Lấy danh sách ID phần tử để loại trừ khi mở selector
-     */
     getExcludeIds() {
         return this.quyTacList.map(q => q.phantuluong_id);
     }
-
-    // ============================================================
-    // UTILS
-    // ============================================================
 
     escapeHtml(str) {
         if (!str) return '';

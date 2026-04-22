@@ -1,11 +1,15 @@
 <div class="flex items-center gap-1.5">
     <div class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
         <i class="fa-regular fa-calendar text-slate-500 mr-1.5 text-[10px]"></i>
-        <input type="date" id="filter-start-date" name="start_date"
-               class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+     <div class="relative">
+         <input type="date" id="filter-start-date" name="start_date"
+             class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+     </div>
         <span class="text-slate-300 px-1 text-[11px]">-</span>
-        <input type="date" id="filter-end-date" name="end_date"
-               class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+     <div class="relative">
+         <input type="date" id="filter-end-date" name="end_date"
+             class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+     </div>
     </div>
 
     <button type="button" id="btn-range-week"

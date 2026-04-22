@@ -1661,7 +1661,6 @@ class BangLuongService:
             cls.STATUS_CALCULATED,  # ← BỔ SUNG
             cls.STATUS_APPROVED, 
             cls.STATUS_PAID,
-            cls.STATUS_CANCELLED,   # ← BỔ SUNG
         ]
         # ✅ SỬA: Dùng computed status thay vì DB status
         computed = cls.get_computed_status(bang_luong)

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.db import transaction
-from django.db.models import F, Q, Sum, Count, Exists, OuterRef, FloatField
+from django.db.models import F, Q, Sum, Count, Exists, OuterRef, FloatField, Min
 from django.urls import reverse
 from django.db.models.functions import Coalesce
 
@@ -46,6 +46,109 @@ from .services import (
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+SYSTEM_SOURCE_FIXED_SETUP = 'thietlapsolieucodinh.giatrimacdinh'
+SYSTEM_SOURCE_SALARY_BASE_PRORATED = 'bangluong.luong_thuc_te_phan_bo'
+SYSTEM_SOURCE_ATTENDANCE_WORK_DAY = 'bangchamcong.tong_cong_lamviec'
+SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR = 'bangchamcong.tong_thoigian_lamviec'
+SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR = 'bangchamcong.tong_thoigian_lamthem'
+SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT = 'bangchamcong.tong_so_luong_an'
+SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES = 'bangchamcong.tong_di_muon_phut'
+SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES = 'bangchamcong.tong_ve_som_phut'
+SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY = 'bangchamcong.tong_ngay_vang'
+SYSTEM_SOURCE_ATTENDANCE_VP_DAY = 'bangchamcong.tong_cong_vp_thucte'
+SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT = 'bangchamcong.tong_tien_sx'
+SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY = 'lichlamviecthucte.tong_cong_lamviec_thucte'
+SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR = 'lichlamviecthucte.tong_gio_lamviec_chuan'
+
+SYSTEM_SOURCE_KEYS = {
+    SYSTEM_SOURCE_FIXED_SETUP,
+    SYSTEM_SOURCE_SALARY_BASE_PRORATED,
+    SYSTEM_SOURCE_ATTENDANCE_WORK_DAY,
+    SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR,
+    SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR,
+    SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT,
+    SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES,
+    SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES,
+    SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY,
+    SYSTEM_SOURCE_ATTENDANCE_VP_DAY,
+    SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT,
+    SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY,
+    SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR,
+}
+
+# Mã quy tắc mặc định dùng công thức lương thực tế phân bổ VP + SX
+SYSTEM_SOURCE_PRORATED_DEFAULT_RULE_CODES = {
+    'LUONG_THUC_TE',
+}
+
+
+def _get_default_system_source_for_rule(rule_code):
+    rule_code = str(rule_code or '').strip().upper()
+    if rule_code in SYSTEM_SOURCE_PRORATED_DEFAULT_RULE_CODES:
+        return SYSTEM_SOURCE_SALARY_BASE_PRORATED
+    return SYSTEM_SOURCE_FIXED_SETUP
+
+
+def _safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_system_source_key(source_key):
+    normalized_key = str(source_key or '').strip().lower()
+    if not normalized_key:
+        return ''
+    return normalized_key
+
+
+def _normalize_rule_source(rule):
+    source = str(rule.get('nguondulieu') or 'manual').strip().lower()
+    if source not in {'manual', 'system', 'formula'}:
+        source = 'manual'
+
+    source_key = _normalize_system_source_key(rule.get('nguondulieuchitiet'))
+    rule_code = str(rule.get('maquytac') or '').strip().upper()
+
+    if source == 'system':
+        if not source_key:
+            source_key = _get_default_system_source_for_rule(rule_code)
+        if source_key not in SYSTEM_SOURCE_KEYS:
+            source_key = SYSTEM_SOURCE_FIXED_SETUP
+    else:
+        source_key = ''
+
+    return source, source_key
+
+
+def _resolve_system_source_value(source_key, rule, nv_bcc, nv_setup, cong_chuan_thang, schedule_data):
+    setup_value = _safe_float(nv_setup.get(rule['phantuluong'], 0.0))
+    source_map = {
+        SYSTEM_SOURCE_FIXED_SETUP: setup_value,
+        SYSTEM_SOURCE_ATTENDANCE_WORK_DAY: _safe_float(nv_bcc.get('tong_cong_lamviec', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamviec', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamthem', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT: _safe_float(nv_bcc.get('tong_so_luong_an', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES: _safe_float(nv_bcc.get('tong_di_muon_phut', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES: _safe_float(nv_bcc.get('tong_ve_som_phut', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY: _safe_float(nv_bcc.get('tong_ngay_vang', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_VP_DAY: _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0)),
+        SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT: _safe_float(nv_bcc.get('tong_tien_sx', 0)),
+        SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY: _safe_float(schedule_data.get('tong_cong_lamviec_thucte', 0)),
+        SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR: _safe_float(schedule_data.get('tong_gio_lamviec_chuan', 0)),
+    }
+
+    if source_key == SYSTEM_SOURCE_SALARY_BASE_PRORATED:
+        tong_cong_vp = _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0))
+        tong_tien_sx = _safe_float(nv_bcc.get('tong_tien_sx', 0))
+        if cong_chuan_thang <= 0:
+            return tong_tien_sx
+        return round(((setup_value / cong_chuan_thang) * tong_cong_vp) + tong_tien_sx, 2)
+
+    return source_map.get(source_key, setup_value)
+
+
 def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     """
     Sinh phiếu lương cho bảng lương đã chọn, gom dữ liệu, áp dụng công thức động, trả về kết quả từng nhân viên.
@@ -69,18 +172,32 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id'))
 
     # 2. Lấy danh sách quy tắc tính lương (rules) đang active cho chế độ lương này
-    rules_qs = Quytacchedoluong.objects.filter(
-        chedoluong_id=chedoluong_id, trangthai='active'
-    ).values(
-        'maquytac', 'bieuthuctinhtoan', 'nguondulieu', 'phantuluong', 'phantuluong__loaiphantu'
+    rules_qs = (
+        Quytacchedoluong.objects
+        .filter(chedoluong_id=chedoluong_id, trangthai='active')
+        .values(
+            'maquytac',
+            'bieuthuctinhtoan',
+            'nguondulieu',
+            'nguondulieuchitiet',
+            'phantuluong',
+            'phantuluong__loaiphantu',
+            'thutuhienthi'
+        )
+        .order_by('thutuhienthi', 'id')
     )
     rules_list = list(rules_qs)
     #Check quy tắc rỗng trước khi sinh phiếu
     if not rules_list:
         return None, "Chế độ lương chưa có quy tắc tính lương nào. Vui lòng thiết lập quy tắc trước."
+
+    for rule in rules_list:
+        src, source_key = _normalize_rule_source(rule)
+        rule['_src'] = src
+        rule['_source_key'] = source_key
     
     # Các mã quy tắc cần tính bằng công thức
-    formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'].strip().lower() == 'formula']
+    formula_keys = [r['maquytac'] for r in rules_list if r['_src'] == 'formula']
 
     # 3. Lấy dữ liệu chấm công tổng hợp theo nhân viên trong kỳ lương
     bcc_data = Bangchamcong.objects.filter(
@@ -96,7 +213,10 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem'), 0.0, output_field=FloatField()) / 60.0,
         tong_cong_lamviec=Coalesce(Sum('conglamviec'), 0.0, output_field=FloatField()),
         tong_cong_vp_thucte=(Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP')), 0.0, output_field=FloatField())),
-        tong_tien_sx=Coalesce(Sum('thanhtien'), 0.0, output_field=FloatField()),
+        tong_tien_sx=Coalesce(Sum('thanhtien', filter=Q(loaichamcong='SX')), 0.0, output_field=FloatField()),
+        tong_di_muon_phut=Coalesce(Sum('thoigiandimuon'), 0.0, output_field=FloatField()),
+        tong_ve_som_phut=Coalesce(Sum('thoigianvesom'), 0.0, output_field=FloatField()),
+        tong_ngay_vang=Count('id', filter=Q(codilam=False, cophaingaynghi=False)),
     )
     bcc_dict = {item['nhanvien']: item for item in bcc_data}
     if not bcc_dict:
@@ -106,9 +226,12 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
-    ).values('nhanvien').annotate(tong_cong_lamviec_thucte=Sum('calamviec__congcuacalamviec'))
-    # Chuyển về dict {nhanvien_id: tong_cong_lamviec}
-    lich_lam_viec_dict = {item['nhanvien']: item['tong_cong_lamviec_thucte'] for item in lich_lam_viec_qs}
+    ).values('nhanvien').annotate(
+        tong_cong_lamviec_thucte=Coalesce(Sum('calamviec__congcuacalamviec'), 0.0, output_field=FloatField()),
+        tong_gio_lamviec_chuan=Coalesce(Sum('calamviec__tongthoigianlamvieccuaca'), 0.0, output_field=FloatField())
+    )
+    # Chuyển về dict {nhanvien_id: {...}}
+    lich_lam_viec_dict = {item['nhanvien']: item for item in lich_lam_viec_qs}
 
     # 4. Lấy dữ liệu thiết lập số liệu cố định cho từng nhân viên
     setup_data = Thietlapsolieucodinh.objects.filter(
@@ -128,31 +251,38 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     for nv_id in nhanvien_ids:
         nv_bcc = bcc_dict.get(nv_id, {})
         nv_setup = setup_dict.get(nv_id, {})
+        nv_schedule = lich_lam_viec_dict.get(nv_id, {})
         context_params = {}
         
         # A. Dữ liệu biến động từ chấm công
-        context_params['SO_LUONG_AN'] = float(nv_bcc.get('tong_so_luong_an', 0)) # Số lượng ăn
-        context_params['SO_CONG_LAM_VIEC'] = float(nv_bcc.get('tong_cong_lamviec', 0)) # Số công làm việc
+        context_params['SO_LUONG_AN'] = _safe_float(nv_bcc.get('tong_so_luong_an', 0)) # Số lượng ăn
+        context_params['SO_CONG_LAM_VIEC'] = _safe_float(nv_bcc.get('tong_cong_lamviec', 0)) # Số công làm việc
 
-        cong_chuan_thang = lich_lam_viec_dict.get(nv_id, 26)
+        cong_chuan_thang = _safe_float(nv_schedule.get('tong_cong_lamviec_thucte', 0), 26)
         if cong_chuan_thang <= 0:
             cong_chuan_thang = 26
         context_params['CONG_CHUAN_THANG'] = cong_chuan_thang
+        context_params['GIO_CHUAN_THANG'] = _safe_float(nv_schedule.get('tong_gio_lamviec_chuan', 0))
 
         # B. Dữ liệu từ rules: system/manual/formula
         for rule in rules_list:
             ma_qt = rule['maquytac']
-            src = rule['nguondulieu'].strip().lower()
+            src = rule['_src']
+            source_key = rule['_source_key']
             
             # Nếu quy tắc đã tồn tại trong context_params (do trùng mã quy tắc) và nguồn dữ liệu là system nhưng không có thiết lập số liệu cố định → bỏ qua để tránh ghi đè bằng None
             if ma_qt in context_params and nv_setup.get(rule['phantuluong']) is None:
                 continue        
                 
             if src == 'system':
-                if ma_qt == 'LUONG_KHOAN':
-                    continue
-                else:
-                    context_params[ma_qt] = nv_setup.get(rule['phantuluong'], 0.0)
+                context_params[ma_qt] = _resolve_system_source_value(
+                    source_key=source_key,
+                    rule=rule,
+                    nv_bcc=nv_bcc,
+                    nv_setup=nv_setup,
+                    cong_chuan_thang=cong_chuan_thang,
+                    schedule_data=nv_schedule
+                )
             elif src == 'manual':
                 context_params[ma_qt] = None # Chờ nhập liệu tay
             elif src == 'formula':
@@ -196,8 +326,10 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             phieu_luong_final[nv_id][rule['phantuluong']] = {
                 "value": round(val, 2) if val is not None else None,
                 "type": rule['phantuluong__loaiphantu'],
-                "status": "calculated" if val is not None else rule['nguondulieu'].strip().lower(),
-                "formula": rule['bieuthuctinhtoan']
+                "status": "calculated" if val is not None else rule['_src'],
+                "formula": rule['bieuthuctinhtoan'],
+                "source_key": rule['_source_key'],
+                "display_order": rule.get('thutuhienthi')
             }
 
     # Trả về danh sách phần tử lương và phiếu lương từng nhân viên
@@ -760,6 +892,14 @@ def api_phieu_luong_list(request):
         else:
             phieu_luong_data = Phieuluong.objects.filter(bangluong_id=bang_luong_id).select_related('nhanvien').values()
             ct_phieu_luong_data = Ctphieuluong.objects.filter(phieuluong_id__in=phieu_luong_data.values_list('id', flat=True)).select_related('phantuluong').order_by('thutuhienthi').values()
+            ordered_phan_tu_luong = list(
+                Ctphieuluong.objects
+                .filter(phieuluong_id__in=phieu_luong_data.values_list('id', flat=True))
+                .values('phantuluong_id')
+                .annotate(min_order=Min('thutuhienthi'))
+                .order_by('min_order', 'phantuluong_id')
+                .values_list('phantuluong_id', flat=True)
+            )
             ct_phieu_luong_map = defaultdict()
             for item in ct_phieu_luong_data:
                 if item['phieuluong_id'] not in ct_phieu_luong_map:
@@ -778,7 +918,7 @@ def api_phieu_luong_list(request):
                 item['ct_phieu_luong'] = ct_phieu_luong_map.get(item['id'], {})
 
             return json_success('Lấy danh sách phiếu lương thành công', data={
-                'phan_tu_luong': list(ct_phieu_luong_data.values_list('phantuluong_id', flat=True).distinct()),
+                'phan_tu_luong': ordered_phan_tu_luong,
                 'phieu_luong': list(phieu_luong_data),
             })
     
@@ -829,13 +969,28 @@ def api_phieu_luong_list(request):
         nhanvien_map = {str(item['nhanvien_id']): item for item in nhanvien_list}
 
         # Lấy quy tắc lương
-        quytac_chedoluong_qs = Quytacchedoluong.objects.select_related('phantuluong', 'chedoluong').filter(
-            chedoluong_id=bang_luong_obj.chedoluong_id, trangthai='active'
-        ).annotate(
-            loai_phan_tu = F('phantuluong__loaiphantu'),
-            ten_phan_tu = F('phantuluong__tenphantu'),
-            ma_phan_tu = F('phantuluong__maphantu')
-        ).values('maquytac', 'phantuluong_id', 'ten_phan_tu', 'ma_phan_tu', 'loai_phan_tu', 'bieuthuctinhtoan', 'nguondulieu')
+        quytac_chedoluong_qs = (
+            Quytacchedoluong.objects
+            .select_related('phantuluong', 'chedoluong')
+            .filter(chedoluong_id=bang_luong_obj.chedoluong_id, trangthai='active')
+            .annotate(
+                loai_phan_tu=F('phantuluong__loaiphantu'),
+                ten_phan_tu=F('phantuluong__tenphantu'),
+                ma_phan_tu=F('phantuluong__maphantu')
+            )
+            .order_by('thutuhienthi', 'id')
+            .values(
+                'maquytac',
+                'phantuluong_id',
+                'ten_phan_tu',
+                'ma_phan_tu',
+                'loai_phan_tu',
+                'bieuthuctinhtoan',
+                'nguondulieu',
+                'nguondulieuchitiet',
+                'thutuhienthi'
+            )
+        )
         
         quytac_chedoluong_map = {item['phantuluong_id']: item for item in quytac_chedoluong_qs}
 
@@ -919,7 +1074,7 @@ def api_phieu_luong_list(request):
             # Cập nhật THUC_LINH vào params context nếu công thức khác cần dùng (dù hiện tại chỉ print ra)
             calc_context_params['THUC_LINH'] = val_thuc_nhan
             
-            for i, pt_id in enumerate(phantu_luong):
+            for i, pt_id in enumerate(phantu_luong, start=1):
                 val = phieu_luong_data.get(str(pt_id))
                 quy_tac = quytac_chedoluong_map.get(int(pt_id))
 
@@ -932,6 +1087,15 @@ def api_phieu_luong_list(request):
                     val_float = 0
 
                 loai_phan_tu = quy_tac.get('loai_phan_tu', '')
+                nguon_du_lieu = quy_tac.get('nguondulieu', '')
+                nguon_du_lieu_chitiet = _normalize_system_source_key(quy_tac.get('nguondulieuchitiet'))
+                if nguon_du_lieu == 'system' and nguon_du_lieu_chitiet:
+                    nguon_du_lieu = f"system:{nguon_du_lieu_chitiet}"
+
+                try:
+                    thu_tu_hien_thi = int(quy_tac.get('thutuhienthi')) if quy_tac.get('thutuhienthi') is not None else i
+                except (TypeError, ValueError):
+                    thu_tu_hien_thi = i
 
                 if loai_phan_tu == 'THU_NHAP' and quy_tac.get('maquytac') != 'THUC_LINH':  # Không cộng THUC_LINH vào tổng thu nhập
                     tong_thu_nhap += val_float
@@ -945,11 +1109,11 @@ def api_phieu_luong_list(request):
                         maphantuluong=quy_tac.get('ma_phan_tu', ''), # Using maphantu from model
                         tenphantuluong=quy_tac.get('ten_phan_tu', ''),
                         loaiphantu=loai_phan_tu,
-                        nguondulieu=quy_tac.get('nguondulieu', ''),
+                        nguondulieu=nguon_du_lieu,
                         bieuthuctinhtoan=quy_tac.get('bieuthuctinhtoan', ''),
                         giatridauvao=dumps(calculator.extract_formula_params(quy_tac.get('bieuthuctinhtoan', ''), calc_context_params)),
                         giatritinhduoc=val_float,
-                        thutuhienthi=i,
+                        thutuhienthi=thu_tu_hien_thi,
                         phieuluong=phieuluong_obj
                     )
                 )
@@ -1164,18 +1328,24 @@ def api_che_do_luong_detail(request, pk):
         })
         emp_ids.append(rec.nhanvien.id)
     
-    quy_tac_list = Quytacchedoluong.objects.filter(
-        chedoluong=che_do
-    ).select_related('phantuluong').values(
-        'id',
-        'phantuluong_id',
-        'tenquytac',
-        'maquytac', 
-        'nguondulieu',
-        'bieuthuctinhtoan',
-        'mota',
-        'phantuluong__tenphantu',
-        'phantuluong__maphantu'
+    quy_tac_list = (
+        Quytacchedoluong.objects
+        .filter(chedoluong=che_do)
+        .select_related('phantuluong')
+        .order_by('thutuhienthi', 'id')
+        .values(
+            'id',
+            'phantuluong_id',
+            'tenquytac',
+            'maquytac',
+            'nguondulieu',
+            'nguondulieuchitiet',
+            'bieuthuctinhtoan',
+            'mota',
+            'thutuhienthi',
+            'phantuluong__tenphantu',
+            'phantuluong__maphantu'
+        )
     )
 
     quy_tac = []
@@ -1186,8 +1356,10 @@ def api_che_do_luong_detail(request, pk):
             'tenphantu': qt['phantuluong__tenphantu'],
             'maphantu': qt['phantuluong__maphantu'],
             'nguondulieu': qt['nguondulieu'] or 'manual',
+            'nguondulieu_chitiet': _normalize_system_source_key(qt['nguondulieuchitiet'] or ''),
             'bieuthuc': qt['bieuthuctinhtoan'] or '',
-            'mota': qt['mota'] or ''
+            'mota': qt['mota'] or '',
+            'thutuhienthi': qt['thutuhienthi'] or 0,
         })
 
     data = {
@@ -1631,48 +1803,118 @@ FIXED_ELEMENT_CODE = 'THUC_LINH'
 
 def _save_quy_tac(che_do, quy_tac_list):
     """
-    Helper function để lưu quy tắc
-    Đảm bảo phần tử THUC_LINH luôn được lưu
+    Lưu quy tắc chế độ lương với chuẩn hóa nguồn dữ liệu và thứ tự hiển thị.
+    Đảm bảo phần tử THUC_LINH luôn tồn tại và nằm cuối danh sách.
     """
-    # Xóa quy tắc cũ
     Quytacchedoluong.objects.filter(chedoluong=che_do).delete()
-    
-    # Kiểm tra xem THUC_LINH đã có trong danh sách chưa
-    has_fixed_element = any(
-        qt.get('maphantu') == FIXED_ELEMENT_CODE 
-        for qt in quy_tac_list
-    )
-    
-    # Nếu chưa có, tìm và thêm phần tử THUC_LINH
+
+    normalized_items = []
+    seen_element_ids = set()
+
+    for index, qt in enumerate(quy_tac_list or [], start=1):
+        phantuluong_id = qt.get('phantuluong_id')
+        try:
+            phantuluong_id = int(phantuluong_id)
+        except (TypeError, ValueError):
+            continue
+
+        if phantuluong_id in seen_element_ids:
+            continue
+        seen_element_ids.add(phantuluong_id)
+
+        maphantu = str(qt.get('maphantu') or '').strip().upper()
+
+        nguondulieu = str(qt.get('nguondulieu') or 'manual').strip().lower()
+        if nguondulieu not in {'manual', 'system', 'formula'}:
+            nguondulieu = 'manual'
+
+        nguondulieu_chitiet = _normalize_system_source_key(
+            qt.get('nguondulieu_chitiet') or qt.get('nguondulieuchitiet') or ''
+        )
+
+        if nguondulieu == 'system':
+            if not nguondulieu_chitiet:
+                nguondulieu_chitiet = _get_default_system_source_for_rule(maphantu)
+
+            if nguondulieu_chitiet not in SYSTEM_SOURCE_KEYS:
+                nguondulieu_chitiet = SYSTEM_SOURCE_FIXED_SETUP
+        else:
+            nguondulieu_chitiet = ''
+
+        try:
+            thutuhienthi = int(qt.get('thutuhienthi'))
+        except (TypeError, ValueError):
+            thutuhienthi = index
+        if thutuhienthi <= 0:
+            thutuhienthi = index
+
+        normalized_items.append({
+            'phantuluong_id': phantuluong_id,
+            'tenphantu': str(qt.get('tenphantu') or '').strip(),
+            'maphantu': maphantu,
+            'nguondulieu': nguondulieu,
+            'nguondulieu_chitiet': nguondulieu_chitiet,
+            'bieuthuc': str(qt.get('bieuthuc') or '').strip(),
+            'mota': str(qt.get('mota') or '').strip(),
+            'thutuhienthi': thutuhienthi,
+        })
+
+    has_fixed_element = any(item['maphantu'] == FIXED_ELEMENT_CODE for item in normalized_items)
+
     if not has_fixed_element:
         fixed_element = Phantuluong.objects.filter(
             maphantu=FIXED_ELEMENT_CODE,
             trangthai='active'
         ).first()
-        
+
         if fixed_element:
-            quy_tac_list.append({
+            max_order = max([item['thutuhienthi'] for item in normalized_items], default=0)
+            normalized_items.append({
                 'phantuluong_id': fixed_element.id,
                 'tenphantu': fixed_element.tenphantu,
                 'maphantu': fixed_element.maphantu,
                 'nguondulieu': 'formula',
+                'nguondulieu_chitiet': '',
                 'bieuthuc': '',
-                'mota': ''
+                'mota': '',
+                'thutuhienthi': max_order + 1,
             })
-    
-    # Tạo quy tắc mới
-    for qt in quy_tac_list:
-        Quytacchedoluong.objects.create(
-            chedoluong=che_do,
-            phantuluong_id=qt.get('phantuluong_id'),
-            tenquytac=qt.get('tenphantu'),
-            maquytac=qt.get('maphantu'),
-            nguondulieu=qt.get('nguondulieu', 'manual'),
-            bieuthuctinhtoan=qt.get('bieuthuc', ''),
-            mota=qt.get('mota', ''),
-            trangthai='active',
-            created_at=now().date()
+    else:
+        for item in normalized_items:
+            if item['maphantu'] == FIXED_ELEMENT_CODE:
+                item['nguondulieu'] = 'formula'
+                item['nguondulieu_chitiet'] = ''
+
+    normalized_items.sort(
+        key=lambda item: (
+            1 if item['maphantu'] == FIXED_ELEMENT_CODE else 0,
+            item['thutuhienthi'],
+            item['phantuluong_id'],
         )
+    )
+
+    for idx, item in enumerate(normalized_items, start=1):
+        item['thutuhienthi'] = idx
+
+    if not normalized_items:
+        return
+
+    Quytacchedoluong.objects.bulk_create([
+        Quytacchedoluong(
+            chedoluong=che_do,
+            phantuluong_id=item['phantuluong_id'],
+            tenquytac=item['tenphantu'],
+            maquytac=item['maphantu'],
+            nguondulieu=item['nguondulieu'],
+            nguondulieuchitiet=item['nguondulieu_chitiet'] or None,
+            bieuthuctinhtoan=item['bieuthuc'],
+            mota=item['mota'],
+            thutuhienthi=item['thutuhienthi'],
+            trangthai='active',
+            created_at=now().date(),
+        )
+        for item in normalized_items
+    ])
 
 # ===================================================================================
 #---------------------------------- KỲ LƯƠNG --------------------------------------

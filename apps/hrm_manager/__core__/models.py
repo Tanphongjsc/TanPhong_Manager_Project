@@ -822,6 +822,8 @@ class Quytacchedoluong(models.Model):
     bieuthuctinhtoan = models.CharField(db_column='BieuThucTinhToan', blank=True, null=True)  # Field name made lowercase.
     mota = models.TextField(db_column='MoTa', blank=True, null=True)  # Field name made lowercase.
     nguondulieu = models.CharField(db_column='NguonDuLieu', blank=True, null=True)  # Field name made lowercase.
+    nguondulieuchitiet = models.CharField(db_column='NguonDuLieuChiTiet', blank=True, null=True)  # Field name made lowercase.
+    thutuhienthi = models.SmallIntegerField(db_column='ThuTuHienThi', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
     chedoluong = models.ForeignKey(Chedoluong, models.DO_NOTHING, blank=True, null=True)
     phantuluong = models.ForeignKey(Phantuluong, models.DO_NOTHING, blank=True, null=True)

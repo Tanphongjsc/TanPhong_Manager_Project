@@ -357,67 +357,31 @@ class LichFormController extends BaseFormManager {
     // DATE PICKER
     // ============================================================
     initLTDatePicker() {
-        const trigger = document.getElementById('lt-date-trigger');
-        const popover = document.getElementById('lt-date-popover');
-        if (!trigger) return;
+        const pickerLib = window.CustomDateComponents?.CustomMonthYearPicker;
+        if (!pickerLib) return;
 
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-
-        const renderMonthGrid = () => {
-            const selectedYear = parseInt(document.getElementById('lt-picker-year').textContent);
-            const isCurrentYear = selectedYear === currentYear;
-            
-            document.getElementById('lt-month-grid').innerHTML = Array.from({length: 12}).map((_, i) => {
-                const month = i + 1;
-                const isCurrentMonth = isCurrentYear && month === currentMonth;
-                const isSelected = selectedYear === this.stateLT.currentYear && month === this.stateLT.currentMonth;
-                
-                let classes = 'py-2 text-[11px] rounded transition-colors ';
-                if (isSelected) {
-                    classes += 'bg-blue-500 text-white font-bold';
-                } else if (isCurrentMonth) {
-                    classes += 'bg-blue-100 text-blue-700 font-medium ring-1 ring-blue-300';
-                } else {
-                    classes += 'hover:bg-blue-50 hover:text-blue-600';
-                }
-                
-                return `<button type="button" class="${classes}" data-month="${month}">
-                    Thg ${month.toString().padStart(2, '0')}
-                </button>`;
-            }).join('');
-        };
-
-        document.getElementById('lt-picker-year').textContent = this.stateLT.currentYear;
-        renderMonthGrid();
-
-        trigger.onclick = (e) => { 
-            e.stopPropagation(); 
-            renderMonthGrid();
-            popover.classList.toggle('hidden'); 
-        };
-        
-        document.getElementById('lt-month-grid').onclick = (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            this.stateLT.currentMonth = parseInt(btn.dataset.month);
-            this.stateLT.currentYear = parseInt(document.getElementById('lt-picker-year').textContent);
-            document.getElementById('lt-display-date').textContent = `${this.stateLT.currentYear}-${this.stateLT.currentMonth.toString().padStart(2, '0')}`;
-            popover.classList.add('hidden');
-            this.scheduleCalendar.setMonthYear(this.stateLT.currentYear, this.stateLT.currentMonth);
-        };
-
-        document.getElementById('lt-prev-year').onclick = (e) => { 
-            e.stopPropagation(); 
-            document.getElementById('lt-picker-year').textContent--;
-            renderMonthGrid();
-        };
-        document.getElementById('lt-next-year').onclick = (e) => { 
-            e.stopPropagation(); 
-            document.getElementById('lt-picker-year').textContent++;
-            renderMonthGrid();
-        };
-        document.addEventListener('click', () => popover.classList.add('hidden'));
+        this.ltMonthYearPicker = new pickerLib({
+            triggerId: 'lt-date-trigger',
+            popoverId: 'lt-date-popover',
+            displayId: 'lt-display-date',
+            pickerYearId: 'lt-picker-year',
+            prevYearId: 'lt-prev-year',
+            nextYearId: 'lt-next-year',
+            monthGridId: 'lt-month-grid',
+            selectedYear: this.stateLT.currentYear,
+            selectedMonth: this.stateLT.currentMonth,
+            monthGridColumns: 3,
+            displayFormatter: (year, month) => `${year}-${String(month).padStart(2, '0')}`,
+            selectedClass: 'bg-blue-500 text-white font-bold',
+            currentClass: 'bg-blue-100 text-blue-700 font-medium ring-1 ring-blue-300',
+            defaultClass: 'hover:bg-blue-50 hover:text-blue-600 text-slate-700',
+            buttonBaseClass: 'py-2 text-[11px] rounded transition-colors cursor-pointer',
+            onChange: ({ year, month }) => {
+                this.stateLT.currentYear = year;
+                this.stateLT.currentMonth = month;
+                this.scheduleCalendar.setMonthYear(year, month);
+            }
+        });
     }
 
     // ============================================================

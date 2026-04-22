@@ -6,6 +6,7 @@ from django.db.models import Q
 from calendar import monthrange
 from datetime import date, timedelta, datetime
 from collections import OrderedDict, defaultdict
+import logging
 import json
 from django.utils import timezone
 from django.db import transaction
@@ -14,6 +15,9 @@ from django.db.models import Prefetch
 from apps.hrm_manager.__core__.models import *
 from .validators import validate_shift_details, validate_schedule_time_overlap
 from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
+
+
+logger = logging.getLogger(__name__)
 
 class ConflictException(Exception):
     """Exception khi có xung đột nhân viên"""
@@ -268,16 +272,93 @@ class CaLamViecService:
         
 
 class LichLamViecService: 
+
+    @staticmethod
+    def _normalize_period_bounds(start_date=None, end_date=None):
+        if start_date is None and end_date is None:
+            return None, None
+
+        if start_date is None:
+            start_date = end_date
+        if end_date is None:
+            end_date = start_date
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+
+        return start_date, end_date
+
+    @staticmethod
+    def _apply_relation_effective_filter(queryset, start_date=None, end_date=None):
+        start_date, end_date = LichLamViecService._normalize_period_bounds(start_date, end_date)
+        if start_date is None:
+            return queryset
+
+        return queryset.filter(
+            Q(ngayapdung__isnull=True) | Q(ngayapdung__date__lte=end_date)
+        ).filter(
+            Q(ngayketthuc__isnull=True) | Q(ngayketthuc__date__gte=start_date)
+        )
+
+    @staticmethod
+    def _dt_rank(value):
+        if value is None:
+            return float('-inf')
+        return value.timestamp()
+
+    @staticmethod
+    def _get_effective_direct_assignment_map(start_date=None, end_date=None):
+        """
+        Trả về map {nhanvien_id: lichlamviec_id} cho direct assignment hiệu lực trong kỳ.
+        Nếu dữ liệu bị chồng direct assignment, ưu tiên record có ngayapdung/created_at mới hơn.
+        """
+        query = LichlamviecNhanvien.objects.filter(
+            trangthai='active'
+        ).filter(
+            Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True),
+            lichlamviec__trangthai='active'
+        )
+        query = LichLamViecService._apply_relation_effective_filter(query, start_date, end_date)
+
+        winners = {}
+        for row in query.values('id', 'nhanvien_id', 'lichlamviec_id', 'ngayapdung', 'created_at'):
+            nhanvien_id = row.get('nhanvien_id')
+            if not nhanvien_id:
+                continue
+
+            rank = (
+                LichLamViecService._dt_rank(row.get('ngayapdung')),
+                LichLamViecService._dt_rank(row.get('created_at')),
+                row.get('id') or 0,
+            )
+            current = winners.get(nhanvien_id)
+            if current is None or rank > current[0]:
+                winners[nhanvien_id] = (rank, row.get('lichlamviec_id'))
+
+        return {nhanvien_id: item[1] for nhanvien_id, item in winners.items()}
     
     @staticmethod
-    def get_employees_from_departments(dept_ids):
-        if not dept_ids: return set()
-        return set(Nhanvien.objects.filter(
+    def get_employees_from_departments(dept_ids, start_date=None, end_date=None):
+        if not dept_ids:
+            return set()
+
+        start_date, end_date = LichLamViecService._normalize_period_bounds(start_date, end_date)
+
+        query = Nhanvien.objects.filter(
             lichsucongtac__phongban_id__in=dept_ids,
             lichsucongtac__trangthai='active',
-            lichsucongtac__ketthuc__isnull=True,
             trangthai='active'
-        ).values_list('id', flat=True))
+        )
+
+        if start_date is None:
+            query = query.filter(lichsucongtac__ketthuc__isnull=True)
+        else:
+            query = query.filter(
+                Q(lichsucongtac__batdau__isnull=True) | Q(lichsucongtac__batdau__lte=end_date)
+            ).filter(
+                Q(lichsucongtac__ketthuc__isnull=True) | Q(lichsucongtac__ketthuc__gte=start_date)
+            )
+
+        return set(query.values_list('id', flat=True))
 
     @staticmethod
     def resolve_all_employees(dept_ids, direct_emp_ids):
@@ -286,7 +367,7 @@ class LichLamViecService:
         return all_ids
 
     @staticmethod
-    def check_employee_conflicts(emp_ids, exclude_schedule_id=None):
+    def check_employee_conflicts(emp_ids, exclude_schedule_id=None, effective_date=None):
         """
         TỐI ƯU: Sử dụng .values() để chỉ lấy dữ liệu cần thiết, giảm overhead của ORM.
         """
@@ -299,6 +380,13 @@ class LichLamViecService:
         ).filter(
             Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True)
         )
+
+        if effective_date:
+            query = query.filter(
+                Q(ngayapdung__isnull=True) | Q(ngayapdung__date__lte=effective_date)
+            ).filter(
+                Q(ngayketthuc__isnull=True) | Q(ngayketthuc__date__gte=effective_date)
+            )
 
         if exclude_schedule_id:
             query = query.exclude(lichlamviec_id=exclude_schedule_id)
@@ -328,7 +416,7 @@ class LichLamViecService:
         return conflicts
 
     @staticmethod
-    def check_department_conflicts(dept_ids, exclude_schedule_id=None):
+    def check_department_conflicts(dept_ids, exclude_schedule_id=None, effective_date=None):
         """
         TỐI ƯU: Tương tự như check nhân viên, dùng .values()
         """
@@ -340,6 +428,13 @@ class LichLamViecService:
         ).filter(
             Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True)
         )
+
+        if effective_date:
+            query = query.filter(
+                Q(ngayapdung__isnull=True) | Q(ngayapdung__date__lte=effective_date)
+            ).filter(
+                Q(ngayketthuc__isnull=True) | Q(ngayketthuc__date__gte=effective_date)
+            )
 
         if exclude_schedule_id:
             query = query.exclude(lichlamviec_id=exclude_schedule_id)
@@ -895,7 +990,11 @@ class LichLamViecService:
             _, last_day = monthrange(start_date.year, start_date.month)
             end_date = date(start_date.year, start_date.month, last_day)
 
-        all_emp_ids = LichLamViecService._get_all_employee_ids_for_schedule(lich)
+        all_emp_ids = LichLamViecService._get_all_employee_ids_for_schedule(
+            lich,
+            start_date=start_date,
+            end_date=end_date,
+        )
         if not all_emp_ids: 
             return
         
@@ -987,7 +1086,11 @@ class LichLamViecService:
         if start_date < now: 
             start_date = now
             
-        all_emp_ids = LichLamViecService._get_all_employee_ids_for_schedule(lich)
+        all_emp_ids = LichLamViecService._get_all_employee_ids_for_schedule(
+            lich,
+            start_date=start_date,
+            end_date=end_date,
+        )
         if not all_emp_ids:
             return
         
@@ -1075,26 +1178,63 @@ class LichLamViecService:
             Lichlamviecthucte.objects.bulk_create(records_to_create, batch_size=1000)
 
     @staticmethod
-    def _get_all_employee_ids_for_schedule(lich):
+    def _get_all_employee_ids_for_schedule(lich, start_date=None, end_date=None):
         """
         Lấy tất cả ID nhân viên áp dụng cho 1 lịch làm việc
         (Bao gồm cả nhân viên trực tiếp và nhân viên thuộc phòng ban)
+
+        Quy tắc ưu tiên nghiệp vụ:
+        - Direct assignment luôn ưu tiên hơn department assignment.
+        - Nếu nhân viên có direct assignment ở lịch khác trong cùng kỳ,
+          sẽ không lấy từ department assignment của lịch hiện tại.
         """
-        # Lấy nhân viên trực tiếp
-        direct_emp_ids = set(
-            lich.lichlamviecnhanvien_set.filter(trangthai='active')
-            .values_list('nhanvien_id', flat=True)
+        start_date, end_date = LichLamViecService._normalize_period_bounds(start_date, end_date)
+
+        direct_assignment_map = LichLamViecService._get_effective_direct_assignment_map(
+            start_date=start_date,
+            end_date=end_date,
         )
+
+        # Lấy nhân viên trực tiếp
+        direct_relations = lich.lichlamviecnhanvien_set.filter(trangthai='active')
+        direct_relations = LichLamViecService._apply_relation_effective_filter(
+            direct_relations,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        direct_emp_ids = set(direct_relations.values_list('nhanvien_id', flat=True))
+        direct_emp_ids = {
+            emp_id
+            for emp_id in direct_emp_ids
+            if direct_assignment_map.get(emp_id) == lich.id
+        }
         
         # Lấy phòng ban
-        dept_ids = list(
-            lich.lichlamviecphongban_set.filter(trangthai='active')
-            .values_list('phongban_id', flat=True)
+        dept_relations = lich.lichlamviecphongban_set.filter(trangthai='active')
+        dept_relations = LichLamViecService._apply_relation_effective_filter(
+            dept_relations,
+            start_date=start_date,
+            end_date=end_date,
         )
+        dept_ids = list(dept_relations.values_list('phongban_id', flat=True))
         
         # Expand phòng ban và lấy nhân viên
         all_dept_ids = LichLamViecService._expand_dept_ids(dept_ids)
-        dept_emp_ids = LichLamViecService.get_employees_from_departments(all_dept_ids)
+        dept_emp_ids = LichLamViecService.get_employees_from_departments(
+            all_dept_ids,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        direct_assigned_emp_ids = set(direct_assignment_map.keys())
+        overridden_count = len(dept_emp_ids.intersection(direct_assigned_emp_ids))
+        dept_emp_ids -= direct_assigned_emp_ids
+        if overridden_count > 0:
+            logger.info(
+                "Excluded %s employees from department inheritance for schedule_id=%s due to direct assignments.",
+                overridden_count,
+                lich.id,
+            )
         
         return direct_emp_ids.union(dept_emp_ids)
     
@@ -1161,17 +1301,23 @@ class LichLamViecService:
         
         all_dept_ids = LichLamViecService._expand_dept_ids(dept_ids)
         all_emp_ids = LichLamViecService.resolve_all_employees(all_dept_ids, direct_emp_ids)
+
+        # Xác định ngày áp dụng
+        if effective_date is None:
+            effective_date = date.today()
         
         if not force_transfer:  
-            dept_conflicts = LichLamViecService.check_department_conflicts(all_dept_ids)
-            emp_conflicts = LichLamViecService.check_employee_conflicts(all_emp_ids)
+            dept_conflicts = LichLamViecService.check_department_conflicts(
+                all_dept_ids,
+                effective_date=effective_date,
+            )
+            emp_conflicts = LichLamViecService.check_employee_conflicts(
+                all_emp_ids,
+                effective_date=effective_date,
+            )
             
             if dept_conflicts or emp_conflicts: 
                 raise ConflictException(dept_conflicts + emp_conflicts)
-            
-         # Xác định ngày áp dụng
-        if effective_date is None:
-            effective_date = date.today()
 
         with transaction.atomic():
             # ✅ FIX: Chuẩn bị caidatca TRƯỚC khi tạo
@@ -1246,17 +1392,25 @@ class LichLamViecService:
             
         all_dept_ids = LichLamViecService._expand_dept_ids(dept_ids)
         all_emp_ids = LichLamViecService.resolve_all_employees(all_dept_ids, direct_emp_ids)
-        
-        if not force_transfer: 
-            dept_conflicts = LichLamViecService.check_department_conflicts(all_dept_ids, exclude_schedule_id=lich.id)
-            emp_conflicts = LichLamViecService.check_employee_conflicts(all_emp_ids, exclude_schedule_id=lich.id)
-            
-            if dept_conflicts or emp_conflicts:  
-                raise ConflictException(dept_conflicts + emp_conflicts)
-            
+
         # Xác định ngày áp dụng
         if effective_date is None:
             effective_date = date.today()
+        
+        if not force_transfer: 
+            dept_conflicts = LichLamViecService.check_department_conflicts(
+                all_dept_ids,
+                exclude_schedule_id=lich.id,
+                effective_date=effective_date,
+            )
+            emp_conflicts = LichLamViecService.check_employee_conflicts(
+                all_emp_ids,
+                exclude_schedule_id=lich.id,
+                effective_date=effective_date,
+            )
+            
+            if dept_conflicts or emp_conflicts:  
+                raise ConflictException(dept_conflicts + emp_conflicts)
 
         with transaction.atomic():
             # ✅ FIX:  Chuẩn bị caidatca TRƯỚC khi save

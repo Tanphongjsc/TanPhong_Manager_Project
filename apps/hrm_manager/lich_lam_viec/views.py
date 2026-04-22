@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.shortcuts import render
 from django.db.models import Q, Count, Prefetch, Case, When, Value, IntegerField
 from django.core.paginator import Paginator
@@ -214,10 +214,10 @@ def view_tong_hop_lich(request):
         'breadcrumbs': [
             {'title': 'Chấm công', 'url': '#'},
             {'title': 'Quản lý lịch làm việc', 'url': None},
-            {'title': 'Tổng hợp lịch', 'url': None},
+            {'title': 'Tổng hợp lịch làm việc', 'url': None},
         ],
         'tabs': get_thiet_ke_lich_tabs(),
-        'page_title': 'Quản lý lịch làm việc',
+        'page_title': 'Tổng hợp lịch làm việc',
     }
     return render(request, "hrm_manager/lich_lam_viec/tong_hop_lich.html", context)
 
@@ -842,6 +842,13 @@ def api_check_schedule_conflicts(request):
         dept_ids = data.get('dept_ids', [])
         emp_ids = data.get('emp_ids', [])
         exclude_schedule_id = data.get('exclude_schedule_id')  # ID lịch hiện tại nếu đang edit
+        effective_date = None
+        effective_date_raw = data.get('effective_date')
+        if effective_date_raw:
+            try:
+                effective_date = datetime.strptime(effective_date_raw, '%Y-%m-%d').date()
+            except (TypeError, ValueError):
+                effective_date = None
 
         # Gộp tất cả nhân viên
         all_emp_ids = LichLamViecService.resolve_all_employees(dept_ids, emp_ids)
@@ -852,7 +859,8 @@ def api_check_schedule_conflicts(request):
         # Kiểm tra xung đột
         conflicts = LichLamViecService.check_employee_conflicts(
             all_emp_ids, 
-            exclude_schedule_id=exclude_schedule_id
+            exclude_schedule_id=exclude_schedule_id,
+            effective_date=effective_date,
         )
 
         if conflicts:
