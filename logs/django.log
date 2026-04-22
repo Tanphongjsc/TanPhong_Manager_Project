@@ -37025,3 +37025,42 @@ WARNING 2026-04-15 10:24:58,639 log 20968 24436 Not Found: /favicon.ico
 WARNING 2026-04-15 10:24:58,640 basehttp 20968 24436 "GET /favicon.ico HTTP/1.1" 404 3512
 WARNING 2026-04-21 22:53:01,148 tasks 23324 6340 LLV task skipped: lock not acquired. period_key=2026-05
 WARNING 2026-04-21 22:56:12,367 tasks 17288 12424 LLV task skipped: lock not acquired. period_key=2026-05
+WARNING 2026-04-22 15:34:02,784 log 12880 24236 Not Found: /favicon.ico
+WARNING 2026-04-22 15:34:02,786 basehttp 12880 24236 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-04-22 15:35:09,690 log 12880 24236 Not Found: /hrm_manager/lich_lam_viec/tong-hop/
+WARNING 2026-04-22 15:35:09,692 basehttp 12880 24236 "GET /hrm_manager/lich_lam_viec/tong-hop/ HTTP/1.1" 404 3584
+WARNING 2026-04-22 15:35:52,867 log 12880 24236 Not Found: /hrm/
+WARNING 2026-04-22 15:35:52,869 basehttp 12880 24236 "GET /hrm/ HTTP/1.1" 404 5585
+WARNING 2026-04-22 15:36:01,400 log 12880 24236 Not Found: /hrm/lich-lam-viec/
+WARNING 2026-04-22 15:36:01,401 basehttp 12880 24236 "GET /hrm/lich-lam-viec/ HTTP/1.1" 404 15400
+WARNING 2026-04-22 16:01:16,103 log 12880 10004 Not Found: /hrm/lich-lam-viec/tong-hop-lich/
+WARNING 2026-04-22 16:01:16,104 basehttp 12880 10004 "GET /hrm/lich-lam-viec/tong-hop-lich/ HTTP/1.1" 404 15442
+WARNING 2026-04-22 16:01:16,420 log 12880 10004 Not Found: /favicon.ico
+WARNING 2026-04-22 16:01:16,421 basehttp 12880 10004 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-04-22 16:02:30,677 log 12880 20352 Not Found: /hrm/lich-lam-viec/tong-hop-lich/
+WARNING 2026-04-22 16:02:30,678 basehttp 12880 20352 "GET /hrm/lich-lam-viec/tong-hop-lich/ HTTP/1.1" 404 15442
+WARNING 2026-04-22 16:03:05,559 log 12880 20352 Not Found: /hrm/
+WARNING 2026-04-22 16:03:05,560 basehttp 12880 20352 "GET /hrm/ HTTP/1.1" 404 5585
+WARNING 2026-04-22 16:03:09,821 log 12880 20352 Not Found: /hrm/lich-lam-viec/
+WARNING 2026-04-22 16:03:09,823 basehttp 12880 20352 "GET /hrm/lich-lam-viec/ HTTP/1.1" 404 15400
+ERROR 2026-04-22 16:07:55,385 log 12880 12200 Internal Server Error: /hrm/cham-cong/lam-them/quy-tac/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 811, in view_quytac_lam_them
+    return render(request, "hrm_manager/cham_cong/lam_them/quytac_lam_them.html", context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lam_them/quytac_lam_them.html
+ERROR 2026-04-22 16:07:55,396 basehttp 12880 12200 "GET /hrm/cham-cong/lam-them/quy-tac/ HTTP/1.1" 500 95127

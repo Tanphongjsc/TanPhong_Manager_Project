@@ -848,13 +848,17 @@ class LichLamViecService:
 
         # ---------------------------------------------------------
         # 3.XÓA LỊCH THỰC TẾ TƯƠNG LAI CỦA LỊCH CŨ
+        # ✅ FIX: Không phụ thuộc old_schedule_ids (có thể thiếu khi 
+        #    nhân viên được gán qua phòng ban ở lịch cũ nhưng gán trực tiếp ở lịch mới).
+        #    Thay vào đó, xóa TẤT CẢ lịch thực tế tương lai, exclude lịch mới.
         # ---------------------------------------------------------
-        if old_schedule_ids and all_emp_ids:
+        if all_emp_ids:
             Lichlamviecthucte.objects.filter(
-                lichlamviec_id__in=old_schedule_ids,
                 nhanvien_id__in=all_emp_ids,
                 ngaylamviec__gte=effective_date,
                 chophepghide=False
+            ).exclude(
+                lichlamviec=lich
             ).delete()
 
         return transferred

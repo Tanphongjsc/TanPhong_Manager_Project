@@ -74,7 +74,7 @@
 
         /* Sidebar states */
         #sidebar{width:var(--sidebar-w);transition:width var(--dur) var(--ease),transform .25s var(--ease);will-change:width,transform;position:relative}
-        html.sidebar-is-collapsed #sidebar{width:var(--sidebar-w-collapsed);overflow:visible}
+        html.sidebar-is-collapsed #sidebar{width:var(--sidebar-w-collapsed);overflow:visible;z-index:100}
         html.sidebar-is-collapsed #sidebar-nav{overflow:visible}
         html:is(.sidebar-expanding,.sidebar-collapsing) #sidebar,
         html:is(.sidebar-expanding,.sidebar-collapsing) #sidebar-nav{overflow:hidden}
