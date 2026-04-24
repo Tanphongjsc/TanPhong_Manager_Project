@@ -15,7 +15,7 @@
         {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm theo Tên hoặc mã..." show_add_btn=True create_text="Thêm chức vụ" create_onclick="window.ChucVuManager.openSidebar('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" btn_color="blue" %}
 
         <!-- Table -->
-        {% with headers='<th scope="col" class="px-3 py-2 text-left uppercase tracking-wider">Tên Vị Trí</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-28">Mã CV</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-28">Trạng Thái</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-24">Ngày tạo</th>' %}
+        {% with headers='<th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-[46%]">Tên Vị Trí</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-[18%]">Mã CV</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-[16%]">Trạng Thái</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider w-[16%]">Ngày tạo</th>' %}
             {% include "components/table_wrapper.html" with table_id="positions-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
         {% endwith %}
         
@@ -146,14 +146,14 @@ class ChucVuManager extends BaseCRUDManager {
                     <td class="px-4 py-4 text-center">
                         <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}">
                     </td>
-                    <td class="px-3 py-4 text-sm text-slate-800">
+                    <td class="px-3 py-4 text-sm text-slate-800 max-w-[380px]">
                         <a href="javascript:void(0);" onclick="window.ChucVuManager.openSidebar('edit', ${item.id})" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                            ${item.tenvitricongviec || ''}
+                            <span class="block truncate">${item.tenvitricongviec || ''}</span>
                         </a>
                     </td>
-                    <td class="px-3 py-4 text-sm text-slate-600">${item.machucvu || ''}</td>
-                    <td class="px-3 py-4 text-sm">${statusHtml}</td>
-                    <td class="px-3 py-4 text-sm text-slate-500">${createdDate}</td>
+                    <td class="px-3 py-4 text-sm text-slate-600 font-mono whitespace-nowrap">${item.machucvu || ''}</td>
+                    <td class="px-3 py-4 text-sm whitespace-nowrap">${statusHtml}</td>
+                    <td class="px-3 py-4 text-sm text-slate-500 whitespace-nowrap">${createdDate}</td>
                     <td class="px-6 py-4 text-right whitespace-nowrap text-sm font-medium">
                         <div class="inline-flex items-center justify-end gap-1 whitespace-nowrap">
                             <button type="button" 
