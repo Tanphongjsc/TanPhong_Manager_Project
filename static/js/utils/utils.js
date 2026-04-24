@@ -339,8 +339,7 @@ const AppUtils = (() => {
             const confirmBtn = modal.querySelector('#modal-confirm');
 
             if (messageEl) {
-                messageEl.textContent = String(message ?? '');
-                messageEl.style.whiteSpace = 'pre-line';
+                messageEl.innerHTML = String(message ?? '');
             }
 
             requestAnimationFrame(() => {
