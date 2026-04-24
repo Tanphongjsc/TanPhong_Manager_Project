@@ -1133,10 +1133,23 @@ def api_chuc_vu_list(request):
     elif request.method == "POST":
         # Tạo mới chức vụ
         try:
-            data = loads(request.body)
+            data = get_request_data(request)
+            is_valid, _ = validate_required_fields(data, ['machucvu', 'tenvitricongviec'])
+            if not is_valid:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Vui lòng nhập đầy đủ mã và tên chức vụ'
+                }, status=400)
+
+            ma_chuc_vu = (data.get('machucvu') or '').strip()
+            if not validate_unique_field(Chucvu, 'machucvu', ma_chuc_vu):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Mã chức vụ đã tồn tại'
+                }, status=400)
             
             chuc_vu = Chucvu.objects.create(
-                machucvu=data.get('machucvu'),
+                machucvu=ma_chuc_vu,
                 tenvitricongviec=data.get('tenvitricongviec'),
                 ghichu=data.get('ghichu'),
                 trangthai=data.get('trangthai', 'active'),
@@ -1193,10 +1206,22 @@ def api_chuc_vu_detail(request, id):
     elif request.method == "PUT":
         # Cập nhật chức vụ
         try:
-            # data = loads(request.body)
             data = get_request_data(request)
+            is_valid, _ = validate_required_fields(data, ['machucvu', 'tenvitricongviec'])
+            if not is_valid:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Vui lòng nhập đầy đủ mã và tên chức vụ'
+                }, status=400)
+
+            ma_chuc_vu = (data.get('machucvu') or '').strip()
+            if not validate_unique_field(Chucvu, 'machucvu', ma_chuc_vu, exclude_pk=id):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Mã chức vụ đã tồn tại'
+                }, status=400)
             
-            chuc_vu.machucvu = data.get('machucvu', chuc_vu.machucvu)
+            chuc_vu.machucvu = ma_chuc_vu
             chuc_vu.tenvitricongviec = data.get('tenvitricongviec', chuc_vu.tenvitricongviec)
             chuc_vu.ghichu = data.get('ghichu', chuc_vu.ghichu)
             chuc_vu.trangthai = data.get('trangthai', chuc_vu.trangthai)
@@ -1348,7 +1373,11 @@ def view_dmht_congviec_list(request):
             {'title': 'Danh mục công việc', 'url': None},
         ],
         'page_title': 'Danh mục công việc',
-        'status_list': STATUS_LIST # <--- Truyền biến này
+        'status_list': STATUS_LIST,
+        'loai_cong_viec_list': [
+            {'value': 'canhan', 'label': 'Cá nhân'},
+            {'value': 'nhom', 'label': 'Nhóm / Tổ đội'},
+        ]
     }
     return render(request, "hrm_manager/quan_ly_nhan_su/dmht_congviec.html", context)
 # ============================================================================
@@ -1505,6 +1534,10 @@ def api_congviec_list(request):
     """API lấy danh sách công việc (JSON) hỗ trợ search, filter, pagination"""
     queryset = Congviec.objects.all().values()
     query_params = request.GET.dict()
+
+    loai_cong_viec = query_params.get('loaicongviec', '').strip()
+    if loai_cong_viec:
+        queryset = queryset.filter(loaicongviec=loai_cong_viec)
     
     context = get_list_context(
         request,
@@ -1956,14 +1989,23 @@ def api_congviec_detail(request, pk):
 def api_congviec_create(request):
     """ API tạo mới công việc"""
 
-    data = loads(request.body)
+    data = get_request_data(request)
     if not data:
         return json_error('Dữ liệu không hợp lệ', status=400)
 
     try:
+        is_valid, _ = validate_required_fields(data, ['tencongviec', 'macongviec'])
+        if not is_valid:
+            return json_error('Vui lòng nhập đầy đủ mã và tên công việc')
+
+        ma_cong_viec = (data.get('macongviec') or '').strip()
+        if not validate_unique_field(Congviec, 'macongviec', ma_cong_viec):
+            return json_error('Mã công việc đã tồn tại')
+
+        ten_cong_viec = (data.get('tencongviec') or '').strip()
         congviec = Congviec.objects.create(
-            tencongviec=data.get('tencongviec').title(),
-            macongviec=data.get('macongviec'),
+            tencongviec=ten_cong_viec.title(),
+            macongviec=ma_cong_viec,
             ghichu=data.get('ghichu', ''),
             loaicongviec=data.get('loaicongviec', ''),
             bieuthuctinhtoan=data.get('bieuthuctinhtoan', ''),
@@ -1990,12 +2032,24 @@ def api_congviec_create(request):
 def api_congviec_update(request, pk):
     """API Cập nhật công việc"""
 
-    data = loads(request.body)
+    data = get_request_data(request)
     if not data:
         return json_error('Dữ liệu không hợp lệ', status=400)
     
     try:
         congviec = get_object_or_404(Congviec, pk=pk)
+
+        is_valid, _ = validate_required_fields(data, ['tencongviec', 'macongviec'])
+        if not is_valid:
+            return json_error('Vui lòng nhập đầy đủ mã và tên công việc')
+
+        ma_cong_viec = (data.get('macongviec') or '').strip()
+        if not validate_unique_field(Congviec, 'macongviec', ma_cong_viec, exclude_pk=pk):
+            return json_error('Mã công việc đã tồn tại')
+
+        ten_cong_viec = (data.get('tencongviec') or '').strip()
+        data['macongviec'] = ma_cong_viec
+        data['tencongviec'] = ten_cong_viec.title() if ten_cong_viec else ten_cong_viec
 
         for field in Congviec._meta.fields:
             if field.name in data:
