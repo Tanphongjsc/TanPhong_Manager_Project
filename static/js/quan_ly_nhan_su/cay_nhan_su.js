@@ -174,10 +174,10 @@ class EmployeeManager extends BaseCRUDManager {
     async loadLookupData() {
         try {
             const [cv, nh, pb, lnv] = await Promise.all([
-                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/chuc-vu/'),
-                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/ngan-hang/list/'),
-                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/phong-ban/'),
-                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/?page=1&page_size=9990')
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/chuc-vu/?page=1&page_size=9999'),
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/ngan-hang/list/?page=1&page_size=9999'),
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/phong-ban/?page=1&page_size=9999'),
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/loai-nhan-vien/list/?page=1&page_size=9999')
             ]);
             const loaiNhanVienData = lnv?.data?.data || lnv?.data || [];
             this.lookupData = { chucvu: cv.data || [], nganhang: nh.data || [], phongban: pb.data || [], loainv: loaiNhanVienData };
@@ -454,11 +454,13 @@ class EmployeeManager extends BaseCRUDManager {
         if(form.elements['chucvu']) form.elements['chucvu'].value = cvId || '';
 
         const pbId = congTac.phongban_id || congTac.phongban?.id || congTac.phongban;
-        let pbName = congTac.noicongtac || congTac.phongban?.tenphongban;
+        // Prefer actual department name from relation/id; noicongtac is only a fallback display value.
+        let pbName = congTac.phongban?.tenphongban;
         if (!pbName && pbId) {
             const found = this.lookupData.phongban.find(p => p.id == pbId);
             if(found) pbName = found.tenphongban;
         }
+        if (!pbName) pbName = congTac.noicongtac;
         this._selectPhongban(pbId, pbName);
     }
 

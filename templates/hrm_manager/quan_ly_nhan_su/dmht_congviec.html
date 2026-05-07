@@ -12,11 +12,11 @@
         <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
         {# 2. Toolbar #}
-        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm công việc..." show_add_btn=True create_text="Thêm công việc" create_onclick="window.CongViecManager.openUI('create')" filter_form_id="filter-form" btn_color="blue" %}  
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm kiếm công việc..." show_add_btn=True create_text="Thêm công việc" create_onclick="window.CongViecManager.openUI('create')" filter_form_id="filter-form" filter_options=status_list filter_field="status" filter_label="Tất cả trạng thái" filter_template="hrm_manager/quan_ly_nhan_su/partials/congviec_extra_filters.html" btn_color="blue" %}
 
         {# 3. Table #}
         {# FIX: Dùng with thay vì capture để tránh lỗi TemplateSyntaxError #}
-        {% with headers='<th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-1/4">Tên công việc</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-32">Mã</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-24">Loại</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-24">Trạng thái</th><th scope="col" class="px-3 py-2 text-center uppercase tracking-wider text-xs font-semibold text-slate-700 w-24">Công thức</th>' %}
+        {% with headers='<th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-[34%]">Tên công việc</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-[16%]">Mã</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-[16%]">Loại</th><th scope="col" class="px-3 py-2 text-left uppercase tracking-wider text-xs font-semibold text-slate-700 w-[16%]">Trạng thái</th><th scope="col" class="px-3 py-2 text-center uppercase tracking-wider text-xs font-semibold text-slate-700 w-[12%]">Công thức</th>' %}
             {% include "components/table_wrapper.html" with table_id="congviec-table" tbody_id="table-body" headers_html=headers show_checkbox=True select_all_id="select-all-checkbox" %}
         {% endwith %}
 

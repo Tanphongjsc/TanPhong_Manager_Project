@@ -258,6 +258,7 @@ class CongViecManager extends BaseCRUDManager {
             tableBody: document.getElementById('table-body'),
             paginationContainer: document.querySelector('.pagination-container'),
             searchInput: document.getElementById('search-input'),
+            filtersForm: document.getElementById('filter-form'),
             selectAllCheckbox: document.getElementById('select-all-checkbox'),
             bulkActionsContainer: document.getElementById('bulk-actions'),
             enableBulkActions: true,
@@ -302,16 +303,16 @@ class CongViecManager extends BaseCRUDManager {
             <td class="px-4 py-4 text-center">
                 <input type="checkbox" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" data-id="${item.id}">
             </td>
-            <td class="px-3 py-4 text-sm text-slate-800">
+            <td class="px-3 py-4 text-sm text-slate-800 max-w-[360px]">
                 <button class="view-btn font-medium text-blue-600 hover:text-blue-700 transition-colors text-left" 
                         data-id="${item.id}">
-                    ${item.tencongviec || ''}
+                    <span class="block truncate">${item.tencongviec || ''}</span>
                 </button>
             </td>
-            <td class="px-3 py-4 text-sm text-slate-600">${item.macongviec || ''}</td>
+            <td class="px-3 py-4 text-sm text-slate-600 font-mono whitespace-nowrap">${item.macongviec || ''}</td>
             <td class="px-3 py-4 text-sm whitespace-nowrap">${loaiHtml}</td>
-            <td class="px-3 py-4 text-sm">${statusHtml}</td>
-            <td class="px-3 py-4 text-sm text-slate-600 text-center">${formulaIcon}</td>
+            <td class="px-3 py-4 text-sm whitespace-nowrap">${statusHtml}</td>
+            <td class="px-3 py-4 text-sm text-slate-600 text-center whitespace-nowrap">${formulaIcon}</td>
             <td class="px-6 py-4 text-right whitespace-nowrap text-sm font-medium">
                 <div class="inline-flex items-center justify-end gap-1 whitespace-nowrap">
                     <button type="button" 
