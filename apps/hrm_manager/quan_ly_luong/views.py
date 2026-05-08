@@ -210,13 +210,14 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
 
         # Ánh xạ các tham số đầu vào cho quy tắc tính lương dựa trên nguồn dữ liệu
         context_params = {}
+        src_SYSTEM_SOURCE_SALARY_BASE_PRORATED = None  # Biến tạm để lưu mã quy tắc nào đang dùng nguồn lương thực tế phân bổ nếu có, để xử lý đặc biệt trong công thức nếu cần
         for rule in rules_list:
             ma_qt = rule['maquytac']
             src = rule['nguondulieu']
             
             # Nếu quy tắc lấy dữ liệu từ thiết lập số liệu cố định nhưng nhân viên đó không có thiết lập cho phần tử lương này → bỏ qua quy tắc
             if ma_qt in context_params and nv_setup.get(rule['phantuluong']) is None:
-                continue        
+                continue
             
             if src == 'system':
                 setup_val = nv_setup.get(rule['phantuluong'], 0.0)
@@ -224,6 +225,8 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
                 
                 if source_key == SYSTEM_SOURCE_FIXED_SETUP:
                     context_params[ma_qt] = setup_val
+                elif source_key == SYSTEM_SOURCE_SALARY_BASE_PRORATED: #
+                    src_SYSTEM_SOURCE_SALARY_BASE_PRORATED = rule['maquytac']
                 else:
                     context_params[ma_qt] = system_values_map.get(source_key, setup_val)
                     
@@ -235,10 +238,11 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
                 context_params[ma_qt] = rule['bieuthuctinhtoan']
 
         # Tiền xử lý: Tính Lương Thực Tế sớm dựa vào Khoán/VP để ưu tiên các quy tắc công thức lấy phụ thuộc nếu cần
-        luong_co_ban = _safe_float(context_params.get("LUONG_CO_BAN", 0))
-        tien_sx = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT, 0)
-        cong_vp = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_VP_DAY, 0)
-        context_params["LUONG_THUC_TE"] = round(((luong_co_ban / cong_chuan_thang) * cong_vp) + tien_sx, 2)
+        if src_SYSTEM_SOURCE_SALARY_BASE_PRORATED:
+            luong_co_ban = _safe_float(context_params.get("LUONG_CO_BAN", 0))
+            tien_sx = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT, 0)
+            cong_vp = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_VP_DAY, 0)
+            context_params[src_SYSTEM_SOURCE_SALARY_BASE_PRORATED] = round(((luong_co_ban / cong_chuan_thang) * cong_vp) + tien_sx, 2)
 
         data_groups_map[str(nv_id)] = [{
             'tham_so': context_params, 
