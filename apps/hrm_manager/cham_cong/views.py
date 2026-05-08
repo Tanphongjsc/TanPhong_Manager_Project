@@ -360,7 +360,8 @@ def calculate_bang_cham_cong_objects(data_list):
             # Build tham số tính lương (chỉ giữ details có congviec_id)
             valid_details = [
                 {'congviec_id': s.get('congviec_id'), 'tencongviec': s.get('tencongviec'),
-                 'thamsotinhluong': s.get('thamsotinhluong'), 'pay_role': s.get('pay_role')}
+                 'thamsotinhluong': s.get('thamsotinhluong'), 'pay_role': s.get('pay_role'),
+                 'thanhtien': s.get('thanhtien_calculated', 0) or 0}
                 for s in items if s.get('congviec_id') is not None
             ]
             final_thamsotinhluong = {

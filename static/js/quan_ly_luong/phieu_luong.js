@@ -464,6 +464,9 @@ class PayrollDetailManager {
             };
         }
 
+        // --- Init client-side tab switching (same pattern as tab_nav) ---
+        this.initModalTabs();
+
         const extraData = row.extra_data || {};
         const titleEl = document.querySelector('#detail-modal [data-modal-title]');
         if (titleEl) titleEl.textContent = `Chi tiết lương: ${row.hovaten} (${row.manhanvien})`;
@@ -471,6 +474,33 @@ class PayrollDetailManager {
         this.renderTimesheetTable(extraData.ngaychamcong);
         this.renderSalaryDetailList(row);
         AppUtils.Modal.open(this.modal);
+    }
+
+    initModalTabs() {
+        const tabLinks = document.querySelectorAll('#detail-modal .detail-tab-link');
+        const tabPanes = document.querySelectorAll('#detail-modal .detail-tab-pane');
+        const activeClasses = ['border-blue-600', 'text-blue-600'];
+        const inactiveClasses = ['border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300'];
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+
+                // Update tab link styles
+                tabLinks.forEach(l => {
+                    l.classList.remove(...activeClasses);
+                    l.classList.add(...inactiveClasses);
+                });
+                link.classList.remove(...inactiveClasses);
+                link.classList.add(...activeClasses);
+
+                // Toggle panes
+                tabPanes.forEach(p => p.classList.add('hidden'));
+                const targetPane = document.querySelector(targetId);
+                if (targetPane) targetPane.classList.remove('hidden');
+            });
+        });
     }
 
     renderTimesheetTable(timesheets) {
@@ -533,7 +563,7 @@ class PayrollDetailManager {
                 const borderClass = index === rowCount - 1 ? 'border-b border-slate-100' : 'border-b border-dashed border-slate-100';
                 const jName = detail.tencongviec || ts.tencongviec || '-';
                 const params = detail.thamsotinhluong?.tham_so || detail.tham_so || ts?.thamsotinhluong?.tham_so || {};
-                const thanhTien = Number(detail.thanhtien ?? ts.thanhtien ?? 0);
+                const thanhTien = Number(detail.thanhtien ?? 0);
                 const hoursStr = detail.thoigian ? `<span class="ml-1.5 text-[11px] font-mono text-slate-500 font-medium px-1.5 py-0.5 rounded shadow-sm bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">${Number(detail.thoigian).toFixed(1)}h</span>` : '';
 
                 const paramsHtml = Object.keys(params).length > 0 ? `

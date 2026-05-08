@@ -103,126 +103,69 @@ def _normalize_system_source_key(source_key):
     return normalized_key
 
 
-def _normalize_rule_source(rule):
-    source = str(rule.get('nguondulieu') or 'manual').strip().lower()
-    if source not in {'manual', 'system', 'formula'}:
-        source = 'manual'
-
-    source_key = _normalize_system_source_key(rule.get('nguondulieuchitiet'))
-    rule_code = str(rule.get('maquytac') or '').strip().upper()
-
-    if source == 'system':
-        if not source_key:
-            source_key = _get_default_system_source_for_rule(rule_code)
-        if source_key not in SYSTEM_SOURCE_KEYS:
-            source_key = SYSTEM_SOURCE_FIXED_SETUP
-    else:
-        source_key = ''
-
-    return source, source_key
-
-
-def _resolve_system_source_value(source_key, rule, nv_bcc, nv_setup, cong_chuan_thang, schedule_data):
-    setup_value = _safe_float(nv_setup.get(rule['phantuluong'], 0.0))
-    source_map = {
-        SYSTEM_SOURCE_FIXED_SETUP: setup_value,
-        SYSTEM_SOURCE_ATTENDANCE_WORK_DAY: _safe_float(nv_bcc.get('tong_cong_lamviec', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamviec', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamthem', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT: _safe_float(nv_bcc.get('tong_so_luong_an', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES: _safe_float(nv_bcc.get('tong_di_muon_phut', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES: _safe_float(nv_bcc.get('tong_ve_som_phut', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY: _safe_float(nv_bcc.get('tong_ngay_vang', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_VP_DAY: _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0)),
-        SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT: _safe_float(nv_bcc.get('tong_tien_sx', 0)),
-        SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY: _safe_float(schedule_data.get('tong_cong_lamviec_thucte', 0)),
-        SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR: _safe_float(schedule_data.get('tong_gio_lamviec_chuan', 0)),
-    }
-
-    if source_key == SYSTEM_SOURCE_SALARY_BASE_PRORATED:
-        tong_cong_vp = _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0))
-        tong_tien_sx = _safe_float(nv_bcc.get('tong_tien_sx', 0))
-        if cong_chuan_thang <= 0:
-            return tong_tien_sx
-        return round(((setup_value / cong_chuan_thang) * tong_cong_vp) + tong_tien_sx, 2)
-
-    return source_map.get(source_key, setup_value)
-
-
 def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     """
-    Sinh phiếu lương cho bảng lương đã chọn, gom dữ liệu, áp dụng công thức động, trả về kết quả từng nhân viên.
+    Sinh phiếu lương cho bảng lương, gom dữ liệu, áp dụng công thức động.
     """
-    # 1. Lấy thông tin bảng lương, kỳ lương, chế độ lương
+    # 1. Lấy thông tin bảng lương
     try:
-        bangluong_obj = Bangluong.objects.select_related('kyluong', 'chedoluong').get(id=bang_luong_id)
+        bangluong_obj = Bangluong.objects.select_related('kyluong').get(id=bang_luong_id)
     except Bangluong.DoesNotExist:
         return None, "Bảng lương không tồn tại"
+        
     thoigian_batdau = bangluong_obj.kyluong.ngaybatdau
     thoigian_ketthuc = bangluong_obj.kyluong.ngayketthuc
     chedoluong_id = bangluong_obj.chedoluong_id
 
-    # 1.5. Lấy danh sách nhân viên ACTIVE được cấu hình trong chế độ lương của bảng lương này
+    # 1.5. Lấy danh sách ID nhân viên ACTIVE trong chế độ lương
     nhanvien_ids = list(Lichsucongtac.objects.filter(
         trangthai='active',
         nhanvien_id__in=NhanvienChedoluong.objects.filter(
-            chedoluong_id=chedoluong_id,
-            trangthai='active'
+            chedoluong_id=chedoluong_id, trangthai='active'
         ).values('nhanvien_id')
     ).values_list('nhanvien_id', flat=True).distinct().order_by('nhanvien_id'))
 
-    # 2. Lấy danh sách quy tắc tính lương (rules) đang active cho chế độ lương này
-    rules_qs = (
+    if not nhanvien_ids:
+        return None, "Không có nhân viên nào cấu hình chế độ lương này."
+
+    # 2. Lấy danh sách quy tắc tính lương active
+    rules_list = list(
         Quytacchedoluong.objects
         .filter(chedoluong_id=chedoluong_id, trangthai='active')
         .values(
-            'maquytac',
-            'bieuthuctinhtoan',
-            'nguondulieu',
-            'nguondulieuchitiet',
-            'phantuluong',
-            'phantuluong__loaiphantu',
-            'thutuhienthi'
-        )
-        .order_by('thutuhienthi', 'id')
+            'maquytac', 'bieuthuctinhtoan', 'nguondulieu', 'nguondulieuchitiet',
+            'phantuluong', 'phantuluong__loaiphantu', 'thutuhienthi'
+        ).order_by('thutuhienthi', 'id')
     )
-    rules_list = list(rules_qs)
-    #Check quy tắc rỗng trước khi sinh phiếu
     if not rules_list:
-        return None, "Chế độ lương chưa có quy tắc tính lương nào. Vui lòng thiết lập quy tắc trước."
+        return None, "Chế độ lương chưa có quy tắc tính lương nào."
 
-    for rule in rules_list:
-        src, source_key = _normalize_rule_source(rule)
-        rule['_src'] = src
-        rule['_source_key'] = source_key
-    
-    # Các mã quy tắc cần tính bằng công thức
-    formula_keys = [r['maquytac'] for r in rules_list if r['_src'] == 'formula']
+    formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'] == 'formula']
 
-    # 3. Lấy dữ liệu chấm công tổng hợp theo nhân viên trong kỳ lương
+    # 3. Lấy dữ liệu chấm công tổng hợp
     bcc_data = Bangchamcong.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
     ).values('nhanvien').annotate(
         tong_so_luong_an=Count('coantrua', filter=Q(coantrua=True)),
         tong_thoigian_lamviec=(
-            Coalesce(Sum('thoigianlamviec'), 0.0, output_field=FloatField()) +
-            Coalesce(Sum('thoigiandisom'), 0.0, output_field=FloatField()) +
-            Coalesce(Sum('thoigianvemuon'), 0.0, output_field=FloatField())
+            Coalesce(Sum('thoigianlamviec', output_field=FloatField()), 0.0) +
+            Coalesce(Sum('thoigiandisom', output_field=FloatField()), 0.0) +
+            Coalesce(Sum('thoigianvemuon', output_field=FloatField()), 0.0)
         ) / 60.0,
-        tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem'), 0.0, output_field=FloatField()) / 60.0,
-        tong_cong_lamviec=Coalesce(Sum('conglamviec'), 0.0, output_field=FloatField()),
-        tong_cong_vp_thucte=(Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP')), 0.0, output_field=FloatField())),
-        tong_tien_sx=Coalesce(Sum('thanhtien', filter=Q(loaichamcong='SX')), 0.0, output_field=FloatField()),
-        tong_di_muon_phut=Coalesce(Sum('thoigiandimuon'), 0.0, output_field=FloatField()),
-        tong_ve_som_phut=Coalesce(Sum('thoigianvesom'), 0.0, output_field=FloatField()),
+        tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem', output_field=FloatField()), 0.0) / 60.0,
+        tong_cong_lamviec=Coalesce(Sum('conglamviec', output_field=FloatField()), 0.0),
+        tong_cong_vp_thucte=Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP'), output_field=FloatField()), 0.0),
+        tong_tien_sx=Coalesce(Sum('thanhtien', output_field=FloatField()), 0.0),
+        tong_di_muon_phut=Coalesce(Sum('thoigiandimuon', output_field=FloatField()), 0.0),
+        tong_ve_som_phut=Coalesce(Sum('thoigianvesom', output_field=FloatField()), 0.0),
         tong_ngay_vang=Count('id', filter=Q(codilam=False, cophaingaynghi=False)),
     )
     bcc_dict = {item['nhanvien']: item for item in bcc_data}
     if not bcc_dict:
         return None, "Chưa có dữ liệu chấm công trong kỳ lương"
     
-    # 3.5 Lấy ra số công số giờ làm chuẩn từ Lịch làm việc thực tế + Ca làm việc (cho các nhân viên đã lọc)
+    # 4. Lấy số ngày/giờ làm chuẩn từ Lịch làm việc thực tế
     lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
@@ -233,106 +176,111 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
     # Chuyển về dict {nhanvien_id: {...}}
     lich_lam_viec_dict = {item['nhanvien']: item for item in lich_lam_viec_qs}
 
-    # 4. Lấy dữ liệu thiết lập số liệu cố định cho từng nhân viên
+    # 5. Lấy thiết lập số liệu cố định
     setup_data = Thietlapsolieucodinh.objects.filter(
         nhanvien_id__in=nhanvien_ids, trangthai='active'
     ).values('nhanvien', 'phantuluong', 'giatrimacdinh')
+    
     setup_dict = defaultdict(dict)
     for item in setup_data:
-        # Chuyển giá trị về float an toàn
-        try:
-            val = float(item['giatrimacdinh']) if item['giatrimacdinh'] is not None else None
-        except (TypeError, ValueError):
-            val = 0.0
-        setup_dict[item['nhanvien']][item['phantuluong']] = val
+        setup_dict[item['nhanvien']][item['phantuluong']] = _safe_float(item['giatrimacdinh'])
 
-    # 5. Chuẩn bị dữ liệu đầu vào cho PayrollCalculator Dạng: { 'ID_NV': [ { 'tham_so': {...} } ] }
+    # 6. Chuẩn bị dữ liệu tính lương
     data_groups_map = {}
     for nv_id in nhanvien_ids:
         nv_bcc = bcc_dict.get(nv_id, {})
         nv_setup = setup_dict.get(nv_id, {})
         nv_schedule = lich_lam_viec_dict.get(nv_id, {})
-        context_params = {}
         
-        # A. Dữ liệu biến động từ chấm công
-        context_params['SO_LUONG_AN'] = _safe_float(nv_bcc.get('tong_so_luong_an', 0)) # Số lượng ăn
-        context_params['SO_CONG_LAM_VIEC'] = _safe_float(nv_bcc.get('tong_cong_lamviec', 0)) # Số công làm việc
+        # Ánh xạ các giá trị hệ thống theo quy tắc mã nguồn dữ liệu chi tiết
+        system_values_map = {
+            SYSTEM_SOURCE_ATTENDANCE_WORK_DAY: _safe_float(nv_bcc.get('tong_cong_lamviec', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_WORK_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamviec', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_OVERTIME_HOUR: _safe_float(nv_bcc.get('tong_thoigian_lamthem', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_MEAL_COUNT: _safe_float(nv_bcc.get('tong_so_luong_an', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_LATE_MINUTES: _safe_float(nv_bcc.get('tong_di_muon_phut', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES: _safe_float(nv_bcc.get('tong_ve_som_phut', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY: _safe_float(nv_bcc.get('tong_ngay_vang', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_VP_DAY: _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT: _safe_float(nv_bcc.get('tong_tien_sx', 0)),
+            SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY: _safe_float(nv_schedule.get('tong_cong_lamviec_thucte', 0)),
+            SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR: _safe_float(nv_schedule.get('tong_gio_lamviec_chuan', 0)),
+        }
+        # Nếu lịch làm việc thực tế không có dữ liệu, mặc định công chuẩn tháng là 26 ngày
+        cong_chuan_thang = _safe_float(nv_schedule.get('tong_cong_lamviec_thucte', 0)) or 26.0
 
-        cong_chuan_thang = _safe_float(nv_schedule.get('tong_cong_lamviec_thucte', 0), 26)
-        if cong_chuan_thang <= 0:
-            cong_chuan_thang = 26
-        context_params['CONG_CHUAN_THANG'] = cong_chuan_thang
-        context_params['GIO_CHUAN_THANG'] = _safe_float(nv_schedule.get('tong_gio_lamviec_chuan', 0))
-
-        # B. Dữ liệu từ rules: system/manual/formula
+        # Ánh xạ các tham số đầu vào cho quy tắc tính lương dựa trên nguồn dữ liệu
+        context_params = {}
+        src_SYSTEM_SOURCE_SALARY_BASE_PRORATED = None  # Biến tạm để lưu mã quy tắc nào đang dùng nguồn lương thực tế phân bổ nếu có, để xử lý đặc biệt trong công thức nếu cần
         for rule in rules_list:
             ma_qt = rule['maquytac']
-            src = rule['_src']
-            source_key = rule['_source_key']
+            src = rule['nguondulieu']
             
-            # Nếu quy tắc đã tồn tại trong context_params (do trùng mã quy tắc) và nguồn dữ liệu là system nhưng không có thiết lập số liệu cố định → bỏ qua để tránh ghi đè bằng None
+            # Nếu quy tắc lấy dữ liệu từ thiết lập số liệu cố định nhưng nhân viên đó không có thiết lập cho phần tử lương này → bỏ qua quy tắc
             if ma_qt in context_params and nv_setup.get(rule['phantuluong']) is None:
-                continue        
-                
+                continue
+            
             if src == 'system':
-                context_params[ma_qt] = _resolve_system_source_value(
-                    source_key=source_key,
-                    rule=rule,
-                    nv_bcc=nv_bcc,
-                    nv_setup=nv_setup,
-                    cong_chuan_thang=cong_chuan_thang,
-                    schedule_data=nv_schedule
-                )
+                setup_val = nv_setup.get(rule['phantuluong'], 0.0)
+                source_key = rule['nguondulieuchitiet']
+                
+                if source_key == SYSTEM_SOURCE_FIXED_SETUP:
+                    context_params[ma_qt] = setup_val
+                elif source_key == SYSTEM_SOURCE_SALARY_BASE_PRORATED: #
+                    src_SYSTEM_SOURCE_SALARY_BASE_PRORATED = rule['maquytac']
+                else:
+                    context_params[ma_qt] = system_values_map.get(source_key, setup_val)
+                    
             elif src == 'manual':
-                context_params[ma_qt] = None # Chờ nhập liệu tay
+                # Yêu cầu người dùng nhập tay phiếu lương
+                context_params[ma_qt] = None
             elif src == 'formula':
-                # Gán chuỗi công thức, sẽ được tính động khi cần
+                # Lưu biểu thức để Calculator phân tách động
                 context_params[ma_qt] = rule['bieuthuctinhtoan']
 
-        # C. Tính lương khoán nếu có quy tắc, ưu tiên tính sớm để có dữ liệu cho các công thức khác nếu cần
-        luong_co_ban_thiet_lap = context_params.get("LUONG_CO_BAN")
-        context_params["LUONG_KHOAN"] = round(
-            ((luong_co_ban_thiet_lap / context_params.get('CONG_CHUAN_THANG', 1)) * nv_bcc.get('tong_cong_vp_thucte', 0)) + nv_bcc.get('tong_tien_sx', 0),
-            2
-        )
+        # Tiền xử lý: Tính Lương Thực Tế sớm dựa vào Khoán/VP để ưu tiên các quy tắc công thức lấy phụ thuộc nếu cần
+        if src_SYSTEM_SOURCE_SALARY_BASE_PRORATED:
+            luong_co_ban = _safe_float(context_params.get("LUONG_CO_BAN", 0))
+            tien_sx = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT, 0)
+            cong_vp = system_values_map.get(SYSTEM_SOURCE_ATTENDANCE_VP_DAY, 0)
+            context_params[src_SYSTEM_SOURCE_SALARY_BASE_PRORATED] = round(((luong_co_ban / cong_chuan_thang) * cong_vp) + tien_sx, 2)
 
-        # Đóng gói dữ liệu cho từng nhân viên
         data_groups_map[str(nv_id)] = [{
-            'tham_so': context_params,
+            'tham_so': context_params, 
             'nhanvien_id': nv_id
         }]
 
-    # 6. Khởi tạo PayrollCalculator và tính toán các trường công thức cho từng nhân viên
+    # 7. Khởi tạo model xử lý công thức động của nhân viên đồng loạt (PayrollCalculator)
     payroll_calculator = PayrollCalculator(data_groups_map)
     phieu_luong_final = {}
+    
     for nv_id_str, members in data_groups_map.items():
-        member_data = members[0]
-        params = member_data['tham_so']
-        # Tính tất cả các trường công thức cho nhân viên này
+        params = members[0]['tham_so']
+        
+        # Parse chuỗi String công thức và đánh giá hàm dựa trên Params input tương ứng của Nhân viên (Batch Calc)
         calculated_results = payroll_calculator.calculate_batch_fields(
             field_keys=formula_keys,
             params=params,
             group_id=nv_id_str
         )
-        # Cập nhật lại params với kết quả vừa tính
         params.update(calculated_results)
         
-        # 7. Định dạng kết quả đầu ra cho từng nhân viên
+        # 8. Định dạng Object kết quả đầu ra theo format Template yêu cầu 
+        # Cấu trúc: { nvID: { "Phần tử": { "value":.., "type":.., "status":.. } } }
         nv_id = int(nv_id_str)
-        phieu_luong_final[nv_id] = {}
+        nv_dict = {}
         for rule in rules_list:
-            ma_qt = rule['maquytac']
-            val = params.get(ma_qt)
-            phieu_luong_final[nv_id][rule['phantuluong']] = {
+            val = params.get(rule['maquytac'])
+            nv_dict[rule['phantuluong']] = {
                 "value": round(val, 2) if val is not None else None,
                 "type": rule['phantuluong__loaiphantu'],
-                "status": "calculated" if val is not None else rule['_src'],
+                "status": "calculated" if val is not None else rule['nguondulieu'],
                 "formula": rule['bieuthuctinhtoan'],
-                "source_key": rule['_source_key'],
+                "source_key": rule['nguondulieuchitiet'],
                 "display_order": rule.get('thutuhienthi')
             }
+        phieu_luong_final[nv_id] = nv_dict
 
-    # Trả về danh sách phần tử lương và phiếu lương từng nhân viên
     return {
         "phan_tu_luong": [r['phantuluong'] for r in rules_list],
         "phieu_luong": phieu_luong_final
