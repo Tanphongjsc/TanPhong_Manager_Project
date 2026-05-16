@@ -513,6 +513,9 @@ class PayrollDetailManager {
             if (summaryEl) summaryEl.textContent = '';
             return;
         }
+        
+        // Luôn đảm bảo sắp xếp theo ngày làm việc
+        timesheets.sort((a, b) => new Date(a.ngaylamviec) - new Date(b.ngaylamviec));
 
         let totalHours = 0;
         let totalCong = 0;
@@ -563,7 +566,7 @@ class PayrollDetailManager {
                 const borderClass = index === rowCount - 1 ? 'border-b border-slate-100' : 'border-b border-dashed border-slate-100';
                 const jName = detail.tencongviec || ts.tencongviec || '-';
                 const params = detail.thamsotinhluong?.tham_so || detail.tham_so || ts?.thamsotinhluong?.tham_so || {};
-                const thanhTien = Number(detail.thanhtien ?? 0);
+                const thanhTien = Number(detail.thanhtien ?? ts.thanhtien ?? 0);
                 const hoursStr = detail.thoigian ? `<span class="ml-1.5 text-[11px] font-mono text-slate-500 font-medium px-1.5 py-0.5 rounded shadow-sm bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">${Number(detail.thoigian).toFixed(1)}h</span>` : '';
 
                 const paramsHtml = Object.keys(params).length > 0 ? `

@@ -12,6 +12,8 @@ class Bangchamcong(models.Model):
     thoigianlamthem = models.FloatField(db_column='ThoiGianLamThem', blank=True, null=True)  # Field name made lowercase.
     cotinhlamthem = models.BooleanField(db_column='CoTinhLamThem', blank=True, null=True)  # Field name made lowercase.
     coantrua = models.BooleanField(db_column='CoAnTrua', blank=True, null=True)  # Field name made lowercase.
+    coandem = models.BooleanField(db_column='CoAnDem', blank=True, null=True)
+    coanchunhat = models.BooleanField(db_column='CoAnChuNhat', blank=True, null=True)
     codilam = models.BooleanField(db_column='CoDiLam', blank=True, null=True)  # Field name made lowercase.
     thoigiandimuon = models.IntegerField(db_column='ThoiGianDiMuon', blank=True, null=True)  # Field name made lowercase.
     thoigianvesom = models.IntegerField(db_column='ThoiGianVeSom', blank=True, null=True)  # Field name made lowercase.
