@@ -924,7 +924,7 @@ const AppUtils = (() => {
 
         formatNumber(amount) {
             const num = Number(amount) || 0;
-            return new Intl.NumberFormat('vi-VN').format(num);
+            return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(num);
         },
 
         formatCurrency(amount) {
@@ -932,6 +932,52 @@ const AppUtils = (() => {
                 style: 'currency',
                 currency: 'VND'
             }).format(amount);
+        },
+
+        parseNumber(value) {
+            if (value === null || value === undefined || value === '') return 0;
+            if (typeof value === 'number') return isNaN(value) ? 0 : value;
+            
+            let strVal = String(value).trim();
+            const lastComma = strVal.lastIndexOf(',');
+            const lastDot = strVal.lastIndexOf('.');
+            
+            let cleanStr = strVal;
+            
+            if (lastComma > -1 && lastDot > -1) {
+                if (lastComma > lastDot) {
+                    cleanStr = strVal.replace(/\./g, '').replace(/,/g, '.');
+                } else {
+                    cleanStr = strVal.replace(/,/g, '');
+                }
+            } else if (lastComma > -1) {
+                const commaCount = (strVal.match(/,/g) || []).length;
+                if (commaCount > 1) {
+                    cleanStr = strVal.replace(/,/g, '');
+                } else {
+                    const parts = strVal.split(',');
+                    if (parts[1].length === 3) {
+                        cleanStr = strVal.replace(/,/g, '');
+                    } else {
+                        cleanStr = strVal.replace(/,/g, '.');
+                    }
+                }
+            } else if (lastDot > -1) {
+                const dotCount = (strVal.match(/\./g) || []).length;
+                if (dotCount > 1) {
+                    cleanStr = strVal.replace(/\./g, '');
+                } else {
+                    const parts = strVal.split('.');
+                    if (parts[1].length === 3) {
+                        cleanStr = strVal.replace(/\./g, '');
+                    } else {
+                        cleanStr = strVal; 
+                    }
+                }
+            }
+            
+            cleanStr = cleanStr.replace(/[^\d.-]/g, '');
+            return Number(cleanStr) || 0;
         },
 
         removeAccents(str) {

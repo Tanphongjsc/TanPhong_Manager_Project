@@ -142,28 +142,57 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
 
     formula_keys = [r['maquytac'] for r in rules_list if r['nguondulieu'] == 'formula']
 
-    # 3. Lấy dữ liệu chấm công tổng hợp
-    bcc_data = Bangchamcong.objects.filter(
+    # 3. Lấy dữ liệu chấm công: 1 query duy nhất cho cả tổng hợp lẫn chi tiết
+    bcc_all_records = list(Bangchamcong.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
-    ).values('nhanvien').annotate(
-        tong_so_luong_an=Count('coantrua', filter=Q(coantrua=True)),
-        tong_thoigian_lamviec=(
-            Coalesce(Sum('thoigianlamviec', output_field=FloatField()), 0.0) +
-            Coalesce(Sum('thoigiandisom', output_field=FloatField()), 0.0) +
-            Coalesce(Sum('thoigianvemuon', output_field=FloatField()), 0.0)
-        ) / 60.0,
-        tong_thoigian_lamthem=Coalesce(Sum('thoigianlamthem', output_field=FloatField()), 0.0) / 60.0,
-        tong_cong_lamviec=Coalesce(Sum('conglamviec', output_field=FloatField()), 0.0),
-        tong_cong_vp_thucte=Coalesce(Sum('conglamviec', filter=Q(loaichamcong='VP'), output_field=FloatField()), 0.0),
-        tong_tien_sx=Coalesce(Sum('thanhtien', output_field=FloatField()), 0.0),
-        tong_di_muon_phut=Coalesce(Sum('thoigiandimuon', output_field=FloatField()), 0.0),
-        tong_ve_som_phut=Coalesce(Sum('thoigianvesom', output_field=FloatField()), 0.0),
-        tong_ngay_vang=Count('id', filter=Q(codilam=False, cophaingaynghi=False)),
-    )
-    bcc_dict = {item['nhanvien']: item for item in bcc_data}
-    if not bcc_dict:
+    ).values())
+
+    if not bcc_all_records:
         return None, "Chưa có dữ liệu chấm công trong kỳ lương"
+
+    # 3a. Tính aggregate trong Python từ dữ liệu đã load (thay vì query DB thêm lần nữa)
+    bcc_dict = {}
+    bcc_detail_map = defaultdict(list)
+
+    for record in bcc_all_records:
+        nv_id = record['nhanvien_id']
+
+        # Tích lũy aggregate theo nhân viên
+        if nv_id not in bcc_dict:
+            bcc_dict[nv_id] = {
+                'tong_so_luong_an': 0,
+                'tong_thoigian_lamviec': 0.0,
+                'tong_thoigian_lamthem': 0.0,
+                'tong_cong_lamviec': 0.0,
+                'tong_cong_vp_thucte': 0.0,
+                'tong_tien_sx': 0.0,
+                'tong_di_muon_phut': 0.0,
+                'tong_ve_som_phut': 0.0,
+                'tong_ngay_vang': 0,
+            }
+
+        agg = bcc_dict[nv_id]
+        if record.get('coantrua'):
+            agg['tong_so_luong_an'] += 1
+        agg['tong_thoigian_lamviec'] += (
+            _safe_float(record.get('thoigianlamviec')) +
+            _safe_float(record.get('thoigiandisom')) +
+            _safe_float(record.get('thoigianvemuon'))
+        ) / 60.0
+        agg['tong_thoigian_lamthem'] += _safe_float(record.get('thoigianlamthem')) / 60.0
+        agg['tong_cong_lamviec'] += _safe_float(record.get('conglamviec'))
+        if record.get('loaichamcong') == 'VP':
+            agg['tong_cong_vp_thucte'] += _safe_float(record.get('conglamviec'))
+        agg['tong_tien_sx'] += _safe_float(record.get('thanhtien'))
+        agg['tong_di_muon_phut'] += _safe_float(record.get('thoigiandimuon'))
+        agg['tong_ve_som_phut'] += _safe_float(record.get('thoigianvesom'))
+        if not record.get('codilam') and not record.get('cophaingaynghi'):
+            agg['tong_ngay_vang'] += 1
+
+        # 3b. Chi tiết chấm công (chỉ ngày có đi làm) — dùng cho Nhật ký Chấm công
+        if record.get('codilam'):
+            bcc_detail_map[str(nv_id)].append(record)
     
     # 4. Lấy số ngày/giờ làm chuẩn từ Lịch làm việc thực tế
     lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
@@ -281,9 +310,15 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             }
         phieu_luong_final[nv_id] = nv_dict
 
+    # Serialize chi tiết chấm công từng nhân viên để frontend hiển thị Nhật ký Chấm công
+    ngaychamcong_map = {}
+    for nv_id_str, records in bcc_detail_map.items():
+        ngaychamcong_map[nv_id_str] = loads(dumps(records, default=str))
+
     return {
         "phan_tu_luong": [r['phantuluong'] for r in rules_list],
-        "phieu_luong": phieu_luong_final
+        "phieu_luong": phieu_luong_final,
+        "ngaychamcong": ngaychamcong_map
     }, "Tạo phiếu lương thành công"
 
 
@@ -320,6 +355,8 @@ def view_phieu_luong(request, bangluong_id=None):
         return render(request, 'registration/404.html', {})
 
     context = {
+        'page_title': 'Phiếu lương',
+        'active_menu_url': reverse('hrm:quan_ly_luong:bang_luong'),
         'breadcrumbs': [
             {'title': 'Quản lý lương', 'url': '#'},
             {'title': 'Phiếu lương', 'url': None},

@@ -141,6 +141,16 @@ def filter_by_field(request, queryset, field_name, param_name=None):
 # JSON RESPONSE HELPERS
 # ============================================================================
 
+import math
+def _clean_nan(obj):
+    if isinstance(obj, float) and math.isnan(obj):
+        return None
+    elif isinstance(obj, dict):
+        return {k: _clean_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list) or isinstance(obj, tuple):
+        return [_clean_nan(v) for v in obj]
+    return obj
+
 def json_response(success=True, message='', data=None, status=200):
     """
     Tạo JSON response chuẩn
@@ -171,6 +181,8 @@ def json_response(success=True, message='', data=None, status=200):
             response_data.update(data)
         else:
             response_data['data'] = data
+
+    response_data = _clean_nan(response_data)
     
     return JsonResponse(response_data, status=status)
 
