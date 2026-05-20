@@ -53,6 +53,14 @@ class ExcelTableManager extends TableManager {
             }
         });
 
+        // Bắt sự kiện Enter để ép tính toán lại dù không thay đổi giá trị
+        this.eventManager.add(this.options.tableBody, 'keydown', (e) => {
+            if (e.key === 'Enter' && e.target.matches('input[data-key]')) {
+                e.preventDefault();
+                this.handleDelegatedInput(e.target);
+            }
+        });
+
         // Global listeners cho Drag
         document.addEventListener('mousemove', this.boundHandleDragMove);
         document.addEventListener('mouseup', this.boundHandleDragEnd);
@@ -265,7 +273,7 @@ class ExcelTableManager extends TableManager {
             if (col.type === 'input') {
                 td.className = `${baseClass} excel-cell p-0 relative`;
                 const val = this.getValueByPath(item, col.key);
-                const displayVal = val == null ? '' : val;
+                const displayVal = this._formatDisplayValue(val, col);
                 
                 // KHÔNG gắn event listener ở đây để tối ưu
                 td.innerHTML = `
@@ -302,17 +310,52 @@ class ExcelTableManager extends TableManager {
 
     handleDelegatedInput(inputEl) {
         const rowIndex = parseInt(inputEl.dataset.row);
+        const colIndex = parseInt(inputEl.dataset.col);
         const key = inputEl.dataset.key;
-        const value = inputEl.value;
-        const item = this.state.data[rowIndex];
+        const col = this.options.columns[colIndex];
+        
+        let rawValue = inputEl.value;
 
+        // Định dạng số hiển thị ngay khi đang gõ
+        if (col && col.formatter !== false) {
+            let cursor = inputEl.selectionStart;
+            let originalLength = rawValue.length;
+            
+            // Lọc bỏ ký tự không hợp lệ, giữ lại số, dấu phẩy và dấu trừ
+            let cleanStr = rawValue.replace(/\./g, '');
+            let parts = cleanStr.split(',');
+            let intPart = parts[0].replace(/[^\d-]/g, '');
+            let decPart = parts.length > 1 ? ',' + parts[1].replace(/[^\d]/g, '') : '';
+            
+            if (intPart || intPart === '0') {
+                const num = parseInt(intPart, 10);
+                if (!isNaN(num)) {
+                    intPart = this._getNumberFormatter().format(num);
+                    if (rawValue.startsWith('-') && num === 0) intPart = '-0';
+                }
+            }
+            
+            const newRaw = intPart + decPart;
+            if (newRaw !== rawValue) {
+                inputEl.value = newRaw;
+                // Điều chỉnh con trỏ sau khi format
+                let diff = newRaw.length - originalLength;
+                let newCursor = Math.max(0, cursor + diff);
+                inputEl.setSelectionRange(newCursor, newCursor);
+                rawValue = newRaw;
+            }
+        }
+
+        const item = this.state.data[rowIndex];
         if (item) {
-            // Update Model trực tiếp
-            this.setValueByPath(item, key, value);
+            // Chuyển đổi hiển thị (VD: 1.500.000) thành raw (VD: 1500000)
+            const parsedValue = this._parseInputValue(rawValue, col);
+            
+            // Update Model
+            this.setValueByPath(item, key, parsedValue);
             
             if (this.options.onCellChange) {
-                // Debounce callback nếu cần thiết bên ngoài, ở đây gọi trực tiếp
-                this.options.onCellChange([{ row: rowIndex, key, value, item }]);
+                this.options.onCellChange([{ row: rowIndex, col: colIndex, key, value: parsedValue, item }]);
             }
         }
     }
@@ -422,7 +465,10 @@ class ExcelTableManager extends TableManager {
     }
 
     applyDragValues(start, end) {
-        const valueToCopy = start.value;
+        const startCol = this.options.columns[start.colIndex];
+        const rawStringValue = start.value; 
+        const parsedValue = this._parseInputValue(rawStringValue, startCol);
+
         const minRow = Math.min(start.rowIndex, end.rowIndex);
         const maxRow = Math.max(start.rowIndex, end.rowIndex);
         const minCol = Math.min(start.colIndex, end.colIndex);
@@ -442,20 +488,22 @@ class ExcelTableManager extends TableManager {
                 const cell = this.options.tableBody.rows[r]?.cells[c + offset];
                 const input = cell?.querySelector('input');
                 
-                if (input && input.value !== valueToCopy) {
-                    input.value = valueToCopy;
+                if (input) {
+                    const displayValue = this._formatDisplayValue(parsedValue, col);
+                    const isChanged = input.value !== displayValue;
+                    input.value = displayValue;
                     
-                    // Hiệu ứng flash nhẹ
-                    cell.animate([
-                        { backgroundColor: '#bfdbfe' },
-                        { backgroundColor: 'transparent' }
-                    ], { duration: 300 });
+                    if (isChanged) {
+                        cell.animate([
+                            { backgroundColor: '#bfdbfe' },
+                            { backgroundColor: 'transparent' }
+                        ], { duration: 300 });
+                    }
 
-                    // Update Model
-                    this.setValueByPath(rowData, col.key, valueToCopy);
+                    this.setValueByPath(rowData, col.key, parsedValue);
 
                     changedData.push({
-                        row: r, col: c, key: col.key, value: valueToCopy, item: rowData
+                        row: r, col: c, key: col.key, value: parsedValue, item: rowData
                     });
                 }
             }
@@ -464,6 +512,58 @@ class ExcelTableManager extends TableManager {
         if (changedData.length > 0 && this.options.onCellChange) {
             this.options.onCellChange(changedData);
         }
+    }
+
+    // ============================================================
+    // CLIENT-SIDE FILTERING
+    // ============================================================
+
+    /**
+     * Lọc dữ liệu client-side bằng cách ẩn/hiện thẻ <tr>
+     * @param {string} keyword - Từ khóa tìm kiếm
+     * @param {Array<string>|Function} filterCriteria - Mảng các keys (path), hoặc hàm đánh giá (item, keyword) => boolean
+     */
+    filterLocal(keyword, filterCriteria = null) {
+        if (!this.options.tableBody) return;
+        
+        const rows = this.options.tableBody.rows;
+        keyword = (keyword || '').toLowerCase().trim();
+
+        let visibleCount = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const item = this.state.data[i];
+            if (!item) continue;
+
+            if (!keyword) {
+                row.style.display = '';
+                visibleCount++;
+                continue;
+            }
+
+            let isMatch = false;
+
+            if (typeof filterCriteria === 'function') {
+                isMatch = filterCriteria(item, keyword);
+            } else if (Array.isArray(filterCriteria)) {
+                isMatch = filterCriteria.some(field => {
+                    const val = this.getValueByPath(item, field);
+                    return val != null && String(val).toLowerCase().includes(keyword);
+                });
+            } else {
+                // Fallback: Tìm trong tất cả các values của top-level properties
+                isMatch = Object.values(item).some(val => 
+                    val != null && String(val).toLowerCase().includes(keyword)
+                );
+            }
+
+            row.style.display = isMatch ? '' : 'none';
+            if (isMatch) visibleCount++;
+        }
+
+        // Cập nhật lại thanh chọn tất cả (nếu đang bật)
+        this.updateBulkActions();
     }
 
     // ============================================================
@@ -515,6 +615,46 @@ class ExcelTableManager extends TableManager {
 
     extractLastKey(path) {
         return path ? path.split('.').pop() : '';
+    }
+
+    /**
+     * Format giá trị hiển thị cho ô input.
+     * Ưu tiên: col.formatter (custom) > auto-format số > hiển thị raw.
+     * Tắt auto-format bằng col.formatter = false.
+     */
+    _formatDisplayValue(val, col) {
+        if (val == null || val === '') return '';
+        if (typeof col.formatter === 'function') return col.formatter(val);
+        if (col.formatter === false) return val;
+        // Auto-format: nếu giá trị là số, format theo locale
+        const num = Number(val);
+        return isFinite(num) ? this._formatNumber(num) : val;
+    }
+
+    // Cache instance của Intl.NumberFormat để tăng hiệu suất (tránh khởi tạo lại khi render hàng ngàn ô)
+    _getNumberFormatter() {
+        if (!this._cachedNumberFormatter) {
+            this._cachedNumberFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 });
+        }
+        return this._cachedNumberFormatter;
+    }
+
+    _formatNumber(num) {
+        return this._getNumberFormatter().format(num);
+    }
+
+    /**
+     * Bóc tách giá trị hiển thị thành giá trị thực (VD: 1.500.000,5 -> 1500000.5)
+     */
+    _parseInputValue(val, col) {
+        if (val === '' || val == null) return '';
+        if (col && typeof col.parser === 'function') return col.parser(val);
+        if (col && col.formatter === false) return val;
+
+        let strVal = String(val).trim();
+        let cleanStr = strVal.replace(/\./g, '').replace(/,/g, '.');
+        let num = parseFloat(cleanStr);
+        return isNaN(num) ? strVal : num;
     }
 
     destroy() {

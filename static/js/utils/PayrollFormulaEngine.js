@@ -11,6 +11,9 @@ class FormulaEngine {
         // formulaConfig: Map { colKey: "formula_string" }
         this.dataset = dataset || [];
         this.formulaConfig = formulaConfig || {};
+        // Tối ưu hoá: Lookup O(1)
+        this.datasetMap = new Map();
+        this.dataset.forEach(r => this.datasetMap.set(String(r.id), r));
         
         // Cache kết quả tính toán trong 1 chu kỳ để tránh tính lại
         this.sessionCache = new Map(); 
@@ -37,6 +40,9 @@ class FormulaEngine {
             MAX_COL: (colKey) => this.aggregate(colKey, 'max'),
             MIN_COL: (colKey) => this.aggregate(colKey, 'min'),
         };
+        
+        // Tối ưu hoá: Biên dịch trước tất cả công thức một lần duy nhất
+        this.compileFormulas();
     }
 
     /**
@@ -44,6 +50,8 @@ class FormulaEngine {
      */
     updateData(newDataset) {
         this.dataset = newDataset;
+        this.datasetMap.clear();
+        this.dataset.forEach(r => this.datasetMap.set(String(r.id), r));
         this.clearCache();
     }
 
@@ -56,7 +64,7 @@ class FormulaEngine {
      * Tự động quyết định xem nên lấy giá trị có sẵn hay phải tính toán
      */
     getValue(rowId, colKey) {
-        const row = this.dataset.find(r => String(r.id) === String(rowId));
+        const row = this.datasetMap.get(String(rowId));
         if (!row) return 0;
 
         // Tạo khóa cache duy nhất: rowId_colKey
@@ -70,10 +78,8 @@ class FormulaEngine {
         
         // Nếu KHÔNG có công thức -> Trả về giá trị thô (User nhập hoặc Data có sẵn)
         if (!formula) {
-            // Lưu ý: Cần truy cập đúng path object (vd: salary_values.10)
-            // Ở đây giả định data đã được flat hoặc có helper truy xuất
             let val = this.extractValue(row, colKey);
-            return Number(val) || 0;
+            return AppUtils.Helper.parseNumber(val);
         }
 
         // Nếu CÓ công thức -> Tính toán (Lazy Evaluation)
@@ -85,8 +91,17 @@ class FormulaEngine {
 
         this.callStack.add(cacheKey);
         
+        const executor = this.compiledFormulas[colKey];
+        if (!executor) return 0; // Nếu không có hàm đã compile, trả về 0 (nhưng đã xử lý nhánh !formula ở trên)
+
         try {
-            const result = this.executeFormula(formula, row);
+            let result = executor.call(this, rowId);
+            
+            // Tối ưu hoá & Xử lý lỗi: Bắt lỗi chia cho 0 (Infinity) hoặc 0/0 (NaN)
+            if (typeof result === 'number' && !Number.isFinite(result)) {
+                result = 0;
+            }
+            
             this.sessionCache.set(cacheKey, result);
             return result;
         } catch (e) {
@@ -98,39 +113,31 @@ class FormulaEngine {
     }
 
     /**
-     * Thực thi biểu thức công thức
+     * Tối ưu hoá: Biên dịch tất cả các công thức thành các Function độc lập (Pre-compilation)
+     * Thay thế hoàn toàn cho việc gọi `new Function` hàng nghìn lần mỗi khi tính toán
      */
-    executeFormula(formulaStr, currentRow) {
-        // 1. Phân tích biến: Tìm các từ khóa dạng chữ cái (VD: LUONG_CO_BAN, KPI)
-        // Regex này bỏ qua số, chuỗi trong ngoặc kép, và các tên hàm đã đăng ký
+    compileFormulas() {
+        this.compiledFormulas = {};
         const funcNames = Object.keys(this.functions);
-        
-        // Tạo context để thay thế biến bằng this.getValue()
-        // Kỹ thuật: Sử dụng Function constructor với Proxy hoặc Replace chuỗi
-        // Ở đây dùng Replace chuỗi để an toàn và kiểm soát tốt hơn
-        
-        // Regex tìm biến: Bắt đầu bằng chữ cái, theo sau là chữ hoặc số hoặc gạch dưới
-        // Loại bỏ các từ khóa là tên hàm
         const variableRegex = /[a-zA-Z_][a-zA-Z0-9_]*/g;
         
-        // Parse formula để thay thế biến thành hàm gọi getValue
-        const parsedFormula = formulaStr.replace(variableRegex, (match) => {
-            if (funcNames.includes(match)) return `this.functions.${match}`; // Giữ nguyên hàm
-            if (match === 'True') return 'true';
-            if (match === 'False') return 'false';
-            // Biến số -> Gọi đệ quy lấy giá trị
-            return `this.getValue('${currentRow.id}', '${match}')`; 
-        });
+        Object.keys(this.formulaConfig).forEach(colKey => {
+            const formulaStr = this.formulaConfig[colKey];
+            const parsedFormula = formulaStr.replace(variableRegex, (match) => {
+                if (funcNames.includes(match)) return `this.functions.${match}`; // Giữ nguyên hàm
+                if (match === 'True') return 'true';
+                if (match === 'False') return 'false';
+                // Thay thế tên biến bằng hàm gọi nội suy với rowId được truyền vào Function context
+                return `this.getValue(rowId, '${match}')`; 
+            });
 
-        // 2. Thực thi an toàn
-        try {
-            // Tạo hàm thực thi với scope là 'this' (instance của FormulaEngine)
-            const executor = new Function('return ' + parsedFormula);
-            return executor.call(this); 
-        } catch (e) {
-            console.warn(`Lỗi cú pháp công thức: ${formulaStr}`, e);
-            return 0;
-        }
+            try {
+                // Tạo một function nhận tham số 'rowId' duy nhất
+                this.compiledFormulas[colKey] = new Function('rowId', 'return ' + parsedFormula);
+            } catch (e) {
+                console.warn(`Lỗi biên dịch công thức cho phần tử ${colKey}: ${formulaStr}`, e);
+            }
+        });
     }
 
     /**
@@ -175,7 +182,7 @@ class FormulaEngine {
     recalculateRow(rowId) {
         this.clearCache(); // Reset cache phiên làm việc cũ
         const changes = {};
-        const row = this.dataset.find(r => String(r.id) === String(rowId));
+        const row = this.datasetMap.get(String(rowId));
         
         if (!row) return changes;
 
@@ -196,5 +203,15 @@ class FormulaEngine {
     updateRowValue(row, colKey, val) {
         if (!row.salary_values) row.salary_values = {};
         row.salary_values[colKey] = val;
+    }
+
+    /**
+     * Cập nhật giá trị một ô thông qua O(1) map
+     */
+    setRowValue(rowId, colKey, val) {
+        const row = this.datasetMap.get(String(rowId));
+        if (row) {
+            this.updateRowValue(row, colKey, val);
+        }
     }
 }
