@@ -53,6 +53,14 @@ class ExcelTableManager extends TableManager {
             }
         });
 
+        // Bắt sự kiện double-click trên handle kéo để tự động điền xuống cuối cột
+        this.eventManager.add(this.options.tableBody, 'dblclick', (e) => {
+            if (e.target.classList.contains('cell-drag-handle')) {
+                e.preventDefault();
+                this.handleDragHandleDoubleClick(e.target);
+            }
+        });
+
         // Bắt sự kiện Enter để ép tính toán lại dù không thay đổi giá trị
         this.eventManager.add(this.options.tableBody, 'keydown', (e) => {
             if (e.key === 'Enter' && e.target.matches('input[data-key]')) {
@@ -509,6 +517,62 @@ class ExcelTableManager extends TableManager {
             }
         }
 
+        if (changedData.length > 0 && this.options.onCellChange) {
+            this.options.onCellChange(changedData);
+        }
+    }
+
+    /**
+     * Tự động điền giá trị của ô hiện tại xuống tất cả các dòng bên dưới cùng cột khi nhấp đúp chấm xanh
+     */
+    handleDragHandleDoubleClick(handleEl) {
+        const startRowIndex = parseInt(handleEl.dataset.row);
+        const colIndex = parseInt(handleEl.dataset.col);
+        const col = this.options.columns[colIndex];
+        if (!col || col.type !== 'input') return;
+
+        const offset = this.options.enableBulkActions ? 1 : 0;
+        const domColIndex = colIndex + offset;
+        const startCell = this.options.tableBody.rows[startRowIndex]?.cells[domColIndex];
+        const input = startCell?.querySelector('input');
+        if (!input) return;
+
+        const rawStringValue = input.value;
+        const parsedValue = this._parseInputValue(rawStringValue, col);
+        const displayValue = this._formatDisplayValue(parsedValue, col);
+
+        const totalRows = this.state.data.length;
+        let changedData = [];
+
+        // Duyệt qua tất cả các dòng từ phía dưới dòng hiện tại đến cuối bảng
+        for (let r = startRowIndex + 1; r < totalRows; r++) {
+            const rowData = this.state.data[r];
+            if (!rowData) continue;
+
+            const cell = this.options.tableBody.rows[r]?.cells[domColIndex];
+            const targetInput = cell?.querySelector('input');
+            if (targetInput) {
+                const isChanged = targetInput.value !== displayValue;
+                targetInput.value = displayValue;
+
+                if (isChanged) {
+                    // Hiệu ứng flash nhẹ để chỉ báo các ô được thay đổi thành công
+                    cell.animate([
+                        { backgroundColor: '#bfdbfe' },
+                        { backgroundColor: 'transparent' }
+                    ], { duration: 300 });
+                }
+
+                // Cập nhật model
+                this.setValueByPath(rowData, col.key, parsedValue);
+
+                changedData.push({
+                    row: r, col: colIndex, key: col.key, value: parsedValue, item: rowData
+                });
+            }
+        }
+
+        // Kích hoạt tính toán lại một lần duy nhất (Batching)
         if (changedData.length > 0 && this.options.onCellChange) {
             this.options.onCellChange(changedData);
         }
