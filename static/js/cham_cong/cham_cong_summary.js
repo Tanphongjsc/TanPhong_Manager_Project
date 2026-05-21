@@ -8,6 +8,7 @@ class TimekeepingSummaryManager {
             dept: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/',
             summary: '/hrm/cham-cong/api/bang-cham-cong/tong-hop-thang/',
             checkLog: '/hrm/cham-cong/api/bang-cham-cong/check-cham-cong/',
+            jobSummary: '/hrm/cham-cong/api/bang-cham-cong/tong-hop-cong-viec/',
             editBangChamCong: '/hrm/cham-cong/bang-cham-cong/'
         };
 
@@ -17,12 +18,16 @@ class TimekeepingSummaryManager {
             filterDate: document.getElementById('filter-date'),
             filterMonthWrapper: document.getElementById('filter-month-wrapper'),
             filterDateWrapper: document.getElementById('filter-date-wrapper'),
+            filterJobWrapper: document.getElementById('filter-job-wrapper'),
             filterDept: document.getElementById('filter-dept'),
+            filterJob: document.getElementById('filter-job'),
             searchInput: document.getElementById('search-input'),
             tabNav: document.querySelector('#tab-container nav'),
             employeeCount: document.getElementById('employee-count'),
+            jobSummaryBody: document.getElementById('job-summary-body'),
             panes: {
                 '#tab-tong-hop': document.getElementById('tab-tong-hop'),
+                '#tab-cong-viec': document.getElementById('tab-cong-viec'),
                 '#tab-da-cham': document.getElementById('tab-da-cham'),
                 '#tab-chua-cham': document.getElementById('tab-chua-cham')
             }
@@ -30,6 +35,7 @@ class TimekeepingSummaryManager {
 
         this.currentTabId = '#tab-tong-hop';
         this.managers = { summary: null, checked: null, unchecked: null };
+        this.jobSummaryController = null;
         this.eventManager = AppUtils.EventManager.create();
     }
 
@@ -108,6 +114,7 @@ class TimekeepingSummaryManager {
                 if (!value) return;
                 if (tabId === '#tab-tong-hop' && key === 'ngaylamviec') return;
                 if (tabId !== '#tab-tong-hop' && key === 'thang') return;
+                if (tabId !== '#tab-cong-viec' && key === 'congviec_id') return;
                 params[key] = value;
             });
         }
@@ -134,6 +141,9 @@ class TimekeepingSummaryManager {
                 this.rebindSummarySelectAll();
                 this.managers.summary.options.apiParams = { ...currentParams };
                 this.managers.summary.refresh();
+            },
+            '#tab-cong-viec': () => {
+                this.loadJobSummary();
             },
             '#tab-da-cham': () => {
                 this.managers.checked.options.apiParams = { ...currentParams, dachamcong: 'True' };
@@ -231,12 +241,190 @@ class TimekeepingSummaryManager {
 
     updateFilterVisibility(tabId) {
         const isSummaryTab = tabId === '#tab-tong-hop';
+        const isJobTab = tabId === '#tab-cong-viec';
         if (this.els.filterMonthWrapper) {
             this.els.filterMonthWrapper.classList.toggle('hidden', !isSummaryTab);
         }
         if (this.els.filterDateWrapper) {
             this.els.filterDateWrapper.classList.toggle('hidden', isSummaryTab);
         }
+        if (this.els.filterJobWrapper) {
+            this.els.filterJobWrapper.classList.toggle('hidden', !isJobTab);
+        }
+    }
+
+    async loadJobSummary() {
+        if (!this.els.jobSummaryBody) return;
+
+        if (this.jobSummaryController) this.jobSummaryController.abort();
+
+        const controller = new AbortController();
+        this.jobSummaryController = controller;
+        this.showJobSummaryLoading();
+
+        try {
+            const params = this.getFilterParams();
+            const res = await AppUtils.API.get(this.apiUrls.jobSummary, params, { signal: controller.signal });
+            if (res?.success === false) throw new Error(res.message || 'Không thể tải dữ liệu công việc.');
+
+            this.updateJobOptions(Array.isArray(res?.jobs) ? res.jobs : []);
+            this.renderJobSummary(Array.isArray(res?.data) ? res.data : []);
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+            AppUtils.Notify.error(e.message || 'Không thể tải dữ liệu công việc.');
+            this.renderJobSummary([]);
+        } finally {
+            if (this.jobSummaryController === controller) {
+                this.jobSummaryController = null;
+            }
+        }
+    }
+
+    showJobSummaryLoading() {
+        if (!this.els.jobSummaryBody) return;
+        this.els.jobSummaryBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-10 text-center text-slate-500">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
+                        <p class="font-medium">Đang tải dữ liệu...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    renderJobSummary(groups) {
+        const tbody = this.els.jobSummaryBody;
+        if (!tbody) return;
+
+        if (!Array.isArray(groups) || groups.length === 0) {
+            AppUtils.UI.renderEmptyState(tbody, { message: 'Không có dữ liệu công việc', colspan: 4, icon: 'default' });
+            return;
+        }
+
+        const rows = [];
+
+        groups.forEach(group => {
+            const members = Array.isArray(group.members) ? group.members : [];
+            const totalMembers = group.so_nhan_vien || members.length || 0;
+            rows.push(this.renderJobGroupHeader(group, totalMembers));
+            members.forEach(member => rows.push(this.renderJobMemberRow(member)));
+        });
+
+        tbody.innerHTML = rows.join('');
+    }
+
+    renderJobGroupHeader(group, totalMembers) {
+        const jobName = group.tencongviec || 'Công việc';
+        const totalMoney = this.formatCurrency(group.tong_tien || 0);
+
+        return `
+            <tr class="bg-slate-50">
+                <td colspan="4" class="px-2 py-2">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0">CV</span>
+                            <div class="min-w-0">
+                                <div class="text-xs font-semibold text-slate-800 truncate">${jobName}</div>
+                                <div class="text-[10px] text-slate-500">${totalMembers} nhân viên</div>
+                            </div>
+                        </div>
+                        <div class="text-sm font-semibold text-emerald-600">${totalMoney}</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    renderJobMemberRow(member) {
+        const roleTag = member.pay_role
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">${member.pay_role}</span>`
+            : '';
+
+        return `
+            <tr class="hover:bg-slate-50 border-b border-slate-100">
+                <td class="px-2 py-1.5 text-[10px] text-slate-400 text-center">•</td>
+                <td class="px-2 py-1.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-sm font-medium text-slate-900">${member.ten_nv || 'N/A'}</span>
+                        ${roleTag}
+                    </div>
+                    <div class="text-xs text-slate-500">${member.ma_nv || ''}</div>
+                </td>
+                <td class="px-2 py-1.5 text-xs text-slate-600">
+                    ${this.formatParams(member.tham_so)}
+                </td>
+                <td class="px-2 py-1.5 text-right text-sm font-semibold text-slate-700">
+                    ${this.formatCurrency(member.thanhtien || 0)}
+                </td>
+            </tr>
+        `;
+    }
+
+    updateJobOptions(jobs) {
+        const select = this.els.filterJob;
+        if (!select) return;
+
+        const currentValue = select.value;
+        select.innerHTML = '';
+
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'Tất cả Công việc';
+        select.appendChild(defaultOpt);
+
+        (jobs || []).forEach(job => {
+            const opt = document.createElement('option');
+            opt.value = job.id;
+            opt.textContent = job.tencongviec || `Công việc ${job.id}`;
+            select.appendChild(opt);
+        });
+
+        if (currentValue && (jobs || []).some(j => String(j.id) === String(currentValue))) {
+            select.value = currentValue;
+        } else {
+            select.value = '';
+        }
+    }
+
+    formatParams(params) {
+        if (!params || typeof params !== 'object' || Array.isArray(params)) {
+            return '<span class="text-slate-400">--</span>';
+        }
+
+        const entries = Object.entries(params).filter(([_, v]) => v !== null && v !== undefined && v !== '');
+        if (!entries.length) return '<span class="text-slate-400">--</span>';
+
+        return `
+            <div class="flex flex-wrap items-center gap-2">
+                ${entries.map(([key, value]) => {
+                    const label = String(key).replace(/_/g, ' ');
+                    const displayValue = this.formatParamValue(value);
+                    return `
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded shadow-sm border border-slate-200 bg-white whitespace-nowrap">
+                            <span class="text-[11px] text-slate-600 font-medium">${label}:</span>
+                            <span class="text-[11px] text-blue-700 font-mono font-bold">${displayValue}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    formatParamValue(value) {
+        if (value === null || value === undefined || value === '') return '--';
+        const numeric = typeof value === 'number' ? value : Number(value);
+        if (!Number.isNaN(numeric) && String(value).trim() !== '') {
+            return AppUtils.Helper.formatNumber(numeric);
+        }
+        if (Array.isArray(value)) return value.join(', ');
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+    }
+
+    formatCurrency(value) {
+        return AppUtils.Helper.formatCurrency(Number(value) || 0);
     }
 
     renderSummaryHeader() {

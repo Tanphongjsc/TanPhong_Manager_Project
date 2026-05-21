@@ -12,6 +12,15 @@
            class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
 </div>
 
+{% comment %} Filter: Công việc (dùng cho tab Tổng hợp theo công việc) {% endcomment %}
+<div id="filter-job-wrapper" class="hidden flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <i class="fa-solid fa-briefcase text-slate-500 mr-2 text-[10px]"></i>
+    <select id="filter-job" name="congviec_id"
+        class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none">
+        <option value="">Tất cả Công việc</option>
+    </select>
+</div>
+
 {% comment %} Filter: Loại hình (VP/SX) {% endcomment %}
 <select id="filter-type" name="loai_chamcong"
     class="px-2 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer text-slate-600 h-[26px]">
