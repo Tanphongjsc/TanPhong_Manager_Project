@@ -375,7 +375,7 @@ def view_phieu_luong(request, bangluong_id=None):
 # ============================================================================
 
 # ------------------------------- PHẦN TỬ LƯƠNG ------------------------------
-# @login_required
+@login_required
 @require_http_methods(["GET", "POST"])
 def api_phan_tu_luong_list(request):
     """API lấy danh sách phần tử lương"""
@@ -606,7 +606,7 @@ def api_phan_tu_luong_toggle_status(request, id):
     )
 
 # ------------------------------- NHÓM PHẦN TỬ LƯƠNG ------------------------------
-# @login_required
+@login_required
 @require_http_methods(["GET", "POST"])
 def api_nhom_phan_tu_luong_list(request):
     """API lấy danh sách nhom phần tử lương"""
@@ -729,7 +729,7 @@ def api_nhom_phan_tu_luong_detail(request, pk):
 
 # ------------------------------- SETUP GIÁ TRỊ MẶC ĐỊNH PHẦN TỬ LƯƠNG ------------------------------
 
-# @login_required
+@login_required
 @require_http_methods(["GET", "POST"])
 @transaction.atomic
 def api_phan_tu_luong_setup_params(request):
@@ -839,7 +839,7 @@ def api_phan_tu_luong_setup_params(request):
 
 
 # ------------------------------ PHIẾU LƯƠNG ------------------------------
-# @login_required
+@login_required
 @require_http_methods(["GET", "POST"])
 @transaction.atomic
 @csrf_exempt
@@ -1128,6 +1128,7 @@ def api_phieu_luong_list(request):
 
 
 # --- VIEW:  Trang danh sách ---
+@login_required
 def view_che_do_luong(request):
     """Màn hình danh sách Chế độ lương"""
     context = {
@@ -1139,6 +1140,7 @@ def view_che_do_luong(request):
     return render(request, "hrm_manager/quan_ly_luong/che_do_luong.html", context)
 
 # --- VIEW:  Form tạo mới/cập nhật ---
+@login_required
 def view_che_do_luong_create(request):
     """Màn hình Thêm mới Chế độ lương"""
     breadcrumbs = [
@@ -1153,6 +1155,7 @@ def view_che_do_luong_create(request):
         'is_update': False
     })
 
+@login_required
 def view_che_do_luong_update(request, pk):
     """Màn hình Cập nhật Chế độ lương"""
     breadcrumbs = [
@@ -1171,7 +1174,7 @@ def view_che_do_luong_update(request, pk):
 # ============================================================
 # API: LIST
 # ============================================================
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_che_do_luong_list(request):
@@ -1248,6 +1251,7 @@ def api_che_do_luong_list(request):
 # --- API: Chi tiết ---
 @require_http_methods(["GET"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_detail(request, pk):
     """
     ✅ CẬP NHẬT:  Thêm thông tin nhân viên/phòng ban
@@ -1371,6 +1375,7 @@ def api_che_do_luong_detail(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_create(request):
     """API Tạo mới Chế độ lương"""
     data = get_request_data(request)
@@ -1470,6 +1475,7 @@ def api_che_do_luong_create(request):
 
 @require_http_methods(["PUT", "POST"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_update(request, pk):
     """API Cập nhật Chế độ lương"""
     che_do = get_object_or_json_error(Chedoluong, pk, "Không tìm thấy chế độ lương")
@@ -1589,6 +1595,7 @@ def api_che_do_luong_update(request, pk):
 
 @require_http_methods(["GET"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_check_delete(request, pk):
     """API kiểm tra điều kiện xóa trước khi hiển thị confirm"""
     che_do = get_object_or_json_error(Chedoluong, pk, "Không tìm thấy chế độ lương")
@@ -1606,6 +1613,7 @@ def api_che_do_luong_check_delete(request, pk):
 
 @require_http_methods(["POST", "DELETE"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_delete(request, pk):
     """API Xóa Chế độ lương"""
     item = get_object_or_json_error(Chedoluong, pk, "Không tìm thấy dữ liệu")
@@ -1629,6 +1637,7 @@ def api_che_do_luong_delete(request, pk):
 
 @require_http_methods(["GET"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_check_toggle(request, pk):
     """API kiểm tra điều kiện toggle status"""
     che_do = get_object_or_json_error(Chedoluong, pk, "Không tìm thấy chế độ lương")
@@ -1653,6 +1662,7 @@ def api_che_do_luong_check_toggle(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_toggle_status(request, pk):
     """API Bật/Tắt trạng thái"""
     che_do = get_object_or_json_error(Chedoluong, pk, "Không tìm thấy chế độ lương")
@@ -1687,6 +1697,7 @@ def api_che_do_luong_toggle_status(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_check_conflicts(request):
     """API kiểm tra xung đột nhân viên/phòng ban"""
     data = get_request_data(request)
@@ -1737,6 +1748,7 @@ def api_che_do_luong_check_conflicts(request):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_che_do_luong_transfer(request):
     """API chuyển nhân viên/phòng ban giữa các chế độ lương"""
     data = get_request_data(request)
@@ -1920,7 +1932,7 @@ def view_ky_luong(request):
 # ============================================================================
 # API URLS
 # ============================================================================
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_ky_luong_list(request):
@@ -1990,7 +2002,7 @@ def api_ky_luong_list(request):
         }
     )
 
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions  
 def api_ky_luong_detail(request, pk):
@@ -2021,7 +2033,7 @@ def api_ky_luong_detail(request, pk):
     
     return json_success('Lấy chi tiết thành công', data=data)
 
-
+@login_required
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_ky_luong_create(request):
@@ -2094,7 +2106,7 @@ def api_ky_luong_create(request):
     except Exception as e:
         return json_error(f"Lỗi khi tạo kỳ lương: {str(e)}")
 
-
+@login_required
 @require_http_methods(["PUT", "POST"])
 @handle_exceptions
 def api_ky_luong_update(request, pk):
@@ -2145,7 +2157,7 @@ def api_ky_luong_update(request, pk):
     except Exception as e:
         return json_error(f"Lỗi khi cập nhật: {str(e)}")
 
-
+@login_required
 @require_http_methods(["POST", "DELETE"])
 @handle_exceptions
 def api_ky_luong_delete(request, pk):
@@ -2163,6 +2175,7 @@ def api_ky_luong_delete(request, pk):
     else:
         return json_error(msg)
 
+@login_required
 @require_http_methods(["POST"])
 @handle_exceptions
 def api_ky_luong_finalize(request, pk):
@@ -2176,7 +2189,8 @@ def api_ky_luong_finalize(request, pk):
         return json_success(msg)
     else:
         return json_error(msg)
-    
+
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_ky_luong_get_defaults(request):
@@ -2243,7 +2257,7 @@ def view_bang_luong(request):
 # ============================================================================
 # API URLS
 # ============================================================================
-
+@login_required
 @require_http_methods(["GET"])
 @handle_exceptions
 def api_bang_luong_list(request):
@@ -2308,6 +2322,7 @@ def api_bang_luong_list(request):
 
 @require_http_methods(["GET"])
 @handle_exceptions
+@login_required
 def api_bang_luong_detail(request, pk):
     """
     API Lấy chi tiết Bảng lương
@@ -2323,6 +2338,7 @@ def api_bang_luong_detail(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_bang_luong_create(request):
     """
     API Tạo mới Bảng lương
@@ -2348,6 +2364,7 @@ def api_bang_luong_create(request):
 
 @require_http_methods(["PUT", "POST"])
 @handle_exceptions
+@login_required
 def api_bang_luong_update(request, pk):
     """
     API Cập nhật Bảng lương
@@ -2375,6 +2392,7 @@ def api_bang_luong_update(request, pk):
 
 @require_http_methods(["POST", "DELETE"])
 @handle_exceptions
+@login_required
 def api_bang_luong_delete(request, pk):
     """
     API Xóa Bảng lương
@@ -2392,6 +2410,7 @@ def api_bang_luong_delete(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_bang_luong_approve(request, pk):
     """API Duyệt bảng lương: calculated -> approved"""
     bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
@@ -2407,6 +2426,7 @@ def api_bang_luong_approve(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_bang_luong_mark_paid(request, pk):
     """API Đánh dấu đã chi trả: approved -> paid"""
     bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
@@ -2422,6 +2442,7 @@ def api_bang_luong_mark_paid(request, pk):
 
 @require_http_methods(["POST"])
 @handle_exceptions
+@login_required
 def api_bang_luong_cancel(request, pk):
     """API Hủy bảng lương: draft/processing/calculated -> cancelled"""
     bang_luong = get_object_or_json_error(Bangluong, pk, "Không tìm thấy bảng lương")
@@ -2437,6 +2458,7 @@ def api_bang_luong_cancel(request, pk):
 
 @require_http_methods(["GET"])
 @handle_exceptions
+@login_required
 def api_bang_luong_get_options(request):
     """
     API Lấy options cho dropdown (kỳ lương, chế độ lương)

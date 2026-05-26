@@ -371,6 +371,12 @@ class EmployeeManager extends BaseCRUDManager {
             const res = await AppUtils.API.post(url, body);
 
             if (showSuccessMsg) AppUtils.Notify.success('Thao tác thành công!');
+
+            // Hiển thị warnings từ auto-assign / cleanup (nếu có)
+            const warnings = res?.warnings || res?.data?.warnings;
+            if (warnings && warnings.length > 0) {
+                warnings.forEach(w => AppUtils.Notify.warning(w));
+            }
             
             // Refresh UI
             this.tableManager.clearSelection();
@@ -520,17 +526,29 @@ class EmployeeManager extends BaseCRUDManager {
             const nhanvienId = res.data?.id || res.id;
 
             // 4. Create History Record: luôn gửi noicongtac là tên phòng ban đang chọn
+            let autoAssignWarnings = [];
             if (nhanvienId) {
-                await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
                     nhanvien_id: nhanvienId,
                     phongban_id: pbVal,
                     chucvu_id: cvVal,
                     noicongtac: this.phongbanDropdown.selectedText || '', // tên phòng ban
                     trangthai: 'active'
                 });
+
+                // Thu thập warnings từ auto-assign
+                autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
             }
 
             AppUtils.Notify.success(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
+
+            // Hiển thị warnings SAU success toast (tránh bị success toast ghi đè)
+            if (autoAssignWarnings.length > 0) {
+                setTimeout(() => {
+                    autoAssignWarnings.forEach(w => AppUtils.Notify.warning(w));
+                }, 1500);
+            }
+
             this.config.onRefreshTable?.();
 
             if (saveAndNew) {
