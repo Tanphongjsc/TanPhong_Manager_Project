@@ -16,6 +16,7 @@ from json import loads
 from collections import defaultdict
 
 from apps.hrm_manager.__core__.models import *
+from apps.hrm_manager.to_chuc_nhan_su.auto_assign_service import EmployeeAutoAssignService
 
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context,
@@ -726,27 +727,7 @@ def api_nhan_vien_list(request):
 
         nhan_vien_ids = request.GET.getlist('nhan_vien_ids', [])
         try:
-            # ✅ BỔ SUNG: Check từng nhân viên có dữ liệu ràng buộc không
-            blocked_ids = []
-
-            # NV đang trong lịch làm việc hoặc chế độ lương active
-            active_in_schedule = set(LichlamviecNhanvien.objects.filter(
-                nhanvien_id__in=nhan_vien_ids, trangthai='active'
-            ).values_list('nhanvien_id', flat=True))
-
-            active_in_salary = set(NhanvienChedoluong.objects.filter(
-                nhanvien_id__in=nhan_vien_ids, trangthai='active'
-            ).values_list('nhanvien_id', flat=True))
-
-            blocked_ids = list(active_in_schedule | active_in_salary)
-
-            if blocked_ids:
-                return JsonResponse({
-                    'success': False,
-                    'message': f'Không thể xóa {len(blocked_ids)} nhân viên đang được gán lịch làm việc hoặc chế độ lương.'
-                }, status=400)
-
-            # NV có dữ liệu lịch sử → soft delete
+            # NV có dữ liệu lịch sử (chấm công/phiếu lương) → soft delete
             has_history_ids = set(Bangchamcong.objects.filter(
                 nhanvien_id__in=nhan_vien_ids
             ).values_list('nhanvien_id', flat=True))
@@ -758,8 +739,11 @@ def api_nhan_vien_list(request):
             soft_delete_ids = list(has_history_ids | has_payslip_ids)
             hard_delete_ids = list(set(nhan_vien_ids) - set(soft_delete_ids))
 
-            # Soft delete
+            # Soft delete: cleanup lịch/lương → chuyển trạng thái nghỉ việc
             if soft_delete_ids:
+                for nv_id in soft_delete_ids:
+                    EmployeeAutoAssignService.cleanup_on_termination(nv_id)
+
                 Nhanvien.objects.filter(id__in=soft_delete_ids).update(
                     trangthainv='Đã nghỉ việc',
                     updated_at=datetime.now()
@@ -773,8 +757,10 @@ def api_nhan_vien_list(request):
                     updated_at=datetime.now()
                 )
 
-            # Hard delete
+            # Hard delete: cleanup trước khi xóa cứng
             if hard_delete_ids:
+                for nv_id in hard_delete_ids:
+                    EmployeeAutoAssignService.cleanup_on_termination(nv_id)
                 Nhanvien.objects.filter(id__in=hard_delete_ids).delete()
 
             msg_parts = []
@@ -794,7 +780,7 @@ def api_nhan_vien_list(request):
 
 @login_required
 @transaction.atomic
-@require_http_methods(["GET", "PUT", "DELETE"])
+@require_http_methods(["GET", "PUT", "PATCH", "DELETE"])
 def api_nhan_vien_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa Nhân Viên"""
 
@@ -817,11 +803,14 @@ def api_nhan_vien_detail(request, id):
             }
         })
     
-    elif request.method == "PUT":
+    elif request.method in ("PUT", "PATCH"):
         # Cập nhật nhân viên
         try:
             data = loads(request.body)
             data['loainv'] = data.get('loainv_id', data.get('loainv'))
+
+            # Lưu trạng thái cũ để detect chuyển nghỉ việc
+            old_trangthainv = nhan_vien.trangthainv
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
@@ -832,6 +821,21 @@ def api_nhan_vien_detail(request, id):
 
             nhan_vien.updated_at = datetime.now()
             nhan_vien.save()
+
+            # Cleanup khi chuyển sang trạng thái nghỉ việc
+            new_trangthainv = nhan_vien.trangthainv
+            if new_trangthainv == 'Đã nghỉ việc' and old_trangthainv != 'Đã nghỉ việc':
+                EmployeeAutoAssignService.cleanup_on_termination(nhan_vien.id)
+
+                # Đóng lịch sử công tác active
+                Lichsucongtac.objects.filter(
+                    nhanvien=nhan_vien,
+                    trangthai='active'
+                ).update(
+                    trangthai='inactive',
+                    ketthuc=datetime.now().date(),
+                    updated_at=datetime.now()
+                )
             
             return JsonResponse({
                 'success': True,
@@ -848,29 +852,11 @@ def api_nhan_vien_detail(request, id):
     elif request.method == "DELETE":
         # Xóa Nhân Viên
         try:
-            # ✅ BỔ SUNG: Check nhân viên có dữ liệu chấm công
             has_attendance = Bangchamcong.objects.filter(nhanvien=nhan_vien).exists()
-
-            # ✅ BỔ SUNG: Check nhân viên có phiếu lương
             has_payslip = Phieuluong.objects.filter(nhanvien=nhan_vien).exists()
 
-            # ✅ BỔ SUNG: Check nhân viên đang trong lịch làm việc
-            has_schedule = LichlamviecNhanvien.objects.filter(
-                nhanvien=nhan_vien,
-                trangthai='active'
-            ).exists()
-
-            # ✅ BỔ SUNG: Check nhân viên đang trong chế độ lương
-            has_salary_regime = NhanvienChedoluong.objects.filter(
-                nhanvien=nhan_vien,
-                trangthai='active'
-            ).exists()
-
-            if has_schedule or has_salary_regime:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Không thể xóa: Nhân viên đang được gán lịch làm việc hoặc chế độ lương. Vui lòng gỡ bỏ trước.'
-                }, status=400)
+            # Cleanup lịch/lương/thiết lập trước khi xóa hoặc chuyển nghỉ việc
+            EmployeeAutoAssignService.cleanup_on_termination(nhan_vien.id)
 
             if has_attendance or has_payslip:
                 # Có dữ liệu lịch sử → chỉ cho nghỉ việc, không xóa cứng
@@ -944,8 +930,14 @@ def api_lich_su_cong_tac_list(request):
             data = loads(request.body)
             nhanvien_id = data.get('nhanvien_id')
 
-            lich_su_old = get_object_or_404(Lichsucongtac, nhanvien_id=nhanvien_id, trangthai='active')
+            # Lưu phòng ban cũ trước khi deactivate (dùng cho deactivate_old_schedule)
+            old_phongban_id = None
+            lich_su_old = Lichsucongtac.objects.filter(
+                nhanvien_id=nhanvien_id, trangthai='active'
+            ).first()
+
             if lich_su_old:
+                old_phongban_id = lich_su_old.phongban_id
                 lich_su_old.ketthuc = data.get('batdau')
                 lich_su_old.trangthai = 'inactive'
                 lich_su_old.updated_at = datetime.now()
@@ -956,16 +948,35 @@ def api_lich_su_cong_tac_list(request):
                 ketthuc=None,
                 noicongtac=data.get('noicongtac'),
                 trangthai=data.get('trangthai', 'active'),
-                nhanvien_id = data.get('nhanvien_id'),
+                nhanvien_id=data.get('nhanvien_id'),
                 phongban_id=data.get('phongban_id'),
                 chucvu_id=data.get('chucvu_id'),
                 created_at=datetime.now() + timedelta(days=1),
             )
 
+            # Auto-assign lịch làm việc & chế độ lương theo phòng ban mới
+            new_phongban_id = data.get('phongban_id')
+
+            # Nếu chuyển phòng ban → deactivate lịch phòng ban cũ
+            if old_phongban_id and new_phongban_id:
+                EmployeeAutoAssignService.deactivate_old_schedule(
+                    nhanvien_id=nhanvien_id,
+                    old_phongban_id=old_phongban_id,
+                    new_phongban_id=new_phongban_id,
+                )
+
+            assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
+                nhanvien_id=nhanvien_id,
+                phongban_id=new_phongban_id,
+                effective_date=lich_su_new.batdau,
+                old_phongban_id=old_phongban_id,
+            )
+
             return JsonResponse({
                 'success': True,
                 'message': 'Tạo lịch sử công tác thành công',
-                'data': model_to_dict(lich_su_new)
+                'data': model_to_dict(lich_su_new),
+                'warnings': assign_result.get('warnings', []),
             }, status=201)
         
         except Exception as e:
@@ -991,18 +1002,47 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
                 'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
             }, status=400)
 
-        # Cập nhật phòng ban cho các nhân viên
-        Lichsucongtac.objects.filter(
+        # Cập nhật phòng ban cho các nhân viên và auto-assign
+        active_histories = Lichsucongtac.objects.filter(
             nhanvien_id__in=nhan_vien_ids,
-            trangthai='active'  # Chỉ cập nhật lịch sử công tác đang active
-        ).update(
-            phongban_id=phong_ban_id,
-            updated_at=datetime.now()
+            trangthai='active'
         )
+
+        all_warnings = []
+        for lich_su in active_histories:
+            old_phongban_id = lich_su.phongban_id
+            nhanvien_id = lich_su.nhanvien_id
+
+            # Cập nhật phòng ban trực tiếp
+            lich_su.phongban_id = phong_ban_id
+            lich_su.updated_at = datetime.now()
+            lich_su.save()
+
+            if old_phongban_id and phong_ban_id:
+                EmployeeAutoAssignService.deactivate_old_schedule(
+                    nhanvien_id=nhanvien_id,
+                    old_phongban_id=old_phongban_id,
+                    new_phongban_id=phong_ban_id,
+                )
+
+            # Auto-assign lịch và lương
+            assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
+                nhanvien_id=nhanvien_id,
+                phongban_id=phong_ban_id,
+                effective_date=lich_su.batdau,
+                old_phongban_id=old_phongban_id  # Quan trọng: truyền PB cũ để logic đổi lương hoạt động
+            )
+            
+            if assign_result.get('warnings'):
+                all_warnings.extend(assign_result['warnings'])
+
+        # Lọc trùng lặp warnings (nếu nhiều nhân viên cùng bị lỗi giống nhau)
+        unique_warnings = list(dict.fromkeys(all_warnings))
 
         return JsonResponse({
             'success': True,
-            'message': 'Cập nhật phòng ban cho nhân viên thành công'
+            'message': 'Cập nhật phòng ban cho nhân viên thành công',
+            'warnings': unique_warnings
         })
 
     except Exception as e:
