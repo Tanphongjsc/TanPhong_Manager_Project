@@ -59,9 +59,20 @@
 
                     <div id="m-params" class="master-sx-el flex items-center gap-1 flex-wrap"></div>
 
-                    <label class="master-sx-el inline-flex items-center gap-1.5 text-slate-600">
-                        <input type="checkbox" id="m-lunch" class="accent-blue-600 w-3.5 h-3.5" checked>
-                        Ăn trưa
+                    <label class="master-sx-el inline-flex items-center gap-1 text-slate-600">
+                        <input type="checkbox" id="m-trua" class="accent-blue-600 w-3.5 h-3.5" checked
+                            onchange="if(this.checked){document.getElementById('m-dem').checked=false;document.getElementById('m-chunhat').checked=false;}">
+                        Trưa
+                    </label>
+                    <label class="master-sx-el inline-flex items-center gap-1 text-slate-600">
+                        <input type="checkbox" id="m-dem" class="accent-indigo-600 w-3.5 h-3.5"
+                            onchange="if(this.checked){document.getElementById('m-trua').checked=false;document.getElementById('m-chunhat').checked=false;}">
+                        Đêm
+                    </label>
+                    <label class="master-sx-el inline-flex items-center gap-1 text-slate-600">
+                        <input type="checkbox" id="m-chunhat" class="accent-rose-600 w-3.5 h-3.5"
+                            onchange="if(this.checked){document.getElementById('m-trua').checked=false;document.getElementById('m-dem').checked=false;}">
+                        CN
                     </label>
 
                     <button id="btn-apply-master" onclick="window.ChamCongManager.applyMaster()" 
@@ -74,7 +85,7 @@
 
         <div class="flex-1 overflow-hidden relative min-h-0">
             <div id="tab-hybrid" class="h-full flex flex-col overflow-hidden relative">
-                {% with headers='<th class="bulk-action-header p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-hybrid" class="accent-blue-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[220px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-36 text-center sticky top-0 bg-slate-50 z-20">Giờ vào/ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-28 sticky top-0 bg-slate-50 z-20">Phân tích</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc & Tham số)</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[130px] sticky top-0 bg-slate-50 z-20 text-left">Khác</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[120px] sticky top-0 bg-slate-50 z-20 text-left">Ghi chú</th>' %}
+                {% with headers='<th class="bulk-action-header p-1.5 border-b border-r border-slate-200 w-8 text-center sticky left-0 top-0 bg-slate-50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]"><input type="checkbox" id="check-all-hybrid" class="accent-blue-600 w-3.5 h-3.5 cursor-pointer"></th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[220px] text-left">Nhân viên</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-36 text-center sticky top-0 bg-slate-50 z-20">Giờ vào/ra</th><th class="px-1 py-1.5 border-b border-r border-slate-200 w-14 text-center sticky top-0 bg-slate-50 z-20" title="Số giờ làm thực tế">Giờ</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-28 sticky top-0 bg-slate-50 z-20">Phân tích</th><th class="px-2 py-1.5 border-b border-r border-slate-200 w-auto min-w-[400px] sticky top-0 bg-slate-50 z-20 text-left">Chi tiết công việc (Công việc &amp; Tham số)</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[200px] sticky top-0 bg-slate-50 z-20 text-left">Bữa ăn &amp; OT</th><th class="px-2 py-1.5 border-b border-r border-slate-200 min-w-[120px] sticky top-0 bg-slate-50 z-20 text-left">Ghi chú</th>' %}
                     {% include "components/table_wrapper.html" with table_id="hybrid-table" tbody_id="hybrid-body" headers_html=headers show_checkbox=False %}
                 {% endwith %}
             </div>

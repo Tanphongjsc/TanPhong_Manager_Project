@@ -26,19 +26,36 @@ const ChamCongRenderHelper = (() => {
         return parts.length ? parts.join('') : '<span class="text-[10px] text-slate-300">-</span>';
     };
 
-    // Shared HTML fragments
+    // Danh sách bữa ăn: { key, cls, label, accent } — mutual exclusive (chỉ chọn 1)
+    const MEAL_TYPES = [
+        { key: 'trua', cls: 'chk-trua', label: 'Trưa', accent: 'blue' },
+        { key: 'dem', cls: 'chk-dem', label: 'Đêm', accent: 'indigo' },
+        { key: 'chunhat', cls: 'chk-chunhat', label: 'CN', accent: 'rose' },
+    ];
+
+    const _mealCheckboxes = (meals, layout = 'inline') => {
+        const items = MEAL_TYPES.map(m => {
+            const checked = meals[m.key] ? 'checked' : '';
+            return `<label class="inline-flex items-center gap-1 text-[11px] text-slate-600 leading-none cursor-pointer select-none whitespace-nowrap">
+                <input type="checkbox" class="${m.cls} chk-meal w-3.5 h-3.5 accent-${m.accent}-600 cursor-pointer" ${checked}>
+                <span>${m.label}</span>
+            </label>`;
+        }).join('');
+
+        if (layout === 'labeled') {
+            return `<div class="flex items-center gap-3 min-h-[22px] w-full flex-wrap">${items}</div>`;
+        }
+        return `<div class="inline-flex items-center gap-2 w-full h-full py-1 justify-center flex-wrap">${items}</div>`;
+    };
+
     const _lunchOtHtml = (s, layout = 'inline') => {
+        const meals = s.meals || { trua: s.lunch !== false, dem: false, chunhat: false };
         const otDisabled = s.ot ? '' : 'disabled';
         if (layout === 'labeled') {
             return `
             <td class="px-2 py-1 border-r border-slate-200 align-top">
                 <div class="flex flex-col items-start gap-2">
-                    <div class="flex items-center min-h-[22px] w-full">
-                        <label class="inline-flex items-center gap-1.5 text-[11px] text-slate-600 leading-none">
-                            <input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}>
-                            <span>Ăn trưa</span>
-                        </label>
-                    </div>
+                    ${_mealCheckboxes(meals, 'labeled')}
                     <div class="w-full border-t border-slate-100"></div>
                     <div class="flex items-center justify-between gap-2 min-h-[24px] w-full">
                         <label class="inline-flex items-center gap-1.5 text-[11px] text-slate-600 leading-none">
@@ -50,16 +67,17 @@ const ChamCongRenderHelper = (() => {
                 </div>
             </td>`;
         }
-        // inline layout (VP/SX cells)
+        // inline layout
         return `
             <td class="p-0.5 border-r border-slate-200 text-center align-middle">
-                <div class="inline-flex items-center justify-center w-full h-full py-1"><input type="checkbox" class="chk-lunch w-3.5 h-3.5 cursor-pointer accent-blue-600" ${s.lunch ? 'checked' : ''}></div></td>
+                ${_mealCheckboxes(meals, 'inline')}</td>
             <td class="p-0.5 border-r border-slate-200 text-center align-middle">
                 <div class="inline-flex items-center justify-center gap-1 w-full h-full py-1">
                     <input type="checkbox" class="chk-ot w-3.5 h-3.5 accent-blue-600 cursor-pointer" ${s.ot ? 'checked' : ''}>
                     <input type="number" min="0" step="1" class="ot-minutes w-14 text-[11px] text-center border border-slate-200 rounded px-1 py-0.5 focus:border-blue-400 focus:ring-1 focus:ring-blue-300 disabled:bg-slate-50" placeholder="phút" value="${s.otMinutes || ''}" ${otDisabled}>
                 </div></td>`;
     };
+
 
     const _noteHtml = (s) => `<td class="px-2 py-1 note-cell"><input type="text" class="note-input w-full text-xs border-b border-transparent focus:border-blue-300 outline-none bg-transparent placeholder-slate-300 mt-0.5" placeholder="..." value="${s.note || ''}"></td>`;
 

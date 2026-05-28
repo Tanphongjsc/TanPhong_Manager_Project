@@ -25,6 +25,9 @@ class ChamCongManager {
 
     init() {
         this.cacheElements();
+        if (this.mode === 'update' && this.elements.btnDeleteRecords) {
+            this.elements.btnDeleteRecords.classList.remove('hidden');
+        }
         this.initViolationsModal();
         if (this.elements.dateInput) this.elements.dateInput.value = this.currentDate;
         this.setupEventListeners();
@@ -37,7 +40,8 @@ class ChamCongManager {
         this.elements = {
             hybridBody: $('hybrid-body'), masterJobSelect: $('m-job'), dateInput: $('work-date'),
             deptSelect: $('dept-filter'), searchInput: $('search-input'),
-            checkAllHybrid: $('check-all-hybrid'), shiftSelect: $('shift-filter')
+            checkAllHybrid: $('check-all-hybrid'), shiftSelect: $('shift-filter'),
+            btnDeleteRecords: $('btn-delete-records')
         };
     }
 
@@ -103,6 +107,7 @@ class ChamCongManager {
                 in: AppUtils.TimeUtils.normalize(record.thoigianchamcongvao, '') || '',
                 out: AppUtils.TimeUtils.normalize(record.thoigianchamcongra, '') || '',
                 lunch: record.coantrua !== false,
+                meals: { trua: record.coantrua !== false, dem: record.coandem === true, chunhat: record.coanchunhat === true },
                 ot: record.cotinhlamthem === true,
                 otMinutes: Number.isFinite(otMin) && otMin > 0 ? String(parseInt(otMin, 10)) : '',
                 isSelected: this.mode === 'create' && !isLeave,
@@ -334,7 +339,17 @@ class ChamCongManager {
             }
             this.analyzeTime(tr);
         }
-        else if (cls.contains('chk-lunch')) { emp.uiState.lunch = target.checked; }
+        else if (cls.contains('chk-meal')) {
+            const key = cls.contains('chk-trua') ? 'trua' : cls.contains('chk-dem') ? 'dem' : 'chunhat';
+            const m = emp.uiState.meals;
+            if (target.checked) {
+                m.trua = m.dem = m.chunhat = false;
+                m[key] = true;
+                tr.querySelectorAll('.chk-meal').forEach(cb => { if (cb !== target) cb.checked = false; });
+            } else {
+                m[key] = false;
+            }
+        }
         else if (cls.contains('chk-ot')) {
             emp.uiState.ot = target.checked;
             emp.uiState.otMinutes = target.checked ? this.computeOtMinutes(emp, emp.uiState.out) : '';
@@ -386,11 +401,12 @@ class ChamCongManager {
     }
 
     initEmpState(emp) {
-        if (!emp.uiState) emp.uiState = { in: '', out: '', lunch: true, ot: false, otMinutes: '', isSelected: this.mode === 'create', isLeave: false, jobs: [{ jobId: '', params: {} }], extraJobs: [], note: '' };
+        if (!emp.uiState) emp.uiState = { in: '', out: '', lunch: true, meals: { trua: true, dem: false, chunhat: false }, ot: false, otMinutes: '', isSelected: this.mode === 'create', isLeave: false, jobs: [{ jobId: '', params: {} }], extraJobs: [], note: '' };
         emp.uiState.isLeave = emp.uiState.isLeave === true;
         if (emp.uiState.isLeave) emp.uiState.isSelected = false;
         emp.uiState.isSelected ??= (this.mode === 'create');
         emp.uiState.otMinutes ??= ''; emp.uiState.note ??= '';
+        if (!emp.uiState.meals) emp.uiState.meals = { trua: emp.uiState.lunch !== false, dem: false, chunhat: false };
         if (!emp.uiState.jobs?.length) emp.uiState.jobs = [{ jobId: '', params: {} }];
     }
 
@@ -535,8 +551,14 @@ class ChamCongManager {
         if (!checked.length) { AppUtils.Notify.warning('Chưa chọn nhân viên nào!'); return; }
 
         const timeIn = document.getElementById('m-in')?.value, timeOut = document.getElementById('m-out')?.value;
-        const mLunchEl = document.getElementById('m-lunch');
-        const masterLunch = mLunchEl ? !!mLunchEl.checked : null;
+        const mTrua = document.getElementById('m-trua');
+        const mDem = document.getElementById('m-dem');
+        const mCN = document.getElementById('m-chunhat');
+        const masterMeals = (mTrua || mDem || mCN) ? {
+            trua: mTrua ? !!mTrua.checked : null,
+            dem: mDem ? !!mDem.checked : null,
+            chunhat: mCN ? !!mCN.checked : null
+        } : null;
         let masterJob = null;
         if (this.elements.masterJobSelect?.value) {
             const mParams = Object.fromEntries(Array.from(document.querySelectorAll('.m-p-val')).map(i => [i.dataset.key, i.value]));
@@ -546,7 +568,12 @@ class ChamCongManager {
         checked.forEach(emp => {
             if (timeIn) emp.uiState.in = timeIn;
             if (timeOut && emp.cocancheckout === true) emp.uiState.out = timeOut;
-            if (masterLunch !== null) emp.uiState.lunch = masterLunch;
+            if (masterMeals) {
+                const m = emp.uiState.meals;
+                if (masterMeals.trua !== null) m.trua = masterMeals.trua;
+                if (masterMeals.dem !== null) m.dem = masterMeals.dem;
+                if (masterMeals.chunhat !== null) m.chunhat = masterMeals.chunhat;
+            }
             if (masterJob) {
                 const jobs = emp.uiState.jobs;
                 const emptyIdx = jobs.findIndex(j => !j.jobId);
@@ -561,6 +588,56 @@ class ChamCongManager {
         });
         this.render();
         AppUtils.Notify.success(`Đã cập nhật dữ liệu cho ${checked.length} nhân viên.`);
+    }
+
+    async deleteSelectedRecords() {
+        if (this.mode !== 'update') return;
+        
+        const checked = this.getEnabledRowCheckboxes().filter(cb => cb.checked);
+        if (!checked.length) {
+            AppUtils.Notify.warning('Vui lòng chọn ít nhất một nhân viên để xóa.');
+            return;
+        }
+
+        const idsToDelete = [];
+        const employeeNames = [];
+        
+        checked.forEach(cb => {
+            const { tr, emp } = this.getRowContext(cb);
+            if (tr && emp && emp.recordId) {
+                idsToDelete.push(emp.recordId);
+                employeeNames.push(emp.hovaten);
+            }
+        });
+
+        if (!idsToDelete.length) {
+            AppUtils.Notify.warning('Không tìm thấy bản ghi hợp lệ để xóa.');
+            return;
+        }
+
+        const msg = `Bạn có chắc chắn muốn xóa bản ghi chấm công của ${idsToDelete.length} nhân viên đã chọn?\n\nThao tác này không thể hoàn tác!`;
+        AppUtils.Modal.showConfirm({
+            title: 'Xác nhận xóa',
+            message: msg,
+            type: 'danger',
+            confirmText: 'Xóa',
+            onConfirm: async () => {
+                this.state.isLoading = true;
+                try {
+                    // Send bulk delete request
+                    const response = await AppUtils.API.delete(this.apiUrls.saveChamCong, { ids: idsToDelete, ngaylamviec: this.currentDate });
+                    if (response.success || response.status === 'success') {
+                        AppUtils.Notify.success(`Đã xóa thành công ${idsToDelete.length} bản ghi.`);
+                        await this.loadDailyData();
+                    } else throw new Error(response.message || 'Lỗi không xác định');
+                } catch (error) {
+                    console.error('Delete Error:', error);
+                    AppUtils.Notify.error('Xóa thất bại: ' + error.message);
+                } finally {
+                    this.state.isLoading = false;
+                }
+            }
+        });
     }
 
     async saveData() {
@@ -608,7 +685,7 @@ class ChamCongManager {
                 payload.push({
                     nhanvien_id: emp.id, ngaylamviec: this.currentDate,
                     thoigianchamcongvao: null, thoigianchamcongra: null,
-                    cotinhlamthem: false, coantrua: false,
+                    cotinhlamthem: false, coantrua: false, coandem: false, coanchunhat: false,
                     loaicalamviec: emp.loaicalamviec || 'CO_DINH',
                     cophaingaynghi: true, id: this.mode === 'update' ? (emp.recordId || null) : null,
                     codilam: false, calamviec_id: emp.calamviec_id,
@@ -632,7 +709,10 @@ class ChamCongManager {
             const baseObj = {
                 nhanvien_id: emp.id, ngaylamviec: this.currentDate,
                 thoigianchamcongvao: s.in || null, thoigianchamcongra: s.out || null,
-                cotinhlamthem: s.ot || false, coantrua: s.lunch === true,
+                cotinhlamthem: s.ot || false,
+                coantrua: s.meals?.trua === true,
+                coandem: s.meals?.dem === true,
+                coanchunhat: s.meals?.chunhat === true,
                 loaicalamviec: emp.loaicalamviec || 'CO_DINH',
                 cophaingaynghi: false, id: this.mode === 'update' ? (emp.recordId || null) : null,
                 codilam: true, calamviec_id: emp.calamviec_id,

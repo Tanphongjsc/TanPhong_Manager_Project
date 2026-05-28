@@ -137,6 +137,12 @@
         .title-fade-out{opacity:0;transform:translateY(-.5rem)}
         .title-fade-in{opacity:1;transform:translateY(0)}
 
+        /* Fixed form footer - follows sidebar width */
+        @media (min-width:1024px){
+            .form-footer-fixed{transition:left var(--dur) var(--ease)}
+            html.sidebar-is-collapsed .form-footer-fixed{left:var(--sidebar-w-collapsed)}
+        }
+
         /* User menu */
         #user-menu-dropdown{transform-origin:top right;opacity:0;transform:scale(.95);transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
 
@@ -666,7 +672,7 @@
             }
         };
         const initActiveFromLocation = () => {
-            const path = location.pathname;
+            const path = '{{ active_menu_url|default:""|escapejs }}'.trim() || location.pathname;
             const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)').map(a => a.getAttribute('href')).filter(h => h && h !== '#');
             let best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
 

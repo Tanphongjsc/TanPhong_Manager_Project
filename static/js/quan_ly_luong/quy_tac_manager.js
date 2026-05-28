@@ -199,7 +199,7 @@ class QuyTacManager {
         tr.dataset.id = item.phantuluong_id;
 
         const isFixed = this.isFixedElement(item.maphantu);
-        tr.draggable = !isFixed;
+        // Row itself is NOT draggable — only the drag handle is
 
         const isFormula = item.nguondulieu === 'formula';
         const isManual = item.nguondulieu === 'manual';
@@ -228,7 +228,7 @@ class QuyTacManager {
                 </span>
             `
             : `
-                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-sm cursor-grab active:cursor-grabbing" title="Kéo để sắp xếp">
+                <span class="drag-handle inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-sm cursor-grab active:cursor-grabbing" draggable="true" title="Kéo để sắp xếp">
                     +
                 </span>
             `;
@@ -263,7 +263,12 @@ class QuyTacManager {
                 ${isFixed ? '<span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">Bắt buộc</span>' : ''}
             </td>
             <td class="px-3 py-3 align-middle">
-                <code class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">${this.escapeHtml(item.maphantu)}</code>
+                <span class="inline-flex items-center gap-1 group/code">
+                    <code class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs select-all">${this.escapeHtml(item.maphantu)}</code>
+                    <button type="button" data-action="copy" data-copy-value="${this.escapeHtml(item.maphantu)}" class="p-0.5 text-slate-300 hover:text-blue-600 opacity-0 group-hover/code:opacity-100 transition-all" title="Sao chép mã phần tử">
+                        <i class="fas fa-copy text-[10px]"></i>
+                    </button>
+                </span>
             </td>
             <td class="px-3 py-3 align-middle">
                 <select data-field="nguondulieu" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isFixed ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : ''}" ${isFixed ? 'disabled' : ''}>
@@ -371,13 +376,23 @@ class QuyTacManager {
             case 'test':
                 this.testFormula(id);
                 break;
+            case 'copy':
+                this.copyToClipboard(btn.dataset.copyValue, btn);
+                break;
             default:
                 break;
         }
     }
 
     handleDragStart(e) {
-        const row = e.target.closest('tr');
+        // Only allow drag from the drag handle
+        const handle = e.target.closest('.drag-handle');
+        if (!handle) {
+            e.preventDefault();
+            return;
+        }
+
+        const row = handle.closest('tr');
         if (!row) return;
 
         const id = row.dataset.id;
@@ -679,6 +694,36 @@ class QuyTacManager {
 
     getExcludeIds() {
         return this.quyTacList.map(q => q.phantuluong_id);
+    }
+
+    async copyToClipboard(text, btnEl) {
+        try {
+            await navigator.clipboard.writeText(text);
+
+            // Visual feedback
+            const icon = btnEl.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-check text-[10px]';
+                btnEl.classList.add('text-green-500');
+                btnEl.classList.remove('text-slate-300');
+                btnEl.style.opacity = '1';
+                setTimeout(() => {
+                    icon.className = 'fas fa-copy text-[10px]';
+                    btnEl.classList.remove('text-green-500');
+                    btnEl.classList.add('text-slate-300');
+                    btnEl.style.opacity = '';
+                }, 1200);
+            }
+        } catch {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
     }
 
     escapeHtml(str) {

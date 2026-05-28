@@ -26,12 +26,17 @@
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <div id="data-loading-status" class="text-xs text-slate-500 hidden flex items-center">
-                        <i class="fas fa-circle-notch fa-spin text-blue-500 mr-1"></i> Đang tải dữ liệu...
+                    {# Thanh tìm kiếm cục bộ #}
+                    <div class="relative hidden sm:block">
+                        <input type="text" id="local-search-input" placeholder="Tìm tên, mã NV..." 
+                               class="w-48 lg:w-64 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        <svg class="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
                     </div>
-                    
+
                     <button type="button" id="btn-export-excel-main" class="hidden inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded shadow-sm transition-colors">
-                        <i class="fas fa-file-excel mr-1.5"></i> Xuất Excel Tổng hợp
+                        <i class="fas fa-file-excel mr-1.5"></i> <span class="hidden sm:inline">Xuất Excel Tổng hợp</span><span class="sm:hidden">Xuất Excel</span>
                     </button>
                 </div>
             </div>
@@ -49,42 +54,43 @@
     </div>
 </div>
 
-{# === MODAL GIỮ NGUYÊN === #}
+{# === MODAL CHI TIẾT === #}
 {% include "components/crud_modal.html" with modal_id="detail-modal" form_id="detail-form" title="Chi tiết lương & Chấm công" content_template="" modal_size="7xl" submit_label="Đóng" %}
 
 <template id="detail-modal-template">
-    {# ... (Nội dung template giữ nguyên như cũ) ... #}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-2 min-h-[500px]">
-        <div class="flex flex-col h-full border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-            <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">🗓️</span>
-                    <span class="font-semibold text-slate-700">Nhật ký chấm công</span>
-                </div>
-                <span class="text-xs font-medium text-slate-500" id="modal-summary-work"></span>
-            </div>
-            
-            <div class="flex-1 flex flex-col min-h-0 seamless-table">
-                {% with headers='<th class="px-4 py-3 font-semibold border-b border-slate-200 w-[140px] text-left whitespace-nowrap">Thông tin ca</th><th class="px-3 py-3 font-semibold text-right border-b border-slate-200 w-[100px] whitespace-nowrap">Giờ/Công</th><th class="px-4 py-3 font-semibold text-left border-b border-slate-200 whitespace-nowrap">Chi tiết công việc</th><th class="px-4 py-3 font-semibold text-right border-b border-slate-200 min-w-[140px] whitespace-nowrap">Thành tiền</th>' %}
-                    {% include "components/table_wrapper.html" with table_id="modal-timesheet-table" tbody_id="modal-timesheet-body" headers_html=headers %}
-                {% endwith %}
-            </div>
-        </div>
+    {# --- Tab Navigation (client-side, cùng style với tab_nav.html) --- #}
+    <div class="border-b border-slate-200 mb-4" id="detail-tab-nav">
+        <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Detail Tabs">
+            <a href="#detail-tab-timesheet"
+               class="detail-tab-link whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-200 border-blue-600 text-blue-600">
+                <i class="far fa-calendar-check mr-1.5 text-xs"></i>Nhật ký Chấm công
+            </a>
+            <a href="#detail-tab-salary"
+               class="detail-tab-link whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-200 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                <i class="fas fa-coins mr-1.5 text-xs"></i>Chi tiết Lương
+            </a>
+        </nav>
+    </div>
 
-        <div class="flex flex-col h-full border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-            <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">💰</span>
-                    <span class="font-semibold text-slate-700">Chi tiết lương</span>
-                </div>
-                <div class="flex flex-col items-end leading-tight">
-                    <span class="text-lg font-bold text-blue-600" id="modal-total-salary"></span>
-                </div>
-            </div>
-            
-            <div class="flex-1 overflow-auto p-4 custom-scrollbar bg-slate-50/30" id="modal-salary-body">
-                </div>
+    {# --- Tab Pane: Nhật ký Chấm công --- #}
+    <div id="detail-tab-timesheet" class="detail-tab-pane min-h-[460px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-medium text-slate-500" id="modal-summary-work"></span>
         </div>
+        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm flex flex-col max-h-[60vh]">
+            {% with headers='<th class="px-4 py-3 font-semibold border-b border-slate-200 w-[140px] text-left whitespace-nowrap">Thông tin ca</th><th class="px-3 py-3 font-semibold text-right border-b border-slate-200 w-[100px] whitespace-nowrap">Giờ/Công</th><th class="px-4 py-3 font-semibold text-left border-b border-slate-200 min-w-[250px] max-w-[350px] w-full">Chi tiết công việc</th><th class="px-4 py-3 font-semibold text-right border-b border-slate-200 min-w-[140px] whitespace-nowrap">Thành tiền</th>' %}
+                {% include "components/table_wrapper.html" with table_id="modal-timesheet-table" tbody_id="modal-timesheet-body" headers_html=headers %}
+            {% endwith %}
+        </div>
+    </div>
+
+    {# --- Tab Pane: Chi tiết Lương --- #}
+    <div id="detail-tab-salary" class="detail-tab-pane hidden min-h-[460px]">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Bảng tổng hợp các phần tử lương</span>
+            <span class="text-lg font-bold text-blue-600" id="modal-total-salary"></span>
+        </div>
+        <div id="modal-salary-body" class="space-y-4"></div>
     </div>
 </template>
 
@@ -100,8 +106,8 @@
         z-index: 25;
     }
 
-    /* Make timesheet table blend perfectly into the panel container */
-    .seamless-table > div {
+    /* Blend timesheet table into panel */
+    #detail-tab-timesheet .border > div {
         border-width: 0 !important;
         border-radius: 0 !important;
         box-shadow: none !important;

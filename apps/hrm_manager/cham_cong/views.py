@@ -77,6 +77,8 @@ def _build_payload_rows_from_saved_record(record):
         'thoigianchamcongra': record.get('thoigianchamcongra'),
         'cotinhlamthem': record.get('cotinhlamthem', False),
         'coantrua': record.get('coantrua', False),
+        'coandem': record.get('coandem', False),
+        'coanchunhat': record.get('coanchunhat', False),
         'loaicalamviec': record.get('loaicalamviec', 'CO_DINH'),
         'cophaingaynghi': record.get('cophaingaynghi', False),
         'codilam': record.get('codilam', False),
@@ -128,38 +130,109 @@ def _build_payload_rows_from_saved_record(record):
     return rows
 
 
-def _expand_update_payload_for_team_jobs(data_list, ngay_lam_viec_set):
-    """Mở rộng payload khi update: thêm các nhân viên cùng team job chưa có trong payload."""
-    team_job_ids = {
-        _normalize_job_id(item.get('congviec_id'))
-        for item in data_list
-        if _normalize_job_id(item.get('congviec_id')) is not None
-        and _parse_salary_config(item.get('thamsotinhluong')).get('loaicv') == 'nhom'
-    }
-    if not team_job_ids or not ngay_lam_viec_set:
+def _collect_team_job_keys(data_list):
+    """
+    Trích xuất team job keys (congviec_id, calamviec_id) từ data items (payload).
+    """
+    keys = set()
+    for item in data_list:
+        ca_id = item.get('calamviec_id')
+        tsl = _parse_salary_config(item.get('thamsotinhluong'))
+
+        cv_id = _normalize_job_id(item.get('congviec_id'))
+        if cv_id is not None and tsl.get('loaicv') == 'nhom':
+            keys.add((cv_id, ca_id))
+    return keys
+
+
+def _collect_team_job_keys_from_db(records):
+    """
+    Trích xuất team job keys (congviec_id, calamviec_id) từ DB records.
+    Hỗ trợ format DB record (loaicv nằm trong details[].thamsotinhluong).
+    """
+    keys = set()
+    for item in records:
+        ca_id = item.get('calamviec_id')
+        tsl = _parse_salary_config(item.get('thamsotinhluong'))
+
+        for d in (tsl.get('details') or []):
+            if isinstance(d, dict):
+                d_cv_id = _normalize_job_id(d.get('congviec_id'))
+                if d_cv_id is not None and _parse_salary_config(d.get('thamsotinhluong')).get('loaicv') == 'nhom':
+                    keys.add((d_cv_id, ca_id))
+    return keys
+
+
+def _expand_payload_for_team_jobs(data_list, ngay_lam_viec_set, old_team_job_keys=None):
+    """
+    Mở rộng payload bằng thuật toán loang (transitive closure):
+    Thêm tất cả các nhân viên có liên quan qua team jobs (bao gồm cả chuỗi liên kết).
+    """
+    initial_keys = _collect_team_job_keys(data_list)
+    if old_team_job_keys:
+        initial_keys.update(old_team_job_keys)
+
+    if not initial_keys:
         return data_list
 
-    expanded = list(data_list)
-    existing_ids = {item.get('id') for item in data_list if item.get('id') is not None}
-
+    # Cache DB records theo ngày để tránh query nhiều lần trong vòng lặp loang
+    db_records_by_date = {}
     for ngay in ngay_lam_viec_set:
-        for record in build_cham_cong_data_for_update(ngay):
-            if record.get('id') in existing_ids:
-                continue
-            # Kiểm tra record có chứa team job liên quan không
-            details = _parse_salary_config(record.get('thamsotinhluong')).get('details') or []
-            has_related = any(
-                isinstance(d, dict)
-                and _normalize_job_id(d.get('congviec_id')) in team_job_ids
-                and _parse_salary_config(d.get('thamsotinhluong')).get('loaicv') == 'nhom'
-                for d in details
-            )
-            if has_related:
-                expanded.extend(_build_payload_rows_from_saved_record(record))
-                if record.get('id') is not None:
-                    existing_ids.add(record['id'])
+        db_records_by_date[ngay] = build_cham_cong_data_for_update(ngay)
 
-    return expanded
+    existing_ids = {item.get('id') for item in data_list if item.get('id') is not None}
+    processed_keys = set()
+    keys_to_process = set(initial_keys)
+    
+    all_extra_rows = []
+    
+    while keys_to_process:
+        processed_keys.update(keys_to_process)
+        extra_rows = []
+        
+        for ngay in ngay_lam_viec_set:
+            for record in db_records_by_date.get(ngay, []):
+                rec_id = record.get('id')
+                if rec_id in existing_ids:
+                    continue
+                    
+                details = _parse_salary_config(record.get('thamsotinhluong')).get('details') or []
+                record_ca_id = record.get('calamviec_id')
+                has_related = any(
+                    isinstance(d, dict)
+                    and (_normalize_job_id(d.get('congviec_id')), record_ca_id) in keys_to_process
+                    and _parse_salary_config(d.get('thamsotinhluong')).get('loaicv') == 'nhom'
+                    for d in details
+                )
+                
+                if has_related:
+                    extra_rows.extend(_build_payload_rows_from_saved_record(record))
+                    if rec_id is not None:
+                        existing_ids.add(rec_id)
+        
+        if extra_rows:
+            all_extra_rows.extend(extra_rows)
+            new_keys = _collect_team_job_keys(extra_rows)
+            keys_to_process = new_keys - processed_keys
+        else:
+            keys_to_process = set()
+
+    return list(data_list) + all_extra_rows if all_extra_rows else data_list
+
+
+def _recalculate_team_members(team_job_keys, ngay_lam_viec_set):
+    """Tính lại và lưu tất cả bản ghi liên quan đến team jobs (dùng sau DELETE)."""
+    # Dùng một payload ảo (rỗng) và truyền team_job_keys vào old_team_job_keys
+    # để tận dụng thuật toán loang của _expand_payload_for_team_jobs
+    rows = _expand_payload_for_team_jobs([], ngay_lam_viec_set, old_team_job_keys=team_job_keys)
+    if not rows:
+        return
+    objs = calculate_bang_cham_cong_objects(rows)
+    now = timezone.now()
+    for o in objs:
+        if o.id is not None:
+            o.updated_at = now
+            o.save()
 
 
 def tinh_luong_cham_cong(data_list):
@@ -175,8 +248,12 @@ def tinh_luong_cham_cong(data_list):
         item['bieu_thuc'] = config.get('bieu_thuc', '')
         loaicv = config.get('loaicv', 'canhan')
 
-        # Key: nhóm theo team hoặc cá nhân
-        key = f"TEAM_{item.get('congviec_id')}" if loaicv == 'nhom' else f"INDIVIDUAL_{item['nhanvien_id']}"
+        # Key: nhóm theo team hoặc cá nhân, với team thì gom theo cả congviec_id và calamviec_id
+        if loaicv == 'nhom':
+            key = f"TEAM_{item.get('congviec_id')}_SHIFT_{item.get('calamviec_id')}"
+        else:
+            key = f"INDIVIDUAL_{item['nhanvien_id']}"
+            
         groups.setdefault(key, []).append(item)
 
     return PayrollCalculator(groups).calculate_all(field_formula='bieu_thuc', field_params='tham_so', field_id='nhanvien_id')
@@ -305,7 +382,6 @@ def calculate_bang_cham_cong_objects(data_list):
             start_min = parse_time_to_minutes(khung_gio.get("thoigianbatdau"))
             end_min = parse_time_to_minutes(khung_gio.get("thoigianketthuc"))
             ds_nghi_trua = item.get('khunggionghitrua', [])
-            print(ds_nghi_trua)
 
             # Tính thời gian làm việc thực tế và chuẩn
             tg_lam_viec_thuc = calculate_work_minutes_with_overnight(in_min, out_min, start_min, end_min)
@@ -360,7 +436,8 @@ def calculate_bang_cham_cong_objects(data_list):
             # Build tham số tính lương (chỉ giữ details có congviec_id)
             valid_details = [
                 {'congviec_id': s.get('congviec_id'), 'tencongviec': s.get('tencongviec'),
-                 'thamsotinhluong': s.get('thamsotinhluong'), 'pay_role': s.get('pay_role')}
+                 'thamsotinhluong': s.get('thamsotinhluong'), 'pay_role': s.get('pay_role'),
+                 'thanhtien': s.get('thanhtien_calculated', 0) or 0}
                 for s in items if s.get('congviec_id') is not None
             ]
             final_thamsotinhluong = {
@@ -380,6 +457,8 @@ def calculate_bang_cham_cong_objects(data_list):
             thoigianlamthem=tg_lam_them,
             cotinhlamthem=item.get('cotinhlamthem', False),
             coantrua=item.get('coantrua', False),
+            coandem=item.get('coandem', False),
+            coanchunhat=item.get('coanchunhat', False),
             codilam=codilam,
             thoigiandimuon=thoigiandimuon,
             thoigianvesom=thoigianvesom,
@@ -551,7 +630,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
         'hovaten', 'manhanvien', 'loainv', 'phuongthuctinhluong',
         'solanchamcongtrongngay', 'sokhunggiotrongca', 'cocancheckout', 'loaicalamviec', 'tongthoigianlamvieccuaca',
         'congtongcuaca',
-        'thoigianchamcongvao', 'thoigianchamcongra', 'coantrua', 'cotinhlamthem', 'thoigianlamthem',
+        'thoigianchamcongvao', 'thoigianchamcongra', 'coantrua', 'coandem', 'coanchunhat', 'cotinhlamthem', 'thoigianlamthem',
         'codilam', 'loaichamcong', 'tencongviec', 'congviec_id', 'thamsotinhluong', 'ghichu'
     ).order_by('nhanvien_id', 'id')
 
@@ -778,48 +857,72 @@ def view_tong_hop_cham_cong(request):
 
 @login_required
 @require_api_permission('access_control.write_cham_cong')
-@require_http_methods(["POST", "PUT"])
+@require_http_methods(["POST", "PUT", "DELETE"])
 @transaction.atomic
 def api_bang_cham_cong_list(request):
-    """API thêm mới (POST) / cập nhật (PUT) dữ liệu bảng chấm công"""
+    """API thêm mới (POST), cập nhật (PUT), xóa (DELETE) dữ liệu bảng chấm công"""
     try:
+        # ── DELETE: xóa bản ghi + tính lại team members nếu có ──
+        if request.method == 'DELETE':
+            data_payload = loads(request.body)
+            ids = data_payload.get('ids', [])
+            if not ids or not isinstance(ids, list):
+                return JsonResponse({'success': False, 'message': 'Không có bản ghi hợp lệ để xóa'}, status=400)
+
+            # Thu thập team job keys & ngày trước khi xóa
+            records_to_delete = list(Bangchamcong.objects.filter(id__in=ids).values(
+                'id', 'calamviec_id', 'ngaylamviec', 'thamsotinhluong'
+            ))
+            team_job_keys = _collect_team_job_keys_from_db(records_to_delete)
+            ngay_set = {rec['ngaylamviec'] for rec in records_to_delete} if team_job_keys else set()
+
+            deleted_count, _ = Bangchamcong.objects.filter(id__in=ids).delete()
+
+            # Tính lại cho các nhân viên còn lại cùng team job
+            if team_job_keys:
+                _recalculate_team_members(team_job_keys, ngay_set)
+
+            return JsonResponse({'success': True, 'message': f'Đã xóa {deleted_count} bản ghi', 'deleted_count': deleted_count}, status=200)
+
+        # ── POST & PUT: validate, expand team jobs, calculate, save ──
         data_list = loads(request.body)
         if not isinstance(data_list, list) or not data_list:
             return JsonResponse({'success': False, 'message': 'Dữ liệu đầu vào không hợp lệ'}, status=400)
 
-        # Validate & collect ngày làm việc
         ngay_lam_viec_set = set()
         for item in data_list:
             if not item.get('ngaylamviec') or not item.get('nhanvien_id'):
                 return JsonResponse({'success': False, 'message': 'Thiếu thông tin ngày làm việc hoặc nhân viên'}, status=400)
             ngay_lam_viec_set.add(dt.date.fromisoformat(item['ngaylamviec']))
 
-        if request.method == 'POST':
-            objs = calculate_bang_cham_cong_objects(data_list)
-            Bangchamcong.objects.bulk_create(objs)
-            return JsonResponse({
-                'success': True, 'message': 'Chấm công thành công',
-                'data': [model_to_dict(o) for o in objs],
-            }, status=201)
+        # Lấy team job keys từ DB cũ (để xử lý case xóa/sửa team job trong PUT)
+        update_ids = [item.get('id') for item in data_list if item.get('id') is not None]
+        old_team_job_keys = set()
+        if update_ids:
+            old_records = Bangchamcong.objects.filter(id__in=update_ids).values('calamviec_id', 'thamsotinhluong')
+            old_team_job_keys = _collect_team_job_keys_from_db(old_records)
 
-        # PUT: expand team jobs + tách update/create
-        update_data = _expand_update_payload_for_team_jobs(data_list, ngay_lam_viec_set)
-        objs = calculate_bang_cham_cong_objects(update_data)
-        update_objs = [o for o in objs if o.id is not None]
+        # Expand payload với team members (chung cho cả POST & PUT)
+        expanded_data = _expand_payload_for_team_jobs(data_list, ngay_lam_viec_set, old_team_job_keys=old_team_job_keys)
+        objs = calculate_bang_cham_cong_objects(expanded_data)
+
         create_objs = [o for o in objs if o.id is None]
+        update_objs = [o for o in objs if o.id is not None]
 
+        if create_objs:
+            Bangchamcong.objects.bulk_create(create_objs)
         if update_objs:
             now = timezone.now()
             for o in update_objs:
                 o.updated_at = now
                 o.save()
-        if create_objs:
-            Bangchamcong.objects.bulk_create(create_objs)
 
+        is_create = request.method == 'POST'
         return JsonResponse({
-            'success': True, 'message': 'Cập nhật chấm công thành công',
-            'data': [model_to_dict(o) for o in update_objs + create_objs],
-        }, status=200)
+            'success': True,
+            'message': 'Chấm công thành công' if is_create else 'Cập nhật chấm công thành công',
+            'data': [model_to_dict(o) for o in create_objs + update_objs],
+        }, status=201 if is_create else 200)
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Lỗi: {str(e)}'}, status=400)
