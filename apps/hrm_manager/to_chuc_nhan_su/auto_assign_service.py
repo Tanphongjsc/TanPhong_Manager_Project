@@ -203,6 +203,47 @@ class EmployeeAutoAssignService:
         ).update(trangthai='inactive', updated_at=now)
 
     # ------------------------------------------------------------------
+    # PUBLIC: Restore fixed setup on rehire
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def restore_fixed_setup_on_rehire(nhanvien_id):
+        """
+        Khôi phục thiết lập số liệu cố định gần nhất khi NV quay lại làm việc.
+        Chỉ kích hoạt nếu hiện tại chưa có bản ghi active.
+        Returns: int số bản ghi được khôi phục.
+        """
+        if Thietlapsolieucodinh.objects.filter(
+            nhanvien_id=nhanvien_id,
+            trangthai='active',
+        ).exists():
+            return 0
+
+        qs = Thietlapsolieucodinh.objects.filter(
+            nhanvien_id=nhanvien_id,
+            trangthai='inactive',
+        ).order_by('phantuluong_id', '-updated_at', '-created_at', '-id')
+
+        seen = set()
+        to_restore_ids = []
+        for item in qs:
+            if item.phantuluong_id in seen:
+                continue
+            seen.add(item.phantuluong_id)
+            to_restore_ids.append(item.id)
+
+        if not to_restore_ids:
+            return 0
+
+        now = timezone.now()
+        Thietlapsolieucodinh.objects.filter(id__in=to_restore_ids).update(
+            trangthai='active',
+            updated_at=now,
+        )
+
+        return len(to_restore_ids)
+
+    # ------------------------------------------------------------------
     # PRIVATE: Assign lịch làm việc
     # ------------------------------------------------------------------
 

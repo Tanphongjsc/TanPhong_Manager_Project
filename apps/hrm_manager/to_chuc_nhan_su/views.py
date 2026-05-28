@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
-from django.db.models import OuterRef, Subquery, Q, Prefetch
+from django.db.models import OuterRef, Subquery, Q, Prefetch, Case, When, Value, IntegerField
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
@@ -822,6 +822,8 @@ def api_nhan_vien_detail(request, id):
             nhan_vien.updated_at = datetime.now()
             nhan_vien.save()
 
+            rehire_warnings = []
+
             # Cleanup khi chuyển sang trạng thái nghỉ việc
             new_trangthainv = nhan_vien.trangthainv
             if new_trangthainv == 'Đã nghỉ việc' and old_trangthainv != 'Đã nghỉ việc':
@@ -836,12 +838,58 @@ def api_nhan_vien_detail(request, id):
                     ketthuc=datetime.now().date(),
                     updated_at=datetime.now()
                 )
+            elif old_trangthainv == 'Đã nghỉ việc' and new_trangthainv in ('Đang làm việc', 'Thử việc'):
+                # Khôi phục lịch/lương/thiết lập khi NV quay lại làm việc
+                active_history = Lichsucongtac.objects.filter(
+                    nhanvien=nhan_vien,
+                    trangthai='active'
+                ).order_by('-batdau', '-id').first()
+
+                if not active_history:
+                    latest_history = Lichsucongtac.objects.filter(
+                        nhanvien=nhan_vien
+                    ).order_by('-batdau', '-id').first()
+
+                    if latest_history and latest_history.phongban_id:
+                        active_history = Lichsucongtac.objects.create(
+                            batdau=datetime.now().date(),
+                            ketthuc=None,
+                            noicongtac=latest_history.noicongtac,
+                            trangthai='active',
+                            nhanvien=nhan_vien,
+                            phongban=latest_history.phongban,
+                            chucvu=latest_history.chucvu,
+                            created_at=datetime.now(),
+                        )
+                    else:
+                        rehire_warnings.append(
+                            'Không tìm thấy lịch sử công tác gần nhất để khôi phục phòng ban.'
+                        )
+
+                if active_history and active_history.phongban_id:
+                    assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
+                        nhanvien_id=nhan_vien.id,
+                        phongban_id=active_history.phongban_id,
+                        effective_date=datetime.now().date(),
+                        old_phongban_id=None,
+                    )
+                    if assign_result.get('warnings'):
+                        rehire_warnings.extend(assign_result['warnings'])
+
+                restored_count = EmployeeAutoAssignService.restore_fixed_setup_on_rehire(nhan_vien.id)
+                if restored_count:
+                    rehire_warnings.append(
+                        f'Đã khôi phục {restored_count} thiết lập số liệu cố định.'
+                    )
             
-            return JsonResponse({
+            response_payload = {
                 'success': True,
                 'message': 'Cập nhật nhân viên thành công',
                 'data': model_to_dict(nhan_vien)
-            })
+            }
+            if rehire_warnings:
+                response_payload['warnings'] = rehire_warnings
+            return JsonResponse(response_payload)
             
         except Exception as e:
             return JsonResponse({
@@ -1518,7 +1566,13 @@ def api_baohiem_list(request):
 @handle_exceptions
 def api_loainhanvien_list(request):
     """API lấy danh sách loại nhân viên (JSON) hỗ trợ search, filter, pagination"""
-    queryset = Loainhanvien.objects.all()
+    queryset = Loainhanvien.objects.all().annotate(
+        is_default=Case(
+            When(maloainv='NV', then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField()
+        )
+    ).order_by('is_default', '-created_at')
     
     context = get_list_context(
         request,
@@ -1526,7 +1580,7 @@ def api_loainhanvien_list(request):
         search_fields=['tenloainv', 'maloainv', 'phuongthuctinhluong'],
         filter_field=('trangthai', 'status'),
         page_size=20,
-        order_by='-created_at'
+        order_by=None
     )
     
     page_obj = context['page_obj']

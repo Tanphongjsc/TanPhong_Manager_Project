@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AdminSystem{% endblock title %}</title>
+    <title>{% block title %}FlexiPay{% endblock title %}</title>
 
     <!-- Anti-flicker: khôi phục trạng thái sidebar + submenu từ localStorage -->
     <script>
@@ -28,8 +28,8 @@
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="{% static 'logo.png' %}" type="image/png">
 
     <style>
         :root{
@@ -69,6 +69,7 @@
         /* Icon & text */
         .sidebar-link i:first-child{width:1.5rem;text-align:center;flex-shrink:0}
         .sidebar-link span{margin-left:.75rem}
+        .brand-wordmark{font-family:'Sora','Inter',sans-serif}
         .submenu-container .sidebar-link{justify-content:flex-start}
         .submenu-container .sidebar-link .fa-chevron-down{margin-left:auto;transition:transform var(--dur) var(--ease)}
 
@@ -184,9 +185,11 @@
     {% if user.is_authenticated %}
     <!-- Sidebar -->
     <aside id="sidebar" class="bg-gray-800 text-gray-300 flex flex-col fixed lg:relative z-30 h-full" role="navigation">
-        <div class="flex items-center justify-center h-16 border-b border-gray-700 shrink-0">
-            <i class="fas fa-cubes fa-2x text-blue-400 mr-2"></i>
-            <h1 class="text-xl font-semibold text-white sidebar-text">AdminSystem</h1>
+        <div class="flex items-center justify-start h-16 border-b border-gray-700 shrink-0 px-4">
+            <img src="{% static 'logo.png' %}" alt="FlexiPay" class="h-8 w-8 mr-2">
+            <h1 class="text-3xl font-extrabold tracking-wide sidebar-text brand-wordmark">
+                <span class="text-white">Flexi</span><span class="text-blue-400">Pay</span>
+            </h1>
         </div>
 
         <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
@@ -651,7 +654,7 @@
             pageTitle.classList.add('title-fade-out');
             setTimeout(() => {
                 pageTitle.textContent = t;
-                docTitle.textContent = `${t} - AdminSystem`;
+                docTitle.textContent = `${t} - FlexiPay`;
                 pageTitle.classList.remove('title-fade-out');
                 pageTitle.classList.add('title-fade-in');
                 setTimeout(() => pageTitle.classList.remove('title-fade-in'), 120);
