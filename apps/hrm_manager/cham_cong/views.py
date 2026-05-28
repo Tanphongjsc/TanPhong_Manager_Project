@@ -60,6 +60,23 @@ def _normalize_job_id(job_id):
         return job_id
 
 
+def _extract_salary_params(raw_value):
+    """Trích tham số tính lương từ cấu hình chi tiết (fallback {} nếu rỗng)."""
+    cfg = _parse_salary_config(raw_value)
+    if not isinstance(cfg, dict) or not cfg:
+        return {}
+
+    params = cfg.get('tham_so')
+    if isinstance(params, dict) and params:
+        return params
+
+    ignore_keys = {
+        'bieu_thuc', 'loaicv', 'details', 'mode',
+        'tencongviec', 'congviec_id', 'pay_role', 'thamsotinhluong'
+    }
+    return {k: v for k, v in cfg.items() if k not in ignore_keys}
+
+
 def _build_payload_rows_from_saved_record(record):
     """
     Tạo danh sách payload rows từ 1 bản ghi đã lưu.
@@ -845,6 +862,7 @@ def view_tong_hop_cham_cong(request):
         ],
         'tabs': [
             {'label': 'Tổng hợp tháng', 'url': '#tab-tong-hop', 'url_name': 'tab_summary', 'is_active': True},
+            {'label': 'Tổng hợp theo công việc', 'url': '#tab-cong-viec', 'url_name': 'tab_job_summary'},
             {'label': 'Đã chấm công', 'url': '#tab-da-cham', 'url_name': 'tab_checked_in'},
             {'label': 'Chưa chấm công', 'url': '#tab-chua-cham', 'url_name': 'tab_not_checked_in'},
         ]
@@ -1024,6 +1042,134 @@ def api_tong_hop_cham_cong_thang(request):
             result.append(nv)
 
     return JsonResponse({'success': True, 'data': result, 'total': len(result)}, status=200)
+
+
+@login_required
+@require_api_permission('access_control.view_cham_cong')
+@require_http_methods(["GET"])
+def api_tong_hop_cham_cong_cong_viec(request):
+    """API Tổng hợp chấm công theo công việc trong ngày"""
+    try:
+        ngay = dt.date.fromisoformat(request.GET.get("ngaylamviec"))
+    except (ValueError, TypeError):
+        return JsonResponse({'success': False, 'message': 'Ngày không hợp lệ'}, status=400)
+
+    phongban_id = request.GET.get('phongban_id')
+    pb_ids = get_all_child_department_ids(phongban_id, isnclude_root=True) if phongban_id else None
+    search = request.GET.get('search')
+    loai_cc = request.GET.get('loai_chamcong', 'all')
+
+    congviec_id = request.GET.get('congviec_id')
+    if congviec_id in (None, ''):
+        congviec_id = None
+    else:
+        try:
+            congviec_id = int(congviec_id)
+        except (TypeError, ValueError):
+            pass
+
+    # Filter nhân viên theo phòng ban + search
+    qs_nv = Lichsucongtac.objects.filter(trangthai='active')
+    if pb_ids is not None:
+        qs_nv = qs_nv.filter(phongban_id__in=pb_ids)
+    if search:
+        qs_nv = qs_nv.filter(Q(nhanvien__hovaten__icontains=search) | Q(nhanvien__manhanvien__icontains=search))
+
+    nv_ids = list(qs_nv.values_list('nhanvien_id', flat=True))
+    if not nv_ids:
+        return JsonResponse({'success': True, 'data': [], 'jobs': [], 'total': 0}, status=200)
+
+    qs = Bangchamcong.objects.filter(ngaylamviec=ngay, nhanvien_id__in=nv_ids)
+    if loai_cc and loai_cc != 'all':
+        qs = qs.filter(loaichamcong=loai_cc)
+
+    qs = qs.annotate(
+        ten_nv=F('nhanvien__hovaten'),
+        ma_nv=F('nhanvien__manhanvien')
+    ).values(
+        'nhanvien_id', 'ten_nv', 'ma_nv', 'thamsotinhluong', 'codilam'
+    )
+
+    job_options = {}
+    grouped = {}
+
+    for record in qs:
+        if record.get('codilam') is False:
+            continue
+
+        cfg = _parse_salary_config(record.get('thamsotinhluong'))
+        details = cfg.get('details') or []
+        if not isinstance(details, list):
+            continue
+
+        for detail in details:
+            if not isinstance(detail, dict):
+                continue
+            cv_id = detail.get('congviec_id')
+            if cv_id is None:
+                continue
+
+            ten_cv = detail.get('tencongviec') or ''
+            if cv_id not in job_options or (not job_options.get(cv_id) and ten_cv):
+                job_options[cv_id] = ten_cv or f'Công việc {cv_id}'
+
+            if congviec_id is not None and str(cv_id) != str(congviec_id):
+                continue
+
+            group = grouped.setdefault(cv_id, {
+                'congviec_id': cv_id,
+                'tencongviec': ten_cv or f'Công việc {cv_id}',
+                'members': {},
+                'tong_tien': 0
+            })
+
+            nv_id = record.get('nhanvien_id')
+            members_map = group['members']
+            member = members_map.get(nv_id)
+
+            if not member:
+                member = {
+                    'nhanvien_id': nv_id,
+                    'ten_nv': record.get('ten_nv'),
+                    'ma_nv': record.get('ma_nv'),
+                    'pay_role': detail.get('pay_role'),
+                    'tham_so': {},
+                    'thanhtien': 0
+                }
+                members_map[nv_id] = member
+
+            amount = detail.get('thanhtien') or 0
+            try:
+                amount = float(amount)
+            except (TypeError, ValueError):
+                amount = 0
+
+            member['thanhtien'] += amount
+            group['tong_tien'] += amount
+
+            params = _extract_salary_params(detail.get('thamsotinhluong'))
+            if params:
+                if not member['tham_so']:
+                    member['tham_so'] = params
+                else:
+                    for k, v in params.items():
+                        if k not in member['tham_so']:
+                            member['tham_so'][k] = v
+
+    result = []
+    for _, group in grouped.items():
+        members_list = list(group['members'].values())
+        members_list.sort(key=lambda m: (m.get('ten_nv') or '', m.get('ma_nv') or ''))
+        group['members'] = members_list
+        group['so_nhan_vien'] = len(members_list)
+        result.append(group)
+
+    result.sort(key=lambda g: g.get('tencongviec') or '')
+
+    jobs = [{'id': cv_id, 'tencongviec': name} for cv_id, name in job_options.items()]
+    jobs.sort(key=lambda j: j.get('tencongviec') or '')
+
+    return JsonResponse({'success': True, 'data': result, 'jobs': jobs, 'total': len(result)}, status=200)
 
 
 @login_required

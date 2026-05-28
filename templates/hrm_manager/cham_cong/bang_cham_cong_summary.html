@@ -100,6 +100,24 @@
                 {% include "components/bulk_actions.html" with show_export=True id="bulk-actions-summary" %}
             </div>
 
+            <div id="tab-cong-viec" class="tab-pane hidden h-full flex flex-col">
+                <div class="flex-1 overflow-auto custom-scrollbar border border-slate-200 rounded-lg">
+                    <table id="job-summary-table" class="min-w-full table-fixed text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-700 font-semibold text-[11px] sticky top-0 z-10 border-b border-slate-200">
+                            <tr>
+                                <th class="w-8 px-2 py-1.5 text-center"><span class="sr-only">Công việc</span></th>
+                                <th class="w-52 px-2 py-1.5 text-left text-slate-600 uppercase">Nhân viên</th>
+                                <th class="px-2 py-1.5 text-left text-slate-600 uppercase">Tham số tính lương</th>
+                                <th class="w-28 px-2 py-1.5 text-right text-slate-600 uppercase">Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="job-summary-body" class="divide-y divide-slate-100 text-xs leading-tight">
+                            {# Rows rendered by JS #}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="tab-da-cham" class="tab-pane hidden h-full flex flex-col">
                 {% with headers='<th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase w-10"><input type="checkbox" id="select-all-checked" class="w-4 h-4 rounded border-slate-300 cursor-pointer"></th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Nhân viên</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Ca làm việc</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Thời gian</th><th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Chi tiết</th>' %}
                     {% include "components/table_wrapper.html" with table_id="checked-table" tbody_id="checked-table-body" headers_html=headers show_checkbox=False %}
