@@ -7,6 +7,8 @@ class ChamCongManager {
         if (typeof AppUtils === 'undefined') { console.error('⛔ AppUtils is required'); return; }
         this.apiUrls = config.apiUrls || {};
         this.employees = []; this.jobs = []; this.departments = []; this.departmentMap = {};
+        this.departmentChildrenMap = new Map();
+        this.deptFilterCache = new Map();
 
         const urlParams = new URLSearchParams(window.location.search);
         const modeVal = String(urlParams.get('mode') || 'create').toLowerCase();
@@ -89,10 +91,13 @@ class ChamCongManager {
         let shiftType = record.loaichamcong;
         if (shiftType !== 'VP' && shiftType !== 'SX') shiftType = isMonthly ? 'VP' : 'SX';
 
+        const deptIdRaw = record.phongban_id;
+        const deptIdNum = deptIdRaw == null ? null : Number(deptIdRaw);
+        const deptId = Number.isFinite(deptIdNum) ? deptIdNum : deptIdRaw;
         return {
             rowId, id: record.nhanvien_id, recordId: record.id || null,
             hovaten: record.hovaten, manhanvien: record.manhanvien,
-            phongban_id: record.phongban_id, loainv: record.loainv,
+            phongban_id: deptId, loainv: record.loainv,
             phuongthuctinhluong: salaryMode, calamviec_id: record.calamviec_id,
             khunggiolamviec: this.buildKhungGioPayload(record.khunggiolamviec),
             khunggionghitrua: record.khunggionghitrua || [],
@@ -143,6 +148,7 @@ class ChamCongManager {
                 AppUtils.API.get(this.apiUrls.jobs, { status: 'active', page_size: 1000 }, opts)
             ]);
             this.departments = deptRes.data || [];
+            this.buildDepartmentTreeIndex();
             this.departmentMap = Object.fromEntries(this.departments.map(d => [d.id, d.tenphongban]));
             this.initDeptFilter();
             this.jobs = jobRes.data || [];
@@ -176,6 +182,45 @@ class ChamCongManager {
         } catch (error) {
             if (error.name !== 'AbortError') { console.error("Employee Load Error:", error); AppUtils.Notify.error("Lỗi tải danh sách nhân viên: " + error.message); }
         } finally { if (!existingOpts) { this.state.isLoading = false; this.state.loadController = null; } }
+    }
+
+    buildDepartmentTreeIndex() {
+        const childrenMap = new Map();
+        (this.departments || []).forEach(d => {
+            const parentId = d?.phongbancha_id;
+            const childId = d?.id;
+            if (parentId == null || parentId === '' || childId == null) return;
+            const parentKey = Number(parentId);
+            const childKey = Number(childId);
+            if (!Number.isFinite(parentKey) || !Number.isFinite(childKey)) return;
+            const list = childrenMap.get(parentKey);
+            if (list) list.push(childKey); else childrenMap.set(parentKey, [childKey]);
+        });
+        this.departmentChildrenMap = childrenMap;
+        this.deptFilterCache.clear();
+    }
+
+    getDeptFilterSet(dept) {
+        if (!dept || dept === 'all') return null;
+        const key = Number(dept);
+        if (!Number.isFinite(key)) return null;
+        const cached = this.deptFilterCache.get(key);
+        if (cached) return cached;
+
+        const set = new Set([key]);
+        const stack = [key];
+        while (stack.length) {
+            const current = stack.pop();
+            const kids = this.departmentChildrenMap.get(current);
+            if (!kids || !kids.length) continue;
+            for (const child of kids) {
+                if (set.has(child)) continue;
+                set.add(child);
+                stack.push(child);
+            }
+        }
+        this.deptFilterCache.set(key, set);
+        return set;
     }
 
     initDeptFilter() {
@@ -264,10 +309,12 @@ class ChamCongManager {
 
     getFilteredEmployees() {
         const { search, dept } = this.state.filters;
+        const deptSet = this.getDeptFilterSet(dept);
         return this.employees.filter(e => {
             const name = AppUtils.Helper.removeAccents(e.hovaten || '').toLowerCase();
             const code = (e.manhanvien || '').toLowerCase();
-            return (!search || name.includes(search) || code.includes(search)) && (dept === 'all' || e.phongban_id == dept);
+            const deptMatch = !deptSet || (Number.isFinite(e.phongban_id) && deptSet.has(e.phongban_id));
+            return (!search || name.includes(search) || code.includes(search)) && deptMatch;
         });
     }
 

@@ -36854,3 +36854,13 @@ django.template.exceptions.TemplateDoesNotExist: hrm_manager/lich_lam_viec/tong_
 ERROR 2026-03-31 11:25:35,782 basehttp 17492 7216 "GET /hrm/lich-lam-viec/thiet-ke-lich/tong-hop/ HTTP/1.1" 500 104146
 WARNING 2026-03-31 14:41:43,646 log 10356 8264 Not Found: /favicon.ico
 WARNING 2026-03-31 14:41:43,647 basehttp 10356 8264 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-05-29 15:44:43,010 log 9004 2892 Not Found: /favicon.ico
+WARNING 2026-05-29 15:44:43,011 basehttp 9004 2892 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-05-29 15:47:58,549 log 18028 6196 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-29 15:47:58,550 basehttp 18028 6196 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-05-29 16:12:05,134 log 18028 26000 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-29 16:12:05,135 basehttp 18028 26000 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-05-29 16:20:39,685 log 18028 23088 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-29 16:20:39,686 basehttp 18028 23088 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-05-29 16:24:26,150 log 18028 25472 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-29 16:24:26,151 basehttp 18028 25472 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
