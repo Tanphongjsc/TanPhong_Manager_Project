@@ -57,6 +57,8 @@ SYSTEM_SOURCE_ATTENDANCE_EARLY_LEAVE_MINUTES = 'bangchamcong.tong_ve_som_phut'
 SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY = 'bangchamcong.tong_ngay_vang'
 SYSTEM_SOURCE_ATTENDANCE_VP_DAY = 'bangchamcong.tong_cong_vp_thucte'
 SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT = 'bangchamcong.tong_tien_sx'
+SYSTEM_SOURCE_ATTENDANCE_SUNDAY_MEAL = 'bangchamcong.tong_an_chu_nhat'
+SYSTEM_SOURCE_ATTENDANCE_NIGHT_MEAL = 'bangchamcong.tong_an_dem'
 SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY = 'lichlamviecthucte.tong_cong_lamviec_thucte'
 SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR = 'lichlamviecthucte.tong_gio_lamviec_chuan'
 
@@ -72,6 +74,8 @@ SYSTEM_SOURCE_KEYS = {
     SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY,
     SYSTEM_SOURCE_ATTENDANCE_VP_DAY,
     SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT,
+    SYSTEM_SOURCE_ATTENDANCE_SUNDAY_MEAL,
+    SYSTEM_SOURCE_ATTENDANCE_NIGHT_MEAL,
     SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY,
     SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR,
 }
@@ -167,6 +171,8 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
                 'tong_cong_lamviec': 0.0,
                 'tong_cong_vp_thucte': 0.0,
                 'tong_tien_sx': 0.0,
+                'tong_an_chu_nhat': 0,
+                'tong_an_dem': 0,
                 'tong_di_muon_phut': 0.0,
                 'tong_ve_som_phut': 0.0,
                 'tong_ngay_vang': 0,
@@ -185,6 +191,10 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         if record.get('loaichamcong') == 'VP':
             agg['tong_cong_vp_thucte'] += _safe_float(record.get('conglamviec'))
         agg['tong_tien_sx'] += _safe_float(record.get('thanhtien'))
+        if record.get('coanchunhat'):
+            agg['tong_an_chu_nhat'] += 1
+        if record.get('coandem'):
+            agg['tong_an_dem'] += 1
         agg['tong_di_muon_phut'] += _safe_float(record.get('thoigiandimuon'))
         agg['tong_ve_som_phut'] += _safe_float(record.get('thoigianvesom'))
         if not record.get('codilam') and not record.get('cophaingaynghi'):
@@ -232,6 +242,8 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
             SYSTEM_SOURCE_ATTENDANCE_ABSENT_DAY: _safe_float(nv_bcc.get('tong_ngay_vang', 0)),
             SYSTEM_SOURCE_ATTENDANCE_VP_DAY: _safe_float(nv_bcc.get('tong_cong_vp_thucte', 0)),
             SYSTEM_SOURCE_ATTENDANCE_SX_AMOUNT: _safe_float(nv_bcc.get('tong_tien_sx', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_SUNDAY_MEAL: _safe_float(nv_bcc.get('tong_an_chu_nhat', 0)),
+            SYSTEM_SOURCE_ATTENDANCE_NIGHT_MEAL: _safe_float(nv_bcc.get('tong_an_dem', 0)),
             SYSTEM_SOURCE_SCHEDULE_STANDARD_DAY: _safe_float(nv_schedule.get('tong_cong_lamviec_thucte', 0)),
             SYSTEM_SOURCE_SCHEDULE_STANDARD_HOUR: _safe_float(nv_schedule.get('tong_gio_lamviec_chuan', 0)),
         }
@@ -1121,6 +1133,55 @@ def api_phieu_luong_list(request):
         return json_success('Lưu phiếu lương thành công')
     
     return json_success('Lấy danh sách phiếu lương thành công')
+
+
+# ------------------------------ TÍNH LẠI LƯƠNG ------------------------------
+@require_http_methods(["POST"])
+@transaction.atomic
+@csrf_exempt
+def api_phieu_luong_recalculate(request):
+    """API Tính lại lương: xóa phiếu lương cũ và sinh lại từ đầu."""
+    try:
+        data = loads(request.body)
+        bang_luong_id = data.get('bangluong_id')
+    except Exception:
+        return json_error('Dữ liệu không hợp lệ', status=400)
+
+    if not bang_luong_id:
+        return json_error('Thiếu tham số bangluong_id', status=400)
+
+    # 1. Kiểm tra bảng lương tồn tại
+    try:
+        bang_luong_obj = Bangluong.objects.select_related('kyluong').get(id=bang_luong_id)
+    except Bangluong.DoesNotExist:
+        return json_error('Bảng lương không tồn tại', status=400)
+
+    # 2. Kiểm tra trạng thái — không cho tính lại nếu đã duyệt hoặc đã trả lương
+    locked_statuses = ['approved', 'paid']
+    if bang_luong_obj.trangthai in locked_statuses:
+        return json_error(
+            f'Không thể tính lại: Bảng lương đã ở trạng thái "{BangLuongService.get_status_display(bang_luong_obj.trangthai)}"',
+            status=400
+        )
+
+    # 3. Xóa phiếu lương cũ
+    old_phieu_ids = list(Phieuluong.objects.filter(bangluong_id=bang_luong_id).values_list('id', flat=True))
+    if old_phieu_ids:
+        Ctphieuluong.objects.filter(phieuluong_id__in=old_phieu_ids).delete()
+        Phieuluong.objects.filter(id__in=old_phieu_ids).delete()
+
+    # 4. Sinh lại phiếu lương
+    result_data, message = genarate_phieu_luong_from_bang_luong(bang_luong_id)
+    if not result_data:
+        return json_error(message or 'Không thể tính lại lương')
+
+    # 5. Cập nhật trạng thái bảng lương về processing
+    bang_luong_obj.trangthai = 'processing'
+    bang_luong_obj.updated_at = now()
+    bang_luong_obj.save(update_fields=['trangthai', 'updated_at'])
+
+    return json_success('Tính lại lương thành công', data=result_data)
+
         
 # ===================================================================================       
 #------------------------------------CHE DO LUONG------------------------------------

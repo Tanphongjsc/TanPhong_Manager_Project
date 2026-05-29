@@ -27,7 +27,9 @@ class PayrollDetailManager {
         this.modal = document.getElementById('detail-modal');
         this.modalTemplate = document.getElementById('detail-modal-template');
         this.btnExportMain = document.getElementById('btn-export-excel-main');
+        this.btnRecalculate = document.getElementById('btn-recalculate-payroll');
         this.loadingStatus = document.getElementById('data-loading-status');
+        this.payrollStatus = document.getElementById('bangluong-trangthai')?.value || '';
     }
 
     init() {
@@ -148,6 +150,9 @@ class PayrollDetailManager {
 
             this.allEmployeesData = filteredEmployees;
 
+            // Show/hide recalculate button based on conditions
+            this.updateRecalculateButtonVisibility();
+
             const flatData = this.transformToEngineData(filteredEmployees);
             this.formulaEngine = new FormulaEngine(flatData, this.formulaConfig);
 
@@ -196,6 +201,11 @@ class PayrollDetailManager {
     initEvents() {
         const btnSave = document.getElementById('btn-save-payroll');
         if (btnSave) this.eventManager.add(btnSave, 'click', () => this.savePayroll());
+
+        // Recalculate button
+        if (this.btnRecalculate) {
+            this.eventManager.add(this.btnRecalculate, 'click', () => this.recalculatePayroll());
+        }
         
         const modal = document.getElementById('detail-modal');
         if (modal) {
@@ -880,6 +890,69 @@ class PayrollDetailManager {
             }
         });
     }
+    updateRecalculateButtonVisibility() {
+        if (!this.btnRecalculate) return;
+        
+        const lockedStatuses = ['approved', 'paid'];
+        const isLocked = lockedStatuses.includes(this.payrollStatus);
+        const hasSavedPayslips = this.allEmployeesData.some(
+            emp => emp.extra_data && !emp.extra_data.is_draft
+        );
+        
+        // Show only when payslips have been saved AND status is not locked
+        if (hasSavedPayslips && !isLocked) {
+            this.btnRecalculate.classList.remove('hidden');
+        } else {
+            this.btnRecalculate.classList.add('hidden');
+        }
+    }
+
+    async recalculatePayroll() {
+        // Double-check locked status
+        const lockedStatuses = ['approved', 'paid'];
+        if (lockedStatuses.includes(this.payrollStatus)) {
+            return AppUtils.Notify.error('Không thể tính lại: Bảng lương đã được duyệt hoặc đã trả lương');
+        }
+
+        AppUtils.Modal.showConfirm({
+            title: 'Xác nhận tính lại lương',
+            message: `Hệ thống sẽ <strong>xóa toàn bộ phiếu lương hiện tại</strong> và tính lại từ đầu dựa trên dữ liệu chấm công và chế độ lương mới nhất.<br><br>
+                      <span class="text-amber-600"><i class="fas fa-exclamation-triangle mr-1"></i>Lưu ý: Các chỉnh sửa thủ công trước đó sẽ bị mất.</span><br><br>
+                      Bạn có chắc chắn muốn tiếp tục?`,
+            type: 'warning',
+            confirmText: 'Tính lại lương',
+            onConfirm: async () => {
+                const btn = this.btnRecalculate;
+                const originalContent = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tính lại...';
+
+                try {
+                    const res = await AppUtils.API.post('/hrm/quan-ly-luong/api/phieu-luong/recalculate', {
+                        bangluong_id: String(this.currentPayrollId)
+                    });
+
+                    if (res?.success === false) throw new Error(res.message || 'Lỗi tính lại lương');
+                    
+                    AppUtils.Notify.success(res?.message || 'Tính lại lương thành công');
+                    
+                    // Update payroll status
+                    this.payrollStatus = 'processing';
+                    const statusInput = document.getElementById('bangluong-trangthai');
+                    if (statusInput) statusInput.value = 'processing';
+
+                    // Reload table with new data
+                    await this.loadCombinedData();
+                } catch (err) {
+                    AppUtils.Notify.error(err?.message || 'Lỗi tính lại lương');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            }
+        });
+    }
+
     async savePayroll() {
         const { changes, count } = this.excelManager.getChanges();
         if (count === 0) return AppUtils.Notify.info('Không có thay đổi nào');
