@@ -1573,17 +1573,22 @@ class BangLuongService:
     @classmethod
     def get_available_ky_luong_for_create(cls, month=None, year=None):
         """
-        Lấy danh sách kỳ lương khả dụng cho dropdown khi tạo mới
-        Chỉ lấy kỳ lương của tháng/năm hiện tại hoặc được chỉ định
+        Lấy danh sách kỳ lương khả dụng cho dropdown khi tạo/sửa bảng lương
+        ✅ UPDATED: Không lọc theo tháng/năm truyền vào, nhưng CHỈ lấy các kỳ lương 
+        từ tháng hiện tại (theo thời gian thực) trở về trước và chưa chốt.
         """
+        from django.db.models import IntegerField
+        from django.db.models.functions import Cast
         today = date.today()
-        target_month = month or today.month
-        target_year = year or today.year
         
-        return Kyluong.objects.filter(
-            thang=target_month,
-            ngaybatdau__year=target_year
-        ).order_by('-ngaybatdau')
+        # Loại trừ các kỳ lương đã chốt (finalized) và chỉ lấy <= tháng/năm hiện tại
+        # Do cột `thang` trong DB là CharField nên phải ép kiểu sang Integer để so sánh (tránh lỗi '10' < '6' = True)
+        return Kyluong.objects.annotate(
+            thang_int=Cast('thang', IntegerField())
+        ).exclude(trangthai='finalized').filter(
+            Q(ngaybatdau__year__lt=today.year) |
+            Q(ngaybatdau__year=today.year, thang_int__lte=today.month)
+        ).order_by('-ngaybatdau', '-thang_int')
     
     @classmethod
     def get_available_che_do_luong(cls):
