@@ -92,19 +92,42 @@ const AppUtils = (() => {
                 // Parse response
                 const rawText = await response.text();
                 let data = {};
+                let isJSON = false;
                 
                 // 🔧 FIX: Chuẩn hóa response không phải JSON
                 if (rawText) {
                     try {
                         data = JSON.parse(rawText);
+                        isJSON = true;
                     } catch (e) {
-                        // Non-JSON response → standardize format
-                        data = { 
-                            success: false, 
-                            message: 'Response không phải JSON',
-                            raw: rawText 
-                        };
+                        // Non-JSON response → kiểm tra session expired trước
+                        isJSON = false;
                     }
+                }
+
+                // 🔧 FIX: Phát hiện session expired (401 từ middleware)
+                if (response.status === 401) {
+                    const msg = data?.message || 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+                    console.warn('⚠️ SESSION_EXPIRED:', msg);
+                    Notify.warning(msg, { duration: 4000 });
+                    setTimeout(() => { window.location.href = '/login/'; }, 2000);
+                    throw new Error(msg);
+                }
+
+                // 🔧 FIX: Phát hiện redirect sang trang login (HTML response khi follow redirect)
+                if (!isJSON && rawText) {
+                    if (rawText.includes('/login/') || rawText.includes('id_username') || rawText.includes('csrfmiddlewaretoken')) {
+                        const msg = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+                        console.warn('⚠️ SESSION_EXPIRED (HTML redirect detected)');
+                        Notify.warning(msg, { duration: 4000 });
+                        setTimeout(() => { window.location.href = '/login/'; }, 2000);
+                        throw new Error(msg);
+                    }
+                    data = { 
+                        success: false, 
+                        message: 'Response không phải JSON',
+                        raw: rawText 
+                    };
                 }
 
                 // Handle HTTP errors

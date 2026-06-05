@@ -64,11 +64,12 @@
         </div>
         <div>
             <label for="ngayvaolam" class="block text-sm font-medium text-slate-700 mb-1.5">
-                Ngày vào làm:
+                <span class="text-red-500">*</span> Ngày vào làm:
             </label>
             <input type="date" 
                    id="ngayvaolam"
                    name="ngayvaolam" 
+                   required
                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
         </div>
     </div>
@@ -143,6 +144,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Row 7: Nơi công tác -->
+    <div>
+        <label for="noicongtac" class="block text-sm font-medium text-slate-700 mb-1.5">
+            Nơi công tác:
+        </label>
+        <input type="text" 
+               id="noicongtac"
+               name="noicongtac" 
+               placeholder="VD: Chi nhánh HCM, Văn phòng Hà Nội..."
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+    </div>
+
     
     <!-- Section: Thông tin khác -->
     <div class="border-t border-slate-200 pt-4 mt-2">

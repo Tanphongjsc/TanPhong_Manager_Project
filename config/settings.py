@@ -88,6 +88,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'config.middleware.session_expired.SessionExpiredMiddleware',
     'config.middleware.access_control.AccessControlMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
@@ -225,7 +226,7 @@ CSRF_COOKIE_NAME = 'csrftoken'
 # Session Security
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_AGE = 28800  # 8 giờ (1 ca làm việc)
 SESSION_SAVE_EVERY_REQUEST = True
 
 # SECURITY SETTINGS - CHỈ BẬT KHI PRODUCTION

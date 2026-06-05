@@ -302,12 +302,16 @@ class EmployeeAutoAssignService:
             return warnings, False
 
         today = date.today()
-        start_date = max(effective_date, today)
+        # Sinh lịch bắt đầu từ ngày vào làm (effective_date), không phải ngày hôm nay.
+        # Giải quyết vấn đề: công ty chấm công theo tuần, NV vào làm 15/5 nhưng HR thêm ngày 22/5
+        # → cần có lịch từ 15/5 để chấm công cho tuần 15-21/5.
+        start_date = effective_date
         
         # Luôn sinh lịch dự phòng thêm 1 tháng tiếp theo.
-        # Điều này đảm bảo nhân viên mới không bao giờ bị rơi vào khoảng trống (lọt khe cron job)
-        # nếu họ gia nhập vào thời điểm cron job của tháng sau đã chạy xong (sau ngày 25).
-        next_month_date = start_date.replace(day=28) + timedelta(days=4)
+        # end_date tính từ ngày xa nhất (effective_date hoặc today) để đảm bảo cover tương lai,
+        # tránh lọt khe cron job nếu NV gia nhập sau ngày 25.
+        reference_date = max(effective_date, today)
+        next_month_date = reference_date.replace(day=28) + timedelta(days=4)
         _, next_month_last_day = monthrange(next_month_date.year, next_month_date.month)
         end_date = date(next_month_date.year, next_month_date.month, next_month_last_day)
 
@@ -443,12 +447,17 @@ class EmployeeAutoAssignService:
                 )
 
         # Tạo NhanvienChedoluong mới
+        # ngayapdung = effective_date (ngày vào làm) để chế độ lương có hiệu lực
+        # từ ngày NV thực sự bắt đầu làm việc, không phải ngày HR nhập liệu.
         now = timezone.now()
+        ngay_ap_dung = timezone.make_aware(
+            timezone.datetime.combine(effective_date, timezone.datetime.min.time())
+        ) if isinstance(effective_date, date) and not hasattr(effective_date, 'hour') else now
         NhanvienChedoluong.objects.create(
             nhanvien_id=nhanvien_id,
             chedoluong=target_chedoluong,
             trangthai='active',
-            ngayapdung=now,
+            ngayapdung=ngay_ap_dung,
             ngayketthuc=None,
             created_at=now,
         )

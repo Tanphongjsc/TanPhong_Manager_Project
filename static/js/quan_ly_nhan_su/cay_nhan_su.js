@@ -54,8 +54,8 @@ class TreeManager {
                 // Mobile Actions
                 if (window.innerWidth < 1024) {
                     const actions = clone.querySelector('.group-hover\\:flex');
-                    if(actions) actions.classList.replace('hidden', 'flex'); // Simplified class switch
-                    if(actions) actions.classList.add('lg:hidden', 'lg:group-hover:flex');
+                    if (actions) actions.classList.replace('hidden', 'flex'); // Simplified class switch
+                    if (actions) actions.classList.add('lg:hidden', 'lg:group-hover:flex');
                 }
 
                 // Children
@@ -79,8 +79,8 @@ class TreeManager {
                 };
 
                 // CRUD Buttons
-                const bind = (sel, fn) => { const b = div.querySelector(sel); if(b) b.onclick = (e) => { e.stopPropagation(); fn(); }; };
-                
+                const bind = (sel, fn) => { const b = div.querySelector(sel); if (b) b.onclick = (e) => { e.stopPropagation(); fn(); }; };
+
                 if (isCompany) {
                     bind('.btn-add-sub', () => window.DeptManager.openAddSub(item.id, true, name, companyId));
                     bind('.btn-edit', () => window.CompanyManager.openEditCompany(item.id));
@@ -99,7 +99,7 @@ class TreeManager {
     selectNode(el, id, name, isCompany) {
         document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium'));
         this.els.viewAll.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium');
-        
+
         el.classList.add('bg-blue-50', 'text-blue-700', 'font-medium');
         this.els.title.textContent = name;
         this.toggleSidebar(false);
@@ -128,10 +128,10 @@ class TreeManager {
                 li.style.display = match ? 'block' : 'none';
                 if (match && val) { // Show parents
                     let p = li.parentElement.closest('li');
-                    while(p) { p.style.display = 'block'; p.querySelector('.tree-children')?.classList.remove('hidden'); p = p.parentElement.closest('li'); }
+                    while (p) { p.style.display = 'block'; p.querySelector('.tree-children')?.classList.remove('hidden'); p = p.parentElement.closest('li'); }
                 }
             });
-            if(!val) this.els.root.querySelectorAll('li').forEach(li => li.style.display = 'block');
+            if (!val) this.els.root.querySelectorAll('li').forEach(li => li.style.display = 'block');
         }, 300));
     }
 }
@@ -145,7 +145,6 @@ class EmployeeManager extends BaseCRUDManager {
             formId: 'employee-form',
             codeField: 'manhanvien',
             entityName: 'nhân viên',
-            autoCode: { sourceField: 'hovaten', targetField: 'manhanvien' },
             apiUrls: {
                 detail: (id) => `/hrm/to-chuc-nhan-su/api/v1/nhan-vien/${id}/`,
                 create: '/hrm/to-chuc-nhan-su/api/v1/nhan-vien/',
@@ -181,7 +180,7 @@ class EmployeeManager extends BaseCRUDManager {
             ]);
             const loaiNhanVienData = lnv?.data?.data || lnv?.data || [];
             this.lookupData = { chucvu: cv.data || [], nganhang: nh.data || [], phongban: pb.data || [], loainv: loaiNhanVienData };
-            
+
             // Render basic selects
             const fillSelect = (id, items, valK, textK) => {
                 const el = document.getElementById(id);
@@ -194,7 +193,7 @@ class EmployeeManager extends BaseCRUDManager {
             fillSelect('chucvu', this.lookupData.chucvu, 'id', 'tenvitricongviec');
             fillSelect('nganhang', this.lookupData.nganhang, 'id', 'TenNganHang');
             fillSelect('loainv_id', this.lookupData.loainv, 'id', 'TenLoaiNV');
-            
+
             this._initPhongbanDropdown();
         } catch (e) { console.error('Lookup Data Error', e); }
     }
@@ -203,7 +202,7 @@ class EmployeeManager extends BaseCRUDManager {
         this.extraActionsContainer = document.getElementById('employee-sidebar-extra-actions');
     }
 
-// --- LOGIC XỬ LÝ HÀNG LOẠT (BULK) ---
+    // --- LOGIC XỬ LÝ HÀNG LOẠT (BULK) ---
     _initBulkActions() {
         // UI Elements
         const els = {
@@ -233,7 +232,7 @@ class EmployeeManager extends BaseCRUDManager {
         this.eventManager.add(els.menu, 'click', (e) => {
             const actionBtn = e.target.closest('[data-action]');
             if (!actionBtn) return;
-            
+
             els.menu.classList.add('hidden'); // Ẩn menu ngay
             const actionType = actionBtn.dataset.action;
             this.handleBulkAction(actionType);
@@ -257,7 +256,7 @@ class EmployeeManager extends BaseCRUDManager {
             case 'transfer':
                 this.openTransferModal(selectedIds.length);
                 break;
-                
+
             case 'terminate':
                 AppUtils.Modal.showConfirm({
                     title: 'Xác nhận nghỉ việc',
@@ -271,23 +270,23 @@ class EmployeeManager extends BaseCRUDManager {
     }
 
     // --- Logic Modal Chuyển công tác ---
-    
+
     openTransferModal(count) {
         // 1. Fill data
         const countEl = document.getElementById('bulk-transfer-count');
         const select = document.getElementById('bulk-transfer-select');
-        
+
         if (countEl) countEl.textContent = count;
-        
+
         // Populate Select từ lookupData đã cache (Tránh gọi lại API)
         if (select && this.lookupData.phongban) {
-            select.innerHTML = '<option value="">-- Chọn phòng ban mới --</option>' + 
+            select.innerHTML = '<option value="">-- Chọn phòng ban mới --</option>' +
                 this.lookupData.phongban.map(pb => `<option value="${pb.id}">${pb.tenphongban}</option>`).join('');
         }
 
         // 2. Clear error & form
         const errEl = document.getElementById('err-bulk-dept');
-        if(errEl) errEl.classList.add('hidden');
+        if (errEl) errEl.classList.add('hidden');
         document.getElementById('form-bulk-transfer')?.reset();
 
         // 3. Show Modal
@@ -296,10 +295,10 @@ class EmployeeManager extends BaseCRUDManager {
 
     toggleModal(modalId, show) {
         const modal = document.getElementById(modalId);
-        if(!modal) return;
-        
+        if (!modal) return;
+
         // Sử dụng Tailwind classes để show/hide
-        if(show) {
+        if (show) {
             modal.classList.remove('hidden');
             // Animation nhẹ (Optional)
             modal.querySelector('div[class*="transform"]')?.classList.add('scale-100');
@@ -316,7 +315,7 @@ class EmployeeManager extends BaseCRUDManager {
         // 1. Validation dùng AppUtils
         const formData = AppUtils.Form.getData(form);
         if (!formData.phong_ban_id) {
-            if(errEl) errEl.classList.remove('hidden');
+            if (errEl) errEl.classList.remove('hidden');
             return;
         }
 
@@ -363,7 +362,7 @@ class EmployeeManager extends BaseCRUDManager {
             url = '/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/chuyen-cong-tac/';
         } else if (type === 'terminate') {
             // Giả sử API nghỉ việc
-            url = '/hrm/to-chuc-nhan-su/api/v1/nhan-vien/nghi-viec-bulk/'; 
+            url = '/hrm/to-chuc-nhan-su/api/v1/nhan-vien/nghi-viec-bulk/';
             body = { ids: payload };
         }
 
@@ -377,10 +376,10 @@ class EmployeeManager extends BaseCRUDManager {
             if (warnings && warnings.length > 0) {
                 warnings.forEach(w => AppUtils.Notify.warning(w));
             }
-            
+
             // Refresh UI
             this.tableManager.clearSelection();
-            this.tableManager.refresh(); 
+            this.tableManager.refresh();
             window.TreeManager.fetchTree(); // Refresh cây tổ chức
 
         } catch (error) {
@@ -396,10 +395,25 @@ class EmployeeManager extends BaseCRUDManager {
         this._resetCustomState();
         if (mode === 'create') {
             const idInput = this.elements.form.querySelector('input[name="id"]');
-            if(idInput) { idInput.value = ''; idInput.setAttribute('value', ''); }
+            if (idInput) { idInput.value = ''; idInput.setAttribute('value', ''); }
         }
         this.currentItemId = itemId;
-        super.openSidebar(mode, itemId); // Call Parent
+        super.openSidebar(mode, itemId); // Call Parent first to let it reset user forms
+        
+        if (mode === 'create') {
+            AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/nhan-vien/next-code/').then(res => {
+                const data = res.data?.data || res.data || res;
+                if(data && data.next_code) {
+                    // Delay execution slightly to ensure form reset is completely done
+                    setTimeout(() => {
+                        const el = document.getElementById('manhanvien');
+                        if (el) { 
+                            el.value = data.next_code;
+                        }
+                    }, 50);
+                }
+            }).catch(err => console.error("Could not fetch next employee code", err));
+        }
 
         // Render Extra UI
         const c = this.extraActionsContainer;
@@ -413,7 +427,7 @@ class EmployeeManager extends BaseCRUDManager {
         } else {
             c.innerHTML = `<button type="button" id="btn-view-detail" class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2"><i class="fas fa-external-link-alt"></i> <span>Xem chi tiết</span></button>`;
             this.eventManager.add(document.getElementById('btn-view-detail'), 'click', () => {
-                if(this.currentItemId) window.location.href = document.getElementById('url-emp-detail-pattern').value.replace('0', this.currentItemId);
+                if (this.currentItemId) window.location.href = document.getElementById('url-emp-detail-pattern').value.replace('0', this.currentItemId);
             });
         }
     }
@@ -432,10 +446,10 @@ class EmployeeManager extends BaseCRUDManager {
             });
 
             this._fillEmployeeForm(empData);
-            
+
             this.currentCongTac = Array.isArray(congTacRes.data) ? congTacRes.data[0] : (congTacRes.data || congTacRes);
             if (this.currentCongTac) this._fillCongTacData(this.currentCongTac);
-            
+
         } catch (e) {
             console.error(e);
             AppUtils.Notify.error('Không thể tải thông tin chi tiết');
@@ -450,33 +464,38 @@ class EmployeeManager extends BaseCRUDManager {
         if (data.nganhang) {
             const nhId = typeof data.nganhang === 'object' ? data.nganhang.id : data.nganhang;
             const el = this.elements.form.querySelector('[name="nganhang"]');
-            if(el) el.value = nhId || '';
+            if (el) el.value = nhId || '';
         }
     }
 
     _fillCongTacData(congTac) {
         const cvId = congTac.chucvu_id || congTac.chucvu?.id || congTac.chucvu;
         const form = this.elements.form;
-        if(form.elements['chucvu']) form.elements['chucvu'].value = cvId || '';
+        if (form.elements['chucvu']) form.elements['chucvu'].value = cvId || '';
 
         const pbId = congTac.phongban_id || congTac.phongban?.id || congTac.phongban;
-        // Prefer actual department name from relation/id; noicongtac is only a fallback display value.
         let pbName = congTac.phongban?.tenphongban;
         if (!pbName && pbId) {
             const found = this.lookupData.phongban.find(p => p.id == pbId);
-            if(found) pbName = found.tenphongban;
+            if (found) pbName = found.tenphongban;
         }
         if (!pbName) pbName = congTac.noicongtac;
         this._selectPhongban(pbId, pbName);
+
+        // Fill nơi công tác
+        const noicongtacEl = form.querySelector('[name="noicongtac"]');
+        if (noicongtacEl) noicongtacEl.value = congTac.noicongtac || '';
     }
 
     _resetCustomState() {
         this._selectPhongban('', '');
         this.currentCongTac = null;
         const cv = this.elements.form.querySelector('[name="chucvu"]');
-        if(cv) cv.value = '';
+        if (cv) cv.value = '';
         const loaiNv = this.elements.form.querySelector('[name="loainv_id"]');
         if (loaiNv) loaiNv.value = '';
+        const nct = this.elements.form.querySelector('[name="noicongtac"]');
+        if (nct) nct.value = '';
     }
 
     // --- MAIN SUBMIT LOGIC (Refactored) ---
@@ -488,17 +507,19 @@ class EmployeeManager extends BaseCRUDManager {
         const cvVal = form.querySelector('[name="chucvu"]')?.value;
         const loaiNvVal = form.querySelector('[name="loainv_id"]')?.value;
         const pbVal = form.querySelector('[name="phongban"]')?.value;
+        const ngayVaoLamVal = form.querySelector('[name="ngayvaolam"]')?.value;
         
         if (!AppUtils.Validation.required(cvVal)) return AppUtils.Notify.warning('Vui lòng chọn chức vụ');
         if (!AppUtils.Validation.required(loaiNvVal)) return AppUtils.Notify.warning('Vui lòng chọn loại nhân viên');
         if (!AppUtils.Validation.required(pbVal)) return AppUtils.Notify.warning('Vui lòng chọn phòng ban');
+        if (!AppUtils.Validation.required(ngayVaoLamVal)) return AppUtils.Notify.warning('Vui lòng chọn ngày vào làm');
 
         // 2. Button Loading Helper
         const submitBtn = document.querySelector(`#${this.config.sidebarId} [data-sidebar-submit]`);
         const saveNewBtn = document.getElementById('btn-save-and-new');
         const setBtnLoading = (btn, isLoading) => {
-            if(!btn) return;
-            if(isLoading) {
+            if (!btn) return;
+            if (isLoading) {
                 btn.dataset.originalHtml = btn.innerHTML;
                 btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...`;
                 btn.disabled = true;
@@ -510,34 +531,60 @@ class EmployeeManager extends BaseCRUDManager {
 
         const activeBtn = saveAndNew ? saveNewBtn : submitBtn;
         setBtnLoading(activeBtn, true);
-        if(submitBtn && submitBtn !== activeBtn) submitBtn.disabled = true;
+        if (submitBtn && submitBtn !== activeBtn) submitBtn.disabled = true;
 
         try {
             // 3. Prepare Data
             const data = AppUtils.Form.getData(form);
             const isEdit = !!data.id;
-            
+
             const empPayload = { ...data };
-            delete empPayload.chucvu; 
+            delete empPayload.chucvu;
             delete empPayload.phongban;
+            delete empPayload.noicongtac; // noicongtac thuộc lịch sử công tác, không thuộc nhân viên
 
             const url = isEdit ? this.config.apiUrls.update(data.id) : this.config.apiUrls.create;
             const res = await AppUtils.API[isEdit ? 'put' : 'post'](url, empPayload);
             const nhanvienId = res.data?.id || res.id;
 
-            // 4. Create History Record: luôn gửi noicongtac là tên phòng ban đang chọn
+            // 4. Xử lý lịch sử công tác thông minh
+            const noicongtacVal = form.querySelector('[name="noicongtac"]')?.value?.trim() || '';
             let autoAssignWarnings = [];
-            if (nhanvienId) {
-                const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
-                    nhanvien_id: nhanvienId,
-                    phongban_id: pbVal,
-                    chucvu_id: cvVal,
-                    noicongtac: this.phongbanDropdown.selectedText || '', // tên phòng ban
-                    trangthai: 'active'
-                });
 
-                // Thu thập warnings từ auto-assign
-                autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+            if (nhanvienId) {
+                if (!isEdit) {
+                    // CREATE: Luôn tạo bản ghi lịch sử công tác mới
+                    const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                        nhanvien_id: nhanvienId,
+                        phongban_id: pbVal,
+                        chucvu_id: cvVal,
+                        noicongtac: noicongtacVal,
+                        trangthai: 'active'
+                    });
+                    autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+                } else {
+                    // EDIT: So sánh với dữ liệu cũ để quyết định hành động
+                    const oldPb = String(this.currentCongTac?.phongban_id || this.currentCongTac?.phongban || '');
+                    const oldCv = String(this.currentCongTac?.chucvu_id || this.currentCongTac?.chucvu || '');
+                    const oldNct = this.currentCongTac?.noicongtac || '';
+
+                    const pbChanged = String(pbVal) !== oldPb;
+                    const cvChanged = String(cvVal) !== oldCv;
+                    const nctChanged = noicongtacVal !== oldNct;
+
+                    if (pbChanged || cvChanged || nctChanged) {
+                        // Có thay đổi công tác → Tạo bản ghi lịch sử công tác MỚI (deactivate cũ + auto-assign)
+                        const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                            nhanvien_id: nhanvienId,
+                            phongban_id: pbVal,
+                            chucvu_id: cvVal,
+                            noicongtac: noicongtacVal,
+                            trangthai: 'active'
+                        });
+                        autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+                    }
+                    // Không có thay đổi gì → bỏ qua, không gọi API
+                }
             }
 
             AppUtils.Notify.success(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
@@ -556,6 +603,15 @@ class EmployeeManager extends BaseCRUDManager {
                 this._resetCustomState();
                 const idInput = form.querySelector('input[name="id"]');
                 if(idInput) { idInput.value = ''; idInput.removeAttribute('value'); }
+                
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/nhan-vien/next-code/').then(res => {
+                    const nextData = res.data?.data || res.data || res;
+                    if(nextData && nextData.next_code) {
+                        const el = document.getElementById('manhanvien');
+                        if (el) el.value = nextData.next_code;
+                    }
+                }).catch(err => console.error("Could not fetch next employee code", err));
+                
                 form.querySelector('[name="hovaten"]')?.focus();
             } else {
                 this.sidebar.close();
@@ -568,8 +624,8 @@ class EmployeeManager extends BaseCRUDManager {
             else AppUtils.Notify.error('Lỗi khi lưu dữ liệu. Vui lòng thử lại.');
         } finally {
             setBtnLoading(activeBtn, false);
-            if(submitBtn) submitBtn.disabled = false;
-            if(saveNewBtn) saveNewBtn.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
+            if (saveNewBtn) saveNewBtn.disabled = false;
         }
     }
 
@@ -592,11 +648,11 @@ class EmployeeManager extends BaseCRUDManager {
             this.phongbanDropdown.isOpen = !this.phongbanDropdown.isOpen;
             els.menu.classList.toggle('hidden', !this.phongbanDropdown.isOpen);
             els.icon?.classList.toggle('rotate-180', this.phongbanDropdown.isOpen);
-            if(this.phongbanDropdown.isOpen) setTimeout(() => els.search?.focus(), 100);
+            if (this.phongbanDropdown.isOpen) setTimeout(() => els.search?.focus(), 100);
         });
 
         this.eventManager.add(els.search, 'input', AppUtils.Helper.debounce((e) => this._renderPhongbanList(e.target.value), 200));
-        
+
         this.eventManager.add(document, 'click', (e) => {
             if (!els.btn.contains(e.target) && !els.menu.contains(e.target)) {
                 this.phongbanDropdown.isOpen = false;
@@ -614,7 +670,7 @@ class EmployeeManager extends BaseCRUDManager {
     _renderPhongbanList(term) {
         const list = document.getElementById('phongban-dropdown-list');
         const search = AppUtils.Helper.removeAccents(term.toLowerCase());
-        const matches = this.lookupData.phongban.filter(pb => 
+        const matches = this.lookupData.phongban.filter(pb =>
             AppUtils.Helper.removeAccents((pb.tenphongban || '').toLowerCase()).includes(search)
         );
 
@@ -631,16 +687,16 @@ class EmployeeManager extends BaseCRUDManager {
     _selectPhongban(id, name) {
         this.phongbanDropdown.selectedId = id || null;
         this.phongbanDropdown.selectedText = name || '-- Chọn phòng ban --';
-        
+
         const input = document.getElementById('phongban');
         const display = document.getElementById('phongban-selected-text');
-        
+
         if (input) input.value = id || '';
         if (display) {
             display.textContent = this.phongbanDropdown.selectedText;
             display.className = id ? 'text-slate-900 text-sm' : 'text-slate-500 text-sm';
         }
-        
+
         document.getElementById('phongban-dropdown-menu')?.classList.add('hidden');
         document.getElementById('phongban-dropdown-icon')?.classList.remove('rotate-180');
         this.phongbanDropdown.isOpen = false;
@@ -665,11 +721,11 @@ class EmployeeManager extends BaseCRUDManager {
     _renderRow(item) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-200';
-        
+
         const statusMap = { 'Đang làm việc': 'green', 'Đã nghỉ việc': 'red', 'default': 'blue' };
         const color = statusMap[item.trangthainv] || statusMap['default'];
         const statusClass = `bg-${color}-100 text-${color}-700`;
-        
+
         const pbName = item.cong_tac?.phong_ban || '-';
         // Use DateUtils
         const ngayVaoLam = AppUtils.DateUtils.format(item.ngayvaolam, 'dd/MM/yyyy') || '-';
@@ -696,10 +752,10 @@ class EmployeeManager extends BaseCRUDManager {
         return tr;
     }
 
-    filterByOrg(params) { 
+    filterByOrg(params) {
         if (this.tableManager) {
             this.tableManager.options.currentPage = 1;
-            this.tableManager.setApiParams(params); 
+            this.tableManager.setApiParams(params);
             this.tableManager.refresh();
         }
     }
@@ -803,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kiểm tra nếu có sidebar nhân viên thì mới khởi tạo
     if (document.getElementById('employee-sidebar')) {
         window.EmployeeManager = new EmployeeManager();
-        
+
         // Nếu đang ở trang Detail (không có bảng table-body), 
         // ta override hàm onRefreshTable để reload trang thay vì refresh bảng
         if (!document.getElementById('table-body')) {

@@ -376,7 +376,7 @@
 
             const triggerBaseClass = this.options.compact
                 ? 'inline-flex items-center justify-between gap-1.5 px-1 py-0.5 text-xs rounded text-slate-700 hover:text-blue-600 transition-colors min-w-[90px]'
-                : 'w-full px-4 py-2 border border-slate-300 rounded-lg bg-white text-left flex items-center justify-between gap-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all';
+                : 'w-full px-4 py-2 border border-slate-300 rounded-lg bg-white text-left flex items-center justify-between gap-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
 
             this.trigger.className = `${triggerBaseClass} ${this.options.triggerClass}`.trim();
 

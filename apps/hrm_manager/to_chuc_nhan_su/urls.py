@@ -35,6 +35,7 @@ urlpatterns = [
     
     # NHÂN VIÊN
     path('api/v1/nhan-vien/', views.api_nhan_vien_list, name='api_nhan_vien_list'),
+    path('api/v1/nhan-vien/next-code/', views.api_nhan_vien_next_code, name='api_nhan_vien_next_code'),
     path('api/v1/nhan-vien/<int:id>/', views.api_nhan_vien_detail, name='api_nhan_vien_detail'),
     path('api/v1/chuc-vu/<int:id>/toggle-status/', views.api_chuc_vu_toggle_status, name='api_chuc_vu_toggle_status'),
 
