@@ -5,12 +5,13 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
-from django.db.models import OuterRef, Subquery, Q, Prefetch, Case, When, Value, IntegerField
+from django.db.models import OuterRef, Subquery, Q, Prefetch, Case, When, Value, IntegerField, F
 from django.db import transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 
 import json
+import re
 from datetime import datetime, timedelta
 from json import loads
 from collections import defaultdict
@@ -31,6 +32,25 @@ from apps.hrm_manager.utils.view_helpers import (
     paginate_queryset,
     get_request_data
 )
+
+# ============================================================================
+# HELPER: Đồng bộ chéo trangthainv <-> trangthai (active/inactive)
+# ============================================================================
+
+def _sync_employee_status(trangthainv, trangthai):
+    """
+    Đảm bảo trangthainv và trangthai luôn nhất quán:
+      - 'Đã nghỉ việc' <-> 'inactive'
+      - 'Đang làm việc' / 'Thử việc' <-> 'active'
+    Ưu tiên: trangthainv quyết định trước, trangthai là fallback.
+    Returns: (trangthainv, trangthai)
+    """
+    if trangthainv == 'Đã nghỉ việc':
+        return trangthainv, 'inactive'
+    if trangthai == 'inactive':
+        return 'Đã nghỉ việc', 'inactive'
+    return (trangthainv or 'Đang làm việc'), 'active'
+
 
 # ============================================================================
 # VIEW URLS - TRANG CHÍNH
@@ -124,12 +144,9 @@ def api_cong_ty_list(request):
             data = loads(request.body)
 
             # Validate mã công ty phải duy nhất trong toàn hệ thống
-            ma_congty = data.get('macongty')
-            if Congty.objects.filter(macongty=ma_congty).exists():
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Mã công ty đã tồn tại. Vui lòng chọn mã khác.'
-                }, status=400)
+            ma_congty = (data.get('macongty') or '').strip()
+            if not validate_unique_field(Congty, 'macongty', ma_congty):
+                return json_error('Mã công ty đã tồn tại. Vui lòng chọn mã khác.', 400)
 
             cong_ty = Congty.objects.create(
                 macongty=data.get('macongty'),
@@ -195,6 +212,11 @@ def api_cong_ty_detail(request, id):
         # Cập nhật chức vụ
         try:
             data = loads(request.body)
+
+            # Validate mã công ty không trùng (trừ chính nó)
+            ma_congty = (data.get('macongty') or '').strip()
+            if ma_congty and not validate_unique_field(Congty, 'macongty', ma_congty, exclude_pk=id):
+                return json_error('Mã công ty đã tồn tại. Vui lòng chọn mã khác.', 400)
 
             for field in cong_ty._meta.fields:
                 if field.name in data:
@@ -273,12 +295,9 @@ def api_phong_ban_list(request):
             data = loads(request.body)
             
             # Validate mã phòng ban phải duy nhất trong toàn hệ thống
-            ma_phongban = data.get('maphongban')
-            if Phongban.objects.filter(maphongban=ma_phongban).exists():
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Mã phòng ban đã tồn tại. Vui lòng chọn mã khác.'
-                }, status=400)
+            ma_phongban = (data.get('maphongban') or '').strip()
+            if not validate_unique_field(Phongban, 'maphongban', ma_phongban):
+                return json_error('Mã phòng ban đã tồn tại. Vui lòng chọn mã khác.', 400)
 
             # Lấy phòng ban cha nếu có, để xác định level
             phongbancha_id = data.get('phongbancha_id', "") if data.get('phongbancha_id') else None
@@ -343,6 +362,11 @@ def api_phong_ban_detail(request, id):
         # Cập nhật chức vụ
         try:
             data = loads(request.body)
+
+            # Validate mã phòng ban không trùng (trừ chính nó)
+            ma_phongban = (data.get('maphongban') or '').strip()
+            if ma_phongban and not validate_unique_field(Phongban, 'maphongban', ma_phongban, exclude_pk=id):
+                return json_error('Mã phòng ban đã tồn tại. Vui lòng chọn mã khác.', 400)
 
             for field in phong_ban._meta.fields:
                 if field.name in data:
@@ -476,7 +500,7 @@ def api_phong_ban_nhan_vien(request):
 
     try:        
         # Build filters từ Lichsucongtac
-        filters = Q(trangthai='active')  # Bắt buộc active từ Lichsu
+        filters = Q()
         if phongban_ids:
             filters &= Q(phongban__id__in=phongban_ids)
         elif congty_id:
@@ -490,15 +514,27 @@ def api_phong_ban_nhan_vien(request):
             if value:
                 filters &= Q(**{key: value})
         
-        # Thêm query param tìm kiếm & nhân viên còn active
-        filters &= Q(nhanvien__hovaten__icontains=search_param) | Q(nhanvien__manhanvien__icontains=search_param) if search_param else Q()
+        # Thêm query param tìm kiếm
+        if search_param:
+            filters &= Q(nhanvien__hovaten__icontains=search_param) | Q(nhanvien__manhanvien__icontains=search_param)
         filters &= Q(nhanvien__isnull=False)
 
-        # Query từ Lichsucongtac với join (select_related)
-        qs = Lichsucongtac.objects.filter(filters).select_related(
+        # Lấy bản ghi lịch sử công tác mới nhất của mỗi nhân viên
+        latest_id_subquery = Lichsucongtac.objects.filter(
+            nhanvien_id=OuterRef('nhanvien_id')
+        ).order_by('-batdau', '-id').values('id')[:1]
+
+        # Query từ Lichsucongtac bản ghi mới nhất của nhân viên và áp dụng bộ lọc
+        qs = Lichsucongtac.objects.annotate(
+            latest_id=Subquery(latest_id_subquery)
+        ).filter(
+            id=F('latest_id')
+        ).filter(
+            filters
+        ).select_related(
             'nhanvien', 'nhanvien__loainv', 'nhanvien__nganhang',  # Join nhân viên + related
             'phongban', 'chucvu'  # Join cho cong_tac
-        ).distinct('nhanvien__id').order_by('nhanvien__id')  # Unique theo nhân viên (nếu có duplicate active)
+        ).order_by('nhanvien__id')
 
         # Sử dụng Paginator
         paginator = Paginator(qs, page_size)
@@ -647,6 +683,27 @@ def get_all_child_department_ids(root_id, isnclude_root=False):
 # ==================== API NHÂN VIÊN ====================
 
 @login_required
+@require_http_methods(["GET"])
+def api_nhan_vien_next_code(request):
+    """API lấy mã nhân viên tiếp theo tự động tăng"""
+    try:
+        codes = Nhanvien.objects.exclude(manhanvien__isnull=True).exclude(manhanvien='').values_list('manhanvien', flat=True)
+        max_num = 0
+        for code in codes:
+            match = re.search(r'\d+', code)
+            if match:
+                num = int(match.group())
+                if num > max_num:
+                    max_num = num
+        
+        next_num = max_num + 1
+        next_code = f"NV{next_num:05d}"
+        
+        return JsonResponse({'data': {'next_code': next_code}})
+    except Exception as e:
+        return json_error("Không thể tạo mã nhân viên mới", 500)
+
+@login_required
 @transaction.atomic
 @require_http_methods(["GET", "POST", "PUT", "DELETE"])
 def api_nhan_vien_list(request):
@@ -679,6 +736,16 @@ def api_nhan_vien_list(request):
         try:
             data = loads(request.body)
 
+            # Validate mã nhân viên phải duy nhất
+            ma_nhanvien = (data.get('manhanvien') or '').strip()
+            if ma_nhanvien and not validate_unique_field(Nhanvien, 'manhanvien', ma_nhanvien):
+                return json_error('Mã nhân viên đã tồn tại. Vui lòng chọn mã khác.', 400)
+
+            # Đồng bộ chéo trangthainv <-> trangthai
+            trangthainv, trangthai = _sync_employee_status(
+                data.get('trangthainv'), data.get('trangthai')
+            )
+
             nhan_vien = Nhanvien.objects.create(
                 manhanvien=data.get('manhanvien'),
                 hovaten=data.get('hovaten'),
@@ -690,29 +757,20 @@ def api_nhan_vien_list(request):
                 socccd=data.get('socccd'),
                 ngayvaolam=data.get('ngayvaolam') if data.get('ngayvaolam') else None,
                 loainv_id=data.get('loainv_id') or data.get('loainv'),
-                trangthainv=data.get('trangthainv') if data.get('trangthainv') else 'Đang làm việc',
+                trangthainv=trangthainv,
                 nganhang_id=data.get('nganhang'),
                 sotknganhang=data.get('sotknganhang'),
                 tentknganhang=data.get('tentknganhang'),
                 masothue=data.get('masothue'),
-                trangthai=data.get('trangthai', 'active'),
+                trangthai=trangthai,
                 created_at=datetime.now(),
             )
-            
-            lich_su_new = Lichsucongtac.objects.create(
-                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
-                ketthuc=None,
-                noicongtac=data.get('noicongtac'),
-                trangthai=data.get('trangthai', 'active'),
-                nhanvien_id = nhan_vien.id,
-                phongban_id=data.get('phongban'),
-                chucvu_id=data.get('chucvu'),
-                created_at=datetime.now(),
-            )
+            # Lịch sử công tác sẽ được tạo bởi frontend gọi API /lich-su-cong-tac/ riêng
+            # Không tạo ở đây để tránh bị trùng lặp (2 bản ghi)
 
             return JsonResponse({
                 'success': True,
-                'message': 'Tạo công ty thành công',
+                'message': 'Tạo nhân viên thành công',
                 'data': model_to_dict(nhan_vien)
             }, status=201)
             
@@ -746,6 +804,7 @@ def api_nhan_vien_list(request):
 
                 Nhanvien.objects.filter(id__in=soft_delete_ids).update(
                     trangthainv='Đã nghỉ việc',
+                    trangthai='inactive',
                     updated_at=datetime.now()
                 )
                 Lichsucongtac.objects.filter(
@@ -807,10 +866,22 @@ def api_nhan_vien_detail(request, id):
         # Cập nhật nhân viên
         try:
             data = loads(request.body)
+
+            # Validate mã nhân viên không trùng (trừ chính nó)
+            ma_nhanvien = (data.get('manhanvien') or '').strip()
+            if ma_nhanvien and not validate_unique_field(Nhanvien, 'manhanvien', ma_nhanvien, exclude_pk=id):
+                return json_error('Mã nhân viên đã tồn tại. Vui lòng chọn mã khác.', 400)
+
             data['loainv'] = data.get('loainv_id', data.get('loainv'))
 
             # Lưu trạng thái cũ để detect chuyển nghỉ việc
             old_trangthainv = nhan_vien.trangthainv
+
+            # Đồng bộ chéo trangthainv <-> trangthai
+            data['trangthainv'], data['trangthai'] = _sync_employee_status(
+                data.get('trangthainv', nhan_vien.trangthainv),
+                data.get('trangthai', nhan_vien.trangthai),
+            )
 
             for field in nhan_vien._meta.fields:
                 if field.name in data:
@@ -909,6 +980,7 @@ def api_nhan_vien_detail(request, id):
             if has_attendance or has_payslip:
                 # Có dữ liệu lịch sử → chỉ cho nghỉ việc, không xóa cứng
                 nhan_vien.trangthainv = 'Đã nghỉ việc'
+                nhan_vien.trangthai = 'inactive'
                 nhan_vien.updated_at = datetime.now()
                 nhan_vien.save()
 
@@ -949,26 +1021,58 @@ def api_lich_su_cong_tac_list(request):
 
     if request.method == "GET":
         # Lấy danh sách lịch sử công tác
+        nhanvien_id = request.GET.get('nhanvien_id')
         
-        lich_su_qs = Lichsucongtac.objects.all().values()
+        lich_su_qs = Lichsucongtac.objects.select_related('phongban', 'chucvu').all()
+        
+        # Filter theo nhân viên nếu có
+        if nhanvien_id:
+            lich_su_qs = lich_su_qs.filter(nhanvien_id=nhanvien_id)
 
-        context = get_list_context(
-            request,
-            lich_su_qs,
-            filter_field=("trangthai"),
-            page_size=int(request.GET.get('page_size', 10)),
-        )
+        # Filter theo trạng thái nếu có
+        trang_thai_param = request.GET.get('trangthai', '').strip()
+        if trang_thai_param:
+            lich_su_qs = lich_su_qs.filter(trangthai=trang_thai_param)
+
+        lich_su_qs = lich_su_qs.order_by('-created_at')
+
+        # Serialize với related data
+        page_size = int(request.GET.get('page_size', 50))
+        page_obj, paginator = paginate_queryset(request, lich_su_qs, default_page_size=page_size)
+
+        result = []
+        for item in page_obj:
+            result.append({
+                'id': item.id,
+                'created_at': item.created_at,
+                'updated_at': item.updated_at,
+                'batdau': item.batdau,
+                'ketthuc': item.ketthuc,
+                'noicongtac': item.noicongtac,
+                'trangthai': item.trangthai,
+                'nhanvien_id': item.nhanvien_id,
+                'phongban_id': item.phongban_id,
+                'chucvu_id': item.chucvu_id,
+                'phongban': {
+                    'id': item.phongban.id,
+                    'tenphongban': item.phongban.tenphongban,
+                } if item.phongban else None,
+                'chucvu': {
+                    'id': item.chucvu.id,
+                    'tenvitricongviec': item.chucvu.tenvitricongviec,
+                } if item.chucvu else None,
+            })
 
         return json_success(
-            'Lấy danh sách chức vụ thành công',
-            data=list(context['page_obj']),
+            'Lấy danh sách lịch sử công tác thành công',
+            data=result,
             pagination={
-                'page': context['page_obj'].number,
-                'page_size': context['paginator'].per_page,
-                'total': context['paginator'].count,
-                'total_pages': context['paginator'].num_pages,
-                'has_next': context['page_obj'].has_next(),
-                'has_prev': context['page_obj'].has_previous()
+                'page': page_obj.number,
+                'page_size': paginator.per_page,
+                'total': paginator.count,
+                'total_pages': paginator.num_pages,
+                'has_next': page_obj.has_next(),
+                'has_prev': page_obj.has_previous()
             }
         )
 
@@ -986,20 +1090,20 @@ def api_lich_su_cong_tac_list(request):
 
             if lich_su_old:
                 old_phongban_id = lich_su_old.phongban_id
-                lich_su_old.ketthuc = data.get('batdau')
+                lich_su_old.ketthuc = timezone.now().date()
                 lich_su_old.trangthai = 'inactive'
-                lich_su_old.updated_at = datetime.now()
+                lich_su_old.updated_at = timezone.now()
                 lich_su_old.save()
 
             lich_su_new = Lichsucongtac.objects.create(
-                batdau=data.get('batdau', datetime.now()+timedelta(days=1)),
+                batdau=timezone.now().date(),
                 ketthuc=None,
                 noicongtac=data.get('noicongtac'),
                 trangthai=data.get('trangthai', 'active'),
                 nhanvien_id=data.get('nhanvien_id'),
                 phongban_id=data.get('phongban_id'),
                 chucvu_id=data.get('chucvu_id'),
-                created_at=datetime.now() + timedelta(days=1),
+                created_at=timezone.now(),
             )
 
             # Auto-assign lịch làm việc & chế độ lương theo phòng ban mới
@@ -1041,8 +1145,9 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
     # Cập nhập phòng ban nhiều nhân viên cùng lúc
 
     try:
-        nhan_vien_ids = loads(request.body).get('nhan_vien_ids', [])
-        phong_ban_id = loads(request.body).get('phong_ban_id')
+        data = loads(request.body)
+        nhan_vien_ids = data.get('nhan_vien_ids', [])
+        phong_ban_id = data.get('phong_ban_id')
 
         if not nhan_vien_ids or not phong_ban_id:
             return JsonResponse({
@@ -1050,22 +1155,36 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
                 'message': 'Thiếu nhan_vien_ids hoặc phong_ban_id'
             }, status=400)
 
-        # Cập nhật phòng ban cho các nhân viên và auto-assign
+        # Lấy danh sách lịch sử công tác active của các nhân viên
         active_histories = Lichsucongtac.objects.filter(
             nhanvien_id__in=nhan_vien_ids,
             trangthai='active'
         )
 
         all_warnings = []
-        for lich_su in active_histories:
-            old_phongban_id = lich_su.phongban_id
-            nhanvien_id = lich_su.nhanvien_id
+        for lich_su_old in active_histories:
+            old_phongban_id = lich_su_old.phongban_id
+            nhanvien_id = lich_su_old.nhanvien_id
 
-            # Cập nhật phòng ban trực tiếp
-            lich_su.phongban_id = phong_ban_id
-            lich_su.updated_at = datetime.now()
-            lich_su.save()
+            # 1. Deactivate bản ghi cũ
+            lich_su_old.ketthuc = timezone.now().date()
+            lich_su_old.trangthai = 'inactive'
+            lich_su_old.updated_at = timezone.now()
+            lich_su_old.save()
 
+            # 2. Tạo bản ghi lịch sử công tác MỚI
+            lich_su_new = Lichsucongtac.objects.create(
+                batdau=timezone.now().date(),
+                ketthuc=None,
+                noicongtac=lich_su_old.noicongtac,  # Giữ nguyên nơi công tác cũ
+                trangthai='active',
+                nhanvien_id=nhanvien_id,
+                phongban_id=phong_ban_id,
+                chucvu_id=lich_su_old.chucvu_id,  # Giữ nguyên chức vụ cũ
+                created_at=timezone.now(),
+            )
+
+            # 3. Deactivate lịch làm việc phòng ban cũ
             if old_phongban_id and phong_ban_id:
                 EmployeeAutoAssignService.deactivate_old_schedule(
                     nhanvien_id=nhanvien_id,
@@ -1073,12 +1192,12 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
                     new_phongban_id=phong_ban_id,
                 )
 
-            # Auto-assign lịch và lương
+            # 4. Auto-assign lịch và lương theo phòng ban mới
             assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
                 nhanvien_id=nhanvien_id,
                 phongban_id=phong_ban_id,
-                effective_date=lich_su.batdau,
-                old_phongban_id=old_phongban_id  # Quan trọng: truyền PB cũ để logic đổi lương hoạt động
+                effective_date=lich_su_new.batdau,
+                old_phongban_id=old_phongban_id
             )
             
             if assign_result.get('warnings'):
@@ -1106,8 +1225,11 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
 def api_lich_su_cong_tac_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa lịch sử công tác"""
 
-    trang_thai = request.GET.get("trangthai", 'all')
-    lich_su = Lichsucongtac.objects.filter(nhanvien_id=id, trangthai = trang_thai).select_related('phongban', 'chucvu').first()
+    trang_thai = request.GET.get("trangthai", 'active')
+    filters = {'nhanvien_id': id}
+    if trang_thai != 'all':
+        filters['trangthai'] = trang_thai
+    lich_su = Lichsucongtac.objects.filter(**filters).select_related('phongban', 'chucvu').first()
 
     if request.method == "GET":
         # Lấy chi tiết lịch sử công tác

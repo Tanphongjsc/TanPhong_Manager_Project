@@ -145,7 +145,6 @@ class EmployeeManager extends BaseCRUDManager {
             formId: 'employee-form',
             codeField: 'manhanvien',
             entityName: 'nhân viên',
-            autoCode: { sourceField: 'hovaten', targetField: 'manhanvien' },
             apiUrls: {
                 detail: (id) => `/hrm/to-chuc-nhan-su/api/v1/nhan-vien/${id}/`,
                 create: '/hrm/to-chuc-nhan-su/api/v1/nhan-vien/',
@@ -399,7 +398,22 @@ class EmployeeManager extends BaseCRUDManager {
             if (idInput) { idInput.value = ''; idInput.setAttribute('value', ''); }
         }
         this.currentItemId = itemId;
-        super.openSidebar(mode, itemId); // Call Parent
+        super.openSidebar(mode, itemId); // Call Parent first to let it reset user forms
+        
+        if (mode === 'create') {
+            AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/nhan-vien/next-code/').then(res => {
+                const data = res.data?.data || res.data || res;
+                if(data && data.next_code) {
+                    // Delay execution slightly to ensure form reset is completely done
+                    setTimeout(() => {
+                        const el = document.getElementById('manhanvien');
+                        if (el) { 
+                            el.value = data.next_code;
+                        }
+                    }, 50);
+                }
+            }).catch(err => console.error("Could not fetch next employee code", err));
+        }
 
         // Render Extra UI
         const c = this.extraActionsContainer;
@@ -460,7 +474,6 @@ class EmployeeManager extends BaseCRUDManager {
         if (form.elements['chucvu']) form.elements['chucvu'].value = cvId || '';
 
         const pbId = congTac.phongban_id || congTac.phongban?.id || congTac.phongban;
-        // Prefer actual department name from relation/id; noicongtac is only a fallback display value.
         let pbName = congTac.phongban?.tenphongban;
         if (!pbName && pbId) {
             const found = this.lookupData.phongban.find(p => p.id == pbId);
@@ -468,6 +481,10 @@ class EmployeeManager extends BaseCRUDManager {
         }
         if (!pbName) pbName = congTac.noicongtac;
         this._selectPhongban(pbId, pbName);
+
+        // Fill nơi công tác
+        const noicongtacEl = form.querySelector('[name="noicongtac"]');
+        if (noicongtacEl) noicongtacEl.value = congTac.noicongtac || '';
     }
 
     _resetCustomState() {
@@ -477,6 +494,8 @@ class EmployeeManager extends BaseCRUDManager {
         if (cv) cv.value = '';
         const loaiNv = this.elements.form.querySelector('[name="loainv_id"]');
         if (loaiNv) loaiNv.value = '';
+        const nct = this.elements.form.querySelector('[name="noicongtac"]');
+        if (nct) nct.value = '';
     }
 
     // --- MAIN SUBMIT LOGIC (Refactored) ---
@@ -488,10 +507,12 @@ class EmployeeManager extends BaseCRUDManager {
         const cvVal = form.querySelector('[name="chucvu"]')?.value;
         const loaiNvVal = form.querySelector('[name="loainv_id"]')?.value;
         const pbVal = form.querySelector('[name="phongban"]')?.value;
-
+        const ngayVaoLamVal = form.querySelector('[name="ngayvaolam"]')?.value;
+        
         if (!AppUtils.Validation.required(cvVal)) return AppUtils.Notify.warning('Vui lòng chọn chức vụ');
         if (!AppUtils.Validation.required(loaiNvVal)) return AppUtils.Notify.warning('Vui lòng chọn loại nhân viên');
         if (!AppUtils.Validation.required(pbVal)) return AppUtils.Notify.warning('Vui lòng chọn phòng ban');
+        if (!AppUtils.Validation.required(ngayVaoLamVal)) return AppUtils.Notify.warning('Vui lòng chọn ngày vào làm');
 
         // 2. Button Loading Helper
         const submitBtn = document.querySelector(`#${this.config.sidebarId} [data-sidebar-submit]`);
@@ -520,26 +541,50 @@ class EmployeeManager extends BaseCRUDManager {
             const empPayload = { ...data };
             delete empPayload.chucvu;
             delete empPayload.phongban;
+            delete empPayload.noicongtac; // noicongtac thuộc lịch sử công tác, không thuộc nhân viên
 
             const url = isEdit ? this.config.apiUrls.update(data.id) : this.config.apiUrls.create;
             const res = await AppUtils.API[isEdit ? 'put' : 'post'](url, empPayload);
             const nhanvienId = res.data?.id || res.id;
 
-            // 4. Create History Record: luôn gửi noicongtac là tên phòng ban đang chọn
+            // 4. Xử lý lịch sử công tác thông minh
+            const noicongtacVal = form.querySelector('[name="noicongtac"]')?.value?.trim() || '';
             let autoAssignWarnings = [];
-            if (nhanvienId) {
-                //console.log('[DEBUG] batdau gửi lên LSCT:', data.ngayvaolam, '| data keys:', Object.keys(data));
-                const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
-                    nhanvien_id: nhanvienId,
-                    phongban_id: pbVal,
-                    chucvu_id: cvVal,
-                    noicongtac: this.phongbanDropdown.selectedText || '', // tên phòng ban
-                    batdau: data.ngayvaolam || null, // Ngày bắt đầu = ngày vào làm
-                    trangthai: 'active'
-                });
 
-                // Thu thập warnings từ auto-assign
-                autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+            if (nhanvienId) {
+                if (!isEdit) {
+                    // CREATE: Luôn tạo bản ghi lịch sử công tác mới
+                    const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                        nhanvien_id: nhanvienId,
+                        phongban_id: pbVal,
+                        chucvu_id: cvVal,
+                        noicongtac: noicongtacVal,
+                        trangthai: 'active'
+                    });
+                    autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+                } else {
+                    // EDIT: So sánh với dữ liệu cũ để quyết định hành động
+                    const oldPb = String(this.currentCongTac?.phongban_id || this.currentCongTac?.phongban || '');
+                    const oldCv = String(this.currentCongTac?.chucvu_id || this.currentCongTac?.chucvu || '');
+                    const oldNct = this.currentCongTac?.noicongtac || '';
+
+                    const pbChanged = String(pbVal) !== oldPb;
+                    const cvChanged = String(cvVal) !== oldCv;
+                    const nctChanged = noicongtacVal !== oldNct;
+
+                    if (pbChanged || cvChanged || nctChanged) {
+                        // Có thay đổi công tác → Tạo bản ghi lịch sử công tác MỚI (deactivate cũ + auto-assign)
+                        const lsctRes = await AppUtils.API.post('/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/', {
+                            nhanvien_id: nhanvienId,
+                            phongban_id: pbVal,
+                            chucvu_id: cvVal,
+                            noicongtac: noicongtacVal,
+                            trangthai: 'active'
+                        });
+                        autoAssignWarnings = lsctRes?.warnings || lsctRes?.data?.warnings || [];
+                    }
+                    // Không có thay đổi gì → bỏ qua, không gọi API
+                }
             }
 
             AppUtils.Notify.success(isEdit ? 'Cập nhật thành công' : 'Thêm mới thành công');
@@ -557,7 +602,16 @@ class EmployeeManager extends BaseCRUDManager {
                 AppUtils.Form.reset(form);
                 this._resetCustomState();
                 const idInput = form.querySelector('input[name="id"]');
-                if (idInput) { idInput.value = ''; idInput.removeAttribute('value'); }
+                if(idInput) { idInput.value = ''; idInput.removeAttribute('value'); }
+                
+                AppUtils.API.get('/hrm/to-chuc-nhan-su/api/v1/nhan-vien/next-code/').then(res => {
+                    const nextData = res.data?.data || res.data || res;
+                    if(nextData && nextData.next_code) {
+                        const el = document.getElementById('manhanvien');
+                        if (el) el.value = nextData.next_code;
+                    }
+                }).catch(err => console.error("Could not fetch next employee code", err));
+                
                 form.querySelector('[name="hovaten"]')?.focus();
             } else {
                 this.sidebar.close();

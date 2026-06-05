@@ -240,7 +240,7 @@ class DetailManager {
     renderHistoryLoading() {
         this.els.historyBody.innerHTML = `
             <tr>
-                <td colspan="4" class="py-10 text-center">
+                <td colspan="5" class="py-10 text-center">
                     <div class="flex flex-col items-center">
                         <i class="fas fa-circle-notch fa-spin text-2xl text-blue-500 mb-3"></i>
                         <span class="text-sm text-slate-500">Đang tải dữ liệu...</span>
@@ -252,7 +252,7 @@ class DetailManager {
     renderHistoryEmpty() {
         AppUtils.UI.renderEmptyState(this.els.historyBody, {
             message: 'Chưa có lịch sử công tác',
-            colspan: 4,
+            colspan: 5,
             icon: 'default'
         });
     }
@@ -260,7 +260,7 @@ class DetailManager {
     renderHistoryError() {
         this.els.historyBody.innerHTML = `
             <tr>
-                <td colspan="4" class="py-10 text-center">
+                <td colspan="5" class="py-10 text-center">
                     <div class="flex flex-col items-center">
                         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
                             <i class="fas fa-exclamation-triangle text-xl text-red-500"></i>
@@ -279,8 +279,13 @@ class DetailManager {
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50 transition-colors';
 
-            const dateStr = AppUtils.DateUtils.format(item.created_at || item.ngaybatdau, 'dd/MM/yyyy HH:mm') || '--';
-            const deptName = item.phongban?.tenphongban || item.noicongtac || '--';
+            // Thời gian: BắtĐầu → KếtThúc
+            const batdau = AppUtils.DateUtils.format(item.batdau, 'dd/MM/yyyy') || '--';
+            const ketthuc = item.ketthuc ? AppUtils.DateUtils.format(item.ketthuc, 'dd/MM/yyyy') : 'Hiện tại';
+            const dateStr = `${batdau} → ${ketthuc}`;
+
+            const deptName = item.phongban?.tenphongban || '--';
+            const noiCongTac = item.noicongtac || '--';
             const positionName = item.chucvu?.tenvitricongviec || '--';
             const isCurrent = item.trangthai === 'active';
 
@@ -295,6 +300,7 @@ class DetailManager {
             tr.innerHTML = `
                 <td class="px-4 py-3.5 whitespace-nowrap text-sm text-slate-600">${dateStr}</td>
                 <td class="px-4 py-3.5 text-sm font-medium text-slate-900">${deptName}</td>
+                <td class="px-4 py-3.5 text-sm text-slate-600">${noiCongTac}</td>
                 <td class="px-4 py-3.5 text-sm text-slate-600">${positionName}</td>
                 <td class="px-4 py-3.5 whitespace-nowrap">${badge}</td>
             `;
