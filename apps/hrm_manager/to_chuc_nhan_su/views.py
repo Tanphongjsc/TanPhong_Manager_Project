@@ -1077,39 +1077,99 @@ def api_lich_su_cong_tac_list(request):
         )
 
     if request.method == "POST":
-        # Tạo mới lịch sử công tác
+        # Tạo mới / cập nhật lịch sử công tác
         try:
             data = loads(request.body)
             nhanvien_id = data.get('nhanvien_id')
+            today = timezone.now().date()
 
-            # Lưu phòng ban cũ trước khi deactivate (dùng cho deactivate_old_schedule)
+            new_phongban_id = data.get('phongban_id')
+            new_chucvu_id = data.get('chucvu_id')
+            new_noicongtac = data.get('noicongtac')
+
+            # Tìm bản ghi active hiện tại
             old_phongban_id = None
             lich_su_old = Lichsucongtac.objects.filter(
                 nhanvien_id=nhanvien_id, trangthai='active'
-            ).first()
+            ).order_by('-batdau', '-id').first()
 
+            # ============================================================
+            # NHÁNH B: batdau nằm trong tương lai → cập nhật tại chỗ
+            # Tránh nghịch lý ketthuc < batdau khi NV chưa thực sự bắt đầu.
+            # ============================================================
+            if lich_su_old and lich_su_old.batdau and lich_su_old.batdau > today:
+                old_phongban_id = lich_su_old.phongban_id
+
+                # Cập nhật thông tin công tác trực tiếp trên bản ghi hiện có
+                lich_su_old.phongban_id = new_phongban_id
+                lich_su_old.chucvu_id = new_chucvu_id
+                lich_su_old.noicongtac = new_noicongtac
+                lich_su_old.updated_at = timezone.now()
+                lich_su_old.save()
+
+                # Auto-assign: chỉ xử lý khi phòng ban thực sự thay đổi
+                assign_result = {'warnings': []}
+                if old_phongban_id and new_phongban_id and str(old_phongban_id) != str(new_phongban_id):
+                    EmployeeAutoAssignService.deactivate_old_schedule(
+                        nhanvien_id=nhanvien_id,
+                        old_phongban_id=old_phongban_id,
+                        new_phongban_id=new_phongban_id,
+                    )
+                    assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
+                        nhanvien_id=nhanvien_id,
+                        phongban_id=new_phongban_id,
+                        effective_date=lich_su_old.batdau,
+                        old_phongban_id=old_phongban_id,
+                    )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Cập nhật lịch sử công tác thành công',
+                    'data': model_to_dict(lich_su_old),
+                    'warnings': assign_result.get('warnings', []),
+                })
+
+            # ============================================================
+            # NHÁNH C: batdau <= hôm nay → flow chuẩn: đóng cũ + tạo mới
+            # ============================================================
             if lich_su_old:
                 old_phongban_id = lich_su_old.phongban_id
-                lich_su_old.ketthuc = timezone.now().date()
+                lich_su_old.ketthuc = today
                 lich_su_old.trangthai = 'inactive'
                 lich_su_old.updated_at = timezone.now()
                 lich_su_old.save()
 
+            # ============================================================
+            # Xác định batdau cho bản ghi mới
+            #   NHÁNH A: NV mới (chưa có lịch sử) → dùng ngayvaolam
+            #   NHÁNH C: NV đã có lịch sử          → dùng ngày hiện tại
+            # ============================================================
+            if lich_su_old is None:
+                has_any_history = Lichsucongtac.objects.filter(
+                    nhanvien_id=nhanvien_id
+                ).exists()
+                if not has_any_history:
+                    # Nhân viên mới hoàn toàn → lấy ngayvaolam
+                    nhan_vien = Nhanvien.objects.get(id=nhanvien_id)
+                    batdau = nhan_vien.ngayvaolam or today
+                else:
+                    # Đã có lịch sử inactive (tái tuyển dụng, v.v.) → dùng hôm nay
+                    batdau = today
+            else:
+                batdau = today
+
             lich_su_new = Lichsucongtac.objects.create(
-                batdau=timezone.now().date(),
+                batdau=batdau,
                 ketthuc=None,
-                noicongtac=data.get('noicongtac'),
+                noicongtac=new_noicongtac,
                 trangthai=data.get('trangthai', 'active'),
-                nhanvien_id=data.get('nhanvien_id'),
-                phongban_id=data.get('phongban_id'),
-                chucvu_id=data.get('chucvu_id'),
+                nhanvien_id=nhanvien_id,
+                phongban_id=new_phongban_id,
+                chucvu_id=new_chucvu_id,
                 created_at=timezone.now(),
             )
 
             # Auto-assign lịch làm việc & chế độ lương theo phòng ban mới
-            new_phongban_id = data.get('phongban_id')
-
-            # Nếu chuyển phòng ban → deactivate lịch phòng ban cũ
             if old_phongban_id and new_phongban_id:
                 EmployeeAutoAssignService.deactivate_old_schedule(
                     nhanvien_id=nhanvien_id,
@@ -1130,7 +1190,7 @@ def api_lich_su_cong_tac_list(request):
                 'data': model_to_dict(lich_su_new),
                 'warnings': assign_result.get('warnings', []),
             }, status=201)
-        
+
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -1161,20 +1221,44 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
             trangthai='active'
         )
 
+        today = timezone.now().date()
         all_warnings = []
         for lich_su_old in active_histories:
             old_phongban_id = lich_su_old.phongban_id
             nhanvien_id = lich_su_old.nhanvien_id
 
+            # NHÁNH B: batdau tương lai → cập nhật tại chỗ (tránh ketthuc < batdau)
+            if lich_su_old.batdau and lich_su_old.batdau > today:
+                lich_su_old.phongban_id = phong_ban_id
+                lich_su_old.updated_at = timezone.now()
+                lich_su_old.save()
+
+                if old_phongban_id and phong_ban_id and str(old_phongban_id) != str(phong_ban_id):
+                    EmployeeAutoAssignService.deactivate_old_schedule(
+                        nhanvien_id=nhanvien_id,
+                        old_phongban_id=old_phongban_id,
+                        new_phongban_id=phong_ban_id,
+                    )
+                    assign_result = EmployeeAutoAssignService.auto_assign_for_employee(
+                        nhanvien_id=nhanvien_id,
+                        phongban_id=phong_ban_id,
+                        effective_date=lich_su_old.batdau,
+                        old_phongban_id=old_phongban_id,
+                    )
+                    if assign_result.get('warnings'):
+                        all_warnings.extend(assign_result['warnings'])
+                continue
+
+            # NHÁNH C: batdau <= hôm nay → flow chuẩn: đóng cũ + tạo mới
             # 1. Deactivate bản ghi cũ
-            lich_su_old.ketthuc = timezone.now().date()
+            lich_su_old.ketthuc = today
             lich_su_old.trangthai = 'inactive'
             lich_su_old.updated_at = timezone.now()
             lich_su_old.save()
 
             # 2. Tạo bản ghi lịch sử công tác MỚI
             lich_su_new = Lichsucongtac.objects.create(
-                batdau=timezone.now().date(),
+                batdau=today,
                 ketthuc=None,
                 noicongtac=lich_su_old.noicongtac,  # Giữ nguyên nơi công tác cũ
                 trangthai='active',
@@ -1199,7 +1283,7 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
                 effective_date=lich_su_new.batdau,
                 old_phongban_id=old_phongban_id
             )
-            
+
             if assign_result.get('warnings'):
                 all_warnings.extend(assign_result['warnings'])
 
