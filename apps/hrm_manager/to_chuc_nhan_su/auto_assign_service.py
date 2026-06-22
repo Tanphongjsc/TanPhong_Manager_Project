@@ -26,6 +26,9 @@ from apps.hrm_manager.__core__.models import (
     Thietlapsolieucodinh,
 )
 
+import json
+from apps.hrm_manager.__core__.models import Calamviec
+
 logger = logging.getLogger(__name__)
 
 # Trạng thái NV được phép auto-assign
@@ -332,6 +335,8 @@ class EmployeeAutoAssignService:
         Logic tái sử dụng từ LichLamViecService.generate_actual_schedule_for_fixed
         nhưng chỉ cho 1 NV.
         """
+        from apps.hrm_manager.lich_lam_viec.services import CaLamViecService
+
         # Build day_shifts_map: {weekday: [ca_id, ...]}
         day_shifts_map = {}
         days_with_shifts = set()
@@ -339,6 +344,15 @@ class EmployeeAutoAssignService:
             if ca_id:
                 day_shifts_map.setdefault(ngay, []).append(ca_id)
                 days_with_shifts.add(ngay)
+        
+        # Pre-build snapshot map
+        snapshot_map = {}
+        for ca_id in set(ca_id for ca_ids in day_shifts_map.values() for ca_id in ca_ids):
+            ca_obj = Calamviec.objects.filter(id=ca_id).prefetch_related(
+                'khunggiolamviec_set', 'khunggionghitrua_set'
+            ).first()
+            if ca_obj:
+                snapshot_map[ca_id] = json.dumps(CaLamViecService._build_snapshot_ca(ca_obj), ensure_ascii=False)
 
         # Xóa lịch cũ tương lai của NV này thuộc lịch này (không cho phép ghi đè)
         Lichlamviecthucte.objects.filter(
@@ -372,6 +386,7 @@ class EmployeeAutoAssignService:
                     records.append(Lichlamviecthucte(
                         calamviec_id=ca_id,
                         cophaingaynghi=False,
+                        snapshot_ca=snapshot_map.get(ca_id),
                         **base_kwargs,
                     ))
             else:
