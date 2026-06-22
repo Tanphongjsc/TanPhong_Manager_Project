@@ -29,6 +29,7 @@ class Bangchamcong(models.Model):
     congviec = models.ForeignKey('Congviec', models.DO_NOTHING, blank=True, null=True)
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
     calamviec = models.ForeignKey('Calamviec', models.DO_NOTHING, blank=True, null=True)
+    snapshot_khunggio = models.TextField(db_column='SnapshotKhungGio', blank=True, null=True)
 
     class Meta:
         managed = False
@@ -437,6 +438,7 @@ class Lichlamviecthucte(models.Model):
     nhanvien = models.ForeignKey('Nhanvien', models.DO_NOTHING, blank=True, null=True)
     lichlamviec = models.ForeignKey(Lichlamviec, models.DO_NOTHING, blank=True, null=True)
     nguongoc = models.CharField(db_column='NguonGoc', blank=True, null=True)
+    snapshot_ca = models.TextField(db_column='SnapshotCa', blank=True, null=True)
 
     class Meta:
         managed = False

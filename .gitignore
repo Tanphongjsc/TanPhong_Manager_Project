@@ -11,6 +11,7 @@ logs/
 **/migrations/
 *.md
 *.log
+docs/
 
 # Thư mục Node
 node_modules/

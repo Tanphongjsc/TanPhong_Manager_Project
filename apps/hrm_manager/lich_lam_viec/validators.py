@@ -274,3 +274,71 @@ def validate_schedule_time_overlap(chi_tiet_ca):
             )
 
     return True, None
+
+
+def _validate_lichtrinh_cycle_overlap(all_ct_in_cycle, songaylap, editing_ca_id, new_ca_data):
+    """
+    Kiểm tra xung đột thời gian trong 1 chu kỳ lịch trình,
+    bao gồm cả wrap-around (ngày cuối → ngày đầu chu kỳ kế).
+    """
+    all_intervals = []
+    for ct in all_ct_in_cycle:
+        ngay = int(ct.calamviectungngay) if ct.calamviectungngay else 0
+        day_offset = ngay * 1440  # offset phút theo ngày trong chu kỳ
+
+        if ct.calamviec_id == editing_ca_id:
+            # Dùng payload mới
+            khung_gios = new_ca_data.get('ChiTietKhungGio', [])
+            for kg in khung_gios:
+                start = parse_time(kg.get('GioBatDau'))
+                end = parse_time(kg.get('GioKetThuc'))
+                if start is None or end is None:
+                    continue
+                abs_start = day_offset + start
+                abs_end = day_offset + end
+                if end <= start:
+                    abs_end += 1440
+                all_intervals.append({
+                    'start': abs_start, 'end': abs_end,
+                    'ca_name': new_ca_data.get('TenCa', ''),
+                    'ngay': ngay
+                })
+        elif ct.calamviec:
+            # Đọc từ DB
+            for kg in ct.calamviec.khunggiolamviec_set.order_by('id'):
+                start = parse_time(kg.thoigianbatdau.strftime('%H:%M'))
+                end = parse_time(kg.thoigianketthuc.strftime('%H:%M'))
+                if start is None or end is None:
+                    continue
+                abs_start = day_offset + start
+                abs_end = day_offset + end
+                if end <= start:
+                    abs_end += 1440
+                all_intervals.append({
+                    'start': abs_start, 'end': abs_end,
+                    'ca_name': ct.calamviec.tencalamviec,
+                    'ngay': ngay
+                })
+
+    # ── Wrap-around check ──
+    cycle_total_minutes = songaylap * 1440
+    first_day_intervals = [iv for iv in all_intervals if iv['ngay'] == 0]
+    for iv in first_day_intervals:
+        all_intervals.append({
+            **iv,
+            'start': iv['start'] + cycle_total_minutes,
+            'end': iv['end'] + cycle_total_minutes,
+        })
+
+    # Sort và check overlap
+    all_intervals.sort(key=lambda x: x['start'])
+    for i in range(len(all_intervals) - 1):
+        cur = all_intervals[i]
+        nxt = all_intervals[i + 1]
+        if cur['end'] > nxt['start']:
+            return (
+                f"'{cur['ca_name']}' (Ngày {cur['ngay']+1}) "
+                f"trùng với '{nxt['ca_name']}' (Ngày {nxt['ngay']+1})"
+            )
+
+    return None
