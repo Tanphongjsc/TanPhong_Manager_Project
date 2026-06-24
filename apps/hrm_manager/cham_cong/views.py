@@ -463,6 +463,7 @@ def calculate_bang_cham_cong_objects(data_list):
             }
 
         # Tạo object Bangchamcong
+        snapshot_dict = _build_snapshot_from_item(item)
         objs.append(Bangchamcong(
             id=item.get('id') or None,
             created_at=timezone.now(),
@@ -490,7 +491,8 @@ def calculate_bang_cham_cong_objects(data_list):
             ghichu=item.get('ghichu', ''),
             congviec_id=item.get('congviec_id'),
             nhanvien_id=nv_id,
-            calamviec_id=item.get('calamviec_id', None)
+            calamviec_id=item.get('calamviec_id', None),
+            snapshot_khunggio=dumps(snapshot_dict) if snapshot_dict else None
         ))
 
     return objs
@@ -627,6 +629,28 @@ def _get_shifts_for_date(ngay_lam_viec, source='schedule'):
 # DATA BUILDERS: Chấm công theo ngày
 # ============================================================
 
+def _build_snapshot_from_item(item):
+    """
+    Tạo snapshot JSON đóng băng cấu hình khung giờ tại thời điểm chấm công.
+    Build từ server-side trusted data, không tin payload client.
+    """
+    khung_gio = item.get('khunggiolamviec')
+    if not khung_gio:
+        return None
+
+    return {
+        'schema_version': 1,
+        'loaicalamviec': item.get('loaicalamviec', 'CO_DINH'),
+        'cocancheckout': item.get('cocancheckout', True),
+        'tongthoigianlamvieccuaca': item.get('tongthoigianlamvieccuaca', 0),
+        'congcuacalamviec': item.get('congtongcuaca', 0),
+        'sokhunggiotrongca': item.get('sokhunggiotrongca', 1),
+        'solanchamcongtrongngay': item.get('solanchamcongtrongngay', 1),
+        'khunggiolamviec': khung_gio,
+        'khunggionghitrua': item.get('khunggionghitrua', []),
+    }
+
+
 def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
     """Lấy dữ liệu chấm công đã lưu cho mode update."""
     # Query chấm công + join metadata nhân viên/ca
@@ -643,7 +667,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
     ).values(
-        'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi',
+        'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi', 'snapshot_khunggio',
         'hovaten', 'manhanvien', 'loainv', 'phuongthuctinhluong',
         'solanchamcongtrongngay', 'sokhunggiotrongca', 'cocancheckout', 'loaicalamviec', 'tongthoigianlamvieccuaca',
         'congtongcuaca',
@@ -668,18 +692,38 @@ def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
         nv_id = item['nhanvien_id']
         item['phongban_id'] = map_pb.get(nv_id)
 
-        shift_meta = map_ca.get(item.get('calamviec_id'), {})
-        list_kg = shift_meta.get('list_khung_gio', [])
-        item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
+        snapshot_raw = item.pop('snapshot_khunggio', None)
+        snapshot = None
+        if isinstance(snapshot_raw, str):
+            try:
+                snapshot = loads(snapshot_raw)
+            except Exception:
+                snapshot = None
+        else:
+            snapshot = snapshot_raw
 
-        # Xác định khung giờ theo index lần chấm
         idx = row_idx_by_emp[nv_id]
-        item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_kg, idx)
         row_idx_by_emp[nv_id] += 1
-        if item['khunggiolamviec'] is None:
-            continue
 
-        _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_kg)
+        if snapshot and isinstance(snapshot, dict):
+            item['khunggiolamviec'] = snapshot.get('khunggiolamviec')
+            item['khunggionghitrua'] = snapshot.get('khunggionghitrua', [])
+            item['loaicalamviec'] = snapshot.get('loaicalamviec', item.get('loaicalamviec'))
+            item['cocancheckout'] = snapshot.get('cocancheckout', item.get('cocancheckout'))
+            item['tongthoigianlamvieccuaca'] = snapshot.get('tongthoigianlamvieccuaca', item.get('tongthoigianlamvieccuaca'))
+            item['congtongcuaca'] = snapshot.get('congcuacalamviec', item.get('congtongcuaca'))
+            item['sokhunggiotrongca'] = snapshot.get('sokhunggiotrongca', item.get('sokhunggiotrongca'))
+            item['solanchamcongtrongngay'] = snapshot.get('solanchamcongtrongngay', item.get('solanchamcongtrongngay'))
+        else:
+            shift_meta = map_ca.get(item.get('calamviec_id'), {})
+            list_kg = shift_meta.get('list_khung_gio', [])
+            item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
+
+            item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_kg, idx)
+            if item['khunggiolamviec'] is None:
+                continue
+
+            _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_kg)
 
         # Chuẩn hóa output
         item['sophutot'] = item.get('thoigianlamthem') or 0
@@ -747,21 +791,19 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     sq_selected = qs_base.order_by(*order_fields).distinct('nhanvien_id').values('id')
 
     # Annotate nặng (JSONBAgg) chỉ trên tập đã lọc
-    qs = qs_base.filter(id__in=Subquery(sq_selected)).annotate(
+    qs = qs_base.filter(id__in=Subquery(sq_selected)).values(
+        "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
+        "total_cham_cong", "solanchamcongtrongngay",
         sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
         cocancheckout=F('calamviec__cocancheckout'),
         loaicalamviec=F('calamviec__loaichamcong'),
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
-        list_khung_gio_json=_build_khung_gio_jsonb_agg('calamviec__khunggiolamviec__')
-    ).values(
-        "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
-        "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca",
-        "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
-        "congtongcuaca", "list_khung_gio_json",
         hovaten=F('nhanvien__hovaten'),
         manhanvien=F('nhanvien__manhanvien'),
         phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
+    ).annotate(
+        list_khung_gio_json=_build_khung_gio_jsonb_agg('calamviec__khunggiolamviec__')
     ).order_by('nhanvien_id')
 
     ds = list(qs)
@@ -931,8 +973,20 @@ def api_bang_cham_cong_list(request):
             Bangchamcong.objects.bulk_create(create_objs)
         if update_objs:
             now = timezone.now()
+            existing_snapshots = {
+                obj.id: obj.snapshot_khunggio
+                for obj in Bangchamcong.objects.filter(
+                    id__in=[o.id for o in update_objs]
+                ).only('id', 'snapshot_khunggio')
+            }
             for o in update_objs:
                 o.updated_at = now
+                if o.id in existing_snapshots and existing_snapshots[o.id]:
+                    val = existing_snapshots[o.id]
+                    if isinstance(val, (dict, list)):
+                        o.snapshot_khunggio = dumps(val)
+                    else:
+                        o.snapshot_khunggio = val
                 o.save()
 
         is_create = request.method == 'POST'
