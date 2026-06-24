@@ -27,17 +27,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full space-y-4">
+<div class="flex flex-col md:h-full space-y-4">
     <input type="hidden" id="config-emp-id" value="{{ employee.id }}">
     <input type="hidden" id="config-redirect-url" value="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}">
     <input type="hidden" id="url-emp-detail-pattern" value="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_nhan_vien_index' id=0 %}">
 
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
-    <div class="bg-white shadow-sm p-4 sm:p-6 rounded-lg flex-1">
+    <div class="bg-white shadow-sm p-4 sm:p-6 rounded-lg md:flex-1 flex flex-col md:overflow-hidden">
 
         <!-- Merged Header + Profile Card -->
-        <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-6">
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-6 shrink-0">
             <div class="profile-gradient h-24 relative">
                 <a href="{% url 'hrm:to_chuc_nhan_su:cay_nhan_su_index' %}"
                    class="absolute top-3 left-3 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white/20 hover:bg-white/30 text-white backdrop-blur transition">
@@ -111,13 +111,13 @@
         </div>
 
         <!-- Tabs Full Width -->
-        <div class="bg-white rounded-lg border border-slate-200 shadow-sm min-h-[480px] flex flex-col">
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm md:flex-1 flex flex-col md:overflow-hidden md:min-h-0">
             
-            <div id="detail-tab-container" class="w-full">
+            <div id="detail-tab-container" class="w-full shrink-0">
                 {% include "components/tab_nav.html" with tabs=tabs %}
             </div>
 
-            <div class="flex-1 tab-content-scroll overflow-y-auto bg-slate-50/50">
+            <div class="md:flex-1 tab-content-scroll md:overflow-y-auto bg-slate-50/50">
                 
                 <div id="tab-basic" class="tab-pane animate-fade-in p-5 sm:p-6 pb-24">
                     
@@ -147,7 +147,7 @@
                             
                             {% include "components/detail_info_item.html" with label="Email" value=employee.email icon="fa-envelope" color="orange" name="email" type="email" %}
                             
-                            {% include "components/detail_info_item.html" with label="CCCD/CMND" value=employee.cccd icon="fa-id-card" color="slate" name="cccd" %}
+                            {% include "components/detail_info_item.html" with label="CCCD/CMND" value=employee.socccd icon="fa-id-card" color="slate" name="socccd" %}
                             
                             {% include "components/detail_info_item.html" with label="Địa chỉ" value=employee.diachi icon="fa-map-marker-alt" color="red" name="diachi" full_width=True %}
                         </div>
@@ -156,20 +156,30 @@
                             II. Thông tin tài chính
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                            {% include "components/detail_info_item.html" with label="Ngân hàng" value=employee.nganhang.TenNganHang value_id=employee.nganhang.id name="nganhang" icon="fa-university" color="blue" type="select" options=bank_options %}
+                            {% include "components/detail_info_item.html" with label="Ngân hàng" value=employee.nganhang.tennganhang value_id=employee.nganhang.id name="nganhang" icon="fa-university" color="blue" type="select" options=bank_options %}
                             
-                            {% include "components/detail_info_item.html" with label="Số tài khoản" value=employee.taikhoannganhang name="taikhoannganhang" icon="fa-credit-card" color="green" %}
+                            {% include "components/detail_info_item.html" with label="Số tài khoản" value=employee.sotknganhang name="sotknganhang" icon="fa-credit-card" color="green" %}
                             
                             {% include "components/detail_info_item.html" with label="Tên chủ tài khoản" value=employee.tentknganhang name="tentknganhang" icon="fa-user-tag" color="purple" %}
+
+                            {% include "components/detail_info_item.html" with label="Mã số thuế" value=employee.masothue name="masothue" icon="fa-percent" color="red" %}
                         </div>
 
                         <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 mt-6 border-b border-slate-100 pb-2">
                             III. Thông tin công việc
                         </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% include "components/detail_info_item.html" with label="Mã nhân viên" value=employee.manhanvien icon="fa-id-badge" color="slate" editable=False %}
+
                             {% include "components/detail_info_item.html" with label="Phòng ban hiện tại" value=current_job.phongban.tenphongban icon="fa-building" color="slate" editable=False %}
                             
                             {% include "components/detail_info_item.html" with label="Chức vụ hiện tại" value=current_job.chucvu.tenvitricongviec icon="fa-briefcase" color="slate" editable=False %}
+
+                            {% include "components/detail_info_item.html" with label="Ngày vào làm" value=employee.ngayvaolam name="ngayvaolam" icon="fa-calendar-alt" color="green" type="date" %}
+
+                            {% include "components/detail_info_item.html" with label="Loại nhân viên" value=employee.loainv.tenloainv value_id=employee.loainv.id name="loainv_id" icon="fa-user-tag" color="purple" type="select" options=loainv_options %}
+
+                            {% include "components/detail_info_item.html" with label="Trạng thái" value=employee.trangthainv name="trangthainv" icon="fa-toggle-on" color="blue" type="select" options=status_options %}
                         </div>
                     </form>
                 </div>
@@ -202,17 +212,16 @@
                     </div>
                 </div>
 
-                <div id="tab-advanced" class="tab-pane hidden animate-fade-in p-0 h-full">
+                <div id="tab-advanced" class="tab-pane hidden animate-fade-in p-0 md:h-full">
                     {% include "hrm_manager/quan_ly_nhan_su/partials/nhanvien_detail_advanced_info.html" %}
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<div id="global-edit-footer" 
-     class="fixed bottom-0 left-0 right-0 hidden transition-transform duration-300 transform translate-y-full z-[20]">
-    {% include "components/form_footer_fixed.html" with cancel_url="#" cancel_text="Hủy bỏ" submit_id="btn-global-save" submit_text="Lưu thay đổi" %}
+        <div id="global-edit-footer" class="hidden">
+            {% include "components/form_footer_fixed.html" with cancel_url="#" cancel_text="Hủy bỏ" submit_id="btn-global-save" submit_text="Lưu thay đổi" %}
+        </div>
+    </div>
 </div>
 
 {% include "components/crud_sidebar.html" with sidebar_id="employee-sidebar" overlay_id="employee-sidebar-overlay" form_id="employee-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/nhanvien_form.html" title="Cập nhật nhân viên" submit_text="Lưu thay đổi" %}
