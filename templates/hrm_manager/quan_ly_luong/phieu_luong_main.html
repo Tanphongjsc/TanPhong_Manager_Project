@@ -49,7 +49,24 @@
 
         </form>
 
-        {% include "components/form_footer_fixed.html" with cancel_url="/hrm/quan-ly-luong/bang-luong" submit_id="btn-save-payroll" submit_text="Lưu phiếu lương" %}
+        <input type="hidden" id="bangluong-trangthai" value="{{ bangluong.trangthai }}">
+
+        <div class="form-footer-fixed fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 flex justify-end gap-4 z-40 shadow-lg lg:left-[var(--sidebar-w)]">
+            <a href="/hrm/quan-ly-luong/bang-luong"
+               class="px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                Hủy
+            </a>
+            <button type="button"
+                    id="btn-recalculate-payroll"
+                    class="hidden px-5 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 shadow-sm transition-colors flex items-center">
+                <i class="fas fa-sync-alt mr-2"></i>Tính lại lương
+            </button>
+            <button type="button"
+                    id="btn-save-payroll"
+                    class="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center">
+                <i class="fas fa-save mr-2"></i>Lưu phiếu lương
+            </button>
+        </div>
         
     </div>
 </div>

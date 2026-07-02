@@ -26,6 +26,7 @@ urlpatterns = [
 
     # -------------------------------- PHIẾU LƯƠNG ------------------------------
     path("api/phieu-luong/list", views.api_phieu_luong_list, name="api_phieu_luong_list"),
+    path("api/phieu-luong/recalculate", views.api_phieu_luong_recalculate, name="api_phieu_luong_recalculate"),
 
     # ------------------------------ CHẾ ĐỘ LƯƠNG -----------------------------
     path('che-do-luong/', views.view_che_do_luong, name='che_do_luong'),
