@@ -675,10 +675,30 @@ def api_tong_hop_lichlamviec(request):
 
         if item.calamviec:
             ten_ca = item.calamviec.tencalamviec or 'Ca làm việc'
-            for frame in item.calamviec.khunggiolamviec_set.all():
-                display = _format_time_range(frame.thoigianbatdau, frame.thoigianketthuc)
-                if display:
-                    khung_gio.append(display)
+            
+            # Đọc từ snapshot_ca nếu có để đảm bảo tính nhất quán dữ liệu quá khứ
+            if item.snapshot_ca:
+                try:
+                    snapshot = item.snapshot_ca
+                    if isinstance(snapshot, str):
+                        snapshot = json.loads(snapshot)
+                        
+                    if isinstance(snapshot, dict):
+                        ten_ca = snapshot.get('tencalamviec', ten_ca)
+                        for kg in snapshot.get('khunggio', []):
+                            start = kg.get('thoigianbatdau')
+                            end = kg.get('thoigianketthuc')
+                            if start and end:
+                                khung_gio.append(f"{start} - {end}")
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            
+            # Fallback nếu không có snapshot
+            if not khung_gio:
+                for frame in item.calamviec.khunggiolamviec_set.all():
+                    display = _format_time_range(frame.thoigianbatdau, frame.thoigianketthuc)
+                    if display:
+                        khung_gio.append(display)
 
         schedule_map[item.nhanvien_id][date_key].append({
             'ca_id': item.calamviec_id,
@@ -808,13 +828,34 @@ def api_lichlamviec_detail(request, pk):
                     schedule_data[key] = []
                 
                 if record.calamviec:
-                    khung_gios = [
-                        f"{kg.thoigianbatdau.strftime('%H:%M')} - {kg.thoigianketthuc.strftime('%H:%M')}"
-                        for kg in record.calamviec.khunggiolamviec_set.order_by('id')
-                    ]
+                    khung_gios = []
+                    ten_ca = record.calamviec.tencalamviec
+                    
+                    if record.snapshot_ca:
+                        try:
+                            snapshot = record.snapshot_ca
+                            if isinstance(snapshot, str):
+                                snapshot = json.loads(snapshot)
+                                
+                            if isinstance(snapshot, dict):
+                                ten_ca = snapshot.get('tencalamviec', ten_ca)
+                                for kg in snapshot.get('khunggio', []):
+                                    start = kg.get('thoigianbatdau')
+                                    end = kg.get('thoigianketthuc')
+                                    if start and end:
+                                        khung_gios.append(f"{start} - {end}")
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                            
+                    if not khung_gios:
+                        khung_gios = [
+                            f"{kg.thoigianbatdau.strftime('%H:%M')} - {kg.thoigianketthuc.strftime('%H:%M')}"
+                            for kg in record.calamviec.khunggiolamviec_set.order_by('id')
+                        ]
+                        
                     schedule_data[key].append({
                         'id':  record.calamviec.id,
-                        'TenCa': record.calamviec.tencalamviec,
+                        'TenCa': ten_ca,
                         'KhungGio': khung_gios
                     })
                 else:

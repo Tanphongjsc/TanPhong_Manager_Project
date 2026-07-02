@@ -45,6 +45,8 @@ class QuyTacManager {
             { value: 'bangchamcong.tong_ngay_vang', label: 'Bảng công - Số ngày vắng' },
             { value: 'bangchamcong.tong_cong_vp_thucte', label: 'Bảng công - Công VP thực tế' },
             { value: 'bangchamcong.tong_tien_sx', label: 'Bảng công - Thành tiền sản xuất' },
+            { value: 'bangchamcong.tong_an_chu_nhat', label: 'Bảng công - Số suất ăn Chủ Nhật' },
+            { value: 'bangchamcong.tong_an_dem', label: 'Bảng công - Số suất ăn Đêm' },
             { value: 'lichlamviecthucte.tong_cong_lamviec_thucte', label: 'Lịch thực tế - Công chuẩn tháng' },
             { value: 'lichlamviecthucte.tong_gio_lamviec_chuan', label: 'Lịch thực tế - Giờ chuẩn tháng' }
         ];

@@ -32,57 +32,214 @@ class CaLamViecService:
     ✅ DRY: Tái sử dụng cho cả Create và Update
     """
     @staticmethod
-    def check_ca_has_attendance_data(ca_id):
+    def _check_reverse_schedule_conflicts(ca_instance, new_data):
         """
-        ✅ NEW:  Kiểm tra Ca làm việc đã có dữ liệu chấm công chưa
+        Reverse validation: Kiểm tra Ca mới có gây xung đột 
+        trong các lịch CO_DINH và LICH_TRINH đang dùng Ca này không.
+        
+        Returns: str error message nếu xung đột, None nếu OK.
         """
-        
-        # Kiểm tra trong lịch thực tế đã qua
-        past_schedule_count = Lichlamviecthucte.objects.filter(
-            calamviec_id=ca_id,
-            ngaylamviec__lt=date.today(),
-            is_deleted=False
-        ).count()
-        
-        if past_schedule_count > 0:
-            return True, f"Ca này đã được sử dụng trong {past_schedule_count} ngày làm việc"
-        
-        return False, ""
+        from .validators import validate_schedule_time_overlap, _validate_lichtrinh_cycle_overlap
+
+        # ── 1. Kiểm tra lịch CO_DINH ──
+        lich_ids_co_dinh = LichlamviecCodinh.objects.filter(
+            calamviec_id=ca_instance.id,
+            lichlamviec__trangthai='active'
+        ).filter(
+            Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True)
+        ).values_list('lichlamviec_id', flat=True).distinct()
+
+        for lich_id in lich_ids_co_dinh:
+            # Lấy toàn bộ chi tiết ca trong lịch
+            chi_tiet_raw = list(LichlamviecCodinh.objects.filter(
+                lichlamviec_id=lich_id
+            ).values('ngaytrongtuan', 'calamviec_id'))
+
+            # Chuyển sang format mà validate_schedule_time_overlap yêu cầu
+            chi_tiet_ca = [
+                {'NgayTrongTuan': ct['ngaytrongtuan'], 'CaID': ct['calamviec_id']}
+                for ct in chi_tiet_raw
+            ]
+
+            is_valid, msg = validate_schedule_time_overlap(chi_tiet_ca)
+            if not is_valid:
+                lich = Lichlamviec.objects.filter(id=lich_id).first()
+                ten_lich = lich.tenlichlamviec if lich else f"ID={lich_id}"
+                return (
+                    f"Không thể sửa Ca vì gây xung đột thời gian "
+                    f"trong lịch cố định '{ten_lich}': {msg}"
+                )
+
+        # ── 2. Kiểm tra lịch LICH_TRINH ──
+        chu_ky_ids = CtlichlamviecLichtrinh.objects.filter(
+            calamviec_id=ca_instance.id,
+            lichlamviec_lichtrinh__lichlamviec__trangthai='active'
+        ).values_list('lichlamviec_lichtrinh_id', flat=True).distinct()
+
+        for chu_ky_id in chu_ky_ids:
+            chu_ky = LichlamviecLichtrinh.objects.filter(id=chu_ky_id).first()
+            if not chu_ky:
+                continue
+
+            all_ct = list(CtlichlamviecLichtrinh.objects.filter(
+                lichlamviec_lichtrinh=chu_ky
+            ).select_related('calamviec').order_by('calamviectungngay'))
+
+            conflict_msg = _validate_lichtrinh_cycle_overlap(
+                all_ct, chu_ky.songaylap, ca_instance.id, new_data
+            )
+            if conflict_msg:
+                ten_lich = chu_ky.lichlamviec.tenlichlamviec if chu_ky.lichlamviec else ''
+                return (
+                    f"Không thể sửa Ca vì gây xung đột thời gian "
+                    f"trong lịch trình '{ten_lich}', chu kỳ '{chu_ky.tenchuky}': {conflict_msg}"
+                )
+
+        return None
 
     @staticmethod
-    def validate_ca_update(ca_instance, new_data):
-        """
-        ✅ NEW:  Validate trước khi update Ca
-        Chặn sửa thông tin cốt lõi nếu đã có dữ liệu chấm công
-        """
-        has_data, msg = CaLamViecService.check_ca_has_attendance_data(ca_instance.id)
-        
-        if not has_data:
-            return True, ""
-        
-        # Lấy khung giờ hiện tại
-        current_frames = list(ca_instance.khunggiolamviec_set.order_by('id').values(
-            'thoigianbatdau', 'thoigianketthuc'
+    def _check_payroll_period_for_ca(ca_instance):
+        future_dates = Lichlamviecthucte.objects.filter(
+            calamviec_id=ca_instance.id,
+            ngaylamviec__gte=date.today()
+        ).values_list('ngaylamviec', flat=True)
+
+        if not future_dates:
+            return None
+
+        min_date = min(future_dates)
+        max_date = max(future_dates)
+
+        locked_ky = Kyluong.objects.filter(
+            ngaybatdau__lte=max_date,
+            ngayketthuc__gte=min_date,
+            trangthai__in=['calculated', 'approved', 'paid']
+        ).first()
+
+        if locked_ky:
+            return (
+                f"Không thể sửa Ca vì đang ảnh hưởng kỳ lương "
+                f"tháng {locked_ky.thang}/{locked_ky.ngaybatdau.year} "
+                f"(trạng thái: {locked_ky.trangthai}). "
+                f"Vui lòng chờ chốt kỳ lương hoặc chọn ngày hiệu lực sau kỳ này."
+            )
+
+        return None
+
+    @staticmethod
+    def _regenerate_future_schedules(ca_instance):
+        today = date.today()
+
+        lich_ids = LichlamviecCodinh.objects.filter(
+            calamviec_id=ca_instance.id,
+            lichlamviec__trangthai='active'
+        ).filter(
+            Q(lichlamviec__is_deleted=False) | Q(lichlamviec__is_deleted__isnull=True)
+        ).values_list('lichlamviec_id', flat=True).distinct()
+
+        for lich_id in lich_ids:
+            try:
+                lich = Lichlamviec.objects.get(id=lich_id)
+            except Lichlamviec.DoesNotExist:
+                continue
+
+            Lichlamviecthucte.objects.filter(
+                lichlamviec=lich,
+                calamviec_id=ca_instance.id,
+                ngaylamviec__gte=today,
+                chophepghide=False
+            ).delete()
+
+            LichLamViecService.generate_actual_schedule_for_fixed(
+                lich, start_date=today
+            )
+
+    @staticmethod
+    def _build_snapshot_ca(ca_obj):
+        khung_gio_list = []
+        for kg in ca_obj.khunggiolamviec_set.order_by('id'):
+            khung_gio_list.append({
+                'thoigianbatdau': kg.thoigianbatdau.strftime('%H:%M') if kg.thoigianbatdau else None,
+                'thoigianketthuc': kg.thoigianketthuc.strftime('%H:%M') if kg.thoigianketthuc else None,
+                'congcuakhunggio': kg.congcuakhunggio,
+            })
+
+        nghi_trua_list = []
+        for nt in ca_obj.khunggionghitrua_set.all():
+            nghi_trua_list.append({
+                'giobatdau': nt.giobatdau.strftime('%H:%M') if nt.giobatdau else None,
+                'gioketthuc': nt.gioketthuc.strftime('%H:%M') if nt.gioketthuc else None,
+            })
+
+        return {
+            'schema_version': 1,
+            'tencalamviec': ca_obj.tencalamviec,
+            'macalamviec': ca_obj.macalamviec,
+            'loaichamcong': ca_obj.loaichamcong,
+            'congcuacalamviec': float(ca_obj.congcuacalamviec or 0),
+            'tongthoigianlamvieccuaca': ca_obj.tongthoigianlamvieccuaca or 0,
+            'sokhunggiotrongca': ca_obj.sokhunggiotrongca or 1,
+            'solanchamcongtrongngay': ca_obj.solanchamcongtrongngay or 1,
+            'khunggio': khung_gio_list,
+            'nghitrua': nghi_trua_list,
+        }
+
+    @staticmethod
+    def _refresh_caidatca_for_ca(ca_instance):
+        lich_ids_codinh = set(LichlamviecCodinh.objects.filter(
+            calamviec_id=ca_instance.id
+        ).values_list('lichlamviec_id', flat=True))
+
+        lich_ids_lichtrinh = set(CtlichlamviecLichtrinh.objects.filter(
+            calamviec_id=ca_instance.id
+        ).values_list(
+            'lichlamviec_lichtrinh__lichlamviec_id', flat=True
         ))
-        
-        new_frames = new_data.get('ChiTietKhungGio', [])
-        
-        # So sánh số lượng khung giờ
-        if len(current_frames) != len(new_frames):
-            return False, "Không thể thay đổi số lượng khung giờ vì ca này đã có dữ liệu lịch làm việc.Vui lòng tạo ca mới."
-        
-        # So sánh từng khung giờ
-        for i, (current, new) in enumerate(zip(current_frames, new_frames)):
-            current_start = current['thoigianbatdau'].strftime('%H:%M') if current['thoigianbatdau'] else None
-            current_end = current['thoigianketthuc'].strftime('%H:%M') if current['thoigianketthuc'] else None
-            
-            new_start = new.get('GioBatDau')
-            new_end = new.get('GioKetThuc')
-            
-            if current_start != new_start or current_end != new_end:
-                return False, f"Không thể thay đổi giờ vào/ra của khung giờ {i+1} vì ca này đã có dữ liệu lịch làm việc.Vui lòng tạo ca mới."
-        
-        return True, ""
+
+        all_lich_ids = lich_ids_codinh | lich_ids_lichtrinh
+
+        for lich_id in all_lich_ids:
+            lich = Lichlamviec.objects.filter(id=lich_id).first()
+            if not lich or not lich.caidatca:
+                continue
+
+            try:
+                ca_list = json.loads(lich.caidatca)
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+            updated = False
+            for entry in ca_list:
+                if entry.get('id') == ca_instance.id:
+                    entry['TenCa'] = ca_instance.tencalamviec
+                    entry['KhungGio'] = [
+                        f"{kg.thoigianbatdau.strftime('%H:%M')} - {kg.thoigianketthuc.strftime('%H:%M')}"
+                        for kg in ca_instance.khunggiolamviec_set.order_by('id')
+                    ]
+                    updated = True
+
+            if updated:
+                lich.caidatca = json.dumps(ca_list, ensure_ascii=False)
+                lich.save(update_fields=['caidatca'])
+
+    @staticmethod
+    def _collect_lichtrinh_warnings(ca_instance):
+        lich_names = list(CtlichlamviecLichtrinh.objects.filter(
+            calamviec_id=ca_instance.id,
+            lichlamviec_lichtrinh__lichlamviec__trangthai='active'
+        ).values_list(
+            'lichlamviec_lichtrinh__lichlamviec__tenlichlamviec', flat=True
+        ).distinct())
+
+        if not lich_names:
+            return []
+
+        return [
+            f"Ca '{ca_instance.tencalamviec}' đang được sử dụng trong "
+            f"{len(lich_names)} lịch trình: {', '.join(lich_names)}. "
+            f"Hệ thống không tự cập nhật lịch trình xoay ca. "
+            f"Vui lòng kiểm tra và xếp lại lịch nếu cần."
+        ]
     
     @staticmethod
     def create_ca(data):
@@ -124,22 +281,54 @@ class CaLamViecService:
     def update_ca(ca_instance, data):
         """
         Cập nhật Ca làm việc
-        ✅ FIX: Thêm validate chặn sửa thông tin cốt lõi nếu đã có lịch làm việc
+        ✅ REFACTOR: Cho phép sửa, chỉ chặn thay đổi cấu trúc nếu đã phát sinh.
+        Khi sửa field tính toán → tạo phiên bản mới, re-generate lịch tương lai.
         """
-        # Kiểm tra xem ca đã có dữ liệu trong bảng Lichlamviecthucte chưa 
-        has_data = Lichlamviecthucte.objects.filter(
-            calamviec_id=ca_instance.id,
-        ).exists()
-
-        if has_data:
-            # Nếu đã có dữ liệu -> Không cho sửa, return lỗi hoặc raise Exception
-            # Ở đây tôi dùng raise ValidationError để tương thích với cách handle cũ
-            raise ValidationError("Ca làm việc này đã phát sinh dữ liệu lịch làm việc thực tế.Không được phép chỉnh sửa!")
-        
+        # ── 1. Validate nội bộ Ca ──
         is_valid, error = validate_shift_details(data)
         if not is_valid:
             raise ValidationError(error)
-        
+
+        # ── 2. Kiểm tra Ca đã có chấm công chưa ──
+        has_attendance = Bangchamcong.objects.filter(
+            calamviec_id=ca_instance.id
+        ).exists()
+
+        if has_attendance:
+            # Chặn thay đổi CẤU TRÚC (vì snapshot không thể bù)
+            new_so_khung = data.get('SoKhungGio', 1)
+            new_so_lan = data.get('SoLanChamCong', 1)
+            new_loai = data.get('LoaiCa')
+
+            if new_so_khung != ca_instance.sokhunggiotrongca:
+                raise ValidationError(
+                    f"Không thể thay đổi số khung giờ (hiện tại: {ca_instance.sokhunggiotrongca}) "
+                    f"vì ca này đã có dữ liệu chấm công. Vui lòng tạo ca mới."
+                )
+            if new_so_lan != ca_instance.solanchamcongtrongngay:
+                raise ValidationError(
+                    f"Không thể thay đổi số lần chấm công (hiện tại: {ca_instance.solanchamcongtrongngay}) "
+                    f"vì ca này đã có dữ liệu chấm công. Vui lòng tạo ca mới."
+                )
+            if new_loai and new_loai != ca_instance.loaichamcong:
+                raise ValidationError(
+                    f"Không thể thay đổi loại chấm công (hiện tại: {ca_instance.loaichamcong}) "
+                    f"vì ca này đã có dữ liệu chấm công. Vui lòng tạo ca mới."
+                )
+
+        # ── 3. Reverse validation: xung đột lịch ──
+        conflicts = CaLamViecService._check_reverse_schedule_conflicts(
+            ca_instance, data
+        )
+        if conflicts:
+            raise ValidationError(conflicts)
+
+        # ── 4. Kiểm tra kỳ lương ──
+        payroll_block = CaLamViecService._check_payroll_period_for_ca(ca_instance)
+        if payroll_block:
+            raise ValidationError(payroll_block)
+
+        # ── 5. Cập nhật ──
         with transaction.atomic():
             ca_instance.tencalamviec = data.get('TenCa')
             ca_instance.macalamviec = data.get('MaCa', '').strip().upper()
@@ -157,8 +346,25 @@ class CaLamViecService:
             ca_instance.khunggionghitrua_set.all().delete()
             
             CaLamViecService._save_shift_details(ca_instance, data)
-            
-            return ca_instance
+
+            # ── 6. Re-generate lịch thực tế tương lai ──
+            CaLamViecService._regenerate_future_schedules(ca_instance)
+
+            # ── 6.1. Cập nhật snapshot cho các lịch tương lai còn lại (Lịch trình, ghi đè...) ──
+            today = date.today()
+            new_snapshot = json.dumps(CaLamViecService._build_snapshot_ca(ca_instance), ensure_ascii=False)
+            Lichlamviecthucte.objects.filter(
+                calamviec_id=ca_instance.id,
+                ngaylamviec__gte=today
+            ).update(snapshot_ca=new_snapshot)
+
+            # ── 7. Refresh caidatca JSON cache ──
+            CaLamViecService._refresh_caidatca_for_ca(ca_instance)
+
+            # ── 8. Thu thập cảnh báo LICH_TRINH ──
+            warnings = CaLamViecService._collect_lichtrinh_warnings(ca_instance)
+
+            return ca_instance, warnings
     
     @staticmethod
     def _save_shift_details(ca_instance, data):
@@ -1027,6 +1233,15 @@ class LichLamViecService:
         records_batch = []
         created_at = timezone.now()
         
+        # Pre-build snapshot map: {ca_id: snapshot_dict}
+        snapshot_map = {}
+        for ca_id in set(ca_id for ca_ids in day_shifts_map.values() for ca_id in ca_ids):
+            ca_obj = Calamviec.objects.filter(id=ca_id).prefetch_related(
+                'khunggiolamviec_set', 'khunggionghitrua_set'
+            ).first()
+            if ca_obj:
+                snapshot_map[ca_id] = json.dumps(CaLamViecService._build_snapshot_ca(ca_obj), ensure_ascii=False)
+
         # Tối ưu vòng lặp: Tính trước số ngày
         delta = (end_date - start_date).days + 1
 
@@ -1053,6 +1268,7 @@ class LichLamViecService:
                             calamviec_id=ca_id,
                             cophaingaynghi=False,
                             nhanvien_id=emp_id,
+                            snapshot_ca=snapshot_map.get(ca_id),
                             **base_kwargs
                         ))
             else:
@@ -1101,6 +1317,23 @@ class LichLamViecService:
         records_to_create = []
         map_emp_dates_to_clear = defaultdict(list)
         
+        # Pre-build snapshot map cho LICH_TRINH
+        unique_ca_ids = set()
+        for shifts in schedule_data.values():
+            if shifts:
+                for shift in shifts:
+                    ca_id = shift.get('id')
+                    if ca_id and ca_id != 0:
+                        unique_ca_ids.add(ca_id)
+        
+        snapshot_map = {}
+        for ca_id in unique_ca_ids:
+            ca_obj = Calamviec.objects.filter(id=ca_id).prefetch_related(
+                'khunggiolamviec_set', 'khunggionghitrua_set'
+            ).first()
+            if ca_obj:
+                snapshot_map[ca_id] = json.dumps(CaLamViecService._build_snapshot_ca(ca_obj), ensure_ascii=False)
+
         for key, shifts in schedule_data.items():
             parts = key.split('_')
             if len(parts) != 4:
@@ -1147,6 +1380,7 @@ class LichLamViecService:
                             nhanvien_id=emp_id,
                             cophaingaynghi=False,
                             calamviec_id=ca_id,
+                            snapshot_ca=snapshot_map.get(ca_id),
                             **base_kwargs
                         ))
                 
