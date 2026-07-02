@@ -679,14 +679,18 @@ def api_tong_hop_lichlamviec(request):
             # Đọc từ snapshot_ca nếu có để đảm bảo tính nhất quán dữ liệu quá khứ
             if item.snapshot_ca:
                 try:
-                    snapshot = json.loads(item.snapshot_ca)
-                    ten_ca = snapshot.get('tencalamviec', ten_ca)
-                    for kg in snapshot.get('khunggio', []):
-                        start = kg.get('thoigianbatdau')
-                        end = kg.get('thoigianketthuc')
-                        if start and end:
-                            khung_gio.append(f"{start} - {end}")
-                except json.JSONDecodeError:
+                    snapshot = item.snapshot_ca
+                    if isinstance(snapshot, str):
+                        snapshot = json.loads(snapshot)
+                        
+                    if isinstance(snapshot, dict):
+                        ten_ca = snapshot.get('tencalamviec', ten_ca)
+                        for kg in snapshot.get('khunggio', []):
+                            start = kg.get('thoigianbatdau')
+                            end = kg.get('thoigianketthuc')
+                            if start and end:
+                                khung_gio.append(f"{start} - {end}")
+                except (json.JSONDecodeError, TypeError):
                     pass
             
             # Fallback nếu không có snapshot
@@ -829,14 +833,18 @@ def api_lichlamviec_detail(request, pk):
                     
                     if record.snapshot_ca:
                         try:
-                            snapshot = json.loads(record.snapshot_ca)
-                            ten_ca = snapshot.get('tencalamviec', ten_ca)
-                            for kg in snapshot.get('khunggio', []):
-                                start = kg.get('thoigianbatdau')
-                                end = kg.get('thoigianketthuc')
-                                if start and end:
-                                    khung_gios.append(f"{start} - {end}")
-                        except json.JSONDecodeError:
+                            snapshot = record.snapshot_ca
+                            if isinstance(snapshot, str):
+                                snapshot = json.loads(snapshot)
+                                
+                            if isinstance(snapshot, dict):
+                                ten_ca = snapshot.get('tencalamviec', ten_ca)
+                                for kg in snapshot.get('khunggio', []):
+                                    start = kg.get('thoigianbatdau')
+                                    end = kg.get('thoigianketthuc')
+                                    if start and end:
+                                        khung_gios.append(f"{start} - {end}")
+                        except (json.JSONDecodeError, TypeError):
                             pass
                             
                     if not khung_gios:

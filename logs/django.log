@@ -37329,3 +37329,89 @@ WARNING 2026-06-01 17:04:12,569 log 15036 11936 Not Found: /.well-known/appspeci
 WARNING 2026-06-01 17:04:12,569 basehttp 15036 11936 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
 WARNING 2026-06-01 17:05:34,856 log 20040 9344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-06-01 17:05:34,859 basehttp 20040 9344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-02 09:44:37,246 log 29124 25652 Not Found: /favicon.ico
+WARNING 2026-07-02 09:44:37,247 basehttp 29124 25652 "GET /favicon.ico HTTP/1.1" 404 3512
+ERROR 2026-07-02 09:44:47,525 log 29124 12016 Internal Server Error: /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedFunction: could not identify an equality operator for type json
+LINE 1: ...amviec_id", "hrm"."LichLamViecThucTe"."NguonGoc", "hrm"."Lic...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 48, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 972, in api_bang_cham_cong_nhan_vien_list
+    data = build_cham_cong_data_by_status(ngay, mode='update' if is_update else 'create', da_cham_cong=False, calamviec_id=ca_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 767, in build_cham_cong_data_by_status
+    ds = list(qs)
+         ^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\models\query.py", line 216, in __iter__
+    for row in compiler.results_iter(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\models\sql\compiler.py", line 1572, in results_iter
+    results = self.execute_sql(
+              ^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: could not identify an equality operator for type json
+LINE 1: ...amviec_id", "hrm"."LichLamViecThucTe"."NguonGoc", "hrm"."Lic...
+                                                             ^
+
+ERROR 2026-07-02 09:44:47,533 basehttp 29124 12016 "GET /hrm/cham-cong/api/bang-cham-cong/nhan-vien-list/?ngaylamviec=2026-07-02&mode=create&page_size=2000 HTTP/1.1" 500 27608
+ERROR 2026-07-02 09:44:54,400 log 29124 12016 Internal Server Error: /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/
+ERROR 2026-07-02 09:44:54,401 basehttp 29124 12016 "GET /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/?page=1&page_size=20&search=test&start_date=2026-07-02&end_date=2026-07-08 HTTP/1.1" 500 90
+ERROR 2026-07-02 09:45:15,544 log 29124 12016 Internal Server Error: /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/
+ERROR 2026-07-02 09:45:15,545 basehttp 29124 12016 "GET /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/?page=1&page_size=20&search=te&start_date=2026-07-02&end_date=2026-07-08 HTTP/1.1" 500 90
+ERROR 2026-07-02 09:45:17,374 log 29124 12016 Internal Server Error: /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/
+ERROR 2026-07-02 09:45:17,375 basehttp 29124 12016 "GET /hrm/lich-lam-viec/api/lich-lam-viec/tong-hop/?page=1&page_size=20&search=test&start_date=2026-07-02&end_date=2026-07-08 HTTP/1.1" 500 90
+WARNING 2026-07-02 09:45:18,295 log 29124 12016 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-02 09:45:18,296 basehttp 29124 12016 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-02 09:45:44,891 log 29124 15224 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-02 09:45:44,892 basehttp 29124 15224 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-02 09:46:00,009 log 29124 8268 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-02 09:46:00,010 basehttp 29124 8268 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-02 09:46:01,402 log 29124 14820 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-02 09:46:01,402 basehttp 29124 14820 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-02 09:51:01,826 log 25628 24828 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-02 09:51:01,827 basehttp 25628 24828 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
