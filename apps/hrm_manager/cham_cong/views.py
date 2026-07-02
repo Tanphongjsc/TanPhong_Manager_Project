@@ -747,21 +747,19 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     sq_selected = qs_base.order_by(*order_fields).distinct('nhanvien_id').values('id')
 
     # Annotate nặng (JSONBAgg) chỉ trên tập đã lọc
-    qs = qs_base.filter(id__in=Subquery(sq_selected)).annotate(
+    qs = qs_base.filter(id__in=Subquery(sq_selected)).values(
+        "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
+        "total_cham_cong", "solanchamcongtrongngay",
+        hovaten=F('nhanvien__hovaten'),
+        manhanvien=F('nhanvien__manhanvien'),
+        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
+    ).annotate(
         sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
         cocancheckout=F('calamviec__cocancheckout'),
         loaicalamviec=F('calamviec__loaichamcong'),
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
         list_khung_gio_json=_build_khung_gio_jsonb_agg('calamviec__khunggiolamviec__')
-    ).values(
-        "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
-        "total_cham_cong", "solanchamcongtrongngay", "sokhunggiotrongca",
-        "cocancheckout", "loaicalamviec", "tongthoigianlamvieccuaca",
-        "congtongcuaca", "list_khung_gio_json",
-        hovaten=F('nhanvien__hovaten'),
-        manhanvien=F('nhanvien__manhanvien'),
-        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
     ).order_by('nhanvien_id')
 
     ds = list(qs)
