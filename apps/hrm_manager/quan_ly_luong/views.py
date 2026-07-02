@@ -193,17 +193,44 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         # 3b. Chi tiết chấm công (chỉ ngày có đi làm) — dùng cho Nhật ký Chấm công
         if record.get('codilam'):
             bcc_detail_map[str(nv_id)].append(record)
-    
+        
     # 4. Lấy số ngày/giờ làm chuẩn từ Lịch làm việc thực tế
-    lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
+    # ✅ REFACTOR: Ưu tiên đọc snapshot_ca, fallback JOIN Ca nếu chưa có snapshot
+    lich_lam_viec_raw = Lichlamviecthucte.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
-    ).values('nhanvien').annotate(
-        tong_cong_lamviec_thucte=Coalesce(Sum('calamviec__congcuacalamviec'), 0.0, output_field=FloatField()),
-        tong_gio_lamviec_chuan=Coalesce(Sum('calamviec__tongthoigianlamvieccuaca'), 0.0, output_field=FloatField())
-    )
-    # Chuyển về dict {nhanvien_id: {...}}
-    lich_lam_viec_dict = {item['nhanvien']: item for item in lich_lam_viec_qs}
+    ).values('nhanvien_id', 'snapshot_ca', 'calamviec__congcuacalamviec', 'calamviec__tongthoigianlamvieccuaca')
+
+    lich_lam_viec_dict = {}
+    for record in lich_lam_viec_raw:
+        nv_id = record['nhanvien_id']
+        if nv_id not in lich_lam_viec_dict:
+            lich_lam_viec_dict[nv_id] = {
+                'tong_cong_lamviec_thucte': 0.0,
+                'tong_gio_lamviec_chuan': 0.0,
+            }
+
+        snapshot_raw = record.get('snapshot_ca')
+        snapshot = None
+        if isinstance(snapshot_raw, str):
+            try:
+                snapshot = loads(snapshot_raw)
+            except Exception:
+                snapshot = None
+        else:
+            snapshot = snapshot_raw
+
+        if snapshot and isinstance(snapshot, dict):
+            # ✅ Có snapshot → dùng dữ liệu đóng băng
+            cong = _safe_float(snapshot.get('congcuacalamviec', 0))
+            gio = _safe_float(snapshot.get('tongthoigianlamvieccuaca', 0))
+        else:
+            # ❌ Chưa có snapshot → fallback JOIN Ca (backward compatible)
+            cong = _safe_float(record.get('calamviec__congcuacalamviec', 0))
+            gio = _safe_float(record.get('calamviec__tongthoigianlamvieccuaca', 0))
+
+        lich_lam_viec_dict[nv_id]['tong_cong_lamviec_thucte'] += cong
+        lich_lam_viec_dict[nv_id]['tong_gio_lamviec_chuan'] += gio
 
     # 5. Lấy thiết lập số liệu cố định
     setup_data = Thietlapsolieucodinh.objects.filter(
