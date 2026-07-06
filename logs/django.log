@@ -37329,3 +37329,15 @@ WARNING 2026-06-01 17:04:12,569 log 15036 11936 Not Found: /.well-known/appspeci
 WARNING 2026-06-01 17:04:12,569 basehttp 15036 11936 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
 WARNING 2026-06-01 17:05:34,856 log 20040 9344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-06-01 17:05:34,859 basehttp 20040 9344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-03 08:41:39,249 log 19304 32236 Not Found: /favicon.ico
+WARNING 2026-07-03 08:41:39,252 basehttp 19304 32236 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-07-06 14:56:02,557 log 19304 26016 Not Found: /favicon.ico
+WARNING 2026-07-06 14:56:02,560 basehttp 19304 26016 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-07-06 18:19:18,076 log 33524 5844 Bad Request: /hrm/quan-ly-luong/api/phieu-luong/list
+WARNING 2026-07-06 18:19:18,080 basehttp 33524 5844 "POST /hrm/quan-ly-luong/api/phieu-luong/list HTTP/1.1" 400 109
+WARNING 2026-07-06 18:19:21,722 log 33524 5844 Bad Request: /hrm/quan-ly-luong/api/phieu-luong/list
+WARNING 2026-07-06 18:19:21,725 basehttp 33524 5844 "POST /hrm/quan-ly-luong/api/phieu-luong/list HTTP/1.1" 400 109
+WARNING 2026-07-06 18:19:27,873 log 33524 5844 Bad Request: /hrm/quan-ly-luong/api/phieu-luong/list
+WARNING 2026-07-06 18:19:27,875 basehttp 33524 5844 "POST /hrm/quan-ly-luong/api/phieu-luong/list HTTP/1.1" 400 109
+WARNING 2026-07-06 18:47:27,667 log 6380 20192 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-06 18:47:27,669 basehttp 6380 20192 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623

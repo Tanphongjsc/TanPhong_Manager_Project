@@ -62,7 +62,7 @@
                     {% include "components/excel_table_wrapper.html" with table_id="salary-setup-table" %}
 
                     <div class="mt-2 relative">
-                        {% include "components/bulk_actions.html" with id="salary-setup-bulk-actions" show_export=True %}
+                        {% include "components/bulk_actions.html" with id="salary-setup-bulk-actions" show_export=True bulk_footer_aware=True %}
                     </div>
                 </form>
                 
