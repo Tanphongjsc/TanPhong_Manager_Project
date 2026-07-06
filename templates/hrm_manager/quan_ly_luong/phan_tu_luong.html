@@ -70,7 +70,7 @@
                 
                 </div>
 
-            {% include "hrm_manager/quan_ly_luong/partials/tab_thongtin_luong_form_modal.html" %}
+            {% include "components/salary_column_selector.html" %}
 
         </div>
     </div>
@@ -84,5 +84,6 @@
 
 {% block scripts %}
 <script src="{% static 'js/utils/ExcelTableManager.js' %}"></script>
+<script src="{% static 'js/components/salary_column_selector.js' %}"></script>
 <script src="{% static 'js/quan_ly_luong/phan_tu_luong.js' %}"></script>
 {% endblock scripts %}

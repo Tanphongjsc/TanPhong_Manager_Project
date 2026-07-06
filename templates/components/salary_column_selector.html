@@ -1,0 +1,72 @@
+{% comment %}
+  Component: Salary Column Selector (Tree Checkbox Modal)
+  Description: Modal chọn cột bảng lương dạng tree checkbox theo nhóm phần tử.
+               Tái sử dụng được ở nhiều màn hình khác nhau.
+
+  Usage:
+    {% include "components/salary_column_selector.html" with 
+       modal_id="salary-columns-modal" 
+       title="Chọn cột bảng lương"
+       submit_text="Cập nhật bảng"
+       modal_size="2xl"
+    %}
+
+  Params:
+    - modal_id: ID cho modal wrapper (mặc định: salary-columns-modal)
+    - title: Tiêu đề modal (mặc định: Chọn cột bảng lương)
+    - submit_text: Text nút xác nhận (mặc định: Cập nhật bảng)
+    - modal_size: Kích thước modal - sm/md/lg/xl/2xl/3xl (mặc định: 2xl)
+
+  JS Dependency: static/js/components/salary_column_selector.js
+{% endcomment %}
+
+<div id="{{ modal_id|default:'salary-columns-modal' }}" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-[1px]">
+    <div class="bg-white rounded-xl shadow-2xl w-full flex flex-col max-h-[90vh] animate-fade-in
+        {% if modal_size == 'sm' %}max-w-sm
+        {% elif modal_size == 'md' %}max-w-md
+        {% elif modal_size == 'lg' %}max-w-lg
+        {% elif modal_size == 'xl' %}max-w-xl
+        {% elif modal_size == '3xl' %}max-w-3xl
+        {% else %}max-w-2xl{% endif %}">
+        
+        {# Header #}
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+            <h3 class="text-lg font-bold text-slate-800">{{ title|default:"Chọn cột bảng lương" }}</h3>
+            <button type="button" data-modal-close class="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        {# Body - Tree Container #}
+        <div class="flex-1 overflow-auto p-6 bg-slate-50">
+            <div data-tree-container class="space-y-4">
+                <div class="text-center text-slate-500 py-4"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</div>
+            </div>
+        </div>
+
+        {# Footer #}
+        <div class="px-6 py-4 border-t border-slate-100 bg-white rounded-b-xl flex justify-end items-center shrink-0">
+            <button type="button" data-modal-submit class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i> {{ submit_text|default:"Cập nhật bảng" }}
+            </button>
+        </div>
+    </div>
+</div>
+
+{# Template cho mỗi nhóm trong cây #}
+<template data-tree-group-template="{{ modal_id|default:'salary-columns-modal' }}">
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden group-item">
+        <div class="flex items-center gap-3 px-4 py-3 bg-slate-50/50 hover:bg-slate-50 cursor-pointer border-b border-slate-100/50 group-header">
+            <div class="flex items-center h-5">
+                <input type="checkbox" class="group-checkbox w-4 h-4 text-green-600 rounded border-slate-300 focus:ring-green-500 cursor-pointer" onclick="event.stopPropagation()">
+            </div>
+            <div class="flex-1 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 group-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                <i class="fas fa-folder text-yellow-500"></i>
+                <span class="font-medium text-slate-700 group-name">Tên nhóm</span>
+            </div>
+        </div>
+        <div class="children-container hidden pl-12 pr-4 py-2 space-y-1 border-t border-slate-50">
+        </div>
+    </div>
+</template>
