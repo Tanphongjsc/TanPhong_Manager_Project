@@ -19,8 +19,10 @@ class TimekeepingSummaryManager {
             filterMonthWrapper: document.getElementById('filter-month-wrapper'),
             filterDateWrapper: document.getElementById('filter-date-wrapper'),
             filterJobWrapper: document.getElementById('filter-job-wrapper'),
+            filterShiftWrapper: document.getElementById('filter-shift-wrapper'),
             filterDept: document.getElementById('filter-dept'),
             filterJob: document.getElementById('filter-job'),
+            filterShift: document.getElementById('filter-shift'),
             searchInput: document.getElementById('search-input'),
             tabNav: document.querySelector('#tab-container nav'),
             employeeCount: document.getElementById('employee-count'),
@@ -34,6 +36,8 @@ class TimekeepingSummaryManager {
         };
 
         this.currentTabId = '#tab-tong-hop';
+        this.selectedShiftId = null;
+        this.availableShifts = [];
         this.managers = { summary: null, checked: null, unchecked: null };
         this.jobSummaryController = null;
         this.eventManager = AppUtils.EventManager.create();
@@ -115,6 +119,7 @@ class TimekeepingSummaryManager {
                 if (tabId === '#tab-tong-hop' && key === 'ngaylamviec') return;
                 if (tabId !== '#tab-tong-hop' && key === 'thang') return;
                 if (tabId !== '#tab-cong-viec' && key === 'congviec_id') return;
+                if (tabId !== '#tab-cong-viec' && key === 'calamviec_id') return;
                 params[key] = value;
             });
         }
@@ -126,6 +131,9 @@ class TimekeepingSummaryManager {
         if (tabId !== '#tab-tong-hop') {
             this.ensureDateValue();
             if (this.els.filterDate?.value) params['ngaylamviec'] = this.els.filterDate.value;
+        }
+        if (tabId === '#tab-cong-viec' && this.selectedShiftId) {
+            params['calamviec_id'] = this.selectedShiftId;
         }
         return params;
     }
@@ -251,6 +259,9 @@ class TimekeepingSummaryManager {
         if (this.els.filterJobWrapper) {
             this.els.filterJobWrapper.classList.toggle('hidden', !isJobTab);
         }
+        if (this.els.filterShiftWrapper) {
+            this.els.filterShiftWrapper.classList.toggle('hidden', !isJobTab);
+        }
     }
 
     async loadJobSummary() {
@@ -267,12 +278,17 @@ class TimekeepingSummaryManager {
             const res = await AppUtils.API.get(this.apiUrls.jobSummary, params, { signal: controller.signal });
             if (res?.success === false) throw new Error(res.message || 'Không thể tải dữ liệu công việc.');
 
+            this.selectedShiftId = res?.selected_calamviec_id;
+            this.availableShifts = res?.ds_calamviec || [];
+            this.renderShiftDropdown(this.availableShifts, this.selectedShiftId);
+
             this.updateJobOptions(Array.isArray(res?.jobs) ? res.jobs : []);
             this.renderJobSummary(Array.isArray(res?.data) ? res.data : []);
         } catch (e) {
             if (e.name === 'AbortError') return;
             AppUtils.Notify.error(e.message || 'Không thể tải dữ liệu công việc.');
             this.renderJobSummary([]);
+            this.renderShiftDropdown([], null);
         } finally {
             if (this.jobSummaryController === controller) {
                 this.jobSummaryController = null;
@@ -318,13 +334,15 @@ class TimekeepingSummaryManager {
     renderJobGroupHeader(group, totalMembers) {
         const jobName = group.tencongviec || 'Công việc';
         const totalMoney = this.formatCurrency(group.tong_tien || 0);
+        const tag = group.group_type === 'office' ? 'VP' : 'CV';
+        const tagBg = group.group_type === 'office' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-blue-100 text-blue-700 border border-blue-200';
 
         return `
             <tr class="bg-slate-50">
                 <td colspan="4" class="px-2 py-2">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2 min-w-0">
-                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0">CV</span>
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full ${tagBg} text-[10px] font-bold shrink-0">${tag}</span>
                             <div class="min-w-0">
                                 <div class="text-xs font-semibold text-slate-800 truncate">${jobName}</div>
                                 <div class="text-[10px] text-slate-500">${totalMembers} nhân viên</div>
@@ -386,6 +404,43 @@ class TimekeepingSummaryManager {
         } else {
             select.value = '';
         }
+    }
+
+    renderShiftDropdown(shifts, selectedId) {
+        const select = this.els.filterShift;
+        if (!select) return;
+
+        select.innerHTML = '';
+        if (!shifts || shifts.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'Không có ca làm việc';
+            select.appendChild(opt);
+            select.disabled = true;
+            this.els.filterShiftWrapper?.classList.add('opacity-60');
+            return;
+        }
+
+        select.disabled = false;
+        this.els.filterShiftWrapper?.classList.remove('opacity-60');
+
+        shifts.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.calamviec_id;
+            
+            let shiftName = s.tencalamviec || `Ca ${s.calamviec_id}`;
+            if (s.gio_bat_dau && s.gio_ket_thuc) {
+                shiftName += ` (${s.gio_bat_dau}-${s.gio_ket_thuc})`;
+            }
+            opt.textContent = shiftName;
+            
+            if (String(s.calamviec_id) === String(selectedId)) {
+                opt.selected = true;
+            }
+            select.appendChild(opt);
+        });
+        
+        select.value = selectedId || '';
     }
 
     formatParams(params) {
@@ -760,7 +815,17 @@ class TimekeepingSummaryManager {
     initEventListeners() {
         // 1. Filter Form Changes
         this.els.filterForm.querySelectorAll('input, select').forEach(input => {
-            this.eventManager.add(input, 'change', () => this.handleTabChange(this.currentTabId));
+            this.eventManager.add(input, 'change', () => {
+                if (input === this.els.filterDate && this.currentTabId === '#tab-cong-viec') {
+                    this.selectedShiftId = null;
+                }
+                if (input === this.els.filterShift) {
+                    this.selectedShiftId = input.value;
+                    this.loadJobSummary();
+                    return;
+                }
+                this.handleTabChange(this.currentTabId);
+            });
         });
 
         // 2. Search Input Changes (Debounced using AppUtils)

@@ -37,6 +37,8 @@ def _is_api_request(request):
 _EXEMPT_PREFIXES = (
     '/login',
     '/logout',
+    '/accounts/login',
+    '/accounts/logout',
     '/static/',
     '/favicon.ico',
     '/health/',

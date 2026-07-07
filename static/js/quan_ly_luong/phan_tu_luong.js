@@ -91,13 +91,11 @@ class SalaryInfoManager {
     constructor() {
         this.excelManager = null;
         this.elementsMap = new Map();
-        this.loadedData = { elements: [] };
         this.selectedElementIds = [];
         this.salarySetupMap = {};
         this.hasLoadedEmployees = false;
         
-        this.modal = document.getElementById('salary-columns-modal');
-        this.treeContainer = document.getElementById('salary-tree-container');
+        this.columnSelector = null;
         this.eventManager = AppUtils.EventManager.create();
     }
 
@@ -130,7 +128,7 @@ class SalaryInfoManager {
 
     init() {
         this.initExcelTable();
-        this.initModalEvents();
+        this.initColumnSelector();
         this.initFormSubmission();
     }
 
@@ -151,25 +149,27 @@ class SalaryInfoManager {
         });
     }
 
-    initModalEvents() {
-        const btnOpen = document.querySelector('[data-trigger="salary-columns-modal"]');
-        const btnCloseList = this.modal?.querySelectorAll('[data-modal-close]');
-        const btnApply = document.getElementById('btn-apply-columns');
+    initColumnSelector() {
+        this.columnSelector = new SalaryColumnSelector({
+            modalId: 'salary-columns-modal',
+            onApply: (selectedItems) => this.handleColumnsApply(selectedItems)
+        });
+    }
 
-        if (btnOpen) this.eventManager.add(btnOpen, 'click', () => this.openModal());
-        if (btnCloseList) this.eventManager.addMultiple(btnCloseList, 'click', () => this.closeModal());
-        if (btnApply) this.eventManager.add(btnApply, 'click', () => this.applyColumns());
+    // Mở modal chọn cột — delegate sang component
+    openModal() {
+        this.columnSelector?.open(this.selectedElementIds);
+    }
+
+    // Đóng modal chọn cột — delegate sang component
+    closeModal() {
+        this.columnSelector?.close();
     }
 
     async loadInitialData() {
         this.toggleLoading(true);
         try {
-            const [elemRes, setupRes] = await Promise.all([
-                AppUtils.API.get('/hrm/quan-ly-luong/api/phan-tu-luong/list', { is_group: true, page_size: 9999 }),
-                AppUtils.API.get('/hrm/quan-ly-luong/api/phan-tu-luong/thiet-lap-gia-tri')
-            ]);
-
-            this.loadedData.elements = elemRes.data || elemRes || {};
+            const setupRes = await AppUtils.API.get('/hrm/quan-ly-luong/api/phan-tu-luong/thiet-lap-gia-tri');
             const setupData = setupRes.data || setupRes || {};
             
             this.selectedElementIds = Array.isArray(setupData.phan_tu_luong)
@@ -177,8 +177,15 @@ class SalaryInfoManager {
                 : [];
             this.salarySetupMap = setupData.set_up_phan_tu_luong || {};
 
-            this.renderTreeModal();
-            await this.applyPreselectedColumns();
+            // Load data cho component và lấy kết quả preselected
+            await this.columnSelector.loadData();
+            this.columnSelector.setPreselectedIds(this.selectedElementIds);
+            
+            // Xây dựng elementsMap từ component
+            this._buildElementsMap();
+
+            // Áp dụng cột đã chọn sẵn (silent)
+            await this._applyColumnsFromSelector({ silent: true });
             await this.fetchEmployeesIfNeeded();
             
         } catch (err) {
@@ -204,101 +211,25 @@ class SalaryInfoManager {
         }
     }
 
-    // --- MODAL LOGIC (Tree & Groups) ---
-    openModal() { AppUtils.Modal.open(this.modal); }
-    closeModal() { AppUtils.Modal.close(this.modal); }
+    // --- COLUMN APPLY LOGIC ---
 
-    renderTreeModal() {
-        const template = document.getElementById('tree-group-template');
-        if (!template || !this.treeContainer) return;
-        
-        this.treeContainer.innerHTML = '';
-        const groups = Array.isArray(this.loadedData.elements) ? this.loadedData.elements : Object.values(this.loadedData.elements);
-
-        groups.forEach(group => {
-            if (!group.elements?.length) return;
-
-            const clone = template.content.cloneNode(true);
-            const root = clone.querySelector('.group-item');
-            
-            clone.querySelector('.group-name').textContent = group.nhomphantu_ten || group.tennhom;
-            const groupCheckbox = clone.querySelector('.group-checkbox');
-            groupCheckbox.dataset.groupId = group.nhomphantu || group.id;
-            
-            this.eventManager.add(groupCheckbox, 'change', (e) => this.handleGroupCheck(e.target));
-            
-            const headerEl = clone.querySelector('.group-header');
-            this.eventManager.add(headerEl, 'click', (e) => {
-                if(!e.target.closest('input')) this.toggleGroup(headerEl);
-            });
-
-            const childContainer = clone.querySelector('.children-container');
-            group.elements.forEach(el => {
-                this.elementsMap.set(el.id, el);
-                const isPreselected = this.selectedElementIds.includes(Number(el.id));
-                const childItem = this.createElementCheckboxItem(el, isPreselected);
-                this.eventManager.add(childItem.querySelector('input'), 'change', () => this.updateGroupCheckboxState(root));
-                childContainer.appendChild(childItem);
-            });
-
-            this.updateGroupCheckboxState(root);
-            this.treeContainer.appendChild(clone);
-        });
-    }
-
-    toggleGroup(headerEl) {
-        const arrow = headerEl.querySelector('.group-arrow');
-        const container = headerEl.nextElementSibling;
-        container.classList.toggle('hidden');
-        arrow.classList.toggle('rotate-90');
-    }
-
-    createElementCheckboxItem(el, isChecked = false) {
-        const div = document.createElement('div');
-        div.className = 'flex items-center gap-3 py-1.5 hover:bg-slate-100 px-2 rounded cursor-pointer';
-        div.innerHTML = `
-            <input type="checkbox" 
-                   class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 element-checkbox"
-                   value="${el.id}" data-code="${el.maphantu}" data-name="${el.tenphantu}"
-                   ${isChecked ? 'checked' : ''}>
-            <div class="flex flex-col">
-                <span class="text-sm text-slate-700 font-medium">${el.tenphantu}</span>
-                <span class="text-xs text-slate-400 font-mono">${el.maphantu}</span>
-            </div>
-        `;
-        return div;
-    }
-
-    handleGroupCheck(groupCb) {
-        const root = groupCb.closest('.group-item');
-        root.querySelectorAll('.element-checkbox').forEach(cb => cb.checked = groupCb.checked);
-    }
-
-    updateGroupCheckboxState(rootElement) {
-        const groupCb = rootElement.querySelector('.group-checkbox');
-        const children = Array.from(rootElement.querySelectorAll('.element-checkbox'));
-        const checkedCount = children.filter(c => c.checked).length;
-        groupCb.checked = checkedCount === children.length;
-        groupCb.indeterminate = checkedCount > 0 && checkedCount < children.length;
-    }
-
-    async applyColumns(options = {}) {
-        const { silent = false } = options;
-        if (!this.treeContainer) return;
-
+    /**
+     * Callback từ SalaryColumnSelector component khi user nhấn xác nhận.
+     * @param {Array<{id, code, name}>} selectedItems
+     */
+    async handleColumnsApply(selectedItems) {
         try {
-            const selectedCheckboxes = this.treeContainer.querySelectorAll('.element-checkbox:checked');
-            this.selectedElementIds = Array.from(selectedCheckboxes).map(cb => Number(cb.value));
+            this.selectedElementIds = selectedItems.map(item => item.id);
             
             const baseColumns = this.getBaseColumns();
-            const dynamicColumns = Array.from(selectedCheckboxes).map(cb => ({
-                key: `salary_values.${cb.dataset.code}`,
-                title: cb.dataset.name,
-                subtitle: cb.dataset.code,
+            const dynamicColumns = selectedItems.map(item => ({
+                key: `salary_values.${item.code}`,
+                title: item.name,
+                subtitle: item.code,
                 width: 120,
                 type: 'input',
                 sticky: false,
-                elementId: Number(cb.value) // Lưu ID phần tử để payload gửi đúng định dạng
+                elementId: item.id
             }));
 
             this.excelManager.setColumns([...baseColumns, ...dynamicColumns]);
@@ -306,32 +237,61 @@ class SalaryInfoManager {
             if (!this.hasLoadedEmployees) {
                 await this.fetchEmployeesIfNeeded();
             } else {
-                // Nếu đã có data, force render lại để áp dụng cột mới
                 this.excelManager.render();
             }
 
-            if (!silent) {
-                this.closeModal();
-                AppUtils.Notify.success('Đã cập nhật hiển thị');
-            }
+            AppUtils.Notify.success('Đã cập nhật hiển thị');
         } catch (error) {
             console.error('Lỗi áp dụng cột:', error);
-            if (!silent) AppUtils.Notify.error('Lỗi cập nhật bảng lương');
+            AppUtils.Notify.error('Lỗi cập nhật bảng lương');
         }
     }
 
-    applyPreselectedColumns() {
-        if (!this.treeContainer) return;
-        const selectedSet = new Set(this.selectedElementIds.map(Number));
-        const groupRoots = new Set();
+    /**
+     * Áp dụng cột từ trạng thái hiện tại của component (dùng cho preselect lúc init)
+     */
+    async _applyColumnsFromSelector(options = {}) {
+        const { silent = false } = options;
+        const selectedItems = this.columnSelector.getSelectedItems();
         
-        this.treeContainer.querySelectorAll('.element-checkbox').forEach(cb => {
-            cb.checked = selectedSet.has(Number(cb.value));
-            const root = cb.closest('.group-item');
-            if (root) groupRoots.add(root);
+        this.selectedElementIds = selectedItems.map(item => item.id);
+        
+        const baseColumns = this.getBaseColumns();
+        const dynamicColumns = selectedItems.map(item => ({
+            key: `salary_values.${item.code}`,
+            title: item.name,
+            subtitle: item.code,
+            width: 120,
+            type: 'input',
+            sticky: false,
+            elementId: item.id
+        }));
+
+        this.excelManager.setColumns([...baseColumns, ...dynamicColumns]);
+
+        if (!this.hasLoadedEmployees) {
+            await this.fetchEmployeesIfNeeded();
+        } else {
+            this.excelManager.render();
+        }
+
+        if (!silent) {
+            AppUtils.Notify.success('Đã cập nhật hiển thị');
+        }
+    }
+
+    /**
+     * Xây dựng elementsMap từ dữ liệu đã load trong component
+     */
+    _buildElementsMap() {
+        this.elementsMap.clear();
+        const groups = this.columnSelector?.groupsData || [];
+        const groupsList = Array.isArray(groups) ? groups : Object.values(groups);
+        groupsList.forEach(group => {
+            (group.elements || []).forEach(el => {
+                this.elementsMap.set(el.id, el);
+            });
         });
-        groupRoots.forEach(root => this.updateGroupCheckboxState(root));
-        return this.applyColumns({ silent: true });
     }
 
     // --- DATA PROCESSING ---
@@ -437,6 +397,7 @@ class SalaryInfoManager {
 
     destroy() {
         this.eventManager.removeAll();
+        this.columnSelector?.destroy();
         this.excelManager?.destroy();
     }
 }

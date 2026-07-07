@@ -4,10 +4,11 @@
   1. Hiển thị text "đã chọn" trên mọi màn hình (xóa class hidden sm:inline).
   2. Nút Xóa/Export hiển thị màu trực tiếp thay vì chỉ hover.
   3. Cải tiến UX cho nút Xóa và Xuất Excel với icon + text responsive.
+  4. Cho phép bật bulk_footer_aware cho các màn có footer cố định.
 {% endcomment %}
 
-<div id="{{ id|default:'bulk-actions' }}" 
-    class="bulk-actions-container hidden opacity-0 transform translate-y-4 transition-all duration-300 ease-in-out fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-3xl bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 items-center justify-between gap-3 [&.show]:flex [&.show]:opacity-100 [&.show]:translate-y-0">    
+<div id="{{ id|default:'bulk-actions' }}"
+    class="bulk-actions-container hidden opacity-0 transform translate-y-4 transition-all duration-300 ease-in-out fixed {% if bulk_footer_aware %}bottom-[4.75rem] z-50{% else %}bottom-6 z-30{% endif %} left-1/2 -translate-x-1/2 w-[95%] max-w-3xl bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 items-center justify-between gap-3 [&.show]:flex [&.show]:opacity-100 [&.show]:translate-y-0">
     
     <div class="flex items-center gap-2 pl-2">
         <div class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm shrink-0">
