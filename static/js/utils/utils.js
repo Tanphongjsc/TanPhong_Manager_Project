@@ -110,17 +110,17 @@ const AppUtils = (() => {
                     const msg = data?.message || 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
                     console.warn('⚠️ SESSION_EXPIRED:', msg);
                     Notify.warning(msg, { duration: 4000 });
-                    setTimeout(() => { window.location.href = '/login/'; }, 2000);
+                    setTimeout(() => { window.location.href = '/accounts/login/'; }, 2000);
                     throw new Error(msg);
                 }
 
                 // 🔧 FIX: Phát hiện redirect sang trang login (HTML response khi follow redirect)
                 if (!isJSON && rawText) {
-                    if (rawText.includes('/login/') || rawText.includes('id_username') || rawText.includes('csrfmiddlewaretoken')) {
+                    if (rawText.includes('/accounts/login/') || rawText.includes('/login/') || rawText.includes('id_username') || rawText.includes('csrfmiddlewaretoken')) {
                         const msg = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
                         console.warn('⚠️ SESSION_EXPIRED (HTML redirect detected)');
                         Notify.warning(msg, { duration: 4000 });
-                        setTimeout(() => { window.location.href = '/login/'; }, 2000);
+                        setTimeout(() => { window.location.href = '/accounts/login/'; }, 2000);
                         throw new Error(msg);
                     }
                     data = { 

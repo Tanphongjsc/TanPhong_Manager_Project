@@ -1130,10 +1130,32 @@ def api_tong_hop_cham_cong_cong_viec(request):
         qs_nv = qs_nv.filter(Q(nhanvien__hovaten__icontains=search) | Q(nhanvien__manhanvien__icontains=search))
 
     nv_ids = list(qs_nv.values_list('nhanvien_id', flat=True))
+
+    # Lấy danh sách ca làm việc và tự động chọn ca đầu tiên nếu không truyền hoặc không hợp lệ
+    ds_ca = _get_shifts_for_date(ngay, 'attendance')
+    valid_ca_ids = [c['calamviec_id'] for c in ds_ca]
+    try:
+        ca_id = int(request.GET.get('calamviec_id') or '')
+    except (TypeError, ValueError):
+        ca_id = None
+
+    if ca_id not in valid_ca_ids:
+        ca_id = ds_ca[0]['calamviec_id'] if ds_ca else None
+
     if not nv_ids:
-        return JsonResponse({'success': True, 'data': [], 'jobs': [], 'total': 0}, status=200)
+        return JsonResponse({
+            'success': True,
+            'data': [],
+            'jobs': [],
+            'total': 0,
+            'ds_calamviec': ds_ca,
+            'selected_calamviec_id': ca_id
+        }, status=200)
 
     qs = Bangchamcong.objects.filter(ngaylamviec=ngay, nhanvien_id__in=nv_ids)
+    if ca_id is not None:
+        qs = qs.filter(calamviec_id=ca_id)
+
     if loai_cc and loai_cc != 'all':
         qs = qs.filter(loaichamcong=loai_cc)
 
@@ -1141,7 +1163,7 @@ def api_tong_hop_cham_cong_cong_viec(request):
         ten_nv=F('nhanvien__hovaten'),
         ma_nv=F('nhanvien__manhanvien')
     ).values(
-        'nhanvien_id', 'ten_nv', 'ma_nv', 'thamsotinhluong', 'codilam'
+        'nhanvien_id', 'ten_nv', 'ma_nv', 'thamsotinhluong', 'codilam', 'thanhtien', 'loaichamcong'
     )
 
     job_options = {}
@@ -1151,28 +1173,12 @@ def api_tong_hop_cham_cong_cong_viec(request):
         if record.get('codilam') is False:
             continue
 
-        cfg = _parse_salary_config(record.get('thamsotinhluong'))
-        details = cfg.get('details') or []
-        if not isinstance(details, list):
-            continue
-
-        for detail in details:
-            if not isinstance(detail, dict):
-                continue
-            cv_id = detail.get('congviec_id')
-            if cv_id is None:
-                continue
-
-            ten_cv = detail.get('tencongviec') or ''
-            if cv_id not in job_options or (not job_options.get(cv_id) and ten_cv):
-                job_options[cv_id] = ten_cv or f'Công việc {cv_id}'
-
-            if congviec_id is not None and str(cv_id) != str(congviec_id):
-                continue
-
-            group = grouped.setdefault(cv_id, {
-                'congviec_id': cv_id,
-                'tencongviec': ten_cv or f'Công việc {cv_id}',
+        # 1. Thêm vào nhóm Văn phòng nếu là khối Văn phòng và không lọc theo một công việc cụ thể
+        if record.get('loaichamcong') == 'VP' and congviec_id is None:
+            group = grouped.setdefault(None, {
+                'congviec_id': None,
+                'tencongviec': 'Văn phòng',
+                'group_type': 'office',
                 'members': {},
                 'tong_tien': 0
             })
@@ -1186,13 +1192,13 @@ def api_tong_hop_cham_cong_cong_viec(request):
                     'nhanvien_id': nv_id,
                     'ten_nv': record.get('ten_nv'),
                     'ma_nv': record.get('ma_nv'),
-                    'pay_role': detail.get('pay_role'),
+                    'pay_role': None,
                     'tham_so': {},
                     'thanhtien': 0
                 }
                 members_map[nv_id] = member
 
-            amount = detail.get('thanhtien') or 0
+            amount = record.get('thanhtien') or 0
             try:
                 amount = float(amount)
             except (TypeError, ValueError):
@@ -1201,7 +1207,7 @@ def api_tong_hop_cham_cong_cong_viec(request):
             member['thanhtien'] += amount
             group['tong_tien'] += amount
 
-            params = _extract_salary_params(detail.get('thamsotinhluong'))
+            params = _extract_salary_params(record.get('thamsotinhluong'))
             if params:
                 if not member['tham_so']:
                     member['tham_so'] = params
@@ -1209,6 +1215,65 @@ def api_tong_hop_cham_cong_cong_viec(request):
                     for k, v in params.items():
                         if k not in member['tham_so']:
                             member['tham_so'][k] = v
+
+        # 2. Xử lý các chi tiết công việc phụ/extra trong thamsotinhluong (áp dụng cho cả VP và SX)
+        cfg = _parse_salary_config(record.get('thamsotinhluong'))
+        details = cfg.get('details') or []
+        if isinstance(details, list):
+            for detail in details:
+                if not isinstance(detail, dict):
+                    continue
+                cv_id = detail.get('congviec_id')
+                if cv_id is None:
+                    continue
+
+                ten_cv = detail.get('tencongviec') or ''
+                if cv_id not in job_options or (not job_options.get(cv_id) and ten_cv):
+                    job_options[cv_id] = ten_cv or f'Công việc {cv_id}'
+
+                if congviec_id is not None and str(cv_id) != str(congviec_id):
+                    continue
+
+                group = grouped.setdefault(cv_id, {
+                    'congviec_id': cv_id,
+                    'tencongviec': ten_cv or f'Công việc {cv_id}',
+                    'group_type': 'job',
+                    'members': {},
+                    'tong_tien': 0
+                })
+
+                nv_id = record.get('nhanvien_id')
+                members_map = group['members']
+                member = members_map.get(nv_id)
+
+                if not member:
+                    member = {
+                        'nhanvien_id': nv_id,
+                        'ten_nv': record.get('ten_nv'),
+                        'ma_nv': record.get('ma_nv'),
+                        'pay_role': detail.get('pay_role'),
+                        'tham_so': {},
+                        'thanhtien': 0
+                    }
+                    members_map[nv_id] = member
+
+                amount = detail.get('thanhtien') or 0
+                try:
+                    amount = float(amount)
+                except (TypeError, ValueError):
+                    amount = 0
+
+                member['thanhtien'] += amount
+                group['tong_tien'] += amount
+
+                params = _extract_salary_params(detail.get('thamsotinhluong'))
+                if params:
+                    if not member['tham_so']:
+                        member['tham_so'] = params
+                    else:
+                        for k, v in params.items():
+                            if k not in member['tham_so']:
+                                member['tham_so'][k] = v
 
     result = []
     for _, group in grouped.items():
@@ -1223,7 +1288,14 @@ def api_tong_hop_cham_cong_cong_viec(request):
     jobs = [{'id': cv_id, 'tencongviec': name} for cv_id, name in job_options.items()]
     jobs.sort(key=lambda j: j.get('tencongviec') or '')
 
-    return JsonResponse({'success': True, 'data': result, 'jobs': jobs, 'total': len(result)}, status=200)
+    return JsonResponse({
+        'success': True,
+        'data': result,
+        'jobs': jobs,
+        'total': len(result),
+        'ds_calamviec': ds_ca,
+        'selected_calamviec_id': ca_id
+    }, status=200)
 
 
 @login_required
