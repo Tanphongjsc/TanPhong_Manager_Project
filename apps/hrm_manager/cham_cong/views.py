@@ -29,6 +29,18 @@ from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 # HELPERS
 # ============================================================
 
+# Danh sách fields cho update (không bao gồm id và created_at)
+_BANGCHAMCONG_UPDATE_FIELDS = [
+    'updated_at', 'thoigianchamcongvao', 'thoigianchamcongra',
+    'conglamviec', 'thoigianlamviec', 'ngaylamviec',
+    'thoigianlamthem', 'cotinhlamthem',
+    'coantrua', 'coandem', 'coanchunhat', 'codilam',
+    'thoigiandimuon', 'thoigianvesom', 'thoigiandisom', 'thoigianvemuon',
+    'loaichamcong', 'tencongviec', 'cophaingaynghi',
+    'thamsotinhluong', 'thanhtien', 'thanhtienthanhphan',
+    'ghichu', 'congviec', 'nhanvien', 'calamviec', 'snapshot_khunggio',
+]
+
 def get_lam_them_tabs():
     """Tabs cho nhóm Quản lý Làm thêm"""
     return [
@@ -249,7 +261,7 @@ def _recalculate_team_members(team_job_keys, ngay_lam_viec_set):
     for o in objs:
         if o.id is not None:
             o.updated_at = now
-            o.save()
+            o.save(update_fields=_BANGCHAMCONG_UPDATE_FIELDS)
 
 
 def tinh_luong_cham_cong(data_list):
@@ -987,7 +999,7 @@ def api_bang_cham_cong_list(request):
                         o.snapshot_khunggio = dumps(val)
                     else:
                         o.snapshot_khunggio = val
-                o.save()
+                o.save(update_fields=_BANGCHAMCONG_UPDATE_FIELDS)
 
         is_create = request.method == 'POST'
         return JsonResponse({

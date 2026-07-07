@@ -338,7 +338,7 @@ const AppUtils = (() => {
                             </div>
                             <div class="ml-4 grow">
                                 <h3 class="text-lg font-semibold text-slate-900">${title}</h3>
-                                <p id="modal-message" class="mt-2 text-sm text-slate-600 leading-relaxed"></p>
+                                <p id="modal-message" class="mt-2 text-sm text-slate-600 leading-relaxed" style="white-space: pre-line;"></p>
                             </div>
                         </div>
                         
