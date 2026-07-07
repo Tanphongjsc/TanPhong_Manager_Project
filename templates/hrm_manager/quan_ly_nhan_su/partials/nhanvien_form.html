@@ -117,32 +117,12 @@
         </div>
     </div>
 
-    <!-- Row 6: Phòng ban (Searchable dropdown - required) -->
+    <!-- Row 6: Phòng ban (OrgTree dropdown component - required) -->
     <div>
         <label class="block text-sm font-medium text-slate-700 mb-1.5">
             <span class="text-red-500">*</span> Phòng ban:
         </label>
-        <div class="relative" id="phongban-dropdown-container">
-            <input type="hidden" name="phongban" id="phongban" required>
-            <button type="button" 
-                    id="phongban-dropdown-btn"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-left text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between">
-                <span id="phongban-selected-text" class="text-slate-500">-- Chọn phòng ban --</span>
-                <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" id="phongban-dropdown-icon"></i>
-            </button>
-            <div id="phongban-dropdown-menu" 
-                 class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-64 overflow-hidden">
-                <div class="p-2 border-b border-slate-100">
-                    <input type="text" 
-                           id="phongban-search-input"
-                           placeholder="Tìm kiếm phòng ban..."
-                           class="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <ul id="phongban-dropdown-list" class="overflow-y-auto max-h-48">
-                    <li class="px-3 py-2 text-sm text-slate-400 text-center">Đang tải...</li>
-                </ul>
-            </div>
-        </div>
+        {% include "components/org_tree.html" with component_id="phongban-picker" variant="dropdown" show_actions=False show_all=False show_search=True search_placeholder="Tìm phòng ban..." dropdown_label="-- Chọn phòng ban --" hidden_input_name="phongban" %}
     </div>
 
     <!-- Row 7: Nơi công tác -->

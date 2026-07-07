@@ -19,7 +19,8 @@ class PayrollDetailManager {
 
         // Store full data for export
         this.allEmployeesData = []; 
-        this.salaryElementsList = []; 
+        this.salaryElementsList = [];
+        this.isFirstSave = false;
 
         this.debouncedRecalc = AppUtils.Helper.debounce((changes) => this.processExcelChanges(changes), 150);
 
@@ -110,7 +111,8 @@ class PayrollDetailManager {
             
             let allEmployees = employeeRes.data || (Array.isArray(employeeRes) ? employeeRes : []);
             
-            const { columnIds, valuesMap, extraDataMap } = this.normalizePayrollData(payrollRes.data);
+            const { columnIds, valuesMap, extraDataMap, isDraft } = this.normalizePayrollData(payrollRes.data);
+            this.isFirstSave = isDraft;
             this.currentPhanTuLuong = columnIds;
             this.salaryElementsList = columnIds;
 
@@ -171,6 +173,7 @@ class PayrollDetailManager {
         let columnIds = [];
         let valuesMap = {}; 
         let extraDataMap = {};
+        let isDraft = false;
 
         if (Array.isArray(data.phan_tu_luong)) columnIds = data.phan_tu_luong.map(String);
 
@@ -184,6 +187,7 @@ class PayrollDetailManager {
         } else if (typeof data.phieu_luong === 'object') {
             // Chế độ draft: phieu_luong là dict {empId: {phantu_id: {...}}}
             const ngaychamcongMap = data.ngaychamcong || {};
+            isDraft = true;
             Object.keys(data.phieu_luong).forEach(empId => {
                 valuesMap[empId] = data.phieu_luong[empId];
                 extraDataMap[empId] = {
@@ -193,7 +197,7 @@ class PayrollDetailManager {
                 };
             });
         }
-        return { columnIds, valuesMap, extraDataMap };
+        return { columnIds, valuesMap, extraDataMap, isDraft };
     }
 
     // --- 3. EXPORT EXCEL LOGIC (FIXED) ---
@@ -890,6 +894,22 @@ class PayrollDetailManager {
             }
         });
     }
+    getFullPayrollPayload() {
+        const columns = (this.currentPhanTuLuong || []).map(String);
+        const changes = (this.excelManager?.state?.data || []).reduce((acc, row) => {
+            const rowId = String(this.excelManager.getRowId(row) || '');
+            if (!rowId) return acc;
+
+            acc[rowId] = columns.reduce((payload, colId) => {
+                payload[colId] = AppUtils.Helper.parseNumber(row.salary_values?.[colId] ?? 0);
+                return payload;
+            }, {});
+            return acc;
+        }, {});
+
+        return { changes, count: Object.keys(changes).length };
+    }
+
     updateRecalculateButtonVisibility() {
         if (!this.btnRecalculate) return;
         
@@ -954,8 +974,13 @@ class PayrollDetailManager {
     }
 
     async savePayroll() {
-        const { changes, count } = this.excelManager.getChanges();
-        if (count === 0) return AppUtils.Notify.info('Không có thay đổi nào');
+        const { changes, count } = this.isFirstSave
+            ? this.getFullPayrollPayload()
+            : this.excelManager.getChanges();
+
+        if (count === 0) {
+            return AppUtils.Notify.info(this.isFirstSave ? 'Không có dữ liệu để lưu' : 'Không có thay đổi nào');
+        }
 
         const btnSave = document.getElementById('btn-save-payroll');
         let originalContent = '';
@@ -969,11 +994,13 @@ class PayrollDetailManager {
             const payload = {
                 bangluong_id: String(this.currentPayrollId),
                 changes,
-                phan_tu_luong: Array.isArray(this.currentPhanTuLuong) ? [...this.currentPhanTuLuong] : []
+                phan_tu_luong: Array.isArray(this.currentPhanTuLuong) ? [...this.currentPhanTuLuong] : [],
+                is_full_payload: this.isFirstSave
             };
             const res = await AppUtils.API.post('/hrm/quan-ly-luong/api/phieu-luong/list', payload);
             if (res?.success === false) throw new Error(res.message || 'Lỗi lưu dữ liệu');
             AppUtils.Notify.success(res?.message || `Đã cập nhật ${count} dòng`);
+            this.isFirstSave = false;
             this.excelManager.setData(this.excelManager.state.data);
         } catch (err) { 
             AppUtils.Notify.error(err?.message || 'Lỗi lưu dữ liệu'); 

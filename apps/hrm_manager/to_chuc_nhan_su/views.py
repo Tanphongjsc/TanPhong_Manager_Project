@@ -111,7 +111,9 @@ def view_nhan_vien_index(request, id):
         'employee': nhan_vien,
         'current_job': nhan_vien.lichsucongtac_set.filter(trangthai='active').first(),
         'bank_options': list(Nganhang.objects.values_list('id', 'tennganhang')),
-        'gender_options': [('Nam', 'Nam'), ('Nữ', 'Nữ'), ('Khác', 'Khác')]
+        'gender_options': [('Nam', 'Nam'), ('Nữ', 'Nữ'), ('Khác', 'Khác')],
+        'loainv_options': list(Loainhanvien.objects.values_list('id', 'tenloainv')),
+        'status_options': [('Đang làm việc', 'Đang làm việc'), ('Thử việc', 'Thử việc'), ('Đã nghỉ việc', 'Đã nghỉ việc')]
     }
 
     return render(request, "hrm_manager/quan_ly_nhan_su/nhanvien_detail.html", context=context)

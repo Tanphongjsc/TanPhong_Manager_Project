@@ -203,17 +203,44 @@ def genarate_phieu_luong_from_bang_luong(bang_luong_id):
         # 3b. Chi tiết chấm công (chỉ ngày có đi làm) — dùng cho Nhật ký Chấm công
         if record.get('codilam'):
             bcc_detail_map[str(nv_id)].append(record)
-    
+        
     # 4. Lấy số ngày/giờ làm chuẩn từ Lịch làm việc thực tế
-    lich_lam_viec_qs = Lichlamviecthucte.objects.filter(
+    # ✅ REFACTOR: Ưu tiên đọc snapshot_ca, fallback JOIN Ca nếu chưa có snapshot
+    lich_lam_viec_raw = Lichlamviecthucte.objects.filter(
         nhanvien_id__in=nhanvien_ids,
         ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc]
-    ).values('nhanvien').annotate(
-        tong_cong_lamviec_thucte=Coalesce(Sum('calamviec__congcuacalamviec'), 0.0, output_field=FloatField()),
-        tong_gio_lamviec_chuan=Coalesce(Sum('calamviec__tongthoigianlamvieccuaca'), 0.0, output_field=FloatField())
-    )
-    # Chuyển về dict {nhanvien_id: {...}}
-    lich_lam_viec_dict = {item['nhanvien']: item for item in lich_lam_viec_qs}
+    ).values('nhanvien_id', 'snapshot_ca', 'calamviec__congcuacalamviec', 'calamviec__tongthoigianlamvieccuaca')
+
+    lich_lam_viec_dict = {}
+    for record in lich_lam_viec_raw:
+        nv_id = record['nhanvien_id']
+        if nv_id not in lich_lam_viec_dict:
+            lich_lam_viec_dict[nv_id] = {
+                'tong_cong_lamviec_thucte': 0.0,
+                'tong_gio_lamviec_chuan': 0.0,
+            }
+
+        snapshot_raw = record.get('snapshot_ca')
+        snapshot = None
+        if isinstance(snapshot_raw, str):
+            try:
+                snapshot = loads(snapshot_raw)
+            except Exception:
+                snapshot = None
+        else:
+            snapshot = snapshot_raw
+
+        if snapshot and isinstance(snapshot, dict):
+            # ✅ Có snapshot → dùng dữ liệu đóng băng
+            cong = _safe_float(snapshot.get('congcuacalamviec', 0))
+            gio = _safe_float(snapshot.get('tongthoigianlamvieccuaca', 0))
+        else:
+            # ❌ Chưa có snapshot → fallback JOIN Ca (backward compatible)
+            cong = _safe_float(record.get('calamviec__congcuacalamviec', 0))
+            gio = _safe_float(record.get('calamviec__tongthoigianlamvieccuaca', 0))
+
+        lich_lam_viec_dict[nv_id]['tong_cong_lamviec_thucte'] += cong
+        lich_lam_viec_dict[nv_id]['tong_gio_lamviec_chuan'] += gio
 
     # 5. Lấy thiết lập số liệu cố định
     setup_data = Thietlapsolieucodinh.objects.filter(
@@ -925,18 +952,28 @@ def api_phieu_luong_list(request):
             if data is None:
                 return json_error('Dữ liệu không hợp lệ: Rỗng', status=400)
 
-            changes = data.get('changes', {})
-            nhanvien_ids = list(changes.keys())
-            if not nhanvien_ids:
+            changes = data.get('changes') or {}
+            if not isinstance(changes, dict):
+                return json_error('Dữ liệu không hợp lệ: changes phải là object', status=400)
+
+            changes = {str(nv_id): row for nv_id, row in changes.items() if isinstance(row, dict)}
+            if not changes:
                 return json_error('Dữ liệu không hợp lệ: Rỗng nhân viên', status=400)
-            
-            phantu_luong = data.get("phan_tu_luong", [])
+
+            try:
+                nhanvien_ids = list(changes)
+                nhanvien_ids_int = [int(nv_id) for nv_id in nhanvien_ids]
+                phantu_luong = [int(pt_id) for pt_id in (data.get("phan_tu_luong") or [])]
+            except (TypeError, ValueError):
+                return json_error('Dữ liệu ID không hợp lệ', status=400)
             if not phantu_luong:
                 return json_error('Dữ liệu không hợp lệ: Rỗng phần tử lương', status=400)
                 
             bang_luong_id = data.get('bangluong_id') or request.GET.get('bangluong_id')
             if not bang_luong_id:
                 return json_error('Thiếu tham số bangluong_id', status=400)
+
+            is_full_payload = data.get('is_full_payload') is True
                 
         except Exception as e:
             return json_error(f'Dữ liệu không hợp lệ: {str(e)}', status=400)
@@ -954,9 +991,35 @@ def api_phieu_luong_list(request):
                 f'Bảng lương đã ở trạng thái "{bang_luong_obj.trangthai}", không thể tạo/ghi đè phiếu lương',
                 status=400
             )
+
+        has_existing_payslips = Phieuluong.objects.filter(bangluong_id=bang_luong_id).exists()
+        if not has_existing_payslips and not is_full_payload:
+            return json_error(
+                'Lần lưu đầu tiên phải gửi toàn bộ nhân viên và toàn bộ phần tử lương đang hiển thị',
+                status=400
+            )
+
+        if is_full_payload:
+            phantu_keys = {str(pt_id) for pt_id in phantu_luong}
+            if any(phantu_keys - set(map(str, row.keys())) for row in changes.values()):
+                return json_error('Dữ liệu full payload thiếu phần tử lương', status=400)
+
+            expected_nhanvien_ids = {
+                str(nv_id)
+                for nv_id in Lichsucongtac.objects.filter(
+                    trangthai='active',
+                    nhanvien_id__in=NhanvienChedoluong.objects.filter(
+                        chedoluong_id=bang_luong_obj.chedoluong_id,
+                        trangthai='active'
+                    ).values('nhanvien_id')
+                ).values_list('nhanvien_id', flat=True).distinct()
+            }
+            missing_count = len(expected_nhanvien_ids - set(nhanvien_ids))
+            if missing_count:
+                return json_error(f'Dữ liệu full payload thiếu {missing_count} nhân viên đang hiển thị', status=400)
         
         # Lấy thông tin nhân viên
-        nhanvien_list = Lichsucongtac.objects.filter(trangthai='active', nhanvien_id__in=nhanvien_ids).select_related("nhanvien", "phongban", "chucvu").annotate(
+        nhanvien_list = Lichsucongtac.objects.filter(trangthai='active', nhanvien_id__in=nhanvien_ids_int).select_related("nhanvien", "phongban", "chucvu").annotate(
             ho_ten=F('nhanvien__hovaten'),
             ten_phongban=F('phongban__tenphongban'),
             ten_chucvu=F('chucvu__tenvitricongviec'),
@@ -995,7 +1058,7 @@ def api_phieu_luong_list(request):
         thoigian_batdau = bang_luong_obj.kyluong.ngaybatdau
         thoigian_ketthuc = bang_luong_obj.kyluong.ngayketthuc
         bcc_data = Bangchamcong.objects.filter(
-            nhanvien_id__in=nhanvien_ids,
+            nhanvien_id__in=nhanvien_ids_int,
             ngaylamviec__range=[thoigian_batdau, thoigian_ketthuc],
             codilam=True
         ).values()
@@ -1015,10 +1078,10 @@ def api_phieu_luong_list(request):
             params = {}
             # Gán trực tiếp các phần tử lương có trong dữ liệu gửi lên
             for pt_id in phantu_luong:
-                rule = quytac_chedoluong_map.get(int(pt_id))
+                rule = quytac_chedoluong_map.get(pt_id)
                 if rule:
-                    val = phieu_luong_data.get(str(pt_id))
-                    params[rule['maquytac']] = val
+                    val = phieu_luong_data.get(str(pt_id), phieu_luong_data.get(pt_id))
+                    params[rule['maquytac']] = _safe_float(val, 0.0)
 
             calc_input[str(nv_id)] = [{
                 'tham_so': params,
@@ -1034,16 +1097,26 @@ def api_phieu_luong_list(request):
         phieuluong_objs = []
         chitiet_phieuluong_objs = []
         
-        # Xóa các phiếu lương cũ để tránh trùng lặp
-        Phieuluong.objects.filter(bangluong_id=bang_luong_id, nhanvien_id__in=nhanvien_ids).delete()
+        # Xóa phiếu cũ theo đúng phạm vi payload: full thì ghi đè cả bảng, partial thì chỉ ghi đè nhân viên đổi.
+        old_phieuluong_qs = Phieuluong.objects.filter(bangluong_id=bang_luong_id)
+        if not is_full_payload:
+            old_phieuluong_qs = old_phieuluong_qs.filter(nhanvien_id__in=nhanvien_ids_int)
+        old_phieuluong_ids = list(old_phieuluong_qs.values_list('id', flat=True))
+        if old_phieuluong_ids:
+            Ctphieuluong.objects.filter(phieuluong_id__in=old_phieuluong_ids).delete()
+            Phieuluong.objects.filter(id__in=old_phieuluong_ids).delete()
 
         for nv_id, phieu_luong_data in changes.items():
             nv_info = nhanvien_map.get(str(nv_id), {})
             
             # Cập nhật kết quả tính toán vào dữ liệu changes
-            val_thuc_nhan = calculated_results.get(str(nv_id), 0)
-            if float(val_thuc_nhan) != float(phieu_luong_data.get(str(id_phantu_luong_thuc_nhan))):
-                logging.warning(f"Giá trị THUC_LINH cho NV {nv_id} được tính lại: {phieu_luong_data.get(str(id_phantu_luong_thuc_nhan))} -> {val_thuc_nhan:.2f}")
+            val_thuc_nhan = _safe_float(calculated_results.get(str(nv_id), 0), 0.0)
+            old_thuc_nhan = _safe_float(
+                phieu_luong_data.get(str(id_phantu_luong_thuc_nhan), phieu_luong_data.get(id_phantu_luong_thuc_nhan)),
+                0.0
+            )
+            if val_thuc_nhan != old_thuc_nhan:
+                logging.warning(f"Giá trị THUC_LINH cho NV {nv_id} được tính lại: {old_thuc_nhan} -> {val_thuc_nhan:.2f}")
             phieu_luong_data[str(id_phantu_luong_thuc_nhan)] = val_thuc_nhan # Update giá trị thực nhận sau khi tính toán
 
             tong_thu_nhap = 0
@@ -1072,8 +1145,8 @@ def api_phieu_luong_list(request):
             calc_context_params['THUC_LINH'] = val_thuc_nhan
             
             for i, pt_id in enumerate(phantu_luong, start=1):
-                val = phieu_luong_data.get(str(pt_id))
-                quy_tac = quytac_chedoluong_map.get(int(pt_id))
+                val = phieu_luong_data.get(str(pt_id), phieu_luong_data.get(pt_id))
+                quy_tac = quytac_chedoluong_map.get(pt_id)
 
                 if not quy_tac:
                     continue
@@ -1121,12 +1194,15 @@ def api_phieu_luong_list(request):
         Phieuluong.objects.bulk_create(phieuluong_objs)
         Ctphieuluong.objects.bulk_create(chitiet_phieuluong_objs)
 
+        payroll_summary = Phieuluong.objects.filter(bangluong_id=bang_luong_id).aggregate(
+            total_count=Count('id'),
+            total_salary=Sum('luongthuclinh')
+        )
+
         # ✅ THÊM: Chuyển bảng lương sang calculated sau khi lưu phiếu lương thành công
         bang_luong_obj.trangthai = 'calculated'
-        bang_luong_obj.tongsoluongnhanvien = len(nhanvien_ids)
-        bang_luong_obj.tongtienluong = sum(
-            float(calculated_results.get(str(nv_id), 0)) for nv_id in nhanvien_ids
-        )
+        bang_luong_obj.tongsoluongnhanvien = payroll_summary.get('total_count') or 0
+        bang_luong_obj.tongtienluong = _safe_float(payroll_summary.get('total_salary'), 0.0)
         bang_luong_obj.updated_at = now()
         bang_luong_obj.save(update_fields=['trangthai', 'tongsoluongnhanvien', 'tongtienluong', 'updated_at'])
 

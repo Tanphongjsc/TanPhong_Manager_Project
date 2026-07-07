@@ -29,6 +29,18 @@ from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 # HELPERS
 # ============================================================
 
+# Danh sách fields cho update (không bao gồm id và created_at)
+_BANGCHAMCONG_UPDATE_FIELDS = [
+    'updated_at', 'thoigianchamcongvao', 'thoigianchamcongra',
+    'conglamviec', 'thoigianlamviec', 'ngaylamviec',
+    'thoigianlamthem', 'cotinhlamthem',
+    'coantrua', 'coandem', 'coanchunhat', 'codilam',
+    'thoigiandimuon', 'thoigianvesom', 'thoigiandisom', 'thoigianvemuon',
+    'loaichamcong', 'tencongviec', 'cophaingaynghi',
+    'thamsotinhluong', 'thanhtien', 'thanhtienthanhphan',
+    'ghichu', 'congviec', 'nhanvien', 'calamviec', 'snapshot_khunggio',
+]
+
 def get_lam_them_tabs():
     """Tabs cho nhóm Quản lý Làm thêm"""
     return [
@@ -249,7 +261,7 @@ def _recalculate_team_members(team_job_keys, ngay_lam_viec_set):
     for o in objs:
         if o.id is not None:
             o.updated_at = now
-            o.save()
+            o.save(update_fields=_BANGCHAMCONG_UPDATE_FIELDS)
 
 
 def tinh_luong_cham_cong(data_list):
@@ -463,6 +475,7 @@ def calculate_bang_cham_cong_objects(data_list):
             }
 
         # Tạo object Bangchamcong
+        snapshot_dict = _build_snapshot_from_item(item)
         objs.append(Bangchamcong(
             id=item.get('id') or None,
             created_at=timezone.now(),
@@ -490,7 +503,8 @@ def calculate_bang_cham_cong_objects(data_list):
             ghichu=item.get('ghichu', ''),
             congviec_id=item.get('congviec_id'),
             nhanvien_id=nv_id,
-            calamviec_id=item.get('calamviec_id', None)
+            calamviec_id=item.get('calamviec_id', None),
+            snapshot_khunggio=dumps(snapshot_dict) if snapshot_dict else None
         ))
 
     return objs
@@ -627,6 +641,28 @@ def _get_shifts_for_date(ngay_lam_viec, source='schedule'):
 # DATA BUILDERS: Chấm công theo ngày
 # ============================================================
 
+def _build_snapshot_from_item(item):
+    """
+    Tạo snapshot JSON đóng băng cấu hình khung giờ tại thời điểm chấm công.
+    Build từ server-side trusted data, không tin payload client.
+    """
+    khung_gio = item.get('khunggiolamviec')
+    if not khung_gio:
+        return None
+
+    return {
+        'schema_version': 1,
+        'loaicalamviec': item.get('loaicalamviec', 'CO_DINH'),
+        'cocancheckout': item.get('cocancheckout', True),
+        'tongthoigianlamvieccuaca': item.get('tongthoigianlamvieccuaca', 0),
+        'congcuacalamviec': item.get('congtongcuaca', 0),
+        'sokhunggiotrongca': item.get('sokhunggiotrongca', 1),
+        'solanchamcongtrongngay': item.get('solanchamcongtrongngay', 1),
+        'khunggiolamviec': khung_gio,
+        'khunggionghitrua': item.get('khunggionghitrua', []),
+    }
+
+
 def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
     """Lấy dữ liệu chấm công đã lưu cho mode update."""
     # Query chấm công + join metadata nhân viên/ca
@@ -643,7 +679,7 @@ def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
     ).values(
-        'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi',
+        'id', 'nhanvien_id', 'calamviec_id', 'cophaingaynghi', 'snapshot_khunggio',
         'hovaten', 'manhanvien', 'loainv', 'phuongthuctinhluong',
         'solanchamcongtrongngay', 'sokhunggiotrongca', 'cocancheckout', 'loaicalamviec', 'tongthoigianlamvieccuaca',
         'congtongcuaca',
@@ -668,18 +704,38 @@ def build_cham_cong_data_for_update(ngay_lam_viec, calamviec_id=None):
         nv_id = item['nhanvien_id']
         item['phongban_id'] = map_pb.get(nv_id)
 
-        shift_meta = map_ca.get(item.get('calamviec_id'), {})
-        list_kg = shift_meta.get('list_khung_gio', [])
-        item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
+        snapshot_raw = item.pop('snapshot_khunggio', None)
+        snapshot = None
+        if isinstance(snapshot_raw, str):
+            try:
+                snapshot = loads(snapshot_raw)
+            except Exception:
+                snapshot = None
+        else:
+            snapshot = snapshot_raw
 
-        # Xác định khung giờ theo index lần chấm
         idx = row_idx_by_emp[nv_id]
-        item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_kg, idx)
         row_idx_by_emp[nv_id] += 1
-        if item['khunggiolamviec'] is None:
-            continue
 
-        _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_kg)
+        if snapshot and isinstance(snapshot, dict):
+            item['khunggiolamviec'] = snapshot.get('khunggiolamviec')
+            item['khunggionghitrua'] = snapshot.get('khunggionghitrua', [])
+            item['loaicalamviec'] = snapshot.get('loaicalamviec', item.get('loaicalamviec'))
+            item['cocancheckout'] = snapshot.get('cocancheckout', item.get('cocancheckout'))
+            item['tongthoigianlamvieccuaca'] = snapshot.get('tongthoigianlamvieccuaca', item.get('tongthoigianlamvieccuaca'))
+            item['congtongcuaca'] = snapshot.get('congcuacalamviec', item.get('congtongcuaca'))
+            item['sokhunggiotrongca'] = snapshot.get('sokhunggiotrongca', item.get('sokhunggiotrongca'))
+            item['solanchamcongtrongngay'] = snapshot.get('solanchamcongtrongngay', item.get('solanchamcongtrongngay'))
+        else:
+            shift_meta = map_ca.get(item.get('calamviec_id'), {})
+            list_kg = shift_meta.get('list_khung_gio', [])
+            item['khunggionghitrua'] = shift_meta.get('khunggionghitrua', [])
+
+            item['khunggiolamviec'] = _resolve_khung_gio_lam_viec(item, list_kg, idx)
+            if item['khunggiolamviec'] is None:
+                continue
+
+            _bo_sung_nghi_trua_giua_cac_khung_gio(item, list_kg)
 
         # Chuẩn hóa output
         item['sophutot'] = item.get('thoigianlamthem') or 0
@@ -750,15 +806,15 @@ def build_cham_cong_data_by_status(ngay_lam_viec, da_cham_cong=False, mode='crea
     qs = qs_base.filter(id__in=Subquery(sq_selected)).values(
         "id", "nhanvien_id", "calamviec_id", "cophaingaynghi",
         "total_cham_cong", "solanchamcongtrongngay",
-        hovaten=F('nhanvien__hovaten'),
-        manhanvien=F('nhanvien__manhanvien'),
-        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
-    ).annotate(
         sokhunggiotrongca=F('calamviec__sokhunggiotrongca'),
         cocancheckout=F('calamviec__cocancheckout'),
         loaicalamviec=F('calamviec__loaichamcong'),
         tongthoigianlamvieccuaca=F('calamviec__tongthoigianlamvieccuaca'),
         congtongcuaca=F('calamviec__congcuacalamviec'),
+        hovaten=F('nhanvien__hovaten'),
+        manhanvien=F('nhanvien__manhanvien'),
+        phuongthuctinhluong=F('nhanvien__loainv__phuongthuctinhluong')
+    ).annotate(
         list_khung_gio_json=_build_khung_gio_jsonb_agg('calamviec__khunggiolamviec__')
     ).order_by('nhanvien_id')
 
@@ -929,9 +985,21 @@ def api_bang_cham_cong_list(request):
             Bangchamcong.objects.bulk_create(create_objs)
         if update_objs:
             now = timezone.now()
+            existing_snapshots = {
+                obj.id: obj.snapshot_khunggio
+                for obj in Bangchamcong.objects.filter(
+                    id__in=[o.id for o in update_objs]
+                ).only('id', 'snapshot_khunggio')
+            }
             for o in update_objs:
                 o.updated_at = now
-                o.save()
+                if o.id in existing_snapshots and existing_snapshots[o.id]:
+                    val = existing_snapshots[o.id]
+                    if isinstance(val, (dict, list)):
+                        o.snapshot_khunggio = dumps(val)
+                    else:
+                        o.snapshot_khunggio = val
+                o.save(update_fields=_BANGCHAMCONG_UPDATE_FIELDS)
 
         is_create = request.method == 'POST'
         return JsonResponse({
@@ -1074,10 +1142,32 @@ def api_tong_hop_cham_cong_cong_viec(request):
         qs_nv = qs_nv.filter(Q(nhanvien__hovaten__icontains=search) | Q(nhanvien__manhanvien__icontains=search))
 
     nv_ids = list(qs_nv.values_list('nhanvien_id', flat=True))
+
+    # Lấy danh sách ca làm việc và tự động chọn ca đầu tiên nếu không truyền hoặc không hợp lệ
+    ds_ca = _get_shifts_for_date(ngay, 'attendance')
+    valid_ca_ids = [c['calamviec_id'] for c in ds_ca]
+    try:
+        ca_id = int(request.GET.get('calamviec_id') or '')
+    except (TypeError, ValueError):
+        ca_id = None
+
+    if ca_id not in valid_ca_ids:
+        ca_id = ds_ca[0]['calamviec_id'] if ds_ca else None
+
     if not nv_ids:
-        return JsonResponse({'success': True, 'data': [], 'jobs': [], 'total': 0}, status=200)
+        return JsonResponse({
+            'success': True,
+            'data': [],
+            'jobs': [],
+            'total': 0,
+            'ds_calamviec': ds_ca,
+            'selected_calamviec_id': ca_id
+        }, status=200)
 
     qs = Bangchamcong.objects.filter(ngaylamviec=ngay, nhanvien_id__in=nv_ids)
+    if ca_id is not None:
+        qs = qs.filter(calamviec_id=ca_id)
+
     if loai_cc and loai_cc != 'all':
         qs = qs.filter(loaichamcong=loai_cc)
 
@@ -1085,7 +1175,7 @@ def api_tong_hop_cham_cong_cong_viec(request):
         ten_nv=F('nhanvien__hovaten'),
         ma_nv=F('nhanvien__manhanvien')
     ).values(
-        'nhanvien_id', 'ten_nv', 'ma_nv', 'thamsotinhluong', 'codilam'
+        'nhanvien_id', 'ten_nv', 'ma_nv', 'thamsotinhluong', 'codilam', 'thanhtien', 'loaichamcong'
     )
 
     job_options = {}
@@ -1095,28 +1185,12 @@ def api_tong_hop_cham_cong_cong_viec(request):
         if record.get('codilam') is False:
             continue
 
-        cfg = _parse_salary_config(record.get('thamsotinhluong'))
-        details = cfg.get('details') or []
-        if not isinstance(details, list):
-            continue
-
-        for detail in details:
-            if not isinstance(detail, dict):
-                continue
-            cv_id = detail.get('congviec_id')
-            if cv_id is None:
-                continue
-
-            ten_cv = detail.get('tencongviec') or ''
-            if cv_id not in job_options or (not job_options.get(cv_id) and ten_cv):
-                job_options[cv_id] = ten_cv or f'Công việc {cv_id}'
-
-            if congviec_id is not None and str(cv_id) != str(congviec_id):
-                continue
-
-            group = grouped.setdefault(cv_id, {
-                'congviec_id': cv_id,
-                'tencongviec': ten_cv or f'Công việc {cv_id}',
+        # 1. Thêm vào nhóm Văn phòng nếu là khối Văn phòng và không lọc theo một công việc cụ thể
+        if record.get('loaichamcong') == 'VP' and congviec_id is None:
+            group = grouped.setdefault(None, {
+                'congviec_id': None,
+                'tencongviec': 'Văn phòng',
+                'group_type': 'office',
                 'members': {},
                 'tong_tien': 0
             })
@@ -1130,13 +1204,13 @@ def api_tong_hop_cham_cong_cong_viec(request):
                     'nhanvien_id': nv_id,
                     'ten_nv': record.get('ten_nv'),
                     'ma_nv': record.get('ma_nv'),
-                    'pay_role': detail.get('pay_role'),
+                    'pay_role': None,
                     'tham_so': {},
                     'thanhtien': 0
                 }
                 members_map[nv_id] = member
 
-            amount = detail.get('thanhtien') or 0
+            amount = record.get('thanhtien') or 0
             try:
                 amount = float(amount)
             except (TypeError, ValueError):
@@ -1145,7 +1219,7 @@ def api_tong_hop_cham_cong_cong_viec(request):
             member['thanhtien'] += amount
             group['tong_tien'] += amount
 
-            params = _extract_salary_params(detail.get('thamsotinhluong'))
+            params = _extract_salary_params(record.get('thamsotinhluong'))
             if params:
                 if not member['tham_so']:
                     member['tham_so'] = params
@@ -1153,6 +1227,65 @@ def api_tong_hop_cham_cong_cong_viec(request):
                     for k, v in params.items():
                         if k not in member['tham_so']:
                             member['tham_so'][k] = v
+
+        # 2. Xử lý các chi tiết công việc phụ/extra trong thamsotinhluong (áp dụng cho cả VP và SX)
+        cfg = _parse_salary_config(record.get('thamsotinhluong'))
+        details = cfg.get('details') or []
+        if isinstance(details, list):
+            for detail in details:
+                if not isinstance(detail, dict):
+                    continue
+                cv_id = detail.get('congviec_id')
+                if cv_id is None:
+                    continue
+
+                ten_cv = detail.get('tencongviec') or ''
+                if cv_id not in job_options or (not job_options.get(cv_id) and ten_cv):
+                    job_options[cv_id] = ten_cv or f'Công việc {cv_id}'
+
+                if congviec_id is not None and str(cv_id) != str(congviec_id):
+                    continue
+
+                group = grouped.setdefault(cv_id, {
+                    'congviec_id': cv_id,
+                    'tencongviec': ten_cv or f'Công việc {cv_id}',
+                    'group_type': 'job',
+                    'members': {},
+                    'tong_tien': 0
+                })
+
+                nv_id = record.get('nhanvien_id')
+                members_map = group['members']
+                member = members_map.get(nv_id)
+
+                if not member:
+                    member = {
+                        'nhanvien_id': nv_id,
+                        'ten_nv': record.get('ten_nv'),
+                        'ma_nv': record.get('ma_nv'),
+                        'pay_role': detail.get('pay_role'),
+                        'tham_so': {},
+                        'thanhtien': 0
+                    }
+                    members_map[nv_id] = member
+
+                amount = detail.get('thanhtien') or 0
+                try:
+                    amount = float(amount)
+                except (TypeError, ValueError):
+                    amount = 0
+
+                member['thanhtien'] += amount
+                group['tong_tien'] += amount
+
+                params = _extract_salary_params(detail.get('thamsotinhluong'))
+                if params:
+                    if not member['tham_so']:
+                        member['tham_so'] = params
+                    else:
+                        for k, v in params.items():
+                            if k not in member['tham_so']:
+                                member['tham_so'][k] = v
 
     result = []
     for _, group in grouped.items():
@@ -1167,7 +1300,14 @@ def api_tong_hop_cham_cong_cong_viec(request):
     jobs = [{'id': cv_id, 'tencongviec': name} for cv_id, name in job_options.items()]
     jobs.sort(key=lambda j: j.get('tencongviec') or '')
 
-    return JsonResponse({'success': True, 'data': result, 'jobs': jobs, 'total': len(result)}, status=200)
+    return JsonResponse({
+        'success': True,
+        'data': result,
+        'jobs': jobs,
+        'total': len(result),
+        'ds_calamviec': ds_ca,
+        'selected_calamviec_id': ca_id
+    }, status=200)
 
 
 @login_required
