@@ -63,11 +63,7 @@ class InlineEditor {
 
         // 2. Setup Global Footer
         if (this.els.footer) {
-            this.els.footer.classList.remove('hidden', 'translate-y-full');
-            this.els.footer.classList.add('translate-y-0');
-            
-            // Animation nhẹ
-            this.els.footer.firstElementChild?.classList.add('animate-fade-in-up');
+            this.els.footer.classList.remove('hidden');
 
             // 3. GÁN SỰ KIỆN CHO GLOBAL FOOTER (Quan trọng: Xóa cũ trước khi gán mới)
             // Clone nút Save để xóa sạch các event listener từ Editor của tab khác
@@ -101,8 +97,7 @@ class InlineEditor {
         this.els.btnTrigger?.classList.remove('hidden');
         
         // Ẩn Footer
-        this.els.footer?.classList.add('hidden', 'translate-y-full');
-        this.els.footer?.classList.remove('translate-y-0');
+        this.els.footer?.classList.add('hidden');
 
         // Reset Form Data
         this.els.form?.reset();
