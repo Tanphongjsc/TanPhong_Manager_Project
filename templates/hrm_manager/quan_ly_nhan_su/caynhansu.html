@@ -9,10 +9,10 @@
     .org-layout { display: grid; grid-template-columns: 1fr; gap: 1rem; height: calc(100vh - 130px); }
     @media (min-width: 1024px) { .org-layout { grid-template-columns: 320px 1fr; } }
     
-    #tree-sidebar { transition: transform 0.3s ease-in-out; }
+    .org-tree-sidebar { transition: transform 0.3s ease-in-out; }
     @media (max-width: 1023px) {
-        #tree-sidebar { position: fixed; inset: 0; width: 100%; z-index: 50; transform: translateX(-100%); }
-        #tree-sidebar.open { transform: translateX(0); }
+        .org-tree-sidebar { position: fixed; inset: 0; width: 100%; z-index: 50; transform: translateX(-100%); }
+        .org-tree-sidebar.open { transform: translateX(0); }
     }
     /* Custom Scrollbar */
     .custom-scroll::-webkit-scrollbar { width: 4px; }
@@ -20,8 +20,8 @@
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
     /* Keep tree chevron visible even when global sidebar styles hide .fa-chevron-down */
-    .tree-toggle i { transition: transform 0.2s ease; }
-    .tree-toggle.is-open i { transform: rotate(90deg); }
+    .org-tree-toggle i { transition: transform 0.2s ease; }
+    .org-tree-toggle.is-open i { transform: rotate(90deg); }
 </style>
 {% endblock %}
 
@@ -31,33 +31,9 @@
     {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
 
     <div class="org-layout relative">
-        <div id="sidebar-overlay" onclick="window.TreeManager.toggleSidebar(false)" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden transition-opacity"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden transition-opacity"></div>
 
-        <aside id="tree-sidebar" class="bg-white shadow-sm border border-slate-200 rounded-lg flex flex-col h-full overflow-hidden">
-            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-800">Cấu trúc tổ chức</h3>
-                <div class="flex items-center gap-2">
-                    <button onclick="window.CompanyManager.openAddCompany()" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md flex items-center gap-1 transition-colors">
-                        <i class="fas fa-plus"></i> <span class="hidden sm:inline">Công ty</span>
-                    </button>
-                    <button onclick="window.TreeManager.toggleSidebar(false)" class="lg:hidden w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-full">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="p-3 border-b border-slate-50 relative">
-                <i class="fas fa-search absolute left-6 top-5 text-slate-400 text-xs"></i>
-                <input type="text" id="tree-search-input" class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Tìm bộ phận...">
-            </div>
-
-            <div class="flex-1 custom-scroll p-2 overflow-y-auto" id="org-tree-container">
-                <div id="view-all-employees" class="flex items-center gap-3 p-2.5 rounded-md cursor-pointer bg-blue-50 text-blue-700 font-medium mb-2 hover:bg-blue-100 border border-blue-100 transition-colors">
-                    <i class="fas fa-users"></i> <span class="flex-1 text-sm">Tất cả nhân viên</span>
-                </div>
-                <ul id="tree-root" class="space-y-1"></ul>
-            </div>
-        </aside>
+        {% include "components/org_tree.html" with component_id="employee-org-tree" variant="sidebar" show_actions=True show_all=True title="Cấu trúc tổ chức" overlay_id="sidebar-overlay" %}
 
         <main class="bg-white shadow-sm border border-slate-200 rounded-lg flex flex-col h-full overflow-hidden">
             <div class="shrink-0 px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
@@ -90,25 +66,7 @@
 {% include "components/crud_sidebar.html" with sidebar_id="company-sidebar" overlay_id="company-sidebar-overlay" form_id="company-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/congty_form.html" title="Thông tin công ty" submit_text="Lưu công ty" %}
 {% include "components/crud_sidebar.html" with sidebar_id="dept-sidebar" overlay_id="dept-sidebar-overlay" form_id="dept-form" form_fields_template="hrm_manager/quan_ly_nhan_su/partials/phongban_form.html" title="Cập nhật tổ chức" submit_text="Lưu thay đổi" %}
 
-<template id="tree-node-template">
-    <li class="pl-4 border-l border-slate-200 ml-2.5">
-        <div class="tree-item group flex items-center justify-between p-1.5 rounded-md cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all mb-0.5">
-            <div class="flex items-center gap-2 overflow-hidden min-w-0">
-                <button class="tree-toggle invisible w-5 h-5 flex items-center justify-center hover:bg-slate-200 rounded text-slate-400 transition-transform">
-                    <i class="fas fa-chevron-right text-[10px]"></i>
-                </button>
-                <i class="tree-icon text-sm flex-shrink-0"></i>
-                <span class="tree-name text-sm text-slate-700 truncate select-none"></span>
-            </div>
-            <div class="hidden group-hover:flex items-center bg-white rounded shadow-sm border border-slate-100 ml-2">
-                <button type="button" class="btn-add-sub p-1 rounded hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition-colors" title="Thêm cấp con"><i class="fas fa-plus text-xs"></i></button>
-                <button type="button" class="btn-edit p-1 rounded hover:bg-slate-50 text-blue-600 hover:text-blue-900 transition-colors" title="Sửa"><i class="fas fa-pen text-xs"></i></button>
-                <button type="button" class="btn-delete p-1 rounded hover:bg-slate-50 text-red-600 hover:text-red-900 transition-colors" title="Xóa"><i class="fas fa-trash text-xs"></i></button>
-            </div>
-        </div>
-        <ul class="tree-children hidden"></ul>
-    </li>
-</template>
+
 <div id="modal-bulk-transfer" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
 
@@ -158,5 +116,6 @@
 {% endblock content %}
 
 {% block scripts %}
+<script src="{% static 'js/components/org_tree.js' %}"></script>
 <script src="{% static 'js/quan_ly_nhan_su/cay_nhan_su.js' %}"></script>
 {% endblock scripts %}
