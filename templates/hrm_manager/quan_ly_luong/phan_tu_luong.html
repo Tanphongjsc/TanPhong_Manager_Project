@@ -51,7 +51,16 @@
                 <form id="salary-info-form" class="flex-1 flex flex-col overflow-hidden pb-20">
                     {% csrf_token %}
                     
-                    <div class="flex justify-end items-center mb-3 px-1 flex-shrink-0 pt-2">
+                    <div class="flex justify-between items-center mb-3 px-1 flex-shrink-0 pt-2">
+                        {# Thanh tìm kiếm cục bộ #}
+                        <div class="relative hidden sm:block">
+                            <input type="text" id="salary-info-search-input" placeholder="Tìm tên, mã NV..." 
+                                   class="w-48 lg:w-64 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            <svg class="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                            </svg>
+                        </div>
+
                         <button type="button" onclick="window.SalaryInfoManager.openModal()" 
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm">
                             <i class="fas fa-columns text-[11px]"></i>
