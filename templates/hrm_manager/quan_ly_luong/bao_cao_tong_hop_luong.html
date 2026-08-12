@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - FlexiPay{% endblock title %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative overflow-hidden">
+        
+        <div id="tab-container" class="[&>div]:!mb-0">
+            {% include "components/tab_nav.html" with tabs=tabs %}
+        </div>
+
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm tên hoặc mã NV..." filter_form_id="filter-form" filter_template="hrm_manager/quan_ly_luong/partials/bao_cao_tong_hop_luong_filter.html" extra_actions_template="hrm_manager/quan_ly_luong/partials/bao_cao_tong_hop_luong_extra_actions.html" disable_add_button=True show_add_btn=False %}
+
+        <div class="flex-1 relative overflow-hidden">
+    <div id="loading-overlay" class="absolute inset-0 bg-white/80 z-10 hidden flex-col items-center justify-center backdrop-blur-sm">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <p class="text-gray-600 mt-3 font-medium">Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- Tab 1: Theo phòng ban, chức vụ -->
+    <div id="tab-dept-position" class="tab-pane h-full flex flex-col">
+        <div class="overflow-auto table-scroll-x relative h-full border border-slate-200 rounded-lg">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 whitespace-nowrap sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50">Mã NV</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50">Nhân viên</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Suất ăn đêm</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tiền ăn đêm</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Suất ăn CN</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tiền ăn CN</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng tiền CV</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng giờ</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng ca</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right border-l border-gray-200">Lương thực lĩnh</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body-dept" class="divide-y divide-gray-200">
+                    <!-- Dữ liệu render bằng JS -->
+                </tbody>
+                <tfoot id="table-footer-dept" class="bg-blue-50 text-blue-900 font-bold sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+                    <!-- Footer render bằng JS -->
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab 2: Theo công việc -->
+    <div id="tab-job" class="tab-pane hidden h-full flex flex-col">
+        <div class="overflow-auto custom-scrollbar relative h-full border border-slate-200 rounded-lg">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 whitespace-nowrap sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50">Công việc</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng tiền</th>
+                        <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng số giờ</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body-job" class="divide-y divide-gray-200">
+                    <!-- Dữ liệu render bằng JS -->
+                </tbody>
+                <tfoot id="table-footer-job" class="bg-blue-50 text-blue-900 font-bold sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+                    <!-- Footer render bằng JS -->
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/quan_ly_luong/bao_cao_tong_hop_luong.js' %}"></script>
+{% endblock scripts %}

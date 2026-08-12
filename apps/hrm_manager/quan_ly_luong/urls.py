@@ -70,4 +70,8 @@ urlpatterns = [
     path('api/bang-luong/<int:pk>/approve/', views.api_bang_luong_approve, name='api_bang_luong_approve'),
     path('api/bang-luong/<int:pk>/mark-paid/', views.api_bang_luong_mark_paid, name='api_bang_luong_mark_paid'),
     path('api/bang-luong/<int:pk>/cancel/', views.api_bang_luong_cancel, name='api_bang_luong_cancel'),
+    # ------------------------------ BÁO CÁO TỔNG HỢP LƯƠNG -----------------------------
+    path('bao-cao/', views.view_bao_cao_tong_hop_luong, name='bao_cao'),
+    path('api/bao-cao/tong-hop-luong/', views.api_bao_cao_tong_hop_luong, name='api_bao_cao_tong_hop_luong'),
+    path('api/bao-cao/tong-hop-luong/export/', views.api_bao_cao_tong_hop_luong_export, name='api_bao_cao_tong_hop_luong_export'),
 ]

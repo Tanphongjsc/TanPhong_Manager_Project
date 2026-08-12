@@ -1,0 +1,23 @@
+<div id="filter-month-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <i class="fa-regular fa-calendar text-slate-500 mr-2 text-[10px]"></i>
+    <input type="month" id="filter-thang" name="thang"
+           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none" required>
+</div>
+
+<select id="filter-phongban" name="phongban_id"
+    class="px-2 py-1 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 bg-white cursor-pointer text-slate-600 max-w-[150px] truncate h-[26px]">
+    <option value="">Tất cả phòng ban</option>
+    <!-- Render by JS -->
+</select>
+
+<div id="filter-don-gia-dem-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <span class="text-xs text-slate-500 mr-2 whitespace-nowrap">Đ.giá đêm</span>
+    <input type="number" id="filter-don-gia-dem" name="don_gia_an_dem"
+           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-20 p-0 h-full leading-none" min="0" step="1000">
+</div>
+
+<div id="filter-don-gia-cn-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
+    <span class="text-xs text-slate-500 mr-2 whitespace-nowrap">Đ.giá CN</span>
+    <input type="number" id="filter-don-gia-cn" name="don_gia_an_chu_nhat"
+           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-20 p-0 h-full leading-none" min="0" step="1000">
+</div>

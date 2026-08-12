@@ -10,12 +10,18 @@ from django.urls import reverse
 from django.db.models.functions import Coalesce
 
 from apps.hrm_manager.__core__.models import (Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, 
-                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban, Lichlamviecthucte)
+                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban, Lichlamviecthucte, Congviec)
 
 from json import loads, dumps
 from collections import defaultdict
 import logging
 from datetime import date, datetime, timedelta
+import unicodedata
+import openpyxl
+from io import BytesIO
+from urllib.parse import quote
+from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
+from apps.hrm_manager.cham_cong.views import _parse_salary_config, _extract_salary_params
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context,
@@ -2150,7 +2156,6 @@ def api_ky_luong_detail(request, pk):
     ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
     if not isinstance(ky_luong, Kyluong):
         return ky_luong
-    
     data = KyLuongService.format_period_display(ky_luong)
     
     # Thêm thông tin chi tiết cho form edit
@@ -2638,3 +2643,368 @@ def api_bang_luong_get_options(request):
         'current_month': month,
         'current_year': year,
     })
+
+# ============================================================================
+# BÁO CÁO TỔNG HỢP LƯƠNG
+# ============================================================================
+def _normalize_param_key(s):
+    if not s:
+        return ''
+    # NFD strip accents
+    s = unicodedata.normalize('NFD', s).encode('ascii', 'ignore').decode('utf-8')
+    # Khoảng trắng thành _
+    s = s.replace(' ', '_')
+    # Bỏ ký tự ngoài [a-zA-Z0-9_]
+    import re
+    s = re.sub(r'[^a-zA-Z0-9_]', '', s)
+    return s.upper()
+
+def _build_time_key_map():
+    time_map = {}
+    try:
+        jobs = Congviec.objects.filter(trangthaicv=True).values('id', 'danhsachthamso')
+        for job in jobs:
+            params = job.get('danhsachthamso', [])
+            if isinstance(params, str):
+                try:
+                    params = loads(params)
+                except:
+                    params = []
+            if isinstance(params, list):
+                for param in params:
+                    if _normalize_param_key(param.get('ma', '')) == 'THOI_GIAN' or _normalize_param_key(param.get('ten', '')) == 'THOI_GIAN':
+                        time_map[job['id']] = param.get('ma')
+                        break
+    except Exception as e:
+        logging.error(f"_build_time_key_map error: {e}")
+    return time_map
+
+def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat):
+    don_gia_an_dem = _safe_float(don_gia_an_dem, 0.0)
+    don_gia_an_chu_nhat = _safe_float(don_gia_an_chu_nhat, 0.0)
+    
+    empty_result = {'grouped': [], 'jobs': [], 'grand_totals': {}, 'no_payroll': False}
+
+    try:
+        # Find Kyluong matching the given month (format YYYY-MM)
+        ky_luong = Kyluong.objects.filter(thang=thang).first()
+        if not ky_luong:
+            empty_result['no_payroll'] = True
+            return empty_result
+
+        # Find valid Bangluong for this Kyluong (calculated, approved, paid)
+        valid_status = ['calculated', 'approved', 'paid']
+        bang_luongs = Bangluong.objects.filter(kyluong=ky_luong, trangthai__in=valid_status)
+        if not bang_luongs.exists():
+            empty_result['no_payroll'] = True
+            return empty_result
+
+        bang_luong_ids = list(bang_luongs.values_list('id', flat=True))
+    except Exception as e:
+        logging.error(f"_build_tong_hop_luong_report error getting Kyluong/Bangluong: {e}")
+        return empty_result
+
+    # Query Phieuluong
+    phieu_qs = Phieuluong.objects.filter(bangluong_id__in=bang_luong_ids)
+    
+    valid_nv_ids = None
+    if phongban_id or search:
+        ls_qs = Lichsucongtac.objects.filter(trangthai='active').select_related('nhanvien', 'phongban', 'chucvu')
+        if phongban_id:
+            dept_ids = get_all_child_department_ids(phongban_id, isnclude_root=True)
+            ls_qs = ls_qs.filter(phongban_id__in=dept_ids)
+        if search:
+            ls_qs = ls_qs.filter(
+                Q(nhanvien__manhanvien__icontains=search) | 
+                Q(nhanvien__hovaten__icontains=search)
+            )
+        valid_nv_ids = list(ls_qs.values_list('nhanvien_id', flat=True))
+        
+        phieu_qs = phieu_qs.filter(nhanvien_id__in=valid_nv_ids)
+
+    # Need a map of Nhanvien info (ma_nhanvien) since Phieuluong only has tennhanvien
+    # We can fetch Nhanvien to get manhanvien
+    phieu_list = list(phieu_qs.select_related('nhanvien'))
+
+    time_key_map = _build_time_key_map()
+    
+    emp_stats = {}
+    job_stats = {}
+
+    for phieu in phieu_list:
+        emp_id = phieu.nhanvien_id
+        
+        suat_an_dem = 0
+        suat_an_cn = 0
+        tong_gio = 0.0
+        tong_ca = 0.0
+        tong_tien_cv = 0.0
+        
+        ngay_cham_cong_data = []
+        if phieu.ngaychamcong:
+            try:
+                ngay_cham_cong_data = loads(phieu.ngaychamcong)
+            except:
+                ngay_cham_cong_data = []
+
+        for row in ngay_cham_cong_data:
+            # Check if this record is counted
+            if not row.get('codilam'):
+                continue
+                
+            if row.get('coandem'):
+                suat_an_dem += 1
+            if row.get('coanchunhat'):
+                suat_an_cn += 1
+                
+            thoigianlamviec = _safe_float(row.get('thoigianlamviec', 0))
+            tong_gio += thoigianlamviec / 60.0
+            
+            conglamviec = _safe_float(row.get('conglamviec', 0))
+            tong_ca += conglamviec
+
+            thamsotinhluong = row.get('thamsotinhluong')
+            details = []
+            if thamsotinhluong:
+                if isinstance(thamsotinhluong, str):
+                    try:
+                        thamsotinhluong = loads(thamsotinhluong)
+                    except:
+                        thamsotinhluong = {}
+                if isinstance(thamsotinhluong, dict):
+                    details = thamsotinhluong.get('details', [])
+                    
+            if not details and row.get('congviec_id'):
+                # Legacy
+                details = [{
+                    'congviec_id': row['congviec_id'],
+                    'tencongviec': 'Công việc cũ',
+                    'thamsotinhluong': thamsotinhluong if isinstance(thamsotinhluong, dict) else {},
+                    'thanhtien': row.get('thanhtien', 0)
+                }]
+
+            for d in details:
+                job_id = d.get('congviec_id')
+                if not job_id:
+                    continue
+                    
+                ten_job = d.get('tencongviec', f'Job {job_id}')
+                tien_job = _safe_float(d.get('thanhtien', 0))
+                
+                if job_id not in job_stats:
+                    job_stats[job_id] = {'tencongviec': ten_job, 'tong_tien': 0.0, 'tong_gio': 0.0}
+                    
+                job_stats[job_id]['tong_tien'] += tien_job
+                tong_tien_cv += tien_job
+                
+                # Thời gian công việc
+                params = _extract_salary_params(d.get('thamsotinhluong'))
+                t_key = time_key_map.get(job_id)
+                time_val = 0.0
+                
+                if t_key and t_key in params:
+                    time_val = _safe_float(params[t_key])
+                else:
+                    found = False
+                    for k, v in params.items():
+                        if _normalize_param_key(k) == 'THOI_GIAN':
+                            time_val = _safe_float(v)
+                            found = True
+                            break
+                    if not found and 'thoi_gian' in params:
+                        time_val = _safe_float(params['thoi_gian'])
+                
+                job_stats[job_id]['tong_gio'] += time_val
+
+        emp_stats[emp_id] = {
+            'suat_an_dem': suat_an_dem, 
+            'suat_an_cn': suat_an_cn, 
+            'tong_gio': tong_gio, 
+            'tong_ca': tong_ca,
+            'tong_tien_cv': tong_tien_cv,
+            'luong_thuc_linh': _safe_float(phieu.luongthuclinh, 0.0),
+            'ma_nv': phieu.nhanvien.manhanvien if phieu.nhanvien else '',
+            'ten_nv': phieu.tennhanvien or '',
+            'ten_phongban': phieu.tenphongban or 'Chưa sắp xếp',
+            'ten_chucvu': phieu.tenchucvu or 'Chưa có chức vụ',
+        }
+
+    # Group by Phòng ban -> Chức vụ
+    grouped = {}
+    grand_totals = {
+        'suat_an_dem': 0, 'tien_an_dem': 0.0,
+        'suat_an_cn': 0, 'tien_an_cn': 0.0,
+        'tong_tien_cv': 0.0, 'tong_gio': 0.0,
+        'tong_ca': 0.0, 'luong_thuc_linh': 0.0
+    }
+    
+    for emp_id, st in emp_stats.items():
+        # Bỏ qua nếu không có dữ liệu báo cáo
+        if st['suat_an_dem'] == 0 and st['suat_an_cn'] == 0 and st['tong_gio'] == 0 and st['tong_tien_cv'] == 0 and st['luong_thuc_linh'] == 0 and st['tong_ca'] == 0:
+            continue
+            
+        group_key = (st['ten_phongban'], st['ten_chucvu'])
+        if group_key not in grouped:
+            grouped[group_key] = {
+                'ten_phongban': st['ten_phongban'],
+                'ten_chucvu': st['ten_chucvu'],
+                'nhan_vien': [],
+                'subtotal': {
+                    'suat_an_dem': 0, 'tien_an_dem': 0.0,
+                    'suat_an_cn': 0, 'tien_an_cn': 0.0,
+                    'tong_tien_cv': 0.0, 'tong_gio': 0.0,
+                    'tong_ca': 0.0, 'luong_thuc_linh': 0.0
+                }
+            }
+            
+        tien_an_dem = st['suat_an_dem'] * don_gia_an_dem
+        tien_an_cn = st['suat_an_cn'] * don_gia_an_chu_nhat
+        
+        emp_row = {
+            'ma_nv': st['ma_nv'],
+            'ten_nv': st['ten_nv'],
+            'suat_an_dem': st['suat_an_dem'],
+            'tien_an_dem': tien_an_dem,
+            'suat_an_cn': st['suat_an_cn'],
+            'tien_an_cn': tien_an_cn,
+            'tong_tien_cv': st['tong_tien_cv'],
+            'tong_gio': st['tong_gio'],
+            'tong_ca': st['tong_ca'],
+            'luong_thuc_linh': st['luong_thuc_linh']
+        }
+        
+        grouped[group_key]['nhan_vien'].append(emp_row)
+        
+        for k in grouped[group_key]['subtotal']:
+            grouped[group_key]['subtotal'][k] += emp_row[k]
+            grand_totals[k] += emp_row[k]
+
+    # Sort
+    sorted_grouped = []
+    for k in sorted(grouped.keys(), key=lambda x: (x[0], x[1])):
+        g = grouped[k]
+        g['nhan_vien'].sort(key=lambda x: x['ten_nv'])
+        sorted_grouped.append(g)
+        
+    sorted_jobs = sorted(job_stats.values(), key=lambda x: x['tencongviec'])
+    
+    return {
+        'grouped': sorted_grouped,
+        'jobs': sorted_jobs,
+        'grand_totals': grand_totals,
+        'no_payroll': False
+    }
+
+@login_required
+def view_bao_cao_tong_hop_luong(request):
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Báo cáo', 'url': None},
+        ],
+        'tabs': [
+            {'label': 'Theo phòng ban, chức vụ', 'url': '#tab-dept-position', 'url_name': 'tab_dept_position'},
+            {'label': 'Theo công việc', 'url': '#tab-job', 'url_name': 'tab_job'},
+        ],
+        'page_title': 'Tổng hợp lương',
+        'active_menu_url': reverse('hrm:quan_ly_luong:bao_cao')
+    }
+    return render(request, 'hrm_manager/quan_ly_luong/bao_cao_tong_hop_luong.html', context)
+
+@login_required
+@require_http_methods(["GET"])
+def api_bao_cao_tong_hop_luong(request):
+    thang = request.GET.get('thang')
+    
+    if not thang:
+        return json_error("Vui lòng chọn tháng")
+
+    thang = int(thang.split('-')[-1])
+    phongban_id = request.GET.get('phongban_id')
+    search = request.GET.get('search')
+    don_gia_an_dem = request.GET.get('don_gia_an_dem', 0)
+    don_gia_an_chu_nhat = request.GET.get('don_gia_an_chu_nhat', 0)
+    
+    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat)
+    return json_success("Lấy dữ liệu thành công", data=data)
+
+@login_required
+@require_http_methods(["GET"])
+def api_bao_cao_tong_hop_luong_export(request):
+    thang = request.GET.get('thang')
+    if not thang:
+        return json_error("Vui lòng chọn tháng")
+        
+    phongban_id = request.GET.get('phongban_id')
+    search = request.GET.get('search')
+    don_gia_an_dem = request.GET.get('don_gia_an_dem', 0)
+    don_gia_an_chu_nhat = request.GET.get('don_gia_an_chu_nhat', 0)
+    
+    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat)
+    
+    wb = openpyxl.Workbook()
+    
+    # Sheet 1: Theo phòng ban, chức vụ
+    ws1 = wb.active
+    ws1.title = "Theo phòng ban, chức vụ"
+    
+    headers = ["Mã NV", "Nhân viên", "Phòng ban", "Chức vụ", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng tiền CV", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
+    ws1.append(headers)
+    
+    from openpyxl.styles import Font
+    bold_font = Font(bold=True)
+    for cell in ws1[1]:
+        cell.font = bold_font
+        
+    for g in data['grouped']:
+        # Header nhóm
+        ws1.append(['', f"{g['ten_phongban']} - {g['ten_chucvu']}", '', '', '', '', '', '', '', '', '', ''])
+        ws1._cells[(ws1.max_row, 2)].font = bold_font
+        
+        for nv in g['nhan_vien']:
+            ws1.append([
+                nv['ma_nv'], nv['ten_nv'], g['ten_phongban'], g['ten_chucvu'],
+                nv['suat_an_dem'], nv['tien_an_dem'],
+                nv['suat_an_cn'], nv['tien_an_cn'],
+                nv['tong_tien_cv'], round(nv['tong_gio'], 2),
+                round(nv['tong_ca'], 2), nv['luong_thuc_linh']
+            ])
+            
+        # Subtotal
+        sub = g['subtotal']
+        ws1.append(['', 'Tổng', '', '', sub['suat_an_dem'], sub['tien_an_dem'], sub['suat_an_cn'], sub['tien_an_cn'], sub['tong_tien_cv'], round(sub['tong_gio'], 2), round(sub['tong_ca'], 2), sub['luong_thuc_linh']])
+        for cell in ws1[ws1.max_row]:
+            cell.font = bold_font
+            
+    # Grand total
+    gt = data['grand_totals']
+    if gt:
+        ws1.append(['', 'TỔNG CỘNG', '', '', gt['suat_an_dem'], gt['tien_an_dem'], gt['suat_an_cn'], gt['tien_an_cn'], gt['tong_tien_cv'], round(gt['tong_gio'], 2), round(gt['tong_ca'], 2), gt['luong_thuc_linh']])
+        for cell in ws1[ws1.max_row]:
+            cell.font = bold_font
+
+    # Sheet 2: Theo công việc
+    ws2 = wb.create_sheet(title="Theo công việc")
+    ws2.append(["Công việc", "Tổng tiền", "Tổng số giờ"])
+    for cell in ws2[1]:
+        cell.font = bold_font
+        
+    for job in data['jobs']:
+        ws2.append([job['tencongviec'], job['tong_tien'], round(job['tong_gio'], 2)])
+        
+    ws2.append(['TỔNG CỘNG', gt['tong_tien_cv'], round(gt['tong_gio'], 2)])
+    for cell in ws2[ws2.max_row]:
+        cell.font = bold_font
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    from django.http import HttpResponse
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    encoded_filename = quote(f"TongHopLuong_{thang}.xlsx")
+    response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
+    return response
