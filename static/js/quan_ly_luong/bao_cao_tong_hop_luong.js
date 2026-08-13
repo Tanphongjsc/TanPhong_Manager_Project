@@ -8,7 +8,6 @@ class BaoCaoTongHopLuongManager {
         this.form = document.getElementById('filter-form');
         this.searchInput = document.getElementById('search-input');
         this.exportBtn = document.getElementById('btn-export-excel');
-        this.loadingOverlay = document.getElementById('loading-overlay');
         
         this.init();
     }
@@ -19,7 +18,7 @@ class BaoCaoTongHopLuongManager {
         const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
         document.getElementById('filter-thang').value = monthStr;
         
-        this.loadPhongBan();
+        this.initOrgTree();
         this.initTabSwitching();
         this.bindEvents();
         
@@ -27,40 +26,43 @@ class BaoCaoTongHopLuongManager {
         this.loadData();
     }
 
-    async loadPhongBan() {
-        try {
-            const res = await AppUtils.API.get(this.phongBanUrl);
-            if (res && res.success && res.data) {
-                const select = document.getElementById('filter-phongban');
-                res.data.forEach(pb => {
-                    const option = document.createElement('option');
-                    option.value = pb.id;
-                    option.textContent = pb.tenphongban;
-                    select.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading phòng ban:', error);
+    initOrgTree() {
+        if (window.OrgTreeComponent) {
+            this.orgTree = new OrgTreeComponent({
+                componentId: 'org-tree-filter',
+                variant: 'dropdown',
+                showActions: false,
+                selectableMode: 'department',
+                onSelect: () => {
+                    this.loadData();
+                }
+            });
+            this.orgTree.init();
         }
     }
 
     initTabSwitching() {
-        const tabs = document.querySelectorAll('.tab-btn');
+        const tabContainer = document.querySelector('#tab-container nav');
+        if (!tabContainer) return;
+        const tabs = tabContainer.querySelectorAll('a');
+        
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
                 
                 // Cập nhật URL hash
                 const targetId = tab.getAttribute('href');
+                if (!targetId || !document.querySelector(targetId)) return;
+                
                 history.replaceState(null, null, targetId);
                 
                 // Thay đổi active class cho tab buttons
                 tabs.forEach(t => {
-                    t.classList.remove('text-blue-600', 'border-blue-600', 'active');
-                    t.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                    t.classList.remove('text-blue-600', 'border-blue-600');
+                    t.classList.add('text-slate-500', 'border-transparent', 'hover:text-slate-700', 'hover:border-slate-300');
                 });
-                tab.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-                tab.classList.add('text-blue-600', 'border-blue-600', 'active');
+                tab.classList.remove('text-slate-500', 'border-transparent', 'hover:text-slate-700', 'hover:border-slate-300');
+                tab.classList.add('text-blue-600', 'border-blue-600');
                 
                 // Thay đổi active class cho tab panes
                 document.querySelectorAll('.tab-pane').forEach(pane => {
@@ -78,7 +80,7 @@ class BaoCaoTongHopLuongManager {
         if (!hash || !document.querySelector(hash)) {
             hash = '#tab-dept-position';
         }
-        const activeTab = document.querySelector(`.tab-btn[href="${hash}"]`);
+        const activeTab = Array.from(tabs).find(t => t.getAttribute('href') === hash);
         if (activeTab) {
             activeTab.click();
         }
@@ -109,6 +111,7 @@ class BaoCaoTongHopLuongManager {
         const params = new URLSearchParams();
         if (formData.thang) params.append('thang', formData.thang);
         if (formData.phongban_id) params.append('phongban_id', formData.phongban_id);
+        if (formData.don_gia_an_trua) params.append('don_gia_an_trua', formData.don_gia_an_trua);
         if (formData.don_gia_an_dem) params.append('don_gia_an_dem', formData.don_gia_an_dem);
         if (formData.don_gia_an_chu_nhat) params.append('don_gia_an_chu_nhat', formData.don_gia_an_chu_nhat);
         if (search) params.append('search', search);
@@ -116,12 +119,30 @@ class BaoCaoTongHopLuongManager {
         return params;
     }
 
+    renderLoading() {
+        const loadingHtml = `
+            <tr>
+                <td colspan="12" class="px-6 py-10 text-center text-slate-500">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-3"></i>
+                        <p class="font-medium text-sm">Đang tải dữ liệu báo cáo...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        const deptTbody = document.getElementById('dept-tree-table-body');
+        if (deptTbody) deptTbody.innerHTML = loadingHtml;
+        
+        const jobTbody = document.getElementById('table-body-job');
+        if (jobTbody) jobTbody.innerHTML = loadingHtml;
+    }
+
     async loadData() {
         const params = this.getQueryParams();
         if (!params.get('thang')) return;
         
-        this.loadingOverlay.classList.remove('hidden');
-        this.loadingOverlay.classList.add('flex');
+        this.renderLoading();
         
         try {
             const res = await AppUtils.API.get(`${this.apiBaseUrl}?${params.toString()}`);
@@ -138,9 +159,6 @@ class BaoCaoTongHopLuongManager {
             AppUtils.Notification.error('Không thể tải dữ liệu báo cáo');
             this.currentData = null;
             this.renderEmpty();
-        } finally {
-            this.loadingOverlay.classList.add('hidden');
-            this.loadingOverlay.classList.remove('flex');
         }
     }
 
@@ -162,93 +180,88 @@ class BaoCaoTongHopLuongManager {
         const isNoPayroll = this.currentData && this.currentData.no_payroll;
         const msg = isNoPayroll ? 'Chưa có bảng lương nào được chốt cho tháng này' : 'Không có dữ liệu trong khoảng thời gian này';
         
-        document.getElementById('table-body-dept').innerHTML = `
-            <tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>
-        `;
-        document.getElementById('table-footer-dept').innerHTML = '';
+        const deptTbody = document.getElementById('dept-tree-table-body');
+        const deptTfoot = document.getElementById('dept-tree-table-footer');
+        if (deptTbody) deptTbody.innerHTML = `<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>`;
+        if (deptTfoot) deptTfoot.innerHTML = '';
         
-        document.getElementById('table-body-job').innerHTML = `
-            <tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>
-        `;
-        document.getElementById('table-footer-job').innerHTML = '';
+        const jobTbody = document.getElementById('table-body-job');
+        const jobTfoot = document.getElementById('table-footer-job');
+        if (jobTbody) jobTbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>`;
+        if (jobTfoot) jobTfoot.innerHTML = '';
     }
 
     renderTabDeptPosition() {
-        const tbody = document.getElementById('table-body-dept');
-        const tfoot = document.getElementById('table-footer-dept');
-        tbody.innerHTML = '';
-        tfoot.innerHTML = '';
-        
-        if (!this.currentData.grouped || this.currentData.grouped.length === 0 || this.currentData.no_payroll) {
+        if (!this.currentData.tree_data || this.currentData.tree_data.length === 0 || this.currentData.no_payroll) {
             this.renderEmpty();
             return;
         }
-        
-        let html = '';
-        this.currentData.grouped.forEach(group => {
-            // Group header
-            html += `
-                <tr class="bg-gray-50 font-semibold text-gray-800 border-t-2 border-gray-200">
-                    <td colspan="10" class="px-4 py-3">
-                        <i class="fas fa-layer-group text-gray-400 mr-2"></i>
-                        ${group.ten_phongban} - ${group.ten_chucvu}
-                        <span class="ml-2 text-xs font-normal text-gray-500">(${group.nhan_vien.length} nhân viên)</span>
-                    </td>
-                </tr>
-            `;
-            
-            // Employees
-            group.nhan_vien.forEach(nv => {
-                html += `
-                    <tr class="hover:bg-gray-50 bg-white">
-                        <td class="px-4 py-2 font-medium text-gray-900">${nv.ma_nv}</td>
-                        <td class="px-4 py-2">${nv.ten_nv}</td>
-                        <td class="px-4 py-2 text-right">${nv.suat_an_dem || 0}</td>
-                        <td class="px-4 py-2 text-right">${AppUtils.Helper.formatCurrency(nv.tien_an_dem)}</td>
-                        <td class="px-4 py-2 text-right">${nv.suat_an_cn || 0}</td>
-                        <td class="px-4 py-2 text-right">${AppUtils.Helper.formatCurrency(nv.tien_an_cn)}</td>
-                        <td class="px-4 py-2 text-right font-medium">${AppUtils.Helper.formatCurrency(nv.tong_tien_cv)}</td>
-                        <td class="px-4 py-2 text-right">${Number(nv.tong_gio).toFixed(2)}</td>
-                        <td class="px-4 py-2 text-right">${Number(nv.tong_ca).toFixed(2)}</td>
-                        <td class="px-4 py-2 text-right border-l border-gray-100 font-bold text-blue-600">${AppUtils.Helper.formatCurrency(nv.luong_thuc_linh)}</td>
-                    </tr>
-                `;
+
+        if (!this.treeTable) {
+            this.treeTable = new TreeTableComponent({
+                tableId: 'dept-tree-table',
+                defaultExpanded: false,
+                emptyMessage: 'Không có dữ liệu',
+                columns: [
+                    { 
+                        key: 'name_col',
+                        isTreeColumn: true,
+                        render: (val, row) => {
+                            if (row.type === 'department') return `<span class="font-bold text-gray-800">${row.label}</span>`;
+                            if (row.type === 'position') return `<span class="font-semibold text-gray-700">${row.label}</span>`;
+                            return row.label;
+                        }
+                    },
+                    { 
+                        key: 'ma_nv',
+                        align: 'center',
+                        render: (val, row) => row.type === 'employee' ? row.data.ma_nv : ''
+                    },
+                    { key: 'suat_an_trua', align: 'right' },
+                    { 
+                        key: 'tien_an_trua', 
+                        align: 'right',
+                        render: (val) => AppUtils.Helper.formatCurrency(val)
+                    },
+                    { key: 'suat_an_dem', align: 'right' },
+                    { 
+                        key: 'tien_an_dem', 
+                        align: 'right',
+                        render: (val) => AppUtils.Helper.formatCurrency(val)
+                    },
+                    { key: 'suat_an_cn', align: 'right' },
+                    { 
+                        key: 'tien_an_cn', 
+                        align: 'right',
+                        render: (val) => AppUtils.Helper.formatCurrency(val)
+                    },
+                    { 
+                        key: 'tong_gio', 
+                        align: 'right',
+                        render: (val) => Number(val).toFixed(2)
+                    },
+                    { 
+                        key: 'tong_ca', 
+                        align: 'right',
+                        render: (val) => Number(val).toFixed(2)
+                    },
+                    { 
+                        key: 'luong_thuc_linh', 
+                        align: 'right',
+                        className: 'border-l border-gray-100 font-bold text-blue-600',
+                        render: (val, row) => {
+                            if (row.isFooter) return `<span class="text-blue-700">${AppUtils.Helper.formatCurrency(val)}</span>`;
+                            return AppUtils.Helper.formatCurrency(val);
+                        }
+                    }
+                ]
             });
-            
-            // Subtotal
-            const sub = group.subtotal;
-            html += `
-                <tr class="bg-blue-50/30 text-gray-800 border-t border-dashed border-gray-300">
-                    <td colspan="2" class="px-4 py-2 text-right font-medium">Tổng nhóm:</td>
-                    <td class="px-4 py-2 text-right font-medium">${sub.suat_an_dem}</td>
-                    <td class="px-4 py-2 text-right font-medium">${AppUtils.Helper.formatCurrency(sub.tien_an_dem)}</td>
-                    <td class="px-4 py-2 text-right font-medium">${sub.suat_an_cn}</td>
-                    <td class="px-4 py-2 text-right font-medium">${AppUtils.Helper.formatCurrency(sub.tien_an_cn)}</td>
-                    <td class="px-4 py-2 text-right font-medium">${AppUtils.Helper.formatCurrency(sub.tong_tien_cv)}</td>
-                    <td class="px-4 py-2 text-right font-medium">${Number(sub.tong_gio).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right font-medium">${Number(sub.tong_ca).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right border-l border-gray-200 font-bold text-blue-700">${AppUtils.Helper.formatCurrency(sub.luong_thuc_linh)}</td>
-                </tr>
-            `;
+        }
+        
+        this.treeTable.updateData(this.currentData.tree_data, {
+            label: 'Tổng cộng toàn bộ',
+            ...this.currentData.grand_totals
         });
-        
-        tbody.innerHTML = html;
-        
-        // Grand totals
-        const gt = this.currentData.grand_totals;
-        tfoot.innerHTML = `
-            <tr>
-                <td colspan="2" class="px-4 py-3 text-right uppercase tracking-wider">Tổng cộng toàn bộ</td>
-                <td class="px-4 py-3 text-right">${gt.suat_an_dem}</td>
-                <td class="px-4 py-3 text-right">${AppUtils.Helper.formatCurrency(gt.tien_an_dem)}</td>
-                <td class="px-4 py-3 text-right">${gt.suat_an_cn}</td>
-                <td class="px-4 py-3 text-right">${AppUtils.Helper.formatCurrency(gt.tien_an_cn)}</td>
-                <td class="px-4 py-3 text-right text-base">${AppUtils.Helper.formatCurrency(gt.tong_tien_cv)}</td>
-                <td class="px-4 py-3 text-right">${Number(gt.tong_gio).toFixed(2)}</td>
-                <td class="px-4 py-3 text-right">${Number(gt.tong_ca).toFixed(2)}</td>
-                <td class="px-4 py-3 text-right border-l border-blue-200 text-base font-bold text-blue-700">${AppUtils.Helper.formatCurrency(gt.luong_thuc_linh)}</td>
-            </tr>
-        `;
     }
 
     renderTabJob() {

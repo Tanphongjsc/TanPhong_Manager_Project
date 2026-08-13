@@ -2679,20 +2679,21 @@ def _build_time_key_map():
         logging.error(f"_build_time_key_map error: {e}")
     return time_map
 
-def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat):
+def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, don_gia_an_dem, don_gia_an_chu_nhat):
+    don_gia_an_trua = _safe_float(don_gia_an_trua, 0.0)
     don_gia_an_dem = _safe_float(don_gia_an_dem, 0.0)
     don_gia_an_chu_nhat = _safe_float(don_gia_an_chu_nhat, 0.0)
     
-    empty_result = {'grouped': [], 'jobs': [], 'grand_totals': {}, 'no_payroll': False}
+    empty_result = {'tree_data': [], 'jobs': [], 'grand_totals': {}, 'no_payroll': False}
 
     try:
-        # Find Kyluong matching the given month (format YYYY-MM)
+        # Tìm Kỳ lương tương ứng với tháng đã chọn (định dạng YYYY-MM)
         ky_luong = Kyluong.objects.filter(thang=thang).first()
         if not ky_luong:
             empty_result['no_payroll'] = True
             return empty_result
 
-        # Find valid Bangluong for this Kyluong (calculated, approved, paid)
+        # Tìm các Bảng   hợp lệ cho Kỳ lương này (đã tính toán, đã duyệt, đã thanh toán)
         valid_status = ['calculated', 'approved', 'paid']
         bang_luongs = Bangluong.objects.filter(kyluong=ky_luong, trangthai__in=valid_status)
         if not bang_luongs.exists():
@@ -2704,7 +2705,7 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
         logging.error(f"_build_tong_hop_luong_report error getting Kyluong/Bangluong: {e}")
         return empty_result
 
-    # Query Phieuluong
+    # Truy vấn Phiếu lương
     phieu_qs = Phieuluong.objects.filter(bangluong_id__in=bang_luong_ids)
     
     valid_nv_ids = None
@@ -2722,8 +2723,8 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
         
         phieu_qs = phieu_qs.filter(nhanvien_id__in=valid_nv_ids)
 
-    # Need a map of Nhanvien info (ma_nhanvien) since Phieuluong only has tennhanvien
-    # We can fetch Nhanvien to get manhanvien
+    # Cần lấy thông tin Nhân viên (ma_nhanvien) vì Phiếu lương chỉ lưu tennhanvien
+    # Ta lấy dữ liệu Nhanvien để lấy manhanvien
     phieu_list = list(phieu_qs.select_related('nhanvien'))
 
     time_key_map = _build_time_key_map()
@@ -2734,6 +2735,7 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
     for phieu in phieu_list:
         emp_id = phieu.nhanvien_id
         
+        suat_an_trua = 0
         suat_an_dem = 0
         suat_an_cn = 0
         tong_gio = 0.0
@@ -2742,16 +2744,21 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
         
         ngay_cham_cong_data = []
         if phieu.ngaychamcong:
-            try:
-                ngay_cham_cong_data = loads(phieu.ngaychamcong)
-            except:
-                ngay_cham_cong_data = []
+            if isinstance(phieu.ngaychamcong, str):
+                try:
+                    ngay_cham_cong_data = loads(phieu.ngaychamcong)
+                except:
+                    pass
+            elif isinstance(phieu.ngaychamcong, list):
+                ngay_cham_cong_data = phieu.ngaychamcong
 
         for row in ngay_cham_cong_data:
-            # Check if this record is counted
+            # Kiểm tra xem bản ghi này có được tính không
             if not row.get('codilam'):
                 continue
                 
+            if row.get('coantrua'):
+                suat_an_trua += 1
             if row.get('coandem'):
                 suat_an_dem += 1
             if row.get('coanchunhat'):
@@ -2762,7 +2769,6 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
             
             conglamviec = _safe_float(row.get('conglamviec', 0))
             tong_ca += conglamviec
-
             thamsotinhluong = row.get('thamsotinhluong')
             details = []
             if thamsotinhluong:
@@ -2775,7 +2781,7 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
                     details = thamsotinhluong.get('details', [])
                     
             if not details and row.get('congviec_id'):
-                # Legacy
+                # Dữ liệu cũ
                 details = [{
                     'congviec_id': row['congviec_id'],
                     'tencongviec': 'Công việc cũ',
@@ -2817,6 +2823,7 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
                 job_stats[job_id]['tong_gio'] += time_val
 
         emp_stats[emp_id] = {
+            'suat_an_trua': suat_an_trua,
             'suat_an_dem': suat_an_dem, 
             'suat_an_cn': suat_an_cn, 
             'tong_gio': tong_gio, 
@@ -2829,9 +2836,13 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
             'ten_chucvu': phieu.tenchucvu or 'Chưa có chức vụ',
         }
 
-    # Group by Phòng ban -> Chức vụ
-    grouped = {}
+    # Nhóm theo Phòng ban -> Chức vụ
+    dept_map = {}
+    dept_counter = 1
+    pos_counter = 1
+    
     grand_totals = {
+        'suat_an_trua': 0, 'tien_an_trua': 0.0,
         'suat_an_dem': 0, 'tien_an_dem': 0.0,
         'suat_an_cn': 0, 'tien_an_cn': 0.0,
         'tong_tien_cv': 0.0, 'tong_gio': 0.0,
@@ -2840,29 +2851,56 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
     
     for emp_id, st in emp_stats.items():
         # Bỏ qua nếu không có dữ liệu báo cáo
-        if st['suat_an_dem'] == 0 and st['suat_an_cn'] == 0 and st['tong_gio'] == 0 and st['tong_tien_cv'] == 0 and st['luong_thuc_linh'] == 0 and st['tong_ca'] == 0:
+        if st['suat_an_trua'] == 0 and st['suat_an_dem'] == 0 and st['suat_an_cn'] == 0 and st['tong_gio'] == 0 and st['tong_tien_cv'] == 0 and st['luong_thuc_linh'] == 0 and st['tong_ca'] == 0:
             continue
             
-        group_key = (st['ten_phongban'], st['ten_chucvu'])
-        if group_key not in grouped:
-            grouped[group_key] = {
-                'ten_phongban': st['ten_phongban'],
-                'ten_chucvu': st['ten_chucvu'],
-                'nhan_vien': [],
-                'subtotal': {
+        ten_phongban = st['ten_phongban']
+        ten_chucvu = st['ten_chucvu']
+        
+        if ten_phongban not in dept_map:
+            dept_map[ten_phongban] = {
+                'id': f"dept_{dept_counter}",
+                'label': ten_phongban,
+                'type': 'department',
+                'data': {
+                    'suat_an_trua': 0, 'tien_an_trua': 0.0,
                     'suat_an_dem': 0, 'tien_an_dem': 0.0,
                     'suat_an_cn': 0, 'tien_an_cn': 0.0,
                     'tong_tien_cv': 0.0, 'tong_gio': 0.0,
                     'tong_ca': 0.0, 'luong_thuc_linh': 0.0
-                }
+                },
+                'children_map': {}
             }
+            dept_counter += 1
             
+        dept = dept_map[ten_phongban]
+        if ten_chucvu not in dept['children_map']:
+            dept['children_map'][ten_chucvu] = {
+                'id': f"pos_{pos_counter}",
+                'label': ten_chucvu,
+                'type': 'position',
+                'data': {
+                    'suat_an_trua': 0, 'tien_an_trua': 0.0,
+                    'suat_an_dem': 0, 'tien_an_dem': 0.0,
+                    'suat_an_cn': 0, 'tien_an_cn': 0.0,
+                    'tong_tien_cv': 0.0, 'tong_gio': 0.0,
+                    'tong_ca': 0.0, 'luong_thuc_linh': 0.0
+                },
+                'children': []
+            }
+            pos_counter += 1
+            
+        pos = dept['children_map'][ten_chucvu]
+        
+        tien_an_trua = st['suat_an_trua'] * don_gia_an_trua
         tien_an_dem = st['suat_an_dem'] * don_gia_an_dem
         tien_an_cn = st['suat_an_cn'] * don_gia_an_chu_nhat
         
         emp_row = {
             'ma_nv': st['ma_nv'],
             'ten_nv': st['ten_nv'],
+            'suat_an_trua': st['suat_an_trua'],
+            'tien_an_trua': tien_an_trua,
             'suat_an_dem': st['suat_an_dem'],
             'tien_an_dem': tien_an_dem,
             'suat_an_cn': st['suat_an_cn'],
@@ -2873,23 +2911,35 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don
             'luong_thuc_linh': st['luong_thuc_linh']
         }
         
-        grouped[group_key]['nhan_vien'].append(emp_row)
+        pos['children'].append({
+            'id': f"emp_{emp_id}",
+            'label': st['ten_nv'],
+            'type': 'employee',
+            'data': emp_row
+        })
         
-        for k in grouped[group_key]['subtotal']:
-            grouped[group_key]['subtotal'][k] += emp_row[k]
+        for k in pos['data']:
+            pos['data'][k] += emp_row[k]
+            dept['data'][k] += emp_row[k]
             grand_totals[k] += emp_row[k]
 
-    # Sort
-    sorted_grouped = []
-    for k in sorted(grouped.keys(), key=lambda x: (x[0], x[1])):
-        g = grouped[k]
-        g['nhan_vien'].sort(key=lambda x: x['ten_nv'])
-        sorted_grouped.append(g)
+    # Sắp xếp
+    tree_data = []
+    for dept_name in sorted(dept_map.keys()):
+        dept = dept_map[dept_name]
+        pos_list = []
+        for pos_name in sorted(dept['children_map'].keys()):
+            pos = dept['children_map'][pos_name]
+            pos['children'].sort(key=lambda x: x['data']['ten_nv'])
+            pos_list.append(pos)
+        dept['children'] = pos_list
+        del dept['children_map']
+        tree_data.append(dept)
         
     sorted_jobs = sorted(job_stats.values(), key=lambda x: x['tencongviec'])
     
     return {
-        'grouped': sorted_grouped,
+        'tree_data': tree_data,
         'jobs': sorted_jobs,
         'grand_totals': grand_totals,
         'no_payroll': False
@@ -2922,10 +2972,11 @@ def api_bao_cao_tong_hop_luong(request):
     thang = int(thang.split('-')[-1])
     phongban_id = request.GET.get('phongban_id')
     search = request.GET.get('search')
+    don_gia_an_trua = request.GET.get('don_gia_an_trua', 0)
     don_gia_an_dem = request.GET.get('don_gia_an_dem', 0)
     don_gia_an_chu_nhat = request.GET.get('don_gia_an_chu_nhat', 0)
     
-    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat)
+    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, don_gia_an_dem, don_gia_an_chu_nhat)
     return json_success("Lấy dữ liệu thành công", data=data)
 
 @login_required
@@ -2934,66 +2985,111 @@ def api_bao_cao_tong_hop_luong_export(request):
     thang = request.GET.get('thang')
     if not thang:
         return json_error("Vui lòng chọn tháng")
-        
+    
+    thang = int(thang.split('-')[-1])
     phongban_id = request.GET.get('phongban_id')
     search = request.GET.get('search')
+    don_gia_an_trua = request.GET.get('don_gia_an_trua', 0)
     don_gia_an_dem = request.GET.get('don_gia_an_dem', 0)
     don_gia_an_chu_nhat = request.GET.get('don_gia_an_chu_nhat', 0)
     
-    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_dem, don_gia_an_chu_nhat)
+    data = _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, don_gia_an_dem, don_gia_an_chu_nhat)
     
     wb = openpyxl.Workbook()
-    
-    # Sheet 1: Theo phòng ban, chức vụ
-    ws1 = wb.active
-    ws1.title = "Theo phòng ban, chức vụ"
-    
-    headers = ["Mã NV", "Nhân viên", "Phòng ban", "Chức vụ", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng tiền CV", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
-    ws1.append(headers)
-    
     from openpyxl.styles import Font
     bold_font = Font(bold=True)
+    
+    # --- Sheet 1: Tổng hợp Phòng ban ---
+    ws1 = wb.active
+    ws1.title = "Tổng hợp Phòng ban"
+    headers_dept = ["Phòng ban", "Suất ăn trưa", "Tiền ăn trưa", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
+    ws1.append(headers_dept)
     for cell in ws1[1]:
         cell.font = bold_font
         
-    for g in data['grouped']:
-        # Header nhóm
-        ws1.append(['', f"{g['ten_phongban']} - {g['ten_chucvu']}", '', '', '', '', '', '', '', '', '', ''])
-        ws1._cells[(ws1.max_row, 2)].font = bold_font
+    for dept in data['tree_data']:
+        sub_dept = dept['data']
+        ws1.append([
+            dept['label'], 
+            sub_dept['suat_an_trua'], sub_dept['tien_an_trua'],
+            sub_dept['suat_an_dem'], sub_dept['tien_an_dem'], 
+            sub_dept['suat_an_cn'], sub_dept['tien_an_cn'], 
+            round(sub_dept['tong_gio'], 2), round(sub_dept['tong_ca'], 2), 
+            sub_dept['luong_thuc_linh']
+        ])
         
-        for nv in g['nhan_vien']:
-            ws1.append([
-                nv['ma_nv'], nv['ten_nv'], g['ten_phongban'], g['ten_chucvu'],
-                nv['suat_an_dem'], nv['tien_an_dem'],
-                nv['suat_an_cn'], nv['tien_an_cn'],
-                nv['tong_tien_cv'], round(nv['tong_gio'], 2),
-                round(nv['tong_ca'], 2), nv['luong_thuc_linh']
-            ])
-            
-        # Subtotal
-        sub = g['subtotal']
-        ws1.append(['', 'Tổng', '', '', sub['suat_an_dem'], sub['tien_an_dem'], sub['suat_an_cn'], sub['tien_an_cn'], sub['tong_tien_cv'], round(sub['tong_gio'], 2), round(sub['tong_ca'], 2), sub['luong_thuc_linh']])
-        for cell in ws1[ws1.max_row]:
-            cell.font = bold_font
-            
-    # Grand total
     gt = data['grand_totals']
     if gt:
-        ws1.append(['', 'TỔNG CỘNG', '', '', gt['suat_an_dem'], gt['tien_an_dem'], gt['suat_an_cn'], gt['tien_an_cn'], gt['tong_tien_cv'], round(gt['tong_gio'], 2), round(gt['tong_ca'], 2), gt['luong_thuc_linh']])
+        ws1.append([
+            'TỔNG CỘNG', 
+            gt['suat_an_trua'], gt['tien_an_trua'],
+            gt['suat_an_dem'], gt['tien_an_dem'], 
+            gt['suat_an_cn'], gt['tien_an_cn'], 
+            round(gt['tong_gio'], 2), round(gt['tong_ca'], 2), 
+            gt['luong_thuc_linh']
+        ])
         for cell in ws1[ws1.max_row]:
             cell.font = bold_font
 
-    # Sheet 2: Theo công việc
-    ws2 = wb.create_sheet(title="Theo công việc")
-    ws2.append(["Công việc", "Tổng tiền", "Tổng số giờ"])
+    # --- Sheet 2: Chi tiết chức vụ & NV ---
+    ws2 = wb.create_sheet(title="Chi tiết chức vụ & NV")
+    headers_detail = ["Mã NV", "Nhân viên", "Phòng ban", "Chức vụ", "Suất ăn trưa", "Tiền ăn trưa", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
+    ws2.append(headers_detail)
     for cell in ws2[1]:
         cell.font = bold_font
         
-    for job in data['jobs']:
-        ws2.append([job['tencongviec'], job['tong_tien'], round(job['tong_gio'], 2)])
+    from openpyxl.styles import PatternFill, Alignment
+    dept_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid") # Light Blue
+    pos_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid") # Light Gray
+    gt_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid") # Light Yellow
+    
+    for dept in data['tree_data']:
+        for pos in dept['children']:
+            if ws2.max_row > 1:
+                ws2.append([])
+                
+            # Header Chức vụ kết hợp Phòng ban
+            ws2.append(['', f"Nhóm: {pos['label']} ({dept['label']})", '', '', '', '', '', '', '', '', '', '', ''])
+            for cell in ws2[ws2.max_row]:
+                cell.font = bold_font
+                cell.fill = dept_fill
+            
+            for nv in pos['children']:
+                emp = nv['data']
+                ws2.append([
+                    emp['ma_nv'], emp['ten_nv'], dept['label'], pos['label'],
+                    emp['suat_an_trua'], emp['tien_an_trua'],
+                    emp['suat_an_dem'], emp['tien_an_dem'],
+                    emp['suat_an_cn'], emp['tien_an_cn'],
+                    round(emp['tong_gio'], 2), round(emp['tong_ca'], 2), 
+                    emp['luong_thuc_linh']
+                ])
+                
+            # Subtotal Chức vụ
+            sub = pos['data']
+            ws2.append(['', f"Tổng cộng: {pos['label']}", '', '', sub['suat_an_trua'], sub['tien_an_trua'], sub['suat_an_dem'], sub['tien_an_dem'], sub['suat_an_cn'], sub['tien_an_cn'], round(sub['tong_gio'], 2), round(sub['tong_ca'], 2), sub['luong_thuc_linh']])
+            for cell in ws2[ws2.max_row]:
+                cell.font = bold_font
+                cell.fill = pos_fill
+            
+    # Grand total
+    if gt:
+        ws2.append(['', 'TỔNG CỘNG', '', '', gt['suat_an_trua'], gt['tien_an_trua'], gt['suat_an_dem'], gt['tien_an_dem'], gt['suat_an_cn'], gt['tien_an_cn'], round(gt['tong_gio'], 2), round(gt['tong_ca'], 2), gt['luong_thuc_linh']])
+        for cell in ws2[ws2.max_row]:
+            cell.font = bold_font
+            cell.fill = gt_fill
+
+    # --- Sheet 3: Theo công việc ---
+    ws3 = wb.create_sheet(title="Theo công việc")
+    ws3.append(["Công việc", "Tổng tiền", "Tổng số giờ"])
+    for cell in ws3[1]:
+        cell.font = bold_font
         
-    ws2.append(['TỔNG CỘNG', gt['tong_tien_cv'], round(gt['tong_gio'], 2)])
-    for cell in ws2[ws2.max_row]:
+    for job in data['jobs']:
+        ws3.append([job['tencongviec'], job['tong_tien'], round(job['tong_gio'], 2)])
+        
+    ws3.append(['TỔNG CỘNG', gt['tong_tien_cv'], round(gt['tong_gio'], 2)])
+    for cell in ws3[ws3.max_row]:
         cell.font = bold_font
 
     output = BytesIO()
