@@ -516,17 +516,32 @@ class Lichnghi(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
     malichnghi = models.CharField(db_column='MaLichNghi', blank=True, null=True)  # Field name made lowercase.
     tenlichnghi = models.CharField(db_column='TenLichNghi', blank=True, null=True)  # Field name made lowercase.
-    loailichnghi = models.CharField(db_column='LoaiLichNghi', blank=True, null=True)  # Field name made lowercase.
-    ngay = models.DateField(db_column='Ngay', blank=True, null=True)  # Field name made lowercase.
     loainghi = models.CharField(db_column='LoaiNghi', blank=True, null=True)  # Field name made lowercase.
-    hesolamviec = models.FloatField(db_column='HeSoLamViec', blank=True, null=True)  # Field name made lowercase.
-    apdungtinhluong = models.BooleanField(db_column='ApDungTinhLuong', blank=True, null=True)  # Field name made lowercase.
     trangthai = models.CharField(db_column='TrangThai', blank=True, null=True)  # Field name made lowercase.
+    nam = models.IntegerField(db_column='Nam', blank=True, null=True)  # Field name made lowercase.
+    ghichu = models.CharField(db_column='GhiChu', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
         managed = False
-        db_table = '"hrm"."LichNghi"'
+        db_table = 'LichNghi'
         db_table_comment = 'Setup các mẫu lịch nghỉ (theo từng năm)'
+
+
+class LichnghiChitiet(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(blank=True, null=True)
+    ngay = models.DateField(db_column='Ngay', blank=True, null=True)  # Field name made lowercase.
+    tenngaynghi = models.CharField(db_column='TenNgayNghi', blank=True, null=True)  # Field name made lowercase.
+    loailichnghi = models.CharField(db_column='LoaiLichNghi', blank=True, null=True)  # Field name made lowercase.
+    apdungtinhluong = models.BooleanField(db_column='ApDungTinhLuong', blank=True, null=True)  # Field name made lowercase.
+    hesolamviec = models.FloatField(db_column='HeSoLamViec', blank=True, null=True)  # Field name made lowercase.
+    nguongoc = models.CharField(db_column='NguonGoc', blank=True, null=True)  # Field name made lowercase.
+    lichnghi = models.ForeignKey(Lichnghi, models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'LichNghi_ChiTiet'
 
 
 class Lichsucongtac(models.Model):
