@@ -15,6 +15,8 @@ urlpatterns = [
 
     # -- Lịch nghỉ
     path('thiet-ke-nghi/lich-nghi/', views.view_lich_nghi, name='thiet_ke_lich_nghi'),
+    path('thiet-ke-nghi/lich-nghi/create/', views.view_lich_nghi_create, name='lich_nghi_create'),
+    path('thiet-ke-nghi/lich-nghi/<int:pk>/update/', views.view_lich_nghi_update, name='lich_nghi_update'),
     path('thiet-ke-nghi/quy-nghi/', views.view_quy_nghi, name='thiet_ke_quy_nghi'),
     path('thiet-ke-nghi/tong-hop/', views.view_tong_hop_nghi, name='tong_hop_nghi'),
 
@@ -37,5 +39,14 @@ urlpatterns = [
     path('api/validate-employee-selection/', views.api_validate_employee_selection, name='api_validate_employee_selection'),
     # Thêm vào urlpatterns
     path('api/cron/generate-next-month/', views.api_generate_next_month_schedules, name='api_cron_generate_next_month'),
-    
+
+    # API LỊCH NGHỈ
+    path('api/lich-nghi/list/', views.api_lichnghi_list, name='api_lichnghi_list'),
+    path('api/lich-nghi/create/', views.api_lichnghi_create, name='api_lichnghi_create'),
+    path('api/lich-nghi/<int:pk>/detail/', views.api_lichnghi_detail, name='api_lichnghi_detail'),
+    path('api/lich-nghi/<int:pk>/update/', views.api_lichnghi_update, name='api_lichnghi_update'),
+    path('api/lich-nghi/<int:pk>/delete/', views.api_lichnghi_delete, name='api_lichnghi_delete'),
+    path('api/lich-nghi/<int:pk>/toggle-status/', views.api_lichnghi_toggle_status, name='api_lichnghi_toggle_status'),
+    path('api/lich-nghi/bulk-delete/', views.api_lichnghi_bulk_delete, name='api_lichnghi_bulk_delete'),
+    path('api/lich-nghi/templates/', views.api_lichnghi_templates, name='api_lichnghi_templates'),
 ]

@@ -37329,3 +37329,440 @@ WARNING 2026-06-01 17:04:12,569 log 15036 11936 Not Found: /.well-known/appspeci
 WARNING 2026-06-01 17:04:12,569 basehttp 15036 11936 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
 WARNING 2026-06-01 17:05:34,856 log 20040 9344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2026-06-01 17:05:34,859 basehttp 20040 9344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-13 16:44:05,757 log 29288 21536 Not Found: /favicon.ico
+WARNING 2026-07-13 16:44:05,758 basehttp 29288 21536 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-07-13 16:44:21,782 log 29288 21028 Not Found: /favicon.ico
+WARNING 2026-07-13 16:44:21,783 basehttp 29288 21028 "GET /favicon.ico HTTP/1.1" 404 3512
+WARNING 2026-07-13 16:49:40,091 log 29288 20920 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-13 16:49:40,092 basehttp 29288 20920 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-13 16:51:07,495 log 29288 21028 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-13 16:51:07,496 basehttp 29288 21028 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-13 16:52:03,503 log 29288 16932 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-13 16:52:03,503 basehttp 29288 16932 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 09:26:18,637 log 26004 816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 09:26:18,639 basehttp 26004 816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 09:26:34,470 log 26004 816 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 09:26:34,470 basehttp 26004 816 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 09:27:03,896 log 26004 23128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 09:27:03,897 basehttp 26004 23128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+ERROR 2026-07-14 09:33:06,123 log 26004 30588 Internal Server Error: /hrm/cham-cong/lam-them/quy-tac/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\cham_cong\views.py", line 808, in view_quytac_lam_them
+    return render(request, "hrm_manager/cham_cong/lam_them/quytac_lam_them.html", {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hrm_manager/cham_cong/lam_them/quytac_lam_them.html
+ERROR 2026-07-14 09:33:06,124 basehttp 26004 30588 "GET /hrm/cham-cong/lam-them/quy-tac/ HTTP/1.1" 500 97305
+ERROR 2026-07-14 10:11:46,250 log 26004 13880 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 28, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 255, in view_lich_nghi_create
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi_form_page.html", {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 208, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 870, in do_for
+    nodelist_empty = parser.parse(("endfor",))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 861, in do_for
+    sequence = parser.compile_filter(bits[in_index + 1])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'split'
+ERROR 2026-07-14 10:11:46,258 basehttp 26004 13880 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/ HTTP/1.1" 500 330668
+ERROR 2026-07-14 10:11:47,226 log 26004 13880 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 28, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 255, in view_lich_nghi_create
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi_form_page.html", {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 208, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 870, in do_for
+    nodelist_empty = parser.parse(("endfor",))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 861, in do_for
+    sequence = parser.compile_filter(bits[in_index + 1])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'split'
+ERROR 2026-07-14 10:11:47,230 basehttp 26004 13880 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/ HTTP/1.1" 500 330540
+ERROR 2026-07-14 10:11:51,230 log 26004 13880 Internal Server Error: /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/
+Traceback (most recent call last):
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\utils\permissions.py", line 28, in wrapped
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\apps\hrm_manager\lich_lam_viec\views.py", line 255, in view_lich_nghi_create
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi_form_page.html", {
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 1016, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 977, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 208, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+               ^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 870, in do_for
+    nodelist_empty = parser.parse(("endfor",))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 518, in parse
+    raise self.error(token, e)
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\defaulttags.py", line 861, in do_for
+    sequence = parser.compile_filter(bits[in_index + 1])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\TANPHONGJSC\TanPhong_Manager_Project\env\Lib\site-packages\django\template\base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'split'
+ERROR 2026-07-14 10:11:51,234 basehttp 26004 13880 "GET /hrm/lich-lam-viec/thiet-ke-nghi/lich-nghi/create/ HTTP/1.1" 500 330540
+WARNING 2026-07-14 10:14:58,254 log 26004 13880 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 10:14:58,255 basehttp 26004 13880 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 10:15:48,820 log 26004 13880 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 10:15:48,821 basehttp 26004 13880 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 10:16:00,777 log 26004 13880 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 10:16:00,779 basehttp 26004 13880 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-07-14 10:21:59,773 log 26004 22876 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-07-14 10:21:59,775 basehttp 26004 22876 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3623
+WARNING 2026-08-13 09:57:29,842 log 23448 7744 Not Found: /favicon.ico
+WARNING 2026-08-13 09:57:29,843 basehttp 23448 7744 "GET /favicon.ico HTTP/1.1" 404 3512

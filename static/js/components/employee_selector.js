@@ -26,7 +26,6 @@ class EmployeeSelectorController {
             deptEmployeeIds: new Set(),
             deptCache: new Map(),
             treeData: [],
-            expandedNodes: new Set(),
             
             pagination: { 
                 page: 1, 
@@ -46,6 +45,7 @@ class EmployeeSelectorController {
             isLoadingCache: false,
 
             isTreeLoaded: false,
+            treeLoadPromise: null,
             pendingInitialData: null
         };
 
@@ -64,6 +64,7 @@ class EmployeeSelectorController {
 
     init() {
         this.cacheElements();
+        this.initOrganizationTrees();
         this.bindEvents();
         if (this.modal) this.modal.removeAttribute('aria-hidden');
         
@@ -107,6 +108,42 @@ class EmployeeSelectorController {
         };
     }
 
+    initOrganizationTrees() {
+        if (typeof window.OrganizationTreeComponent !== 'function') {
+            throw new Error('OrganizationTreeComponent is required by EmployeeSelectorController');
+        }
+
+        if (this.els.treeContainer) {
+            this.mainDeptTree = new window.OrganizationTreeComponent({
+                container: this.els.treeContainer,
+                selectionMode: 'multiple',
+                selectedIds: this.state.selectedDepts,
+                showBranchLines: true,
+                baseIndent: 0,
+                loadingMessage: 'Đang tải dữ liệu...',
+                emptyMessage: 'Chưa có dữ liệu bộ phận',
+                errorMessage: 'Không tải được dữ liệu bộ phận',
+                onSelect: ({ id, selected }) => this.handleDeptCheck(id, selected)
+            });
+        }
+
+        if (this.els.filterDropdownContent) {
+            this.filterDeptTree = new window.OrganizationTreeComponent({
+                container: this.els.filterDropdownContent,
+                selectionMode: 'single',
+                showAllOption: true,
+                allOptionLabel: 'Tất cả bộ phận',
+                allOptionIconClass: 'fas fa-star',
+                showBranchLines: true,
+                baseIndent: 0,
+                loadingMessage: 'Đang tải...',
+                emptyMessage: 'Chưa có dữ liệu bộ phận',
+                errorMessage: 'Không tải được dữ liệu bộ phận',
+                onSelect: ({ id, name }) => this.handleDeptFilterSelect(id, name)
+            });
+        }
+    }
+
     bindEvents() {
         // 1.Close Modal
         this.els.closeBtns.forEach(btn => btn.addEventListener('click', (e) => { 
@@ -129,23 +166,7 @@ class EmployeeSelectorController {
             });
         });
 
-        // 3.Tree Interaction
-        if (this.els.treeContainer) {
-            this.els.treeContainer.addEventListener('click', (e) => {
-                const toggleBtn = e.target.closest('.tree-toggle-btn');
-                if (toggleBtn) {
-                    e.preventDefault(); 
-                    e.stopPropagation();
-                    this.toggleNodeExpand(toggleBtn.dataset.id, 'main-tree');
-                    return;
-                }
-                if (e.target.classList.contains('dept-checkbox')) {
-                    this.handleDeptCheck(e.target.dataset.id, e.target.checked);
-                }
-            });
-        }
-
-        // 4.Custom Filter Dropdown Logic
+        // 3.Custom Filter Dropdown Logic
         if (this.els.filterDropdownBtn) {
             this.els.filterDropdownBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -160,31 +181,9 @@ class EmployeeSelectorController {
                 }
             });
 
-            this.els.filterDropdownContent.addEventListener('click', (e) => {
-                const toggleBtn = e.target.closest('.tree-toggle-btn');
-                if (toggleBtn) {
-                    e.preventDefault(); 
-                    e.stopPropagation();
-                    this.toggleNodeExpand(toggleBtn.dataset.id, 'filter-tree');
-                    return;
-                }
-
-                const item = e.target.closest('.filter-tree-item');
-                if (item) {
-                    e.stopPropagation();
-                    const deptId = item.dataset.id;
-                    const deptName = item.dataset.name;
-                    this.els.filterSelectedText.textContent = deptName;
-                    this.state.deptFilterId = deptId;
-                    this.state.isDropdownOpen = false;
-                    this.els.filterDropdownContent.classList.add('hidden');
-                    this.state.pagination.page = 1;
-                    this.fetchEmployees();
-                }
-            });
         }
 
-        // 5.Search & Pagination Logic
+        // 4.Search & Pagination Logic
         const debounceFetch = AppUtils.Helper.debounce(() => { 
             this.state.pagination.page = 1; 
             this.fetchEmployees(); 
@@ -208,7 +207,7 @@ class EmployeeSelectorController {
             });
         }
 
-        // 6.Checkbox Emp - Thêm validation
+        // 5.Checkbox Emp - Thêm validation
         if (this.els.empTbody) {
             this.els.empTbody.addEventListener('change', (e) => {
                 if (e.target.classList.contains('emp-checkbox')) {
@@ -254,7 +253,7 @@ class EmployeeSelectorController {
             });
         }
 
-        // 7.Remove & Clear
+        // 6.Remove & Clear
         if (this.els.btnClear) this.els.btnClear.addEventListener('click', () => this.clearAll());
         
         if (this.els.selectedContainer) {
@@ -279,6 +278,15 @@ class EmployeeSelectorController {
                 this.handleConfirm();
             });
         }
+    }
+
+    handleDeptFilterSelect(deptId, deptName) {
+        this.els.filterSelectedText.textContent = deptName || 'Tất cả bộ phận';
+        this.state.deptFilterId = String(deptId || '');
+        this.state.isDropdownOpen = false;
+        this.els.filterDropdownContent.classList.add('hidden');
+        this.state.pagination.page = 1;
+        this.fetchEmployees();
     }
 
     // Kiểm tra nhân viên có thuộc phòng ban đã chọn không
@@ -409,7 +417,15 @@ class EmployeeSelectorController {
         // Nếu chưa load tree, lưu data chờ xử lý sau
         if (!this.state.isTreeLoaded) {
             this.state.pendingInitialData = initialData;
-            this.fetchDeptTree();
+            if (!this.state.treeLoadPromise) {
+                const loadPromise = this.fetchDeptTree();
+                this.state.treeLoadPromise = loadPromise;
+                loadPromise.finally(() => {
+                    if (this.state.treeLoadPromise === loadPromise) {
+                        this.state.treeLoadPromise = null;
+                    }
+                });
+            }
             this.fetchEmployees();
             this.state.isInitialized = true;
             AppUtils.Modal.open(this.modal);
@@ -446,24 +462,25 @@ class EmployeeSelectorController {
     // --- API DEPT TREE ---
     async fetchDeptTree() {
         try {
-            const res = await AppUtils.API.get(this.config.apiUrls.deptTree);
-            if (res.success) {
-                this.state.treeData = res.data;
-                this.buildDeptMap(res.data);
-                this.renderTree('main-tree');
-                this.renderTree('filter-tree');
-                
-                // ✅ THÊM:  Đánh dấu đã load xong
-                this.state.isTreeLoaded = true;
-                
-                // ✅ THÊM: Nếu có data đang chờ, restore ngay
-                if (this.state.pendingInitialData) {
-                    this._restoreSelection(this.state.pendingInitialData);
-                    this.state.pendingInitialData = null;
-                }
+            const treeData = await this.mainDeptTree.load(this.config.apiUrls.deptTree);
+            this.state.treeData = treeData;
+            this.state.deptMap.clear();
+            this.buildDeptMap(treeData);
+            this.filterDeptTree.setData(treeData, { preserveExpanded: false });
+            this.renderTree('main-tree');
+            this.renderTree('filter-tree');
+
+            // ✅ THÊM:  Đánh dấu đã load xong
+            this.state.isTreeLoaded = true;
+
+            // ✅ THÊM: Nếu có data đang chờ, restore ngay
+            if (this.state.pendingInitialData) {
+                this._restoreSelection(this.state.pendingInitialData);
+                this.state.pendingInitialData = null;
             }
         } catch (e) { 
-            console.error(e); 
+            console.error(e);
+            this.filterDeptTree?.renderError(e);
         }
     }
 
@@ -562,60 +579,13 @@ class EmployeeSelectorController {
 
     // --- RENDER TREE ---
     renderTree(targetType) {
-        const container = targetType === 'main-tree' ? this.els.treeContainer : this.els.filterDropdownContent;
-        if (!container) return;
-        const isMain = targetType === 'main-tree';
-
-        const buildHtml = (nodes, level = 0, visible = true) => {
-            return nodes.map(node => {
-                const id = node.id.toString();
-                const isDept = node.maphongban !== undefined;
-                const children = node.children || node.departments || [];
-                const hasChild = children.length > 0;
-                const expandKey = `${targetType}-${id}`;
-                const isExpanded = this.state.expandedNodes.has(expandKey);
-                
-                const toggleBtn = hasChild 
-                    ? `<button class="tree-toggle-btn w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors" data-id="${expandKey}"><i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'}"></i></button>` 
-                    : '<span class="w-5"></span>';
-
-                let contentHtml = '';
-                if (isMain) {
-                    const isChecked = isDept && this.state.selectedDepts.has(id);
-                    const checkbox = isDept 
-                        ? `<input type="checkbox" class="dept-checkbox w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer mr-2" data-id="${id}" ${isChecked ? 'checked' : ''}>` 
-                        : `<i class="fas fa-building text-slate-300 mr-2 text-xs"></i>`;
-                    const labelClass = isDept 
-                        ? 'node-label cursor-pointer text-sm font-medium text-slate-700' 
-                        : 'font-bold uppercase text-xs text-slate-500 tracking-wider';
-                    contentHtml = `<div class="tree-node-row flex items-center py-1 hover:bg-slate-50 rounded pl-${level * 3} cursor-pointer">${toggleBtn}<div class="flex items-center select-none flex-1">${checkbox}<span class="${labelClass}" onclick="${isDept ? 'this.previousElementSibling.click()' : ''}">${node.tenphongban || node.tencongty_vi}</span></div></div>`;
-                } else {
-                    const isSelected = this.state.deptFilterId === id;
-                    const rowClass = isDept 
-                        ? `filter-tree-item cursor-pointer hover:bg-blue-50 hover:text-blue-700 ${isSelected ? 'bg-blue-100 text-blue-700 font-bold' : ''}` 
-                        : 'text-slate-400 font-bold uppercase text-[10px] select-none pl-1';
-                    contentHtml = `<div class="flex items-center py-1.5 rounded pl-${level * 3} ${rowClass}" data-id="${id}" data-name="${node.tenphongban}">${toggleBtn}<span class="text-xs truncate">${node.tenphongban || node.tencongty_vi}</span>${isSelected ? '<i class="fas fa-check ml-auto mr-2 text-blue-600"></i>' : ''}</div>`;
-                }
-
-                return `<div class="${visible ? 'block' : 'hidden'}">${contentHtml}<div id="children-${expandKey}" class="${isExpanded ? '' : 'hidden'} ml-1 border-l border-slate-100">${buildHtml(children, level + 1, isExpanded)}</div></div>`;
-            }).join('');
-        };
-
-        let finalHtml = '';
-        if (! isMain) {
-            finalHtml += `<div class="filter-tree-item py-2 px-3 hover:bg-blue-50 cursor-pointer rounded flex items-center ${this.state.deptFilterId === '' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-slate-600'}" data-id="" data-name="Tất cả bộ phận"><span class="text-xs">★ Tất cả bộ phận</span></div><div class="border-b border-slate-100 my-1"></div>`;
+        if (targetType === 'main-tree') {
+            this.mainDeptTree?.setSelectedIds(this.state.selectedDepts);
+            return;
         }
-        finalHtml += buildHtml(this.state.treeData);
-        container.innerHTML = finalHtml;
-    }
-
-    toggleNodeExpand(key, targetType) {
-        if (this.state.expandedNodes.has(key)) {
-            this.state.expandedNodes.delete(key);
-        } else {
-            this.state.expandedNodes.add(key);
-        }
-        this.renderTree(targetType);
+        this.filterDeptTree?.setSelectedIds(
+            this.state.deptFilterId ? [this.state.deptFilterId] : []
+        );
     }
 
     // Xử lý khi check/uncheck phòng ban - cập nhật cache

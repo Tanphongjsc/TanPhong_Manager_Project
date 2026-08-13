@@ -11,8 +11,6 @@ class TongHopLichController {
         };
 
         this.state = {
-            treeData: [],
-            expandedNodes: new Set(),
             selectedDeptId: '',
             dropdownOpen: false
         };
@@ -27,6 +25,7 @@ class TongHopLichController {
             return;
         }
 
+        this.initOrganizationTree();
         this.initCustomDatePickers();
         this.initDefaultDateRange();
         this.bindFilterEvents();
@@ -57,6 +56,29 @@ class TongHopLichController {
             deptDropdown: document.getElementById('filter-dept-dropdown'),
             deptTree: document.getElementById('filter-dept-tree')
         };
+    }
+
+    initOrganizationTree() {
+        if (!this.els.deptTree) {
+            return;
+        }
+        if (typeof window.OrganizationTreeComponent !== 'function') {
+            throw new Error('OrganizationTreeComponent is required by TongHopLichController');
+        }
+
+        this.departmentTree = new window.OrganizationTreeComponent({
+            container: this.els.deptTree,
+            selectionMode: 'single',
+            showAllOption: true,
+            allOptionLabel: 'Tất cả bộ phận',
+            allOptionIconClass: 'fas fa-list-ul',
+            defaultExpandCompanies: true,
+            baseIndent: 4,
+            loadingMessage: 'Đang tải bộ phận...',
+            emptyMessage: 'Chưa có dữ liệu bộ phận',
+            errorMessage: 'Không tải được dữ liệu bộ phận',
+            onSelect: ({ id, name }) => this.selectDepartment(id, name)
+        });
     }
 
     initCustomDatePickers() {
@@ -140,28 +162,6 @@ class TongHopLichController {
             });
         }
 
-        if (this.els.deptTree) {
-            this.els.deptTree.addEventListener('click', (event) => {
-                const toggleBtn = event.target.closest('.tree-toggle-btn');
-                if (toggleBtn) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.toggleTreeNode(toggleBtn.dataset.key);
-                    return;
-                }
-
-                const selectItem = event.target.closest('.dept-tree-item');
-                if (selectItem) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.selectDepartment(
-                        selectItem.dataset.id || '',
-                        selectItem.dataset.name || 'Tat ca bo phan'
-                    );
-                }
-            });
-        }
-
         document.addEventListener('click', (event) => {
             if (!this.state.dropdownOpen) {
                 return;
@@ -211,23 +211,14 @@ class TongHopLichController {
     }
 
     async loadDepartmentTree() {
-        if (!this.els.deptTree) {
+        if (!this.departmentTree) {
             return;
         }
 
         try {
-            const response = await AppUtils.API.get(this.apiUrls.deptTree);
-            this.state.treeData = response.data || [];
-
-            this.state.expandedNodes.clear();
-            this.state.treeData.forEach((company) => {
-                this.state.expandedNodes.add(`company-${company.id}`);
-            });
-
-            this.renderDepartmentTree();
+            await this.departmentTree.load(this.apiUrls.deptTree);
         } catch (error) {
             console.error('Không tải được cây bộ phận:', error);
-            this.els.deptTree.innerHTML = '<div class="text-xs text-red-500 p-2">Không tải được dữ liệu bộ phận</div>';
         }
     }
 
@@ -239,20 +230,6 @@ class TongHopLichController {
     closeDeptDropdown() {
         this.state.dropdownOpen = false;
         this.els.deptDropdown?.classList.add('hidden');
-    }
-
-    toggleTreeNode(nodeKey) {
-        if (!nodeKey) {
-            return;
-        }
-
-        if (this.state.expandedNodes.has(nodeKey)) {
-            this.state.expandedNodes.delete(nodeKey);
-        } else {
-            this.state.expandedNodes.add(nodeKey);
-        }
-
-        this.renderDepartmentTree();
     }
 
     selectDepartment(deptId, deptName) {
@@ -267,76 +244,10 @@ class TongHopLichController {
             this.els.deptText.textContent = deptName || 'Tất cả bộ phận';
         }
 
-        this.renderDepartmentTree();
+        this.departmentTree?.setSelectedIds(
+            this.state.selectedDeptId ? [this.state.selectedDeptId] : []
+        );
         this.closeDeptDropdown();
-    }
-
-    renderDepartmentTree() {
-        if (!this.els.deptTree) {
-            return;
-        }
-
-        const renderNodes = (nodes, level, parentKey) => {
-            return (nodes || []).map((node) => {
-                const isDept = node.maphongban !== undefined;
-                const children = isDept ? (node.children || []) : (node.departments || []);
-                const rowKey = `${parentKey}-${node.id}`;
-                const hasChildren = children.length > 0;
-                const isExpanded = this.state.expandedNodes.has(rowKey);
-                const label = isDept ? (node.tenphongban || '') : (node.tencongty_vi || 'Cong ty');
-
-                const toggleHtml = hasChildren
-                    ? `<button type="button" class="tree-toggle-btn w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-600" data-key="${rowKey}"><i class="fas ${isExpanded ? 'fa-caret-down' : 'fa-caret-right'} text-[10px]"></i></button>`
-                    : '<span class="w-4 h-4"></span>';
-
-                if (!isDept) {
-                    return `
-                        <div>
-                            <div class="flex items-center gap-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400" style="padding-left:${4 + (level * 12)}px;">
-                                ${toggleHtml}
-                                <span class="truncate">${this.escapeHtml(label)}</span>
-                            </div>
-                            <div class="${isExpanded ? '' : 'hidden'}">
-                                ${renderNodes(children, level + 1, rowKey)}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                const isSelected = this.state.selectedDeptId === String(node.id);
-                const selectedClass = isSelected
-                    ? 'bg-blue-100 text-blue-700 font-semibold'
-                    : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700';
-
-                return `
-                    <div>
-                        <div class="dept-tree-item flex items-center gap-1 py-1.5 rounded cursor-pointer ${selectedClass}" data-id="${node.id}" data-name="${this.escapeHtml(label)}" style="padding-left:${4 + (level * 12)}px;">
-                            ${toggleHtml}
-                            <span class="truncate text-xs">${this.escapeHtml(label)}</span>
-                            ${isSelected ? '<i class="fas fa-check ml-auto mr-2 text-[10px]"></i>' : ''}
-                        </div>
-                        <div class="${isExpanded ? '' : 'hidden'}">
-                            ${renderNodes(children, level + 1, rowKey)}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        };
-
-        const allSelectedClass = this.state.selectedDeptId === ''
-            ? 'bg-blue-100 text-blue-700 font-semibold'
-            : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700';
-
-        let html = `
-            <div class="dept-tree-item flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer text-xs ${allSelectedClass}" data-id="" data-name="Tất cả bộ phận">
-                <i class="fas fa-list-ul text-[10px]"></i>
-                <span>Tất cả bộ phận</span>
-            </div>
-            <div class="border-b border-slate-100 my-1"></div>
-        `;
-
-        html += renderNodes(this.state.treeData, 0, 'company');
-        this.els.deptTree.innerHTML = html;
     }
 
     setDefaultRange(dayCount, triggerRefresh) {

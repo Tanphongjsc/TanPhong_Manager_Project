@@ -13,6 +13,7 @@ from collections import defaultdict
 from django.utils import timezone
 from django.db import transaction
 from .services import CaLamViecService, LichLamViecService, ConflictException
+from .holiday_calendar_service import HolidayCalendarError, HolidayCalendarService
 from apps.hrm_manager.utils.permissions import require_api_permission, require_view_permission
 from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
 
@@ -237,6 +238,45 @@ def view_lich_nghi(request):
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi.html", context)
 
+
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
+def view_lich_nghi_create(request):
+    """Màn hình Thêm mới Lịch nghỉ"""
+    current_year = timezone.localdate().year
+    breadcrumbs = [
+        {'title': 'Chấm công', 'url': '#'},
+        {'title': 'Thiết kế lịch nghỉ', 'url': reverse('hrm:lich_lam_viec:thiet_ke_lich_nghi')},
+        {'title': 'Thêm lịch nghỉ', 'url': None},
+    ]
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi_form_page.html", {
+        'title': 'Thêm lịch nghỉ',
+        'breadcrumbs': breadcrumbs,
+        'cancel_url': reverse('hrm:lich_lam_viec:thiet_ke_lich_nghi'),
+        'is_update': False,
+        'current_year': current_year,
+    })
+
+
+@login_required
+@require_view_permission('access_control.write_lich_lam_viec')
+def view_lich_nghi_update(request, pk):
+    """Màn hình Cập nhật Lịch nghỉ"""
+    breadcrumbs = [
+        {'title': 'Chấm công', 'url': '#'},
+        {'title': 'Thiết kế lịch nghỉ', 'url': reverse('hrm:lich_lam_viec:thiet_ke_lich_nghi')},
+        {'title': 'Sửa lịch nghỉ', 'url': None},
+    ]
+    return render(request, "hrm_manager/lich_lam_viec/lich_nghi/lich_nghi_form_page.html", {
+        'title': 'Sửa lịch nghỉ',
+        'breadcrumbs': breadcrumbs,
+        'cancel_url': reverse('hrm:lich_lam_viec:thiet_ke_lich_nghi'),
+        'is_update': True,
+        'item_id': pk,
+        'current_year': timezone.localdate().year,
+    })
+
+
 @login_required
 @require_view_permission('access_control.view_lich_lam_viec')
 def view_quy_nghi(request):
@@ -264,6 +304,131 @@ def view_tong_hop_nghi(request):
         'page_title': 'Quản lý lịch nghỉ',
     }
     return render(request, "hrm_manager/lich_lam_viec/lich_nghi/tong_hop_nghi.html", context)
+
+# ------------------- API LỊCH NGHỈ -------------------
+
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_lichnghi_list(request):
+    """API Lấy danh sách lịch nghỉ"""
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+        page_size = min(100, max(1, int(request.GET.get('page_size', 20))))
+        items, pagination = HolidayCalendarService.list(
+            search=request.GET.get('search', '').strip(),
+            status=request.GET.get('trangthai', '').strip(),
+            page=page,
+            page_size=page_size,
+        )
+        return json_success('Danh sách lịch nghỉ', data=items, pagination=pagination)
+    except (HolidayCalendarError, TypeError, ValueError) as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_lichnghi_create(request):
+    """API Tạo mới lịch nghỉ + chi tiết (atomic)"""
+    try:
+        item = HolidayCalendarService.create(get_request_data(request))
+        return json_success(
+            'Tạo lịch nghỉ thành công',
+            data=HolidayCalendarService.serialize_calendar(item, include_details=True),
+        )
+    except HolidayCalendarError as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_lichnghi_detail(request, pk):
+    """API Lấy chi tiết lịch nghỉ"""
+    item = Lichnghi.objects.filter(pk=pk).exclude(
+        loainghi=HolidayCalendarService.TEMPLATE_TYPE
+    ).first()
+    if not item:
+        return json_error('Không tìm thấy lịch nghỉ.', status=404)
+    return json_success(
+        'Chi tiết lịch nghỉ',
+        data=HolidayCalendarService.serialize_calendar(item, include_details=True),
+    )
+
+
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
+@require_http_methods(["PUT"])
+@handle_exceptions
+def api_lichnghi_update(request, pk):
+    """API Cập nhật lịch nghỉ + chi tiết (atomic)"""
+    try:
+        item = HolidayCalendarService.update(pk, get_request_data(request))
+        return json_success(
+            'Cập nhật lịch nghỉ thành công',
+            data=HolidayCalendarService.serialize_calendar(item, include_details=True),
+        )
+    except HolidayCalendarError as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
+@require_http_methods(["DELETE"])
+@handle_exceptions
+def api_lichnghi_delete(request, pk):
+    """API Xóa lịch nghỉ"""
+    try:
+        HolidayCalendarService.delete(pk)
+        return json_success('Xóa lịch nghỉ thành công')
+    except HolidayCalendarError as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.view_lich_lam_viec')
+@require_http_methods(["GET"])
+@handle_exceptions
+def api_lichnghi_templates(request):
+    """API Lấy danh sách ngày lễ mẫu theo năm"""
+    try:
+        year = int(request.GET.get('year'))
+        if year < 1900 or year > 2100:
+            raise HolidayCalendarError('Năm bản mẫu không hợp lệ.')
+        return json_success('Danh sách mẫu', data=HolidayCalendarService.templates(year))
+    except (HolidayCalendarError, TypeError, ValueError) as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
+@require_http_methods(["POST"])
+@handle_exceptions
+def api_lichnghi_toggle_status(request, pk):
+    """Bật/tắt trạng thái lịch nghỉ."""
+    try:
+        data = get_request_data(request)
+        HolidayCalendarService.set_status(pk, str(data.get('trangthai') or '').strip())
+        return json_success('Cập nhật trạng thái thành công')
+    except HolidayCalendarError as exc:
+        return json_error(str(exc), status=400)
+
+
+@login_required
+@require_api_permission('access_control.write_lich_lam_viec')
+@require_http_methods(["DELETE"])
+@handle_exceptions
+def api_lichnghi_bulk_delete(request):
+    """Xóa nhiều lịch nghỉ trong một transaction."""
+    try:
+        count = HolidayCalendarService.bulk_delete(get_request_data(request).get('ids') or [])
+        return json_success('Xóa lịch nghỉ thành công', deleted_count=count)
+    except (HolidayCalendarError, TypeError, ValueError) as exc:
+        return json_error(str(exc), status=400)
 
 
 # ------------------- API TRẢ VỀ JSON -------------------

@@ -1,0 +1,384 @@
+{% comment %}
+  Partial: day_sidebar_form.html
+  Rendered inside #day-sidebar-body.
+  JS (HolidayDaySidebarController) controls which sections are visible
+  based on the current sidebar mode:
+    CREATE_HOLIDAY | CREATE_DAY_OFF | CREATE_FROM_CELL | VIEW | EDIT
+{% endcomment %}
+
+{% comment %} ============================================================
+   SECTION: View mode (read-only) — mode=VIEW
+   ============================================================ {% endcomment %}
+<div id="sidebar-view-section" class="hidden space-y-4">
+    <div class="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+        <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <span id="view-loai-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"></span>
+        </div>
+        <div class="space-y-2">
+            <div class="flex items-start gap-3">
+                <span class="text-xs text-slate-400 w-28 shrink-0 pt-0.5">Ngày</span>
+                <span id="view-ngay" class="text-sm text-slate-700 font-medium"></span>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xs text-slate-400 w-28 shrink-0 pt-0.5">Tên ngày nghỉ</span>
+                <span id="view-ten" class="text-sm text-slate-700"></span>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xs text-slate-400 w-28 shrink-0 pt-0.5">Áp dụng tính lương</span>
+                <span id="view-tinluong" class="text-sm text-slate-700"></span>
+            </div>
+            <div class="flex items-start gap-3" id="view-heso-row">
+                <span class="text-xs text-slate-400 w-28 shrink-0 pt-0.5">Hệ số công</span>
+                <span id="view-heso" class="text-sm text-slate-700"></span>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="text-xs text-slate-400 w-28 shrink-0 pt-0.5">Nguồn gốc</span>
+                <span id="view-nguongoc" class="text-sm text-slate-500 italic"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% comment %} ============================================================
+   SECTION: "Thêm nghỉ lễ" — mode=CREATE_HOLIDAY
+   ============================================================ {% endcomment %}
+<div id="sidebar-holiday-section" class="hidden space-y-5">
+    {# Phương thức #}
+    <div class="space-y-2">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phương thức</p>
+        <div class="flex flex-col gap-2">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="holiday-method" value="manual" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Thêm thủ công</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="holiday-method" value="template" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Thêm từ bản mẫu</span>
+            </label>
+        </div>
+    </div>
+
+    {# --- Manual form --- #}
+    <div id="holiday-manual-form" class="space-y-4">
+        <div class="space-y-1">
+            <label for="h-ten-ngay-nghi" class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Tên ngày nghỉ
+            </label>
+            <input
+                type="text"
+                id="h-ten-ngay-nghi"
+                placeholder="VD: Quốc khánh"
+                maxlength="200"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+            <p id="err-h-ten" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Ngày nghỉ lễ
+            </label>
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <input
+                        type="date"
+                        id="h-tu-ngay"
+                        placeholder="Từ ngày"
+                        readonly
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer bg-white"
+                    >
+                </div>
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                <div class="relative flex-1">
+                    <input
+                        type="date"
+                        id="h-den-ngay"
+                        placeholder="Đến ngày"
+                        readonly
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer bg-white"
+                    >
+                </div>
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5"/>
+                </svg>
+            </div>
+            <p id="err-h-ngay" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <input type="checkbox" id="h-apdung-tinluong" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+            <label for="h-apdung-tinluong" class="text-sm text-slate-700 cursor-pointer select-none flex items-center gap-1">
+                Áp dụng tính lương
+                <span title="Nếu bật, ngày nghỉ lễ vẫn được tính lương theo hệ số quy định" class="text-slate-400 cursor-help">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                    </svg>
+                </span>
+            </label>
+        </div>
+
+        <div id="h-heso-row" class="space-y-1 hidden">
+            <label for="h-heso" class="block text-sm font-medium text-slate-700">
+                Hệ số công so với ngày thường
+                <span title="Hệ số 1.00 = 100% ngày công. VD: 3.00 = 300% (ngày lễ)" class="text-slate-400 cursor-help ml-1">
+                    <svg class="w-3.5 h-3.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                    </svg>
+                </span>
+            </label>
+            <input type="number" id="h-heso" value="1.00" step="0.01" min="0" max="10"
+                   class="w-40 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        </div>
+    </div>
+
+    {# --- Template form --- #}
+    <div id="holiday-template-form" class="hidden space-y-3">
+        <p class="text-xs text-slate-500">Chọn các ngày lễ để thêm vào lịch nghỉ năm <strong id="template-year-label"></strong>:</p>
+        <div id="holiday-template-list" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+            <div class="text-center py-6 text-slate-400 text-sm">Đang tải bản mẫu...</div>
+        </div>
+        <div class="pt-2 border-t border-slate-100">
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="tmpl-apdung-tinluong" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                <label for="tmpl-apdung-tinluong" class="text-sm text-slate-700 cursor-pointer select-none">
+                    Áp dụng tính lương cho các ngày đã chọn
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% comment %} ============================================================
+   SECTION: "Thêm ngày nghỉ" — mode=CREATE_DAY_OFF
+   ============================================================ {% endcomment %}
+<div id="sidebar-dayoff-section" class="hidden space-y-5">
+    {# Phương thức #}
+    <div class="space-y-2">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phương thức</p>
+        <div class="flex flex-col gap-2">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="dayoff-method" value="batch" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Thêm hàng loạt</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="dayoff-method" value="single" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Thêm thủ công từng ngày</span>
+            </label>
+        </div>
+    </div>
+
+    {# --- Batch form --- #}
+    <div id="dayoff-batch-form" class="space-y-4">
+        <div class="space-y-1">
+            <label for="d-ten-ngay-nghi" class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Tên ngày nghỉ
+            </label>
+            <input
+                type="text"
+                id="d-ten-ngay-nghi"
+                placeholder="VD: Nghỉ cuối tuần"
+                maxlength="200"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+            <p id="err-d-ten" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        {# Checkboxes Thứ 2 - CN #}
+        <div class="space-y-2">
+            <p class="text-sm font-medium text-slate-700">Ngày trong tuần</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="0" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 2</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="1" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 3</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="2" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 4</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="3" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 5</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="4" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 6</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="5" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Thứ 7</span></label>
+                <label class="inline-flex items-center cursor-pointer gap-2"><input type="checkbox" name="weekdays" value="6" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"><span class="text-sm text-slate-700">Chủ Nhật</span></label>
+            </div>
+            <p id="err-d-weekdays" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="space-y-1">
+            <label for="d-hinh-thuc-lap" class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Hình thức lặp
+            </label>
+            <select id="d-hinh-thuc-lap"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors bg-white cursor-pointer">
+                <option value="">Lựa chọn</option>
+                <option value="1">Hàng tuần</option>
+                <option value="2">Cách 1 tuần</option>
+                <option value="3">Cách 2 tuần</option>
+                <option value="4">Cách 3 tuần</option>
+                <option value="5">Cách 4 tuần</option>
+            </select>
+            <p id="err-d-lap" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="space-y-1">
+            <label class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Áp dụng từ
+            </label>
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <input type="date" id="d-tu-ngay" placeholder="Từ ngày" readonly
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white">
+                </div>
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                <div class="relative flex-1">
+                    <input type="date" id="d-den-ngay" placeholder="Đến ngày" readonly
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white">
+                </div>
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5"/>
+                </svg>
+            </div>
+            <p id="err-d-range" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <input type="checkbox" id="d-apdung-tinluong" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+            <label for="d-apdung-tinluong" class="text-sm text-slate-700 cursor-pointer select-none flex items-center gap-1">
+                Áp dụng tính lương
+                <span title="Nếu bật, ngày nghỉ này vẫn được tính 1 ngày công" class="text-slate-400 cursor-help">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                    </svg>
+                </span>
+            </label>
+        </div>
+
+        <div id="d-heso-row" class="space-y-1 hidden">
+            <label for="d-heso" class="block text-sm font-medium text-slate-700">
+                Hệ số công so với ngày thường
+                <span title="Hệ số 1.00 = 100% ngày công" class="text-slate-400 cursor-help ml-1">
+                    <svg class="w-3.5 h-3.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                    </svg>
+                </span>
+            </label>
+            <input type="number" id="d-heso" value="1.00" step="0.01" min="0" max="10"
+                   class="w-40 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        </div>
+
+        {# Preview count #}
+        <div id="d-preview-count" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-700 font-medium" id="d-preview-text">Sẽ thêm 0 ngày</p>
+        </div>
+    </div>
+
+    {# --- Single form --- #}
+    <div id="dayoff-single-form" class="hidden space-y-4">
+        <div class="space-y-1">
+            <label for="ds-ten-ngay-nghi" class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Tên ngày nghỉ
+            </label>
+            <input
+                type="text"
+                id="ds-ten-ngay-nghi"
+                placeholder="VD: Nghỉ bù Tết"
+                maxlength="200"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+            <p id="err-ds-ten" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="space-y-1">
+            <label for="ds-chon-ngay" class="block text-sm font-medium text-slate-700">
+                <span class="text-red-500">*</span> Chọn ngày
+            </label>
+            <div class="relative">
+                <input type="date" id="ds-chon-ngay" placeholder="Chọn ngày" readonly
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white">
+                <svg class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5"/>
+                </svg>
+            </div>
+            <p id="err-ds-ngay" class="text-xs text-red-500 hidden"></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <input type="checkbox" id="ds-apdung-tinluong" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+            <label for="ds-apdung-tinluong" class="text-sm text-slate-700 cursor-pointer select-none flex items-center gap-1">
+                Áp dụng tính lương
+                <span title="Nếu bật, ngày nghỉ này vẫn được tính 1 ngày công" class="text-slate-400 cursor-help">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                    </svg>
+                </span>
+            </label>
+        </div>
+
+        <div id="ds-heso-row" class="space-y-1">
+            <label for="ds-heso" class="block text-sm font-medium text-slate-700">
+                Hệ số công so với ngày thường
+            </label>
+            <input type="number" id="ds-heso" value="1.00" step="0.01" min="0" max="10"
+                   class="w-40 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        </div>
+    </div>
+</div>
+
+{% comment %} ============================================================
+   SECTION: Click from calendar cell — mode=CREATE_FROM_CELL
+   ============================================================ {% endcomment %}
+<div id="sidebar-cell-section" class="hidden space-y-4">
+    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-xs text-blue-600 font-medium">Ngày đang chọn</p>
+        <p id="cell-ngay-display" class="text-base font-bold text-blue-800 mt-0.5"></p>
+    </div>
+
+    <div class="space-y-2">
+        <label class="block text-sm font-medium text-slate-700">Loại ngày nghỉ</label>
+        <div class="flex flex-col gap-2">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="cell-loai" value="NGAY_NGHI" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Ngày nghỉ thường</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="cell-loai" value="NGHI_LE" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span class="ml-2 text-sm text-slate-700">Ngày nghỉ lễ</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="space-y-1">
+        <label for="cell-ten-ngay-nghi" class="block text-sm font-medium text-slate-700">
+            <span class="text-red-500">*</span> Tên ngày nghỉ
+        </label>
+        <input
+            type="text"
+            id="cell-ten-ngay-nghi"
+            placeholder="Nhập tên ngày nghỉ"
+            maxlength="200"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        >
+        <p id="err-cell-ten" class="text-xs text-red-500 hidden"></p>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <input type="checkbox" id="cell-apdung-tinluong" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+        <label for="cell-apdung-tinluong" class="text-sm text-slate-700 cursor-pointer select-none flex items-center gap-1">
+            Áp dụng tính lương
+            <span title="Nếu bật, ngày nghỉ này vẫn được tính công" class="text-slate-400 cursor-help">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                </svg>
+            </span>
+        </label>
+    </div>
+
+    <div id="cell-heso-row" class="space-y-1">
+        <label for="cell-heso" class="block text-sm font-medium text-slate-700">
+            Hệ số công so với ngày thường
+        </label>
+        <input type="number" id="cell-heso" value="1.00" step="0.01" min="0" max="10"
+               class="w-40 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+    </div>
+
+    <input type="hidden" id="cell-ngay-value">
+    <input type="hidden" id="cell-loai-current">
+</div>
