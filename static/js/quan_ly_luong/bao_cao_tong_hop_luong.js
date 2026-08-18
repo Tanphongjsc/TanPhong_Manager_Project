@@ -122,7 +122,7 @@ class BaoCaoTongHopLuongManager {
     renderLoading() {
         const loadingHtml = `
             <tr>
-                <td colspan="12" class="px-6 py-10 text-center text-slate-500">
+                <td colspan="11" class="px-6 py-10 text-center text-slate-500">
                     <div class="flex flex-col items-center justify-center">
                         <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-3"></i>
                         <p class="font-medium text-sm">Đang tải dữ liệu báo cáo...</p>
@@ -134,8 +134,19 @@ class BaoCaoTongHopLuongManager {
         const deptTbody = document.getElementById('dept-tree-table-body');
         if (deptTbody) deptTbody.innerHTML = loadingHtml;
         
-        const jobTbody = document.getElementById('table-body-job');
-        if (jobTbody) jobTbody.innerHTML = loadingHtml;
+        const jobTbody = document.getElementById('job-table-body');
+        if (jobTbody) jobTbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="px-6 py-10 text-center text-slate-500">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-3"></i>
+                        <p class="font-medium text-sm">Đang tải dữ liệu báo cáo...</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        const jobTfoot = document.getElementById('job-table-footer');
+        if (jobTfoot) jobTfoot.innerHTML = '';
     }
 
     async loadData() {
@@ -182,12 +193,21 @@ class BaoCaoTongHopLuongManager {
         
         const deptTbody = document.getElementById('dept-tree-table-body');
         const deptTfoot = document.getElementById('dept-tree-table-footer');
-        if (deptTbody) deptTbody.innerHTML = `<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>`;
+        if (deptTbody) deptTbody.innerHTML = `<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>`;
         if (deptTfoot) deptTfoot.innerHTML = '';
         
-        const jobTbody = document.getElementById('table-body-job');
-        const jobTfoot = document.getElementById('table-footer-job');
-        if (jobTbody) jobTbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">${msg}</td></tr>`;
+        const jobTbody = document.getElementById('job-table-body');
+        const jobTfoot = document.getElementById('job-table-footer');
+        if (jobTbody) jobTbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="px-4 py-12 text-center text-gray-400">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p class="text-sm">${msg}</p>
+                    </div>
+                </td>
+            </tr>
+        `;
         if (jobTfoot) jobTfoot.innerHTML = '';
     }
 
@@ -207,29 +227,50 @@ class BaoCaoTongHopLuongManager {
                         key: 'name_col',
                         isTreeColumn: true,
                         render: (val, row) => {
-                            if (row.type === 'department') return `<span class="font-bold text-gray-800">${row.label}</span>`;
-                            if (row.type === 'position') return `<span class="font-semibold text-gray-700">${row.label}</span>`;
-                            return row.label;
+                            if (row.type === 'department') {
+                                return `<span class="font-bold text-slate-800"><i class="fas fa-building text-blue-600 mr-2 text-xs opacity-80"></i>${row.label}</span>`;
+                            }
+                            if (row.type === 'position') {
+                                return `<span class="font-semibold text-slate-700"><i class="fas fa-user-tag text-slate-400 mr-2 text-xs"></i>${row.label}</span>`;
+                            }
+                            return `<span class="text-slate-700"><i class="fas fa-user text-slate-400 mr-2 text-xs"></i>${row.label}</span>`;
                         }
                     },
                     { 
                         key: 'ma_nv',
                         align: 'center',
-                        render: (val, row) => row.type === 'employee' ? row.data.ma_nv : ''
+                        render: (val, row) => {
+                            if (row.type === 'employee' && row.data && row.data.ma_nv) {
+                                return `<span class="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-medium border border-slate-200/60">${row.data.ma_nv}</span>`;
+                            }
+                            return '';
+                        }
                     },
-                    { key: 'suat_an_trua', align: 'right' },
+                    { 
+                        key: 'suat_an_trua', 
+                        align: 'right',
+                        render: (val) => val ? Number(val).toLocaleString('vi-VN') : '0'
+                    },
                     { 
                         key: 'tien_an_trua', 
                         align: 'right',
                         render: (val) => AppUtils.Helper.formatCurrency(val)
                     },
-                    { key: 'suat_an_dem', align: 'right' },
+                    { 
+                        key: 'suat_an_dem', 
+                        align: 'right',
+                        render: (val) => val ? Number(val).toLocaleString('vi-VN') : '0'
+                    },
                     { 
                         key: 'tien_an_dem', 
                         align: 'right',
                         render: (val) => AppUtils.Helper.formatCurrency(val)
                     },
-                    { key: 'suat_an_cn', align: 'right' },
+                    { 
+                        key: 'suat_an_cn', 
+                        align: 'right',
+                        render: (val) => val ? Number(val).toLocaleString('vi-VN') : '0'
+                    },
                     { 
                         key: 'tien_an_cn', 
                         align: 'right',
@@ -238,20 +279,24 @@ class BaoCaoTongHopLuongManager {
                     { 
                         key: 'tong_gio', 
                         align: 'right',
-                        render: (val) => Number(val).toFixed(2)
+                        className: 'tabular-nums',
+                        render: (val) => Number(val || 0).toFixed(2)
                     },
                     { 
                         key: 'tong_ca', 
                         align: 'right',
-                        render: (val) => Number(val).toFixed(2)
+                        className: 'tabular-nums',
+                        render: (val) => Number(val || 0).toFixed(2)
                     },
                     { 
                         key: 'luong_thuc_linh', 
                         align: 'right',
-                        className: 'border-l border-gray-100 font-bold text-blue-600',
+                        className: 'tabular-nums font-bold text-blue-600',
                         render: (val, row) => {
-                            if (row.isFooter) return `<span class="text-blue-700">${AppUtils.Helper.formatCurrency(val)}</span>`;
-                            return AppUtils.Helper.formatCurrency(val);
+                            if (row.isFooter) return `<span class="text-blue-700 font-bold">${AppUtils.Helper.formatCurrency(val)}</span>`;
+                            if (row.type === 'department') return `<span class="font-bold text-blue-700">${AppUtils.Helper.formatCurrency(val)}</span>`;
+                            if (row.type === 'position') return `<span class="font-semibold text-blue-600">${AppUtils.Helper.formatCurrency(val)}</span>`;
+                            return `<span class="font-medium text-blue-600">${AppUtils.Helper.formatCurrency(val)}</span>`;
                         }
                     }
                 ]
@@ -264,9 +309,19 @@ class BaoCaoTongHopLuongManager {
         });
     }
 
+    _formatParamValue(val) {
+        if (val === null || val === undefined || val === '') return '—';
+        const num = Number(val);
+        if (isNaN(num)) return val;
+        // Số nguyên → không decimal, số thập phân → 2 chữ số
+        return Number.isInteger(num) ? num.toLocaleString('vi-VN') : num.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     renderTabJob() {
-        const tbody = document.getElementById('table-body-job');
-        const tfoot = document.getElementById('table-footer-job');
+        const tbody = document.getElementById('job-table-body');
+        const tfoot = document.getElementById('job-table-footer');
+        if (!tbody || !tfoot) return;
+        
         tbody.innerHTML = '';
         tfoot.innerHTML = '';
         
@@ -275,25 +330,78 @@ class BaoCaoTongHopLuongManager {
             return;
         }
         
+        // Palette màu cho badge tham số
+        const badgeColors = [
+            { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' },
+            { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
+            { bg: '#fefce8', text: '#854d0e', border: '#fde68a' },
+            { bg: '#fdf2f8', text: '#9d174d', border: '#fbcfe8' },
+            { bg: '#f5f3ff', text: '#5b21b6', border: '#ddd6fe' },
+            { bg: '#ecfeff', text: '#155e75', border: '#a5f3fc' },
+        ];
+        
         let html = '';
-        this.currentData.jobs.forEach(job => {
+        this.currentData.jobs.forEach((job, index) => {
+            const paramsDef = job.params_def || [];
+            const paramsTotals = job.params_totals || {};
+            const hasParams = paramsDef.length > 0;
+            const jobName = job.tencongviec || `Công việc #${index + 1}`;
+            const tongTien = AppUtils.Helper.formatCurrency(Number(job.tong_tien) || 0);
+            const isEven = index % 2 === 0;
+            const rowBg = isEven ? '#ffffff' : '#f8fafc';
+            
+            // Build badges HTML cho tham số
+            let paramsHtml = '';
+            if (hasParams) {
+                const badges = paramsDef.map((p, pIdx) => {
+                    const val = paramsTotals[p.ma] || 0;
+                    const color = badgeColors[pIdx % badgeColors.length];
+                    const paramName = p.ten || p.ma;
+                    const paramVal = this._formatParamValue(val);
+                    const paramDonVi = (p.donvi || '').trim();
+                    const donViHtml = paramDonVi ? `<span style="font-weight:500;font-size:11px;opacity:0.85;margin-left:1px">${paramDonVi}</span>` : '';
+                    return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:${color.bg};color:${color.text};border:1px solid ${color.border};white-space:nowrap;margin:2px">
+                        <span style="font-weight:500;opacity:0.8">${paramName}:</span>
+                        <span style="font-weight:700">${paramVal}</span>
+                        ${donViHtml}
+                    </span>`;
+                });
+                paramsHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${badges.join('')}</div>`;
+            } else {
+                paramsHtml = `<span style="color:#94a3b8;font-size:12px;font-style:italic"><i class="fas fa-info-circle" style="margin-right:4px"></i>Không có tham số</span>`;
+            }
+            
             html += `
-                <tr class="hover:bg-gray-50 bg-white">
-                    <td class="px-4 py-3 font-medium text-gray-900">${job.tencongviec}</td>
-                    <td class="px-4 py-3 text-right text-gray-900">${AppUtils.Helper.formatCurrency(job.tong_tien)}</td>
-                    <td class="px-4 py-3 text-right">${Number(job.tong_gio).toFixed(2)}</td>
-                </tr>
+            <tr class="bg-white hover:bg-slate-50/80 cursor-pointer transition-colors" style="transition: background-color 0.15s ease;" onmouseenter="this.style.backgroundColor='#f1f5f9'" onmouseleave="this.style.backgroundColor=''">
+                <td class="px-4 py-2.5 text-left font-semibold text-slate-800">
+                    <div class="flex items-center">
+                        <i class="fas fa-briefcase text-blue-600 mr-2 text-xs opacity-80"></i>
+                        <span>${jobName}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-2.5 text-right font-bold text-blue-600 tabular-nums">
+                    ${tongTien}
+                </td>
+                <td class="px-4 py-2.5 text-left">
+                    ${paramsHtml}
+                </td>
+            </tr>
             `;
         });
         
         tbody.innerHTML = html;
         
+        // Grand total footer đồng bộ với Tab 1
         const gt = this.currentData.grand_totals;
         tfoot.innerHTML = `
             <tr>
-                <td class="px-4 py-3 text-right uppercase tracking-wider">Tổng cộng toàn bộ</td>
-                <td class="px-4 py-3 text-right text-base">${AppUtils.Helper.formatCurrency(gt.tong_tien_cv)}</td>
-                <td class="px-4 py-3 text-right">${Number(gt.tong_gio).toFixed(2)}</td>
+                <td class="px-4 py-3 text-left uppercase tracking-wider">
+                    TỔNG CỘNG TOÀN BỘ
+                </td>
+                <td class="px-4 py-3 text-right text-blue-700 font-bold text-sm tabular-nums">
+                    ${AppUtils.Helper.formatCurrency(Number(gt.tong_tien_cv) || 0)}
+                </td>
+                <td class="px-4 py-3"></td>
             </tr>
         `;
     }

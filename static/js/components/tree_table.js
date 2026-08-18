@@ -89,15 +89,17 @@ class TreeTableComponent {
             // Dùng style đặc biệt cho dòng group (level 0, 1...) và dòng lá
             const isGroup = hasChildren || row.type === 'group';
             
-            let rowClass = 'bg-white hover:bg-gray-50 cursor-pointer transition-colors';
+            let rowClass = 'cursor-pointer transition-colors';
             if (row.level === 0) {
-                rowClass = 'bg-gray-50 font-semibold text-gray-800 border-t-2 border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors';
+                rowClass += ' tree-row-level-0';
             } else if (row.level === 1 && isGroup) {
-                rowClass = 'bg-slate-50/50 font-medium text-gray-700 border-t border-gray-100 hover:bg-slate-100 cursor-pointer transition-colors';
+                rowClass += ' tree-row-level-1';
+            } else {
+                rowClass += ' tree-row-leaf bg-white';
             }
 
             if (this.activeRowId === row.id) {
-                rowClass += ' !bg-blue-100';
+                rowClass += ' tree-row-active';
             }
 
             html += `<tr class="${rowClass}" data-node-id="${row.id}">`;
