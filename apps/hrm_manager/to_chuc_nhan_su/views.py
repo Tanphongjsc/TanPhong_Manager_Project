@@ -37,7 +37,7 @@ from apps.hrm_manager.utils.view_helpers import (
 # HELPER: Đồng bộ chéo trangthainv <-> trangthai (active/inactive)
 # ============================================================================
 
-def _sync_employee_status(trangthainv, trangthai):
+def _sync_employee_status(trangthainv, trangthai=None):
     """
     Đảm bảo trangthainv và trangthai luôn nhất quán:
       - 'Đã nghỉ việc' <-> 'inactive'
@@ -45,11 +45,15 @@ def _sync_employee_status(trangthainv, trangthai):
     Ưu tiên: trangthainv quyết định trước, trangthai là fallback.
     Returns: (trangthainv, trangthai)
     """
-    if trangthainv == 'Đã nghỉ việc':
-        return trangthainv, 'inactive'
+    if trangthainv:
+        if trangthainv == 'Đã nghỉ việc':
+            return 'Đã nghỉ việc', 'inactive'
+        return trangthainv, 'active'
+
+    # Fallback nếu không truyền trangthainv
     if trangthai == 'inactive':
         return 'Đã nghỉ việc', 'inactive'
-    return (trangthainv or 'Đang làm việc'), 'active'
+    return 'Đang làm việc', 'active'
 
 
 # ============================================================================
@@ -524,7 +528,7 @@ def api_phong_ban_nhan_vien(request):
         # Lấy bản ghi lịch sử công tác mới nhất của mỗi nhân viên
         latest_id_subquery = Lichsucongtac.objects.filter(
             nhanvien_id=OuterRef('nhanvien_id')
-        ).order_by('-batdau', '-id').values('id')[:1]
+        ).order_by('-id').values('id')[:1]
 
         # Query từ Lichsucongtac bản ghi mới nhất của nhân viên và áp dụng bộ lọc
         qs = Lichsucongtac.objects.annotate(
@@ -885,6 +889,8 @@ def api_nhan_vien_detail(request, id):
                 data.get('trangthai', nhan_vien.trangthai),
             )
 
+            print(data)
+
             for field in nhan_vien._meta.fields:
                 if field.name in data:
                     if field.name in ['loainv', 'nganhang']:
@@ -1036,7 +1042,7 @@ def api_lich_su_cong_tac_list(request):
         if trang_thai_param:
             lich_su_qs = lich_su_qs.filter(trangthai=trang_thai_param)
 
-        lich_su_qs = lich_su_qs.order_by('-created_at')
+        lich_su_qs = lich_su_qs.order_by('-id')
 
         # Serialize với related data
         page_size = int(request.GET.get('page_size', 50))
@@ -1311,11 +1317,11 @@ def api_lich_su_cong_tac_chuyen_cong_tac(request):
 def api_lich_su_cong_tac_detail(request, id):
     """API lấy chi tiết, cập nhật và xóa lịch sử công tác"""
 
-    trang_thai = request.GET.get("trangthai", 'active')
+    trang_thai = request.GET.get("trangthai", '').strip()
     filters = {'nhanvien_id': id}
-    if trang_thai != 'all':
+    if trang_thai and trang_thai != 'all':
         filters['trangthai'] = trang_thai
-    lich_su = Lichsucongtac.objects.filter(**filters).select_related('phongban', 'chucvu').first()
+    lich_su = Lichsucongtac.objects.filter(**filters).select_related('phongban', 'chucvu').order_by('-id').first()
 
     if request.method == "GET":
         # Lấy chi tiết lịch sử công tác

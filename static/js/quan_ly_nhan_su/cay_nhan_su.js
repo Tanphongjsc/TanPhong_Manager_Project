@@ -366,7 +366,7 @@ class EmployeeManager extends BaseCRUDManager {
         try {
             const [empRes, congTacRes] = await Promise.all([
                 AppUtils.API.get(this.config.apiUrls.detail(id)),
-                AppUtils.API.get(`/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/${id}/`, { trangthai: 'active' })
+                AppUtils.API.get(`/hrm/to-chuc-nhan-su/api/v1/lich-su-cong-tac/${id}/`)
             ]);
 
             const empData = empRes.data || empRes;
