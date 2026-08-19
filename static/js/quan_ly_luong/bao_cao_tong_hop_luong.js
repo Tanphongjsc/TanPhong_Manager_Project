@@ -111,9 +111,6 @@ class BaoCaoTongHopLuongManager {
         const params = new URLSearchParams();
         if (formData.thang) params.append('thang', formData.thang);
         if (formData.phongban_id) params.append('phongban_id', formData.phongban_id);
-        if (formData.don_gia_an_trua) params.append('don_gia_an_trua', formData.don_gia_an_trua);
-        if (formData.don_gia_an_dem) params.append('don_gia_an_dem', formData.don_gia_an_dem);
-        if (formData.don_gia_an_chu_nhat) params.append('don_gia_an_chu_nhat', formData.don_gia_an_chu_nhat);
         if (search) params.append('search', search);
         
         return params;

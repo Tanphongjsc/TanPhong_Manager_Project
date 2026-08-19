@@ -2679,9 +2679,6 @@ def _extract_report_params(request):
         'thang': int(thang_raw.split('-')[-1]),
         'phongban_id': request.GET.get('phongban_id'),
         'search': request.GET.get('search'),
-        'don_gia_an_trua': request.GET.get('don_gia_an_trua', 0),
-        'don_gia_an_dem': request.GET.get('don_gia_an_dem', 0),
-        'don_gia_an_chu_nhat': request.GET.get('don_gia_an_chu_nhat', 0),
     }
 
 
@@ -2785,12 +2782,8 @@ def _build_job_param_map():
     return param_map
 
 
-def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, don_gia_an_dem, don_gia_an_chu_nhat):
+def _build_tong_hop_luong_report(thang, phongban_id, search):
     """Xây dựng dữ liệu báo cáo tổng hợp lương theo tháng."""
-    don_gia_an_trua = _safe_float(don_gia_an_trua, 0.0)
-    don_gia_an_dem = _safe_float(don_gia_an_dem, 0.0)
-    don_gia_an_chu_nhat = _safe_float(don_gia_an_chu_nhat, 0.0)
-    
     empty_result = {'tree_data': [], 'jobs': [], 'grand_totals': {}, 'no_payroll': False}
 
     # 1. Lấy kỳ lương & các bảng lương hợp lệ
@@ -2826,6 +2819,27 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
         phieu_qs = phieu_qs.filter(nhanvien_id__in=ls_qs.values_list('nhanvien_id', flat=True))
 
     phieu_list = list(phieu_qs.select_related('nhanvien'))
+    if not phieu_list:
+        return empty_result
+
+    phieu_ids = [p.id for p in phieu_list]
+
+    # Lấy dữ liệu chi tiết phiếu lương cho các phần tử ăn uống
+    # Biến: SO_LUONG_AN, TIEN_AN, SO_LUONG_AN_DEM, TIEN_COM_DEM, SO_LUONG_AN_CN, TIEN_COM_CN
+    meal_keys = {'SO_LUONG_AN', 'TIEN_AN', 'SO_LUONG_AN_DEM', 'TIEN_COM_DEM', 'SO_LUONG_AN_CN', 'TIEN_COM_CN'}
+    meal_keys_query = list(meal_keys | {k.lower() for k in meal_keys})
+    
+    ct_phieu_data = Ctphieuluong.objects.filter(
+        phieuluong_id__in=phieu_ids,
+        maphantuluong__in=meal_keys_query
+    ).values('phieuluong_id', 'maphantuluong', 'giatritinhduoc')
+
+    meal_by_phieu = defaultdict(dict)
+    for ct in ct_phieu_data:
+        ma_pt = (ct.get('maphantuluong') or '').strip().upper()
+        if ma_pt in meal_keys:
+            meal_by_phieu[ct['phieuluong_id']][ma_pt] = _safe_float(ct.get('giatritinhduoc'), 0.0)
+
     job_param_map = _build_job_param_map()
     
     emp_stats = {}
@@ -2838,7 +2852,14 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
     # 3. Tính toán số liệu từng nhân viên và công việc
     for phieu in phieu_list:
         emp_id = phieu.nhanvien_id
-        suat_an_trua = suat_an_dem = suat_an_cn = 0
+        phieu_meal = meal_by_phieu.get(phieu.id, {})
+        suat_an_trua = phieu_meal.get('SO_LUONG_AN', 0.0)
+        tien_an_trua = phieu_meal.get('TIEN_AN', 0.0)
+        suat_an_dem = phieu_meal.get('SO_LUONG_AN_DEM', 0.0)
+        tien_an_dem = phieu_meal.get('TIEN_COM_DEM', 0.0)
+        suat_an_cn = phieu_meal.get('SO_LUONG_AN_CN', 0.0)
+        tien_an_cn = phieu_meal.get('TIEN_COM_CN', 0.0)
+
         tong_gio = tong_ca = tong_tien_cv = 0.0
         
         ngay_cham_cong_data = _parse_json_field(phieu.ngaychamcong, default=[])
@@ -2847,9 +2868,6 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
             if not row.get('codilam'):
                 continue
                 
-            suat_an_trua += bool(row.get('coantrua'))
-            suat_an_dem += bool(row.get('coandem'))
-            suat_an_cn += bool(row.get('coanchunhat'))
             tong_gio += _safe_float(row.get('thoigianlamviec', 0)) / 60.0
             tong_ca += _safe_float(row.get('conglamviec', 0))
             
@@ -2903,19 +2921,34 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
                     else:
                         js['params_totals'][pk] += _safe_float(params.get(pk, 0))
 
-        emp_stats[emp_id] = {
-            'suat_an_trua': suat_an_trua,
-            'suat_an_dem': suat_an_dem, 
-            'suat_an_cn': suat_an_cn, 
-            'tong_gio': tong_gio, 
-            'tong_ca': tong_ca,
-            'tong_tien_cv': tong_tien_cv,
-            'luong_thuc_linh': _safe_float(phieu.luongthuclinh, 0.0),
-            'ma_nv': phieu.nhanvien.manhanvien if phieu.nhanvien else '',
-            'ten_nv': phieu.tennhanvien or '',
-            'ten_phongban': phieu.tenphongban or 'Chưa sắp xếp',
-            'ten_chucvu': phieu.tenchucvu or 'Chưa có chức vụ',
-        }
+        if emp_id not in emp_stats:
+            emp_stats[emp_id] = {
+                'suat_an_trua': 0.0,
+                'tien_an_trua': 0.0,
+                'suat_an_dem': 0.0,
+                'tien_an_dem': 0.0,
+                'suat_an_cn': 0.0,
+                'tien_an_cn': 0.0,
+                'tong_gio': 0.0, 
+                'tong_ca': 0.0,
+                'tong_tien_cv': 0.0,
+                'luong_thuc_linh': 0.0,
+                'ma_nv': phieu.nhanvien.manhanvien if phieu.nhanvien else '',
+                'ten_nv': phieu.tennhanvien or '',
+                'ten_phongban': phieu.tenphongban or 'Chưa sắp xếp',
+                'ten_chucvu': phieu.tenchucvu or 'Chưa có chức vụ',
+            }
+
+        emp_stats[emp_id]['suat_an_trua'] += suat_an_trua
+        emp_stats[emp_id]['tien_an_trua'] += tien_an_trua
+        emp_stats[emp_id]['suat_an_dem'] += suat_an_dem
+        emp_stats[emp_id]['tien_an_dem'] += tien_an_dem
+        emp_stats[emp_id]['suat_an_cn'] += suat_an_cn
+        emp_stats[emp_id]['tien_an_cn'] += tien_an_cn
+        emp_stats[emp_id]['tong_gio'] += tong_gio
+        emp_stats[emp_id]['tong_ca'] += tong_ca
+        emp_stats[emp_id]['tong_tien_cv'] += tong_tien_cv
+        emp_stats[emp_id]['luong_thuc_linh'] += _safe_float(phieu.luongthuclinh, 0.0)
 
     # 4. Gom nhóm dữ liệu theo Phòng ban -> Chức vụ -> Nhân viên
     dept_map = {}
@@ -2923,7 +2956,7 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
     grand_totals = {k: 0 for k in _STAT_KEYS}
     
     for emp_id, st in emp_stats.items():
-        if all(st.get(k, 0) == 0 for k in ('suat_an_trua', 'suat_an_dem', 'suat_an_cn', 
+        if all(st.get(k, 0) == 0 for k in ('suat_an_trua', 'tien_an_trua', 'suat_an_dem', 'tien_an_dem', 'suat_an_cn', 'tien_an_cn', 
                                              'tong_gio', 'tong_tien_cv', 'luong_thuc_linh', 'tong_ca')):
             continue
             
@@ -2951,19 +2984,15 @@ def _build_tong_hop_luong_report(thang, phongban_id, search, don_gia_an_trua, do
             
         pos = dept['children_map'][ten_chucvu]
         
-        tien_an_trua = st['suat_an_trua'] * don_gia_an_trua
-        tien_an_dem = st['suat_an_dem'] * don_gia_an_dem
-        tien_an_cn = st['suat_an_cn'] * don_gia_an_chu_nhat
-        
         emp_row = {
             'ma_nv': st['ma_nv'],
             'ten_nv': st['ten_nv'],
             'suat_an_trua': st['suat_an_trua'],
-            'tien_an_trua': tien_an_trua,
+            'tien_an_trua': st['tien_an_trua'],
             'suat_an_dem': st['suat_an_dem'],
-            'tien_an_dem': tien_an_dem,
+            'tien_an_dem': st['tien_an_dem'],
             'suat_an_cn': st['suat_an_cn'],
-            'tien_an_cn': tien_an_cn,
+            'tien_an_cn': st['tien_an_cn'],
             'tong_tien_cv': st['tong_tien_cv'],
             'tong_gio': st['tong_gio'],
             'tong_ca': st['tong_ca'],
@@ -3028,8 +3057,7 @@ def api_bao_cao_tong_hop_luong(request):
         return json_error("Vui lòng chọn tháng")
     
     data = _build_tong_hop_luong_report(
-        params['thang'], params['phongban_id'], params['search'],
-        params['don_gia_an_trua'], params['don_gia_an_dem'], params['don_gia_an_chu_nhat']
+        params['thang'], params['phongban_id'], params['search']
     )
     return json_success("Lấy dữ liệu thành công", data=data)
 
@@ -3043,8 +3071,7 @@ def api_bao_cao_tong_hop_luong_export(request):
     
     thang = params['thang']
     data = _build_tong_hop_luong_report(
-        thang, params['phongban_id'], params['search'],
-        params['don_gia_an_trua'], params['don_gia_an_dem'], params['don_gia_an_chu_nhat']
+        thang, params['phongban_id'], params['search']
     )
     
     wb = openpyxl.Workbook()

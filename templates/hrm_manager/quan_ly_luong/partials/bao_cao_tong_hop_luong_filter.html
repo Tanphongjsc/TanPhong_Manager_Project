@@ -4,24 +4,7 @@
            class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none" required>
 </div>
 
-<div class="min-w-[180px]">
-    {% include "components/org_tree.html" with component_id="org-tree-filter" variant="dropdown" dropdown_label="Tất cả phòng ban" hidden_input_name="phongban_id" show_actions=False %}
+<div class="min-w-[160px]">
+    {% include "components/org_tree.html" with component_id="org-tree-filter" variant="dropdown" dropdown_label="Tất cả phòng ban" hidden_input_name="phongban_id" show_actions=False btn_class="w-full px-2.5 py-1 h-[26px] border border-slate-300 rounded-md text-left text-xs bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between hover:border-blue-400 transition-colors" text_class="text-slate-600 text-xs truncate" %}
 </div>
 
-<div id="filter-don-gia-trua-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
-    <span class="text-xs text-slate-500 mr-2 whitespace-nowrap">Đ.giá trưa</span>
-    <input type="number" id="filter-don-gia-trua" name="don_gia_an_trua"
-           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-20 p-0 h-full leading-none" min="0" step="1000">
-</div>
-
-<div id="filter-don-gia-dem-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
-    <span class="text-xs text-slate-500 mr-2 whitespace-nowrap">Đ.giá đêm</span>
-    <input type="number" id="filter-don-gia-dem" name="don_gia_an_dem"
-           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-20 p-0 h-full leading-none" min="0" step="1000">
-</div>
-
-<div id="filter-don-gia-cn-wrapper" class="flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 h-[26px] hover:border-blue-400 transition-colors">
-    <span class="text-xs text-slate-500 mr-2 whitespace-nowrap">Đ.giá CN</span>
-    <input type="number" id="filter-don-gia-cn" name="don_gia_an_chu_nhat"
-           class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs w-20 p-0 h-full leading-none" min="0" step="1000">
-</div>
