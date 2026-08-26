@@ -10,12 +10,18 @@ from django.urls import reverse
 from django.db.models.functions import Coalesce
 
 from apps.hrm_manager.__core__.models import (Bangluong, Phantuluong, Nhomphantuluong, Thietlapsolieucodinh, Phieuluong, Quytacchedoluong, Bangchamcong, 
-                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban, Lichlamviecthucte)
+                                              Lichsucongtac, Ctphieuluong, NhanvienChedoluong, Chedoluong, Kyluong, PhongbanChedoluong, Phongban, Lichlamviecthucte, Congviec)
 
 from json import loads, dumps
 from collections import defaultdict
 import logging
 from datetime import date, datetime, timedelta
+import unicodedata
+import openpyxl
+from io import BytesIO
+from urllib.parse import quote
+from apps.hrm_manager.to_chuc_nhan_su.views import get_all_child_department_ids
+from apps.hrm_manager.cham_cong.views import _parse_salary_config, _extract_salary_params
 from apps.hrm_manager.cham_cong.services import PayrollCalculator
 from apps.hrm_manager.utils.view_helpers import (
     get_list_context,
@@ -2150,7 +2156,6 @@ def api_ky_luong_detail(request, pk):
     ky_luong = get_object_or_json_error(Kyluong, pk, "Không tìm thấy kỳ lương")
     if not isinstance(ky_luong, Kyluong):
         return ky_luong
-    
     data = KyLuongService.format_period_display(ky_luong)
     
     # Thêm thông tin chi tiết cho form edit
@@ -2638,3 +2643,644 @@ def api_bang_luong_get_options(request):
         'current_month': month,
         'current_year': year,
     })
+
+# ============================================================================
+# BÁO CÁO TỔNG HỢP LƯƠNG
+# ============================================================================
+
+def _parse_json_field(raw, default=None):
+    """Parse an toàn trường dữ liệu JSON (str, list, dict). Trả về default nếu lỗi."""
+    if default is None:
+        default = []
+    if not raw:
+        return default
+    if isinstance(raw, (list, dict)):
+        return raw
+    if isinstance(raw, str):
+        try:
+            return loads(raw)
+        except (ValueError, TypeError):
+            return default
+    return default
+
+_STAT_KEYS = [
+    'suat_an_trua', 'tien_an_trua', 'suat_an_dem', 'tien_an_dem',
+    'suat_an_cn', 'tien_an_cn', 'tong_tien_cv', 'tong_gio',
+    'tong_ca', 'luong_thuc_linh'
+]
+
+
+def _extract_report_params(request):
+    """Trích xuất và chuẩn hóa tham số báo cáo từ request GET."""
+    thang_raw = request.GET.get('thang')
+    if not thang_raw:
+        return None
+    return {
+        'thang': int(thang_raw.split('-')[-1]),
+        'phongban_id': request.GET.get('phongban_id'),
+        'search': request.GET.get('search'),
+    }
+
+
+# --- Tiện ích định dạng Excel ---
+
+def _get_excel_styles():
+    """Hệ thống style chuẩn đồng bộ cho file Excel xuất ra."""
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    thin_side = Side(style='thin', color='B0B0B0')
+    return {
+        'header_font': Font(bold=True, size=11, color="1E293B"),
+        'bold_font': Font(bold=True, size=10),
+        'total_font': Font(bold=True, size=11, color="1E293B"),
+        'regular_font': Font(size=10),
+        'header_fill': PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid"),
+        'dept_fill': PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid"),
+        'pos_fill': PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid"),
+        'gt_fill': PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid"),
+        'thin_border': Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side),
+        'align_left': Alignment(horizontal='left', vertical='center'),
+        'align_right': Alignment(horizontal='right', vertical='center'),
+        'align_center': Alignment(horizontal='center', vertical='center'),
+        'align_wrap': Alignment(horizontal='left', vertical='center', wrap_text=True),
+    }
+
+
+def _style_header_row(ws, row, num_cols, styles):
+    """Định dạng hàng tiêu đề (header) của sheet."""
+    ws.row_dimensions[row].height = 26
+    for ci in range(1, num_cols + 1):
+        cell = ws.cell(row=row, column=ci)
+        cell.font = styles['header_font']
+        cell.fill = styles['header_fill']
+        cell.border = styles['thin_border']
+        cell.alignment = styles['align_center']
+
+
+def _style_data_row(ws, row, col_formats, styles, font_key='regular_font'):
+    """Định dạng hàng dữ liệu theo cấu hình cột: {col_idx: (align_key, number_format)}."""
+    for ci, (align_key, num_fmt) in col_formats.items():
+        cell = ws.cell(row=row, column=ci)
+        cell.font = styles[font_key]
+        cell.border = styles['thin_border']
+        cell.alignment = styles[align_key]
+        if num_fmt:
+            cell.number_format = num_fmt
+
+
+def _style_total_row(ws, row, num_cols, col_formats, styles):
+    """Định dạng hàng tổng cộng (grand total)."""
+    ws.row_dimensions[row].height = 26
+    for ci in range(1, num_cols + 1):
+        cell = ws.cell(row=row, column=ci)
+        cell.font = styles['total_font']
+        cell.fill = styles['gt_fill']
+        cell.border = styles['thin_border']
+    for ci, (align_key, num_fmt) in col_formats.items():
+        cell = ws.cell(row=row, column=ci)
+        cell.alignment = styles[align_key]
+        if num_fmt:
+            cell.number_format = num_fmt
+
+
+def _auto_fit_columns(ws, min_width=14, overrides=None):
+    """Tự động tính toán độ rộng các cột trong sheet."""
+    from openpyxl.utils import get_column_letter
+    for col in ws.columns:
+        max_len = max(len(str(c.value or '')) for c in col)
+        letter = get_column_letter(col[0].column)
+        ws.column_dimensions[letter].width = max(max_len + 4, min_width)
+    if overrides:
+        for letter, width in overrides.items():
+            ws.column_dimensions[letter].width = width
+
+
+# ============================================================================
+# BÁO CÁO TỔNG HỢP LƯƠNG - Logic chính
+# ============================================================================
+
+def _build_job_param_map():
+    """Xây dựng map {job_id: [{'ma', 'ten', 'donvi'}, ...]} từ Congviec.danhsachthamso."""
+    param_map = {}
+    try:
+        jobs = Congviec.objects.all().values('id', 'danhsachthamso')
+        for job in jobs:
+            params = _parse_json_field(job.get('danhsachthamso'), default=[])
+            if isinstance(params, list):
+                parsed = [
+                    {
+                        'ma': p.get('ma', ''), 
+                        'ten': p.get('ten', p.get('ma', '')),
+                        'donvi': str(p.get('donvi') or p.get('don_vi') or '').strip()
+                    }
+                    for p in params 
+                    if isinstance(p, dict) and p.get('ma')
+                ]
+                if parsed:
+                    param_map[job['id']] = parsed
+    except Exception as e:
+        logging.error(f"_build_job_param_map error: {e}")
+    return param_map
+
+
+def _build_tong_hop_luong_report(thang, phongban_id, search):
+    """Xây dựng dữ liệu báo cáo tổng hợp lương theo tháng."""
+    empty_result = {'tree_data': [], 'jobs': [], 'grand_totals': {}, 'no_payroll': False}
+
+    # 1. Lấy kỳ lương & các bảng lương hợp lệ
+    try:
+        ky_luong = Kyluong.objects.filter(thang=thang).first()
+        if not ky_luong:
+            return {**empty_result, 'no_payroll': True}
+
+        bang_luong_ids = list(
+            Bangluong.objects.filter(
+                kyluong=ky_luong, 
+                trangthai__in=['calculated', 'approved', 'paid']
+            ).values_list('id', flat=True)
+        )
+        if not bang_luong_ids:
+            return {**empty_result, 'no_payroll': True}
+    except Exception as e:
+        logging.error(f"_build_tong_hop_luong_report error getting Kyluong/Bangluong: {e}")
+        return empty_result
+
+    # 2. Truy vấn danh sách phiếu lương
+    phieu_qs = Phieuluong.objects.filter(bangluong_id__in=bang_luong_ids)
+    if phongban_id or search:
+        ls_qs = Lichsucongtac.objects.filter(trangthai='active')
+        if phongban_id:
+            dept_ids = get_all_child_department_ids(phongban_id, isnclude_root=True)
+            ls_qs = ls_qs.filter(phongban_id__in=dept_ids)
+        if search:
+            ls_qs = ls_qs.filter(
+                Q(nhanvien__manhanvien__icontains=search) | 
+                Q(nhanvien__hovaten__icontains=search)
+            )
+        phieu_qs = phieu_qs.filter(nhanvien_id__in=ls_qs.values_list('nhanvien_id', flat=True))
+
+    phieu_list = list(phieu_qs.select_related('nhanvien'))
+    if not phieu_list:
+        return empty_result
+
+    phieu_ids = [p.id for p in phieu_list]
+
+    # Lấy dữ liệu chi tiết phiếu lương cho các phần tử ăn uống
+    # Biến: SO_LUONG_AN, TIEN_AN, SO_LUONG_AN_DEM, TIEN_COM_DEM, SO_LUONG_AN_CN, TIEN_COM_CN
+    meal_keys = {'SO_LUONG_AN', 'TIEN_AN', 'SO_LUONG_AN_DEM', 'TIEN_COM_DEM', 'SO_LUONG_AN_CN', 'TIEN_COM_CN'}
+    meal_keys_query = list(meal_keys | {k.lower() for k in meal_keys})
+    
+    ct_phieu_data = Ctphieuluong.objects.filter(
+        phieuluong_id__in=phieu_ids,
+        maphantuluong__in=meal_keys_query
+    ).values('phieuluong_id', 'maphantuluong', 'giatritinhduoc')
+
+    meal_by_phieu = defaultdict(dict)
+    for ct in ct_phieu_data:
+        ma_pt = (ct.get('maphantuluong') or '').strip().upper()
+        if ma_pt in meal_keys:
+            meal_by_phieu[ct['phieuluong_id']][ma_pt] = _safe_float(ct.get('giatritinhduoc'), 0.0)
+
+    job_param_map = _build_job_param_map()
+    
+    emp_stats = {}
+    job_stats = {}
+    _IGNORE_PARAM_KEYS = frozenset({
+        'bieu_thuc', 'loaicv', 'details', 'mode',
+        'tencongviec', 'congviec_id', 'pay_role', 'thamsotinhluong'
+    })
+
+    # 3. Tính toán số liệu từng nhân viên và công việc
+    for phieu in phieu_list:
+        emp_id = phieu.nhanvien_id
+        phieu_meal = meal_by_phieu.get(phieu.id, {})
+        suat_an_trua = phieu_meal.get('SO_LUONG_AN', 0.0)
+        tien_an_trua = phieu_meal.get('TIEN_AN', 0.0)
+        suat_an_dem = phieu_meal.get('SO_LUONG_AN_DEM', 0.0)
+        tien_an_dem = phieu_meal.get('TIEN_COM_DEM', 0.0)
+        suat_an_cn = phieu_meal.get('SO_LUONG_AN_CN', 0.0)
+        tien_an_cn = phieu_meal.get('TIEN_COM_CN', 0.0)
+
+        tong_gio = tong_ca = tong_tien_cv = 0.0
+        
+        ngay_cham_cong_data = _parse_json_field(phieu.ngaychamcong, default=[])
+
+        for row in ngay_cham_cong_data:
+            if not row.get('codilam'):
+                continue
+                
+            tong_gio += _safe_float(row.get('thoigianlamviec', 0)) / 60.0
+            tong_ca += _safe_float(row.get('conglamviec', 0))
+            
+            ttl = _parse_json_field(row.get('thamsotinhluong'), default={})
+            details = ttl.get('details', []) if isinstance(ttl, dict) else []
+            if not details and row.get('congviec_id'):
+                details = [{
+                    'congviec_id': row['congviec_id'],
+                    'tencongviec': 'Công việc cũ',
+                    'thamsotinhluong': ttl if isinstance(ttl, dict) else {},
+                    'thanhtien': row.get('thanhtien', 0)
+                }]
+
+            for d in details:
+                job_id = d.get('congviec_id')
+                if not job_id:
+                    continue
+                    
+                tien_job = _safe_float(d.get('thanhtien', 0))
+                if job_id not in job_stats:
+                    try:
+                        lookup_id = int(job_id)
+                    except (TypeError, ValueError):
+                        lookup_id = job_id
+                    pdef = job_param_map.get(lookup_id, [])
+                    job_stats[job_id] = {
+                        'tencongviec': d.get('tencongviec', f'Job {job_id}'),
+                        'tong_tien': 0.0,
+                        'params_def': pdef,
+                        'params_totals': {p['ma']: 0.0 for p in pdef},
+                    }
+                    
+                job_stats[job_id]['tong_tien'] += tien_job
+                tong_tien_cv += tien_job
+                
+                params = _extract_salary_params(d.get('thamsotinhluong'))
+                js = job_stats[job_id]
+                if not js['params_def'] and params:
+                    discovered = [
+                        {'ma': k, 'ten': k, 'donvi': ''}
+                        for k in params
+                        if k not in _IGNORE_PARAM_KEYS
+                    ]
+                    if discovered:
+                        js['params_def'] = discovered
+                        js['params_totals'] = {p['ma']: 0.0 for p in discovered}
+                
+                for pk in js['params_totals']:
+                    if "don_gia" in pk:
+                        js['params_totals'][pk] = _safe_float(params.get(pk, 0))
+                    else:
+                        js['params_totals'][pk] += _safe_float(params.get(pk, 0))
+
+        if emp_id not in emp_stats:
+            emp_stats[emp_id] = {
+                'suat_an_trua': 0.0,
+                'tien_an_trua': 0.0,
+                'suat_an_dem': 0.0,
+                'tien_an_dem': 0.0,
+                'suat_an_cn': 0.0,
+                'tien_an_cn': 0.0,
+                'tong_gio': 0.0, 
+                'tong_ca': 0.0,
+                'tong_tien_cv': 0.0,
+                'luong_thuc_linh': 0.0,
+                'ma_nv': phieu.nhanvien.manhanvien if phieu.nhanvien else '',
+                'ten_nv': phieu.tennhanvien or '',
+                'ten_phongban': phieu.tenphongban or 'Chưa sắp xếp',
+                'ten_chucvu': phieu.tenchucvu or 'Chưa có chức vụ',
+            }
+
+        emp_stats[emp_id]['suat_an_trua'] += suat_an_trua
+        emp_stats[emp_id]['tien_an_trua'] += tien_an_trua
+        emp_stats[emp_id]['suat_an_dem'] += suat_an_dem
+        emp_stats[emp_id]['tien_an_dem'] += tien_an_dem
+        emp_stats[emp_id]['suat_an_cn'] += suat_an_cn
+        emp_stats[emp_id]['tien_an_cn'] += tien_an_cn
+        emp_stats[emp_id]['tong_gio'] += tong_gio
+        emp_stats[emp_id]['tong_ca'] += tong_ca
+        emp_stats[emp_id]['tong_tien_cv'] += tong_tien_cv
+        emp_stats[emp_id]['luong_thuc_linh'] += _safe_float(phieu.luongthuclinh, 0.0)
+
+    # 4. Gom nhóm dữ liệu theo Phòng ban -> Chức vụ -> Nhân viên
+    dept_map = {}
+    dept_counter = pos_counter = 1
+    grand_totals = {k: 0 for k in _STAT_KEYS}
+    
+    for emp_id, st in emp_stats.items():
+        if all(st.get(k, 0) == 0 for k in ('suat_an_trua', 'tien_an_trua', 'suat_an_dem', 'tien_an_dem', 'suat_an_cn', 'tien_an_cn', 
+                                             'tong_gio', 'tong_tien_cv', 'luong_thuc_linh', 'tong_ca')):
+            continue
+            
+        ten_phongban, ten_chucvu = st['ten_phongban'], st['ten_chucvu']
+        if ten_phongban not in dept_map:
+            dept_map[ten_phongban] = {
+                'id': f"dept_{dept_counter}",
+                'label': ten_phongban,
+                'type': 'department',
+                'data': {k: 0 for k in _STAT_KEYS},
+                'children_map': {}
+            }
+            dept_counter += 1
+            
+        dept = dept_map[ten_phongban]
+        if ten_chucvu not in dept['children_map']:
+            dept['children_map'][ten_chucvu] = {
+                'id': f"pos_{pos_counter}",
+                'label': ten_chucvu,
+                'type': 'position',
+                'data': {k: 0 for k in _STAT_KEYS},
+                'children': []
+            }
+            pos_counter += 1
+            
+        pos = dept['children_map'][ten_chucvu]
+        
+        emp_row = {
+            'ma_nv': st['ma_nv'],
+            'ten_nv': st['ten_nv'],
+            'suat_an_trua': st['suat_an_trua'],
+            'tien_an_trua': st['tien_an_trua'],
+            'suat_an_dem': st['suat_an_dem'],
+            'tien_an_dem': st['tien_an_dem'],
+            'suat_an_cn': st['suat_an_cn'],
+            'tien_an_cn': st['tien_an_cn'],
+            'tong_tien_cv': st['tong_tien_cv'],
+            'tong_gio': st['tong_gio'],
+            'tong_ca': st['tong_ca'],
+            'luong_thuc_linh': st['luong_thuc_linh']
+        }
+        
+        pos['children'].append({
+            'id': f"emp_{emp_id}",
+            'label': st['ten_nv'],
+            'type': 'employee',
+            'data': emp_row
+        })
+        
+        for k in pos['data']:
+            pos['data'][k] += emp_row[k]
+            dept['data'][k] += emp_row[k]
+            grand_totals[k] += emp_row[k]
+
+    # 5. Sắp xếp cấu trúc cây và danh sách công việc
+    tree_data = []
+    for dept_name in sorted(dept_map):
+        dept = dept_map[dept_name]
+        pos_list = []
+        for pos_name in sorted(dept['children_map']):
+            pos = dept['children_map'][pos_name]
+            pos['children'].sort(key=lambda x: x['data']['ten_nv'])
+            pos_list.append(pos)
+        dept['children'] = pos_list
+        del dept['children_map']
+        tree_data.append(dept)
+        
+    return {
+        'tree_data': tree_data,
+        'jobs': sorted(job_stats.values(), key=lambda x: x['tencongviec']),
+        'grand_totals': grand_totals,
+        'no_payroll': False
+    }
+
+
+@login_required
+def view_bao_cao_tong_hop_luong(request):
+    context = {
+        'breadcrumbs': [
+            {'title': 'Quản lý lương', 'url': '#'},
+            {'title': 'Báo cáo', 'url': None},
+        ],
+        'tabs': [
+            {'label': 'Theo phòng ban, chức vụ', 'url': '#tab-dept-position', 'url_name': 'tab_dept_position'},
+            {'label': 'Theo công việc', 'url': '#tab-job', 'url_name': 'tab_job'},
+        ],
+        'page_title': 'Tổng hợp lương',
+        'active_menu_url': reverse('hrm:quan_ly_luong:bao_cao')
+    }
+    return render(request, 'hrm_manager/quan_ly_luong/bao_cao_tong_hop_luong.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_bao_cao_tong_hop_luong(request):
+    params = _extract_report_params(request)
+    if not params:
+        return json_error("Vui lòng chọn tháng")
+    
+    data = _build_tong_hop_luong_report(
+        params['thang'], params['phongban_id'], params['search']
+    )
+    return json_success("Lấy dữ liệu thành công", data=data)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_bao_cao_tong_hop_luong_export(request):
+    params = _extract_report_params(request)
+    if not params:
+        return json_error("Vui lòng chọn tháng")
+    
+    thang = params['thang']
+    data = _build_tong_hop_luong_report(
+        thang, params['phongban_id'], params['search']
+    )
+    
+    wb = openpyxl.Workbook()
+    styles = _get_excel_styles()
+    gt = data.get('grand_totals', {})
+
+    # =========================================================================
+    # --- Sheet 1: Tổng hợp Phòng ban ---
+    # =========================================================================
+    ws1 = wb.active
+    ws1.title = "Tổng hợp Phòng ban"
+    headers_dept = ["Phòng ban", "Suất ăn trưa", "Tiền ăn trưa", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
+    ws1.append(headers_dept)
+    _style_header_row(ws1, 1, len(headers_dept), styles)
+    
+    # Cấu hình format cột cho Sheet 1
+    col_fmts_dept = {
+        1: ('align_left', None),
+        2: ('align_right', '#,##0'),
+        3: ('align_right', '#,##0'),
+        4: ('align_right', '#,##0'),
+        5: ('align_right', '#,##0'),
+        6: ('align_right', '#,##0'),
+        7: ('align_right', '#,##0'),
+        8: ('align_right', '#,##0.00'),
+        9: ('align_right', '#,##0.00'),
+        10: ('align_right', '#,##0')
+    }
+        
+    for dept in data.get('tree_data', []):
+        sub_dept = dept['data']
+        ws1.append([
+            dept['label'], 
+            sub_dept['suat_an_trua'], sub_dept['tien_an_trua'],
+            sub_dept['suat_an_dem'], sub_dept['tien_an_dem'], 
+            sub_dept['suat_an_cn'], sub_dept['tien_an_cn'], 
+            round(sub_dept['tong_gio'], 2), round(sub_dept['tong_ca'], 2), 
+            sub_dept['luong_thuc_linh']
+        ])
+        curr_row = ws1.max_row
+        ws1.row_dimensions[curr_row].height = 22
+        _style_data_row(ws1, curr_row, col_fmts_dept, styles)
+        
+    if gt:
+        ws1.append([
+            'TỔNG CỘNG', 
+            gt.get('suat_an_trua', 0), gt.get('tien_an_trua', 0),
+            gt.get('suat_an_dem', 0), gt.get('tien_an_dem', 0), 
+            gt.get('suat_an_cn', 0), gt.get('tien_an_cn', 0), 
+            round(gt.get('tong_gio', 0), 2), round(gt.get('tong_ca', 0), 2), 
+            gt.get('luong_thuc_linh', 0)
+        ])
+        _style_total_row(ws1, ws1.max_row, len(headers_dept), col_fmts_dept, styles)
+
+    _auto_fit_columns(ws1, min_width=14, overrides={'A': 30})
+
+    # =========================================================================
+    # --- Sheet 2: Chi tiết chức vụ & NV ---
+    # =========================================================================
+    ws2 = wb.create_sheet(title="Chi tiết chức vụ & NV")
+    headers_detail = ["Mã NV", "Nhân viên", "Phòng ban", "Chức vụ", "Suất ăn trưa", "Tiền ăn trưa", "Suất ăn đêm", "Tiền ăn đêm", "Suất ăn CN", "Tiền ăn CN", "Tổng giờ", "Tổng ca", "Lương thực lĩnh"]
+    ws2.append(headers_detail)
+    _style_header_row(ws2, 1, len(headers_detail), styles)
+    
+    # Cấu hình format cột cho dòng nhân viên Sheet 2
+    col_fmts_emp = {
+        1: ('align_center', None),
+        2: ('align_left', None),
+        3: ('align_left', None),
+        4: ('align_left', None),
+        5: ('align_right', '#,##0'),
+        6: ('align_right', '#,##0'),
+        7: ('align_right', '#,##0'),
+        8: ('align_right', '#,##0'),
+        9: ('align_right', '#,##0'),
+        10: ('align_right', '#,##0'),
+        11: ('align_right', '#,##0.00'),
+        12: ('align_right', '#,##0.00'),
+        13: ('align_right', '#,##0')
+    }
+        
+    for dept in data.get('tree_data', []):
+        for pos in dept.get('children', []):
+            if ws2.max_row > 1:
+                ws2.append([])
+                
+            # Header Chức vụ kết hợp Phòng ban
+            ws2.append(['', f"Nhóm: {pos['label']} ({dept['label']})", '', '', '', '', '', '', '', '', '', '', ''])
+            header_grp_row = ws2.max_row
+            ws2.row_dimensions[header_grp_row].height = 24
+            for col_idx in range(1, len(headers_detail) + 1):
+                cell = ws2.cell(row=header_grp_row, column=col_idx)
+                cell.font = styles['bold_font']
+                cell.fill = styles['dept_fill']
+                cell.border = styles['thin_border']
+            
+            for nv in pos.get('children', []):
+                emp = nv['data']
+                ws2.append([
+                    emp['ma_nv'], emp['ten_nv'], dept['label'], pos['label'],
+                    emp['suat_an_trua'], emp['tien_an_trua'],
+                    emp['suat_an_dem'], emp['tien_an_dem'],
+                    emp['suat_an_cn'], emp['tien_an_cn'],
+                    round(emp['tong_gio'], 2), round(emp['tong_ca'], 2), 
+                    emp['luong_thuc_linh']
+                ])
+                emp_row = ws2.max_row
+                ws2.row_dimensions[emp_row].height = 20
+                _style_data_row(ws2, emp_row, col_fmts_emp, styles)
+                
+            # Subtotal Chức vụ
+            sub = pos['data']
+            ws2.append(['', f"Tổng cộng: {pos['label']}", '', '', sub['suat_an_trua'], sub['tien_an_trua'], sub['suat_an_dem'], sub['tien_an_dem'], sub['suat_an_cn'], sub['tien_an_cn'], round(sub['tong_gio'], 2), round(sub['tong_ca'], 2), sub['luong_thuc_linh']])
+            sub_row = ws2.max_row
+            ws2.row_dimensions[sub_row].height = 22
+            for col_idx in range(1, len(headers_detail) + 1):
+                cell = ws2.cell(row=sub_row, column=col_idx)
+                cell.font = styles['bold_font']
+                cell.fill = styles['pos_fill']
+                cell.border = styles['thin_border']
+                if col_idx in (5, 6, 7, 8, 9, 10, 13):
+                    cell.number_format = '#,##0'
+                    cell.alignment = styles['align_right']
+                elif col_idx in (11, 12):
+                    cell.number_format = '#,##0.00'
+                    cell.alignment = styles['align_right']
+            
+    if gt:
+        ws2.append(['', 'TỔNG CỘNG TOÀN BỘ', '', '', gt.get('suat_an_trua', 0), gt.get('tien_an_trua', 0), gt.get('suat_an_dem', 0), gt.get('tien_an_dem', 0), gt.get('suat_an_cn', 0), gt.get('tien_an_cn', 0), round(gt.get('tong_gio', 0), 2), round(gt.get('tong_ca', 0), 2), gt.get('luong_thuc_linh', 0)])
+        _style_total_row(ws2, ws2.max_row, len(headers_detail), {
+            ci: ('align_right', '#,##0' if ci not in (11, 12) else '#,##0.00')
+            for ci in range(5, 14)
+        }, styles)
+
+    _auto_fit_columns(ws2, min_width=14)
+
+    # =========================================================================
+    # --- Sheet 3: Tổng hợp Công việc ---
+    # =========================================================================
+    ws3 = wb.create_sheet(title="Tổng hợp Công việc")
+    headers_job = ["Tên công việc", "Tổng tiền", "Tham số tổng hợp"]
+    ws3.append(headers_job)
+    _style_header_row(ws3, 1, len(headers_job), styles)
+    
+    col_fmts_job = {
+        1: ('align_left', None),
+        2: ('align_right', '#,##0'),
+        3: ('align_wrap', None)
+    }
+
+    for idx, job in enumerate(data.get('jobs', [])):
+        params_def = job.get('params_def', [])
+        params_totals = job.get('params_totals', {})
+        
+        # Ghép chuỗi tham số: "Tên: Giá trị Đơn_vị  |  Tên: Giá trị Đơn_vị"
+        if params_def:
+            param_parts = []
+            for p in params_def:
+                p_name = p.get('ten', p.get('ma', ''))
+                p_val = params_totals.get(p['ma'], 0)
+                p_donvi = (p.get('donvi') or '').strip()
+                if isinstance(p_val, float):
+                    p_val = round(p_val, 2)
+                val_str = f"{p_val:,}" if isinstance(p_val, (int, float)) else f"{p_val}"
+                param_parts.append(f"{p_name}: {val_str} {p_donvi}".strip())
+            param_text = "  |  ".join(param_parts)
+        else:
+            param_text = "(Không có tham số)"
+        
+        ws3.append([job['tencongviec'], job['tong_tien'], param_text])
+        data_row = ws3.max_row
+        ws3.row_dimensions[data_row].height = 24
+        
+        c1 = ws3.cell(row=data_row, column=1)
+        c1.font = styles['bold_font']
+        c1.alignment = styles['align_left']
+        c1.border = styles['thin_border']
+        
+        c2 = ws3.cell(row=data_row, column=2)
+        c2.font = styles['bold_font']
+        c2.number_format = '#,##0'
+        c2.alignment = styles['align_right']
+        c2.border = styles['thin_border']
+        
+        c3 = ws3.cell(row=data_row, column=3)
+        c3.font = styles['regular_font']
+        c3.alignment = styles['align_wrap']
+        c3.border = styles['thin_border']
+    
+    if gt:
+        ws3.append(['TỔNG CỘNG', gt.get('tong_tien_cv', 0), ''])
+        gt_row_3 = ws3.max_row
+        _style_total_row(ws3, gt_row_3, len(headers_job), {
+            1: ('align_left', None),
+            2: ('align_right', '#,##0')
+        }, styles)
+    
+    # Cài đặt độ rộng cố định cho Sheet 3
+    _auto_fit_columns(ws3, min_width=14, overrides={'A': 32, 'B': 22, 'C': 60})
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    from django.http import HttpResponse
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    encoded_filename = quote(f"TongHopLuong_{thang}.xlsx")
+    response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
+    return response

@@ -408,7 +408,7 @@ class PayrollDetailManager {
         // 3. Chuẩn bị dữ liệu Sheet Chi tiết phần tử lương (Sheet 3)
         const salaryDetailSheetData = [];
         salaryDetailSheetData.push([
-            'Mã NV', 'Họ tên', 'ID phần tử', 'Tên phần tử', 'Mã phần tử', 'Loại', 'Giá trị', 'Công thức'
+            'Mã NV', 'Họ tên', 'Tên phần tử', 'Mã phần tử', 'Giá trị', 'Công thức'
         ]);
 
         employees.forEach(emp => {
@@ -421,16 +421,13 @@ class PayrollDetailManager {
                 const detailMeta = salaryMeta?.[colId] || {};
                 const itemCode = detailMeta.code || meta?.code || '';
                 const itemName = meta?.name || `Phần tử ${colId}`;
-                const itemType = detailMeta.type || meta?.type || '';
                 const formula = detailMeta.formula || '';
 
                 salaryDetailSheetData.push([
                     emp.manhanvien || '',
                     emp.hovaten || '',
-                    Number(colId),
                     itemName,
                     itemCode,
-                    itemType,
                     Number(val || 0),
                     formula
                 ]);
@@ -460,8 +457,8 @@ class PayrollDetailManager {
         // Add Sheet 3: Chi tiết phần tử lương
         const wsSalaryDetail = XLSX.utils.aoa_to_sheet(salaryDetailSheetData);
         wsSalaryDetail['!cols'] = [
-            { wch: 10 }, { wch: 25 }, { wch: 12 }, { wch: 24 }, { wch: 16 },
-            { wch: 12 }, { wch: 14 }, { wch: 45 }
+            { wch: 10 }, { wch: 25 }, { wch: 24 }, { wch: 16 },
+            { wch: 14 }, { wch: 45 }
         ];
         XLSX.utils.book_append_sheet(wb, wsSalaryDetail, "Chi tiết thành phần lương");
 

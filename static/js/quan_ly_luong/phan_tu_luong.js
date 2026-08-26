@@ -130,6 +130,19 @@ class SalaryInfoManager {
         this.initExcelTable();
         this.initColumnSelector();
         this.initFormSubmission();
+        this.initLocalSearch();
+    }
+
+    initLocalSearch() {
+        const searchInput = document.getElementById('salary-info-search-input');
+        if (searchInput) {
+            this.eventManager.add(searchInput, 'input', AppUtils.Helper.debounce((e) => {
+                if (this.excelManager) {
+                    const keyword = e.target.value;
+                    this.excelManager.filterLocal(keyword, ['hovaten', 'manhanvien', 'cong_tac.phong_ban']);
+                }
+            }, 300));
+        }
     }
 
     initExcelTable() {

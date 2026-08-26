@@ -35,8 +35,8 @@ Props (via Django template `with`):
     {# Dropdown trigger button #}
     <button type="button"
             data-org-tree-dropdown-btn
-            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-left text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between">
-        <span data-org-tree-selected-text class="text-slate-500 text-sm truncate">{{ dropdown_label }}</span>
+            class="{{ btn_class|default:'w-full px-3 py-2 border border-slate-300 rounded-lg text-left text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between' }}">
+        <span data-org-tree-selected-text class="{{ text_class|default:'text-slate-500 text-sm truncate' }}">{{ dropdown_label }}</span>
         <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform" data-org-tree-dropdown-icon></i>
     </button>
 

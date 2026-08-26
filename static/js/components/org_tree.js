@@ -155,9 +155,13 @@ class OrgTreeComponent {
         if (this.config.variant === 'dropdown') {
             if (this.els.dropdownSelectedText) {
                 this.els.dropdownSelectedText.textContent = name || '-- Chọn --';
-                this.els.dropdownSelectedText.className = id
-                    ? 'text-slate-900 text-sm truncate'
-                    : 'text-slate-500 text-sm truncate';
+                if (id) {
+                    this.els.dropdownSelectedText.classList.remove('text-slate-500', 'text-slate-600');
+                    this.els.dropdownSelectedText.classList.add('text-slate-900', 'font-medium');
+                } else {
+                    this.els.dropdownSelectedText.classList.remove('text-slate-900', 'font-medium');
+                    this.els.dropdownSelectedText.classList.add('text-slate-500');
+                }
             }
             if (this.els.hiddenInput) {
                 this.els.hiddenInput.value = id || '';

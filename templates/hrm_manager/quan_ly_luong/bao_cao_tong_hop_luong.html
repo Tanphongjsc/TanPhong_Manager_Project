@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - FlexiPay{% endblock title %}
+
+{% block content %}
+<div class="flex flex-col h-full space-y-4">
+    
+    {% include "components/breadcrumb.html" with breadcrumb_items=breadcrumbs %}
+
+    <div class="bg-white shadow-sm p-1 sm:p-2 h-full flex flex-col rounded-lg relative overflow-hidden">
+        
+        <div id="tab-container" class="[&>div]:!mb-0">
+            {% include "components/tab_nav.html" with tabs=tabs %}
+        </div>
+
+        {% include "components/toolbar.html" with search_id="search-input" search_placeholder="Tìm tên hoặc mã NV..." filter_form_id="filter-form" filter_template="hrm_manager/quan_ly_luong/partials/bao_cao_tong_hop_luong_filter.html" extra_actions_template="hrm_manager/quan_ly_luong/partials/bao_cao_tong_hop_luong_extra_actions.html" disable_add_button=True show_add_btn=False %}
+
+        <div class="flex-1 relative overflow-hidden">
+
+
+    <!-- Tab 1: Theo phòng ban, chức vụ -->
+    <div id="tab-dept-position" class="tab-pane h-full flex flex-col">
+        {% include "components/tree_table.html" with table_id="dept-tree-table" headers_html=' <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 min-w-[250px]">Nhân viên / Phòng ban</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-center">Mã NV</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Suất ăn trưa</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tiền ăn trưa</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Suất ăn đêm</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tiền ăn đêm</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Suất ăn CN</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tiền ăn CN</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng giờ</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right">Tổng ca</th> <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right min-w-[140px]">Lương thực lĩnh</th> ' %}
+    </div>
+
+    <!-- Tab 2: Theo công việc -->
+    <div id="tab-job" class="tab-pane hidden h-full flex flex-col">
+        <div class="flex-1 w-full bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col mb-2">
+            <div class="flex-1 overflow-auto custom-scrollbar">
+                <table class="w-full text-left" id="job-summary-table">
+                    <thead class="bg-slate-50 text-slate-700 font-semibold text-xs sticky top-0 z-10 shadow-sm border-b border-slate-200">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 min-w-[220px] w-[30%]">Tên công việc</th>
+                            <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-right min-w-[160px] w-[20%]">Tổng tiền</th>
+                            <th scope="col" class="px-4 py-3 font-semibold bg-gray-50 text-left">Tham số tổng hợp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="job-table-body" class="divide-y divide-slate-100 text-xs text-gray-700">
+                        <!-- Dữ liệu render bằng JS -->
+                    </tbody>
+                    <tfoot id="job-table-footer" class="bg-blue-50 text-blue-900 font-bold sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] text-xs">
+                        <!-- Footer render bằng JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/components/org_tree.js' %}"></script>
+<script src="{% static 'js/components/tree_table.js' %}"></script>
+<script src="{% static 'js/quan_ly_luong/bao_cao_tong_hop_luong.js' %}"></script>
+{% endblock scripts %}
