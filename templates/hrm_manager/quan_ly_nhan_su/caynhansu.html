@@ -33,7 +33,57 @@
     <div class="org-layout relative">
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden transition-opacity"></div>
 
-        {% include "components/org_tree.html" with component_id="employee-org-tree" variant="sidebar" show_actions=True show_all=True title="Cấu trúc tổ chức" overlay_id="sidebar-overlay" %}
+        <aside class="org-tree-component org-tree-sidebar bg-white shadow-sm border border-slate-200 rounded-lg flex flex-col h-full overflow-hidden"
+               data-component-id="employee-org-tree"
+               data-variant="sidebar"
+               data-overlay-id="sidebar-overlay">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-slate-800">Cấu trúc tổ chức</h3>
+                <div class="flex items-center gap-2">
+                    <button data-org-tree-add-company type="button" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md flex items-center gap-1 transition-colors">
+                        <i class="fas fa-plus"></i> <span class="hidden sm:inline">Công ty</span>
+                    </button>
+                    <button data-org-tree-close type="button" class="lg:hidden w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-full">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-3 border-b border-slate-50 relative">
+                <i class="fas fa-search absolute left-6 top-5 text-slate-400 text-xs"></i>
+                <input type="text" data-org-tree-search
+                       class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Tìm bộ phận...">
+            </div>
+
+            <div class="flex-1 custom-scroll p-2 overflow-y-auto">
+                <div data-org-tree-view-all class="flex items-center gap-3 p-2.5 rounded-md cursor-pointer bg-blue-50 text-blue-700 font-medium mb-2 hover:bg-blue-100 border border-blue-100 transition-colors">
+                    <i class="fas fa-users"></i>
+                    <span class="flex-1 text-sm">Tất cả nhân viên</span>
+                </div>
+                <ul data-org-tree-root class="space-y-1"></ul>
+            </div>
+
+            <template data-org-tree-node-template>
+                <li class="pl-2.5 border-l border-slate-200/60 ml-1.5">
+                    <div class="org-tree-item group flex items-center justify-between p-1.5 rounded-md cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all mb-0.5">
+                        <div class="flex items-center gap-1.5 overflow-hidden min-w-0">
+                            <button class="org-tree-toggle invisible w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded text-slate-400 transition-transform" type="button">
+                                <i class="fas fa-chevron-right text-[10px]"></i>
+                            </button>
+                            <i class="org-tree-icon text-sm flex-shrink-0"></i>
+                            <span class="org-tree-name text-sm text-slate-700 truncate select-none"></span>
+                        </div>
+                        <div class="org-tree-actions hidden group-hover:flex items-center bg-white rounded shadow-sm border border-slate-100 ml-2">
+                            <button type="button" class="org-tree-action-btn org-tree-btn-add-sub p-1 rounded hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition-colors" title="Thêm cấp con"><i class="fas fa-plus text-xs"></i></button>
+                            <button type="button" class="org-tree-action-btn org-tree-btn-edit p-1 rounded hover:bg-slate-50 text-blue-600 hover:text-blue-900 transition-colors" title="Sửa"><i class="fas fa-pen text-xs"></i></button>
+                            <button type="button" class="org-tree-action-btn org-tree-btn-delete p-1 rounded hover:bg-slate-50 text-red-600 hover:text-red-900 transition-colors" title="Xóa"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                    <ul class="org-tree-children hidden"></ul>
+                </li>
+            </template>
+        </aside>
 
         <main class="bg-white shadow-sm border border-slate-200 rounded-lg flex flex-col h-full overflow-hidden">
             <div class="shrink-0 px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
@@ -116,6 +166,6 @@
 {% endblock content %}
 
 {% block scripts %}
-<script src="{% static 'js/components/org_tree.js' %}"></script>
+<script src="{% static 'js/components/organization_tree.js' %}"></script>
 <script src="{% static 'js/quan_ly_nhan_su/cay_nhan_su.js' %}"></script>
 {% endblock scripts %}

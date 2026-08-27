@@ -4,7 +4,20 @@
            class="bg-transparent border-none text-slate-700 font-medium focus:outline-none text-xs cursor-pointer p-0 h-full leading-none" required>
 </div>
 
-<div class="min-w-[160px]">
-    {% include "components/org_tree.html" with component_id="org-tree-filter" variant="dropdown" dropdown_label="Tất cả phòng ban" hidden_input_name="phongban_id" show_actions=False btn_class="w-full px-2.5 py-1 h-[26px] border border-slate-300 rounded-md text-left text-xs bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between hover:border-blue-400 transition-colors" text_class="text-slate-600 text-xs truncate" %}
+<div id="salary-dept-wrapper" class="relative min-w-[170px] max-w-[220px]">
+    <input type="hidden" id="salary-filter-phongban" name="phongban_id" value="">
+
+    <button type="button" id="salary-dept-button"
+            class="w-full px-2.5 py-1 h-[26px] border border-slate-300 rounded-md text-left text-xs bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between hover:border-blue-400 transition-colors cursor-pointer">
+        <span id="salary-dept-text" class="text-slate-600 text-xs truncate">Tất cả phòng ban</span>
+        <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+    </button>
+
+    <div id="salary-dept-dropdown"
+         class="hidden absolute top-full right-0 mt-1 w-[320px] max-h-80 overflow-y-auto custom-scrollbar bg-white border border-slate-200 rounded-lg shadow-xl p-2 z-40">
+        <div id="salary-dept-tree" class="space-y-0.5">
+            <div class="text-xs text-slate-400 p-2">Đang tải bộ phận...</div>
+        </div>
+    </div>
 </div>
 

@@ -1,4 +1,270 @@
-// --- 1. QUẢN LÝ CÂY TỔ CHỨC (Wrapper over OrgTreeComponent) ---
+// Cây tổ chức riêng của màn Cây nhân sự.
+// Phần render này dùng trực tiếp markup trong caynhansu.html,
+// trong khi OrganizationTreeComponent tiếp tục phục vụ các picker dùng chung.
+class EmployeeOrgSidebarTree {
+    constructor(config = {}) {
+        this.config = {
+            componentId: config.componentId || 'employee-org-tree',
+            apiUrl: config.apiUrl || '/hrm/to-chuc-nhan-su/api/v1/phong-ban/tree/',
+            onSelect: config.onSelect || null,
+            onViewAll: config.onViewAll || null,
+            actions: config.actions || {}
+        };
+
+        this.root = document.querySelector(`[data-component-id="${this.config.componentId}"]`);
+        this.els = this.root ? {
+            treeRoot: this.root.querySelector('[data-org-tree-root]'),
+            template: this.root.querySelector('[data-org-tree-node-template]'),
+            viewAll: this.root.querySelector('[data-org-tree-view-all]'),
+            search: this.root.querySelector('[data-org-tree-search]'),
+            addCompanyBtn: this.root.querySelector('[data-org-tree-add-company]'),
+            closeBtn: this.root.querySelector('[data-org-tree-close]'),
+            overlay: document.getElementById(this.root.dataset.overlayId)
+        } : {};
+        this.eventManager = AppUtils.EventManager.create();
+        this.nodeMeta = new WeakMap();
+        this.loadVersion = 0;
+    }
+
+    init() {
+        if (!this.root || !this.els.treeRoot || !this.els.template) return;
+        this._initEvents();
+        this.refresh();
+    }
+
+    destroy() {
+        this.loadVersion += 1;
+        this.eventManager?.removeAll();
+        if (this.els.treeRoot) this.els.treeRoot.innerHTML = '';
+    }
+
+    async refresh() {
+        if (!this.els.treeRoot) return [];
+        const version = ++this.loadVersion;
+        this.els.treeRoot.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+        try {
+            const data = await OrganizationTreeDataSource.load(this.config.apiUrl);
+            if (version !== this.loadVersion) return data;
+            this._renderTree(data);
+            return data;
+        } catch (error) {
+            if (version !== this.loadVersion) return [];
+            this.els.treeRoot.innerHTML = '<div class="text-center py-4 text-red-400 text-xs">Lỗi tải dữ liệu</div>';
+            AppUtils.Notify.error('Không thể tải cây tổ chức');
+            return [];
+        }
+    }
+
+    togglePanel(show) {
+        if (!this.root) return;
+        this.root.classList.toggle('open', Boolean(show));
+        this.els.overlay?.classList.toggle('hidden', !show);
+    }
+
+    _renderTree(data) {
+        this.els.treeRoot.innerHTML = '';
+        this.nodeMeta = new WeakMap();
+        const { nodes } = OrganizationTreeComponent.normalize(data);
+        if (nodes.length === 0) {
+            this.els.treeRoot.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Chưa có dữ liệu</div>';
+            return;
+        }
+        this._buildNodes(nodes, this.els.treeRoot);
+    }
+
+    _buildNodes(items, container) {
+        items.forEach((node) => {
+            const clone = this.els.template.content.cloneNode(true);
+            const li = clone.querySelector('li');
+            const row = clone.querySelector('.org-tree-item');
+            const childrenList = clone.querySelector('.org-tree-children');
+            if (!li || !row || !childrenList) return;
+
+            const item = node.raw;
+            const isCompany = node.type === 'company';
+            const name = node.name;
+            const companyId = isCompany
+                ? node.id
+                : (item.congty_id || item.company_id || item.congty?.id);
+
+            row.dataset.id = node.id;
+            row.dataset.companyId = companyId || '';
+            this.nodeMeta.set(row, { item, name, isCompany, companyId });
+
+            const nameElement = clone.querySelector('.org-tree-name');
+            const iconElement = clone.querySelector('.org-tree-icon');
+            if (nameElement) nameElement.textContent = name || '';
+            if (iconElement) {
+                iconElement.className = `org-tree-icon fas ${isCompany ? 'fa-building text-blue-600' : 'fa-folder text-yellow-500'}`;
+            }
+
+            const actionsElement = row.querySelector('.org-tree-actions');
+            if (actionsElement && window.innerWidth < 1024) {
+                actionsElement.classList.replace('hidden', 'flex');
+                actionsElement.classList.add('lg:hidden', 'lg:group-hover:flex');
+            }
+
+            const children = node.children;
+            if (children.length > 0) {
+                clone.querySelector('.org-tree-toggle')?.classList.remove('invisible');
+                this._buildNodes(children, childrenList);
+            }
+            container.appendChild(li);
+        });
+    }
+
+    _initEvents() {
+        this.eventManager.add(
+            this.els.treeRoot,
+            'click',
+            (event) => this._handleTreeClick(event)
+        );
+        if (this.els.viewAll) {
+            this.eventManager.add(this.els.viewAll, 'click', () => this._selectAll());
+        }
+        if (this.els.search) {
+            this.eventManager.add(
+                this.els.search,
+                'input',
+                AppUtils.Helper.debounce(
+                    (event) => this._filterTree(event.target.value),
+                    300
+                )
+            );
+        }
+        if (this.els.addCompanyBtn) {
+            this.eventManager.add(this.els.addCompanyBtn, 'click', () => {
+                this.config.actions.onAddCompany?.();
+            });
+        }
+        this.eventManager.addMultiple(
+            [this.els.closeBtn, this.els.overlay].filter(Boolean),
+            'click',
+            () => this.togglePanel(false)
+        );
+    }
+
+    _handleTreeClick(event) {
+        const toggle = event.target.closest('.org-tree-toggle');
+        if (toggle && this.els.treeRoot.contains(toggle)) {
+            event.preventDefault();
+            event.stopPropagation();
+            const li = toggle.closest('li');
+            const childrenList = li?.querySelector(':scope > .org-tree-children');
+            if (!childrenList) return;
+            childrenList.classList.toggle('hidden');
+            toggle.classList.toggle(
+                'is-open',
+                !childrenList.classList.contains('hidden')
+            );
+            return;
+        }
+
+        const row = event.target.closest('.org-tree-item');
+        if (!row || !this.els.treeRoot.contains(row)) return;
+        const meta = this.nodeMeta.get(row);
+        if (!meta) return;
+
+        const actionButton = event.target.closest('.org-tree-action-btn');
+        if (actionButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            this._runNodeAction(actionButton, meta);
+            return;
+        }
+        this._selectNode(row, meta);
+    }
+
+    _runNodeAction(button, meta) {
+        const { item, name, isCompany, companyId } = meta;
+        const actions = this.config.actions;
+        if (button.classList.contains('org-tree-btn-add-sub')) {
+            actions.onAddSub?.(item.id, isCompany, name, companyId);
+        } else if (button.classList.contains('org-tree-btn-edit')) {
+            if (isCompany) actions.onEditCompany?.(item.id);
+            else actions.onEditDept?.(item.id);
+        } else if (button.classList.contains('org-tree-btn-delete')) {
+            if (isCompany) actions.onDeleteCompany?.(item.id, name);
+            else actions.onDeleteDept?.(item.id, name);
+        }
+    }
+
+    _selectNode(row, meta) {
+        this._clearSelectionStyles();
+        row.classList.add('bg-blue-50', 'text-blue-700', 'font-medium');
+        this.togglePanel(false);
+        this.config.onSelect?.({
+            id: meta.item.id,
+            name: meta.name,
+            isCompany: meta.isCompany,
+            item: meta.item
+        });
+    }
+
+    _selectAll() {
+        this._clearSelectionStyles();
+        this.els.viewAll?.classList.add(
+            'bg-blue-50',
+            'text-blue-700',
+            'font-medium'
+        );
+        this.togglePanel(false);
+        this.config.onViewAll?.();
+    }
+
+    _clearSelectionStyles() {
+        this.els.treeRoot.querySelectorAll('.org-tree-item').forEach((item) => {
+            item.classList.remove(
+                'bg-blue-50',
+                'text-blue-700',
+                'font-medium'
+            );
+        });
+        this.els.viewAll?.classList.remove(
+            'bg-blue-50',
+            'text-blue-700',
+            'font-medium'
+        );
+    }
+
+    _filterTree(value) {
+        const searchValue = AppUtils.Helper.removeAccents(
+            String(value || '').toLowerCase()
+        );
+        const rows = this.els.treeRoot.querySelectorAll('.org-tree-item');
+
+        rows.forEach((row) => {
+            const li = row.closest('li');
+            const text = AppUtils.Helper.removeAccents(
+                row.textContent.toLowerCase()
+            );
+            const matches = text.includes(searchValue);
+            li.style.display = matches ? 'block' : 'none';
+
+            if (matches && searchValue) {
+                let parentLi = li.parentElement.closest('li');
+                while (parentLi) {
+                    parentLi.style.display = 'block';
+                    parentLi
+                        .querySelector(':scope > .org-tree-children')
+                        ?.classList.remove('hidden');
+                    parentLi
+                        .querySelector(':scope > .org-tree-item .org-tree-toggle')
+                        ?.classList.add('is-open');
+                    parentLi = parentLi.parentElement.closest('li');
+                }
+            }
+        });
+
+        if (!searchValue) {
+            this.els.treeRoot.querySelectorAll('li').forEach((li) => {
+                li.style.display = 'block';
+            });
+        }
+    }
+}
+
+// --- 1. QUẢN LÝ CÂY TỔ CHỨC ---
 class TreeManager {
     constructor() {
         this.componentId = 'employee-org-tree';
@@ -6,16 +272,12 @@ class TreeManager {
     }
 
     init() {
-        this.orgTree = new OrgTreeComponent({
+        this.orgTree = new EmployeeOrgSidebarTree({
             componentId: this.componentId,
             apiUrl: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/tree/',
-            variant: 'sidebar',
-            showActions: true,
-            showAll: true,
-            selectableMode: 'all',
 
             // --- Callbacks ---
-            onSelect: ({ id, name, isCompany, params }) => {
+            onSelect: ({ id, name, isCompany }) => {
                 // Update page title
                 const title = document.getElementById('list-title');
                 if (title) title.textContent = name || 'Bảng nhân viên';
@@ -50,11 +312,6 @@ class TreeManager {
 
         this.orgTree.init();
 
-        // Wire overlay click to close sidebar
-        const overlay = document.getElementById('sidebar-overlay');
-        if (overlay) {
-            overlay.addEventListener('click', () => this.toggleSidebar(false));
-        }
     }
 
     fetchTree() {
@@ -89,7 +346,9 @@ class EmployeeManager extends BaseCRUDManager {
         this.lookupData = { chucvu: [], nganhang: [], phongban: [], loainv: [] };
         this.currentCongTac = null;
         this.eventManager = AppUtils.EventManager.create();
-        this.phongbanPicker = null; // OrgTreeComponent for phongban dropdown
+        this.phongbanPicker = null; // OrganizationTreeComponent for phongban dropdown
+        this.phongbanPickerEls = null;
+        this.phongbanPickerOpen = false;
     }
 
     init() {
@@ -559,47 +818,89 @@ class EmployeeManager extends BaseCRUDManager {
         }
     }
 
-    // --- PHÒNG BAN PICKER (OrgTreeComponent dropdown) ---
+    // --- PHÒNG BAN PICKER (OrganizationTreeComponent dropdown) ---
     _initPhongbanPicker() {
-        const root = document.querySelector('[data-component-id="phongban-picker"]');
-        if (!root) return;
+        const wrapper = document.getElementById('phongban-picker-wrapper');
+        if (!wrapper || typeof window.OrganizationTreeComponent !== 'function') return;
 
-        this.phongbanPicker = new OrgTreeComponent({
-            componentId: 'phongban-picker',
-            apiUrl: '/hrm/to-chuc-nhan-su/api/v1/phong-ban/tree/',
-            variant: 'dropdown',
-            showActions: false,
-            showAll: false,
-            selectableMode: 'department',
-            onSelect: ({ id, name, isCompany }) => {
-                // Only departments are selectable (enforced by selectableMode)
-                // Hidden input is auto-set by the component
+        this.phongbanPickerEls = {
+            wrapper,
+            button: wrapper.querySelector('[data-phongban-picker-button]'),
+            text: wrapper.querySelector('[data-phongban-picker-text]'),
+            hiddenInput: wrapper.querySelector('[data-phongban-picker-input]'),
+            dropdown: wrapper.querySelector('[data-phongban-picker-dropdown]'),
+            search: wrapper.querySelector('[data-phongban-picker-search]'),
+            tree: wrapper.querySelector('[data-phongban-picker-tree]')
+        };
+
+        this.phongbanPicker = new OrganizationTreeComponent({
+            container: this.phongbanPickerEls.tree,
+            selectionMode: 'single',
+            showAllOption: false,
+            defaultExpandCompanies: true,
+            loadingMessage: 'Đang tải phòng ban...',
+            emptyMessage: 'Chưa có dữ liệu phòng ban',
+            errorMessage: 'Không tải được dữ liệu phòng ban',
+            onSelect: ({ id, name, type }) => {
+                // Chỉ phòng ban được chọn (company không selectable ở mode single)
+                if (type !== 'department') return;
+                this._selectPhongban(id, name);
+                this._togglePhongbanPickerDropdown(false);
             }
         });
-        this.phongbanPicker.init();
+        // Component tự render error state trong container; catch để tránh unhandled rejection
+        this.phongbanPicker.load('/hrm/to-chuc-nhan-su/api/v1/phong-ban/tree/').catch(() => {});
+
+        if (this.phongbanPickerEls.button) {
+            this.eventManager.add(this.phongbanPickerEls.button, 'click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this._togglePhongbanPickerDropdown();
+            });
+        }
+
+        if (this.phongbanPickerEls.search) {
+            this.eventManager.add(this.phongbanPickerEls.search, 'input',
+                AppUtils.Helper.debounce((event) => {
+                    this.phongbanPicker.setSearch(event.target.value);
+                }, 300));
+        }
+
+        this.eventManager.add(document, 'click', (event) => {
+            if (!this.phongbanPickerOpen) return;
+            if (!this.phongbanPickerEls.wrapper.contains(event.target)) {
+                this._togglePhongbanPickerDropdown(false);
+            }
+        });
+    }
+
+    _togglePhongbanPickerDropdown(show) {
+        this.phongbanPickerOpen = show !== undefined ? show : !this.phongbanPickerOpen;
+        if (this.phongbanPickerEls?.dropdown) {
+            this.phongbanPickerEls.dropdown.classList.toggle('hidden', !this.phongbanPickerOpen);
+        }
+        if (this.phongbanPickerOpen && this.phongbanPickerEls?.search) {
+            setTimeout(() => this.phongbanPickerEls.search.focus(), 100);
+        }
     }
 
     /**
-     * Programmatically select a phongban in the OrgTreeComponent dropdown.
+     * Programmatically select a phongban in the OrganizationTreeComponent dropdown.
      * Used when loading existing employee data.
      */
     _selectPhongban(id, name) {
-        if (!this.phongbanPicker) return;
+        const els = this.phongbanPickerEls;
+        if (!els) return;
 
-        // Set the hidden input and display text via component's scoped elements
-        const root = this.phongbanPicker.root;
-        if (!root) return;
-
-        const hiddenInput = root.querySelector('[data-org-tree-hidden-input]');
-        const displayText = root.querySelector('[data-org-tree-selected-text]');
-
-        if (hiddenInput) hiddenInput.value = id || '';
-        if (displayText) {
-            displayText.textContent = name || '-- Chọn phòng ban --';
-            displayText.className = id ? 'text-slate-900 text-sm truncate' : 'text-slate-500 text-sm truncate';
+        const selectedId = String(id || '');
+        if (els.hiddenInput) els.hiddenInput.value = selectedId;
+        if (els.text) {
+            els.text.textContent = name || '-- Chọn phòng ban --';
+            els.text.className = selectedId ? 'text-slate-900 text-sm truncate' : 'text-slate-500 text-sm truncate';
         }
-
-        this.phongbanPicker.selectedNodeId = id || null;
+        if (this.phongbanPicker) {
+            this.phongbanPicker.setSelectedIds(selectedId ? [selectedId] : []);
+        }
     }
 
     // --- TABLE ---

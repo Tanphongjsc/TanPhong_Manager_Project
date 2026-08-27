@@ -18,7 +18,7 @@ class BaoCaoTongHopLuongManager {
         const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
         document.getElementById('filter-thang').value = monthStr;
         
-        this.initOrgTree();
+        this.initOrganizationTree();
         this.initTabSwitching();
         this.bindEvents();
         
@@ -26,19 +26,79 @@ class BaoCaoTongHopLuongManager {
         this.loadData();
     }
 
-    initOrgTree() {
-        if (window.OrgTreeComponent) {
-            this.orgTree = new OrgTreeComponent({
-                componentId: 'org-tree-filter',
-                variant: 'dropdown',
-                showActions: false,
-                selectableMode: 'department',
-                onSelect: () => {
-                    this.loadData();
-                }
+    initOrganizationTree() {
+        this.deptWrapper = document.getElementById('salary-dept-wrapper');
+        this.deptButton = document.getElementById('salary-dept-button');
+        this.deptText = document.getElementById('salary-dept-text');
+        this.deptInput = document.getElementById('salary-filter-phongban');
+        this.deptDropdown = document.getElementById('salary-dept-dropdown');
+        const treeContainer = document.getElementById('salary-dept-tree');
+
+        if (!treeContainer || typeof window.OrganizationTreeComponent !== 'function') return;
+
+        this.deptDropdownOpen = false;
+        this.departmentTree = new OrganizationTreeComponent({
+            container: treeContainer,
+            selectionMode: 'single',
+            showAllOption: true,
+            allOptionLabel: 'Tất cả phòng ban',
+            defaultExpandCompanies: true,
+            loadingMessage: 'Đang tải bộ phận...',
+            emptyMessage: 'Chưa có dữ liệu bộ phận',
+            errorMessage: 'Không tải được dữ liệu bộ phận',
+            onSelect: ({ id, name }) => this.selectDepartment(id, name)
+        });
+        // Component tự render error state trong container; catch để tránh unhandled rejection
+        this.departmentTree.load('/hrm/to-chuc-nhan-su/api/v1/phong-ban/tree/').catch(() => {});
+
+        if (this.deptButton) {
+            this.deptButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.toggleDeptDropdown();
             });
-            this.orgTree.init();
         }
+
+        document.addEventListener('click', (event) => {
+            if (!this.deptDropdownOpen) return;
+            if (this.deptWrapper && !this.deptWrapper.contains(event.target)) {
+                this.closeDeptDropdown();
+            }
+        });
+    }
+
+    toggleDeptDropdown() {
+        this.deptDropdownOpen = !this.deptDropdownOpen;
+        if (this.deptDropdown) {
+            this.deptDropdown.classList.toggle('hidden', !this.deptDropdownOpen);
+        }
+    }
+
+    closeDeptDropdown() {
+        this.deptDropdownOpen = false;
+        if (this.deptDropdown) {
+            this.deptDropdown.classList.add('hidden');
+        }
+    }
+
+    selectDepartment(deptId, deptName) {
+        const selectedId = String(deptId || '');
+
+        if (this.deptInput) {
+            this.deptInput.value = selectedId;
+            // Listener 'change' sẵn có trên filter-form sẽ tự gọi loadData()
+            this.deptInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        if (this.deptText) {
+            this.deptText.textContent = deptName || 'Tất cả phòng ban';
+        }
+
+        if (this.departmentTree) {
+            this.departmentTree.setSelectedIds(selectedId ? [selectedId] : []);
+        }
+
+        this.closeDeptDropdown();
     }
 
     initTabSwitching() {
