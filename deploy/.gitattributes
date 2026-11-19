@@ -1,0 +1,2 @@
+# Các file chạy trong container Linux: luôn dùng xuống dòng LF, kể cả khi checkout trên Windows.
+* text eol=lf
