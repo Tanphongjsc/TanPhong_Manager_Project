@@ -25,7 +25,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-from config.authz import get_first_allowed_url
+from apps.portal import views as portal_views
 
 
 def health_check(request):
@@ -40,19 +40,14 @@ def root_entry(request):
     if not request.user.is_authenticated:
         return redirect('login')
 
-    destination = get_first_allowed_url(request.user)
-    if destination:
-        return redirect(destination)
-
-    return render(request, 'registration/403.html', status=403)
+    # Trang chủ: các ô phần mềm người dùng được phép dùng.
+    return portal_views.home(request)
 
 
 @login_required
 def post_login_redirect(request):
-    destination = get_first_allowed_url(request.user)
-    if destination:
-        return redirect(destination)
-    return render(request, 'registration/403.html', status=403)
+    # Trang đăng nhập vẫn ưu tiên ?next= (ví dụ /co/orders/) nếu có.
+    return redirect('root_entry')
 
 
 def permission_denied_view(request, exception=None):
@@ -65,6 +60,9 @@ urlpatterns = [
     path('', root_entry, name='root_entry'),
     path('accounts/post-login/', post_login_redirect, name='post_login_redirect'),
     path('accounts/', include('django.contrib.auth.urls')),
+    # Cổng nginx kiểm tra đăng nhập/quyền trước khi chuyển vào CO, Tính giá
+    path('gateway/auth/<slug:app>/', portal_views.gateway_auth, name='gateway_auth'),
+    path('gateway/denied/', portal_views.gateway_denied, name='gateway_denied'),
     path('dashboard/', include('apps.dashboard.urls')),
     path('dichvudiennuoc/', include('apps.dich_vu_dien_nuoc.urls')),
     path('hrm/', include('apps.hrm_manager.urls')),

@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.dashboard',
     'apps.dich_vu_dien_nuoc',
+    'apps.portal',
 
     # HRM Manager Apps
     'apps.hrm_manager',
@@ -85,6 +86,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'apps.portal.middleware.LegacyCookieCleanupMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -114,6 +116,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'config.authz.ui.access_control_context',
+                'apps.portal.context_processors.current_module',
             ],
         },
     },
@@ -188,6 +191,11 @@ LOGOUT_REDIRECT_URL = 'login' # Chuyển hướng sau khi logout
 
 STATIC_URL = '/static/'
 
+# Đường dẫn các ô CO / Tính giá trên trang chủ. Mặc định là đường dẫn dưới cổng
+# nginx; có thể trỏ tạm về link Render cũ trong giai đoạn chuyển đổi.
+PORTAL_CO_URL = os.getenv('PORTAL_CO_URL', '/co/')
+PORTAL_TINHGIA_URL = os.getenv('PORTAL_TINHGIA_URL', '/tinh-gia/')
+
 # Thư mục chứa file static khi development
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -216,14 +224,18 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF Protection
 CSRF_TRUSTED_ORIGINS = get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost:8000,http://127.0.0.1:8000,https://tanphong-manager-project.onrender.com'
+    'http://localhost:8000,http://127.0.0.1:8000,https://tanphong-manager-project.onrender.com,'
+    'https://tanphong-manager-project-ydbo.onrender.com'
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = get_bool_env('CSRF_USE_SESSIONS', False)
-CSRF_COOKIE_NAME = 'csrftoken'
+# Tên cookie riêng để không đụng cookie sessionid/csrftoken của CO và Tính giá
+# khi cả 3 phần mềm chạy chung một domain (xem deploy/README.txt).
+CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'tp_csrftoken')
 
 # Session Security
+SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'tp_sessionid')
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 28800  # 8 giờ (1 ca làm việc)

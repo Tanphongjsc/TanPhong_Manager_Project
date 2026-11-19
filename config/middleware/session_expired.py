@@ -42,6 +42,7 @@ _EXEMPT_PREFIXES = (
     '/static/',
     '/favicon.ico',
     '/health/',
+    '/gateway/',
 )
 
 

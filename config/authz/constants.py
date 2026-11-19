@@ -32,6 +32,7 @@ EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
     "/accounts/",
     "/admin/",
     "/health/",
+    "/gateway/",
     "/static/",
     "/media/",
 )

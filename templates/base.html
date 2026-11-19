@@ -193,6 +193,27 @@
         </div>
 
         <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+            <!-- Trang chủ: chọn phần mềm -->
+            <a href="/" class="sidebar-link relative{% if current_module == 'portal' %} active{% endif %}" data-title="Trang chủ">
+                <i class="fas fa-house w-6 text-gray-400 flex-shrink-0"></i>
+                <span class="ml-3 sidebar-text">Trang chủ</span>
+                <div class="sidebar-tooltip">Trang chủ</div>
+            </a>
+
+            {% if current_module == 'portal' %}
+            <!-- Trang chủ: danh sách phần mềm -->
+            <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 sidebar-text">Phần mềm</div>
+            {% for app in portal_apps %}
+            <a href="{{ app.url }}" class="sidebar-link relative" data-title="{{ app.name }}">
+                <i class="fas {{ app.icon }} w-6 text-gray-400 flex-shrink-0"></i>
+                <span class="ml-3 sidebar-text">{{ app.name }}</span>
+                <div class="sidebar-tooltip">{{ app.name }}</div>
+            </a>
+            {% endfor %}
+            {% endif %}
+
+            {% if current_module == 'hrm' %}
+            <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 sidebar-text">Nhân sự – Tiền lương</div>
             <!-- Dashboard -->
             {% if acl.can_view_dashboard %}
             <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link relative">
@@ -201,8 +222,11 @@
                 <div class="sidebar-tooltip">Dashboard</div>
             </a>
             {% endif %}
+            {% endif %}{# end current_module == 'hrm' (Dashboard) #}
 
             <!-- Quản lý Dịch vụ -->
+            {% if current_module == 'dich_vu' %}
+            <div class="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 sidebar-text">Dịch vụ nhà xưởng</div>
             {% if acl.can_view_dich_vu_dien_nuoc %}
             <div class="submenu-container" data-menu="services">
                 <a href="#" id="services-menu-toggle" aria-expanded="false" aria-controls="services-submenu" class="sidebar-link" data-title="Quản lý Dịch vụ">
@@ -249,7 +273,9 @@
                 </div>
             </div>
             {% endif %}
+            {% endif %}{# end current_module == 'dich_vu' #}
 
+            {% if current_module == 'hrm' %}
             <!-- Quản lý Nhân sự -->
             {% if acl.can_view_to_chuc_nhan_su %}
             <div class="submenu-container" data-menu="hrm">
@@ -479,6 +505,7 @@
                 </div>
             </div>
             {% endif %}
+            {% endif %}{# end current_module == 'hrm' #}
 
             <!-- Cài đặt -->
             <a href="#" class="sidebar-link relative" data-title="Cài đặt">
@@ -676,7 +703,7 @@
         };
         const initActiveFromLocation = () => {
             const path = '{{ active_menu_url|default:""|escapejs }}'.trim() || location.pathname;
-            const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)').map(a => a.getAttribute('href')).filter(h => h && h !== '#');
+            const links = qsa('#sidebar-nav a[href]:not(.tooltip-link)').map(a => a.getAttribute('href')).filter(h => h && h !== '#' && (h !== '/' || path === '/'));
             let best = links.reduce((acc, cur) => path.startsWith(cur) && cur.length > (acc?.length || 0) ? cur : acc, null);
 
             // Nếu không tìm thấy exact match, tìm link có chung base path

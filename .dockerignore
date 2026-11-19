@@ -1,0 +1,21 @@
+# Không đưa vào image: bí mật, môi trường ảo, file build, log
+.git
+.gitignore
+.env
+.env.*
+github_token
+env/
+.venv/
+venv/
+node_modules/
+staticfiles/
+static/css/dist/
+logs/
+*.log
+**/__pycache__/
+*.pyc
+.vscode/
+.idea/
+docs/
+# Thư mục migrations không có trong git; loại ra để build local giống build trên Render
+**/migrations/

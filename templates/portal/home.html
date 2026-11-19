@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Trang chủ · Tân Phong{% endblock title %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Xin chào, {{ user.get_full_name|default:user.username }}</h1>
+        <p class="text-gray-500 mt-1">Chọn phần mềm bạn muốn làm việc.</p>
+    </div>
+
+    {% if portal_apps %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+        {% for app in portal_apps %}
+        <a href="{{ app.url }}"
+           class="group flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm p-6 transition hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500
+                  {% if app.accent == 'blue' %}hover:border-blue-400{% elif app.accent == 'amber' %}hover:border-amber-400{% elif app.accent == 'emerald' %}hover:border-emerald-400{% else %}hover:border-violet-400{% endif %}">
+            <div class="h-12 w-12 rounded-lg flex items-center justify-center mb-4
+                        {% if app.accent == 'blue' %}bg-blue-100 text-blue-600{% elif app.accent == 'amber' %}bg-amber-100 text-amber-600{% elif app.accent == 'emerald' %}bg-emerald-100 text-emerald-600{% else %}bg-violet-100 text-violet-600{% endif %}">
+                <i class="fas {{ app.icon }} text-xl"></i>
+            </div>
+            <h2 class="text-lg font-semibold text-gray-800">{{ app.name }}</h2>
+            <p class="text-sm text-gray-500 mt-1 flex-1">{{ app.description }}</p>
+            <span class="mt-4 text-sm font-medium text-blue-600 group-hover:underline">
+                Mở phần mềm <i class="fas fa-arrow-right ml-1"></i>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl border border-gray-200 p-8 text-center">
+        <i class="fas fa-lock text-3xl text-gray-400 mb-3"></i>
+        <p class="text-gray-700 font-medium">Tài khoản của bạn chưa được cấp quyền vào phần mềm nào.</p>
+        <p class="text-gray-500 text-sm mt-1">Vui lòng liên hệ quản trị viên để được cấp quyền.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

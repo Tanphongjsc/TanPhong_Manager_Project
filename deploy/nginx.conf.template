@@ -1,0 +1,124 @@
+# Cổng vào duy nhất của container. start.sh thay ${PORT} rồi ghi ra /etc/nginx/nginx.conf.
+worker_processes 1;
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+
+events { worker_connections 512; }
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  sendfile on;
+  server_tokens off;
+  client_max_body_size 25m;
+  access_log /dev/stdout;
+
+  gzip on;
+  gzip_proxied any;
+  gzip_min_length 1024;
+  gzip_types text/css application/javascript application/json image/svg+xml text/plain;
+
+  # Kết quả kiểm tra đăng nhập/quyền được nhớ 60 giây cho mỗi phiên đăng nhập,
+  # để CO/Tính giá không phải hỏi phần mềm lương ở mọi request.
+  proxy_cache_path /tmp/nginx-authcache levels=1 keys_zone=gateway_auth:1m max_size=5m inactive=2m;
+
+  server {
+    listen ${PORT};
+    absolute_redirect off;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    # Giữ nguyên header của Render (https) để Django nhận đúng giao thức.
+    proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+    proxy_read_timeout 130s;
+
+    # ----- File static: nginx phục vụ trực tiếp -----
+    location /static/ {
+      alias /app/hrm/staticfiles/;
+      expires 1h;
+      access_log off;
+    }
+    location /co/static/ {
+      alias /app/co/CO_Manager/staticfiles/;
+      expires 1h;
+      access_log off;
+    }
+    location /tinh-gia/static/ {
+      alias /app/tinhgia/staticfiles/;
+      expires 7d;   # tên file có mã băm (manifest) nên cache dài an toàn
+      access_log off;
+    }
+
+    # ----- Hỏi phần mềm lương: người dùng đã đăng nhập và có quyền chưa? -----
+    # internal: trình duyệt không gọi trực tiếp được.
+    location ~ ^/_gateway_auth/(?<gateway_app>co|tinh-gia)$ {
+      internal;
+      proxy_pass http://127.0.0.1:8101/gateway/auth/$gateway_app/;
+      proxy_method GET;
+      proxy_pass_request_body off;
+      # proxy_set_header ở đây làm mất các header khai báo ở server, nên khai báo lại đủ.
+      proxy_set_header Content-Length "";
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+      proxy_set_header X-Original-URI $request_uri;
+      proxy_cache gateway_auth;
+      proxy_cache_key "$gateway_app|$cookie_tp_sessionid";
+      proxy_cache_valid 204 403 60s;
+      proxy_ignore_headers Set-Cookie Cache-Control Expires Vary;
+      proxy_hide_header Set-Cookie;
+    }
+
+    # ----- CO -----
+    location = /co { return 301 /co/; }
+    location /co/ {
+      auth_request /_gateway_auth/co;
+      error_page 401 = @login;
+      error_page 403 = @denied;
+      proxy_cookie_path / /co/;            # cookie của CO chỉ dùng trong /co/
+      proxy_pass http://127.0.0.1:8102;    # giữ nguyên /co/...; gunicorn tự tách SCRIPT_NAME
+    }
+
+    # ----- Tính giá thành -----
+    location = /tinh-gia { return 301 /tinh-gia/; }
+    location /tinh-gia/ {
+      auth_request /_gateway_auth/tinh-gia;
+      error_page 401 = @login;
+      error_page 403 = @denied;
+      proxy_cookie_path / /tinh-gia/;
+      proxy_pass http://127.0.0.1:8103;
+    }
+
+    # Chưa đăng nhập:
+    #   HTMX  -> 401 + HX-Redirect (cả trang chuyển sang đăng nhập)
+    #   AJAX/JSON -> 401
+    #   trang thường -> 302 về trang đăng nhập, đăng nhập xong quay lại đúng trang
+    location @login {
+      if ($http_hx_request = "true") {
+        add_header HX-Redirect "/accounts/login/?next=$uri" always;
+        return 401;
+      }
+      if ($http_x_requested_with = "XMLHttpRequest") { return 401; }
+      if ($http_accept ~* "application/json") { return 401; }
+      return 302 /accounts/login/?next=$uri;
+    }
+
+    # Không có quyền: hiện trang 403 của phần mềm lương.
+    location @denied {
+      rewrite ^ /gateway/denied/ break;
+      proxy_method GET;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+      proxy_pass http://127.0.0.1:8101;
+    }
+
+    # ----- Còn lại: phần mềm lương + Dịch vụ nhà xưởng -----
+    # (/, /accounts/, /admin/, /hrm/, /dashboard/, /dichvudiennuoc/, /health/, /gateway/...)
+    location / {
+      proxy_pass http://127.0.0.1:8101;
+    }
+  }
+}
