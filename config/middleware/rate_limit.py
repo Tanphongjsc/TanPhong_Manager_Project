@@ -5,6 +5,8 @@ from django.http import HttpResponseForbidden
 
 logger = logging.getLogger('django.security')
 
+EXEMPT_PATHS = ('/health/', '/static/')
+
 class RateLimitMiddleware(MiddlewareMixin):
     """
     Giới hạn số lượng request mỗi phút
@@ -16,23 +18,29 @@ class RateLimitMiddleware(MiddlewareMixin):
         # Bỏ qua nếu đã đăng nhập (người dùng hợp lệ)
         if request.user.is_authenticated:
             return None
-            
-        # Lấy IP của người dùng
+
+        # Health probe của Render và file static gọi liên tục, không được tính vào giới hạn
+        if request.path.startswith(EXEMPT_PATHS):
+            return None
+
         ip = self.get_client_ip(request)
         cache_key = f'rate_limit_{ip}'
-        
-        # Đếm số request từ IP này
-        requests = cache.get(cache_key, 0)
-        
+
+        # Cửa sổ 60 giây tính từ request đầu tiên. Không gọi set() lại mỗi request,
+        # vì set() làm mới thời gian sống và bộ đếm không bao giờ hết hạn.
+        cache.add(cache_key, 0, 60)
+        try:
+            count = cache.incr(cache_key)
+        except ValueError:
+            cache.set(cache_key, 1, 60)
+            count = 1
+
         # Nếu vượt quá 100 request/phút → CHẶN
-        if requests > 100:
+        if count > 100:
             logger.warning(f'⚠️ Rate limit exceeded for IP: {ip}')
             return HttpResponseForbidden('Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút.')
-        
-        # Tăng bộ đếm và lưu trong 60 giây
-        cache.set(cache_key, requests + 1, 60)
         return None
-    
+
     def get_client_ip(self, request):
         """Lấy IP thật của người dùng (kể cả khi qua proxy)"""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
